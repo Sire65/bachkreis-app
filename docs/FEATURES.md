@@ -46,5 +46,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F36 | Bühne mit Orchester: Melodien (Musik-Engine), Konzertaufnahmen, Mitschnitt, Eselsohr | ✅ | logik: Musik · Bühnen-Test |
 | BK-F38 | Echtbetrieb-Server bk-api: Anmeldung, Rechte & Sichtbarkeit je Rolle, Delta-Abgleich, Versionskonflikte | ✅ (eingespielt sobald Konto da) | server.test (13), e2e echtbetrieb |
 | BK-F39 | Supabase-Adapter im Browser (Kopie auf dem Gerät, Ausgang offline), Anmeldeseite, Abmelden | ✅ | e2e echtbetrieb |
-| BK-F40 | Versand-Kern bk-versand (Instanz des KC-Communicator-Kerns) | ⏳ Vormerkung fertig | – |
+| BK-F40 | BK Communicator: Router (Programme, Regeln, Vorlagen, Eltern Minderjähriger, Vorlieben, Rückfall/alle, Ruhezeit, Doppelte, Idempotenz) | ✅ | kom.test 1, 2, 9 |
+| BK-F41 | BK Communicator: Zustellung mit Routen, Anbieterwechsel, Zustand, Bremse, Zero-Cost, Not-Aus, Backoff, aufgegeben, Rückfall-Kanal | ✅ | kom.test 3–8 |
+| BK-F42 | BK Communicator: Wartung (pg_cron), Eskalationen, Push-Quittungen (angezeigt/geöffnet/bestätigt) | ✅ | kom.test 3, 10 |
+| BK-F43 | Web-Push-Abo je Gerät (VAPID), Test an mich, Rechte beim Versand | ✅ | kom.test 11 |
+| BK-F44 | Communicator-Konsole in der PC-Verwaltung (Lämpchen, Not-Aus, Test, Aufträge mit Verlauf) | ✅ | e2e echtbetrieb |
 | BK-F37 | Bachkreis-Logo überall (App-Symbol, Favicon, Kopf, Verwaltung, QR-Karten) | ✅ | Vertrag: SW-Dateiliste |

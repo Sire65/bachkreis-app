@@ -2,6 +2,7 @@
 // Aufruf: node tools/schema-sql.mjs > supabase/migrations/20261015000000_bk_grundschema.sql
 // Der Vertragstest prüft, dass die Migration zum Schema passt.
 import { TABELLEN, TABELLEN_NAMEN } from "../js/kern/schema.js";
+import { KOM_STANDARD } from "../js/kern/kom-standard.js";
 
 const TYP = { text: "text", lang: "text", email: "text", tel: "text", farbe: "text", datum: "date", zeit: "timestamptz", zahl: "integer", geld: "numeric(10,2)", ja: "boolean", wahl: "text", ref: "text", refs: "text[]", liste: "text[]", json: "jsonb" };
 const q = (s) => `'${String(s).replace(/'/g, "''")}'`;
@@ -58,4 +59,15 @@ end $$;`);
   return z.join("\n") + "\n";
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) process.stdout.write(erzeugeSql());
+// Startwerte des BK Communicators (js/kern/kom-standard.js). Bestehende Zeilen bleiben unangetastet (on conflict do nothing).
+export function erzeugeKomStandardSql() {
+  const z = ["-- BK Communicator – Startwerte (automatisch erzeugt aus js/kern/kom-standard.js mit tools/schema-sql.mjs – nicht von Hand ändern)"];
+  for (const [t, zeilen] of Object.entries(KOM_STANDARD)) {
+    for (const r of zeilen) {
+      z.push(`insert into bk_${t} select * from jsonb_populate_record(null::bk_${t}, jsonb_build_object('version', 1, 'erstellt_am', now(), 'geaendert_am', now(), 'geaendert_von', 'Standard') || ${q(JSON.stringify(r))}::jsonb) on conflict (id) do nothing;`);
+    }
+  }
+  return z.join("\n") + "\n";
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) process.stdout.write(process.argv[2] === "kom" ? erzeugeKomStandardSql() : erzeugeSql());

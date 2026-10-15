@@ -6,7 +6,7 @@
   - Der Vertragstest prüft, dass die Migration zum Schema passt.
 - **Adapter statt fester Anbieter** (AGENTS.md Regel 4/18):
   - Daten: `lokal-demo` / `supabase`
-  - Versand: Push / Mail / App / WhatsApp
+  - Versand: BK Communicator (Push / Mail / App) + WhatsApp-Übergabe
   - Speicher für Noten (geplant): Supabase Storage / Cloudflare R2
   - Anmeldung: Link-Code / IServ (vorbereitet)
 - **Ohne Build-Schritt:** ES-Module wie in der Club-App, aber in Bereiche aufgeteilt statt eines großen Monolithen.
@@ -20,7 +20,7 @@
              └──── js/kern/daten.js ───┘   (gleiche Fassade, gleiche Tabellen)
                          │
           lokal-demo (IndexedDB + BroadcastChannel)   ← Vorführversion
-          supabase  (Edge Function bk-api)            ← Echtbetrieb
+          supabase  (Edge Functions bk-api + bk-kom)  ← Echtbetrieb
                          │
                  Spiegel → Neon,  Backup → B2
 ```

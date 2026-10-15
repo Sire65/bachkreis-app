@@ -3,7 +3,7 @@
 import { datenStarten, liste, hole, abonnieren, konfig, speichere, datenInfo, istEchtbetrieb, anmelden, abmelden, beiHinweis } from "../kern/daten.js";
 import { AKTIONEN, aktionenStarten, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
 import { S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
-import { setzeEmpfaengerGeraet } from "../kern/versand.js";
+import { setzeEmpfaengerGeraet, pushAbonnieren } from "../kern/versand.js";
 import "./start.js";
 import "./termine.js";
 import "./kommunikation.js";
@@ -100,6 +100,8 @@ async function starten() {
   S.register = einst().startRegister || "bachkreis";
   setzeEmpfaengerGeraet(S.ich.id);
   if (!istEchtbetrieb()) demoLeiste();
+  // Echtbetrieb: Push-Abo dieses Geräts auffrischen, wenn Benachrichtigungen schon erlaubt sind (still im Hintergrund)
+  else if (globalThis.Notification?.permission === "granted") pushAbonnieren().catch((e) => console.warn("Push-Abo", e));
   const view = location.hash.slice(1);
   zeige("start", {}, { ersetzen: true });
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }

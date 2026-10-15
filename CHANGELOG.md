@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.4.0 DEV – 15.10.2026
+- BK Communicator: Versand-Kern wie der KC Communicator (Router, Zustellung, Wartung, Eskalation, Quittungen), Web-Push, Brevo/SMTP, Konsole in der PC-Verwaltung
+
 ## 0.3.0 DEV – 15.10.2026
 - Echtbetrieb vorbereitet: bk-api, Supabase-Adapter, Anmeldung, Rechte auf dem Server, CI-Einrichtung
 

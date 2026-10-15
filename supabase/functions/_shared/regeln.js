@@ -9,7 +9,7 @@
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
 import { TABELLEN } from "./schema.js";
 
-export const SERVER_ONLY = new Set(["aenderungen", "versand"]); // schreibt nur der Server
+export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "pinnwand"]);
 
@@ -75,6 +75,7 @@ function kuerzen(tab, z, ctx, alleLesen) {
     if (["leitung", "lehrkraft"].includes(z.typ)) { out.mobil = z.mobil; out.email = z.email; } // Ansprechpartner (SOS)
   }
   if (tab === "zugaenge") out = { ...out, code: null, code_hash: undefined };
+  if (tab === "versand" && out.quittung_hash !== undefined) { out = { ...out }; delete out.quittung_hash; } // Einmal-Token der Push-Quittung
   const geschuetzt = (TABELLEN[tab]?.felder || []).filter((f) => f.geschuetzt).map((f) => f.k);
   if (geschuetzt.length && !hatRolle(ctx, GESCHUETZT_ROLLEN) && !(tab === "personen" && ctx.meine.has(z.id))) {
     out = { ...out }; for (const k of geschuetzt) delete out[k];

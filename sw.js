@@ -1,7 +1,7 @@
 // Service Worker der Bachkreis-App – atomares Update (AGENTS.md Regel 16):
 // Eine Version = ein Cache mit ALLEN Dateien. Die neue Version wird erst aktiv, wenn die App „jetzt-aktivieren“ sendet
 // (Knopf „Jetzt aktualisieren“). Bis dahin liefert der alte Worker ausschließlich Dateien der alten Version – kein Mischstand.
-const VERSION = "0.3.0";
+const VERSION = "0.4.0";
 const CACHE = "bk-" + VERSION;
 const DATEIEN = [
   "./", "index.html", "verwaltung.html", "manifest.webmanifest",
@@ -9,7 +9,7 @@ const DATEIEN = [
   "icons/logo.png", "icons/favicon.png", "icons/icon-192.png", "icons/icon-512.png",
   "lib/qrcode/qrcode.js",
   "js/kern/version.js", "js/kern/umgebung.js", "js/kern/speicher-idb.js", "js/kern/schema.js", "js/kern/daten.js", "js/kern/adapter-lokal.js", "js/kern/adapter-supabase.js",
-  "js/kern/demodaten.js", "js/kern/logik.js", "js/kern/ui.js", "js/kern/versand.js", "js/kern/musik.js",
+  "js/kern/demodaten.js", "js/kern/kom-standard.js", "js/kern/logik.js", "js/kern/ui.js", "js/kern/versand.js", "js/kern/musik.js",
   "js/app/main.js", "js/app/zustand.js", "js/app/start.js", "js/app/termine.js", "js/app/kommunikation.js",
   "js/app/orchester.js", "js/app/instrumente.js", "js/app/leitung.js", "js/app/meins.js", "js/app/buehne.js",
   "js/verwaltung/main.js",
@@ -35,12 +35,26 @@ self.addEventListener("fetch", (e) => {
     try { return await fetch(req); } catch { return new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8" } }); }
   })());
 });
+// ---------- Web-Push vom BK Communicator (VAPID) mit Quittungen: angezeigt → geöffnet → bestätigt ----------
+// Die Push-Nachricht trägt Auftrags-ID + Einmal-Token; die Quittung geht ohne Anmeldung an bk-kom (Token prüft der Server).
+function quittung(d, art) {
+  if (!d || !d.q || !d.id || !d.t) return Promise.resolve();
+  return fetch(d.q, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ aufgabe: "quittung", id: d.id, t: d.t, art }), keepalive: true }).catch(() => {});
+}
+self.addEventListener("push", (e) => {
+  let d = {}; try { d = e.data?.json() || {}; } catch { d = { titel: "Bachkreis", text: e.data?.text() || "" }; }
+  const opt = {
+    body: d.text || "", icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: d.tag || undefined, data: d,
+    requireInteraction: !!d.kritisch, renotify: !!d.kritisch, vibrate: d.kritisch ? [300, 100, 300, 100, 300] : undefined,
+    actions: d.kritisch ? [{ action: "ok", title: "✅ Verstanden" }] : [],
+  };
+  e.waitUntil(Promise.all([self.registration.showNotification(d.titel || "Bachkreis", opt), quittung(d, "angezeigt")]));
+});
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
-  e.waitUntil(self.clients.matchAll({ type: "window" }).then((l) => (l[0] ? l[0].focus() : self.clients.openWindow("./"))));
-});
-self.addEventListener("push", (e) => {
-  // Vorbereitet für echten Web-Push (VAPID) im Echtbetrieb
-  let d = {}; try { d = e.data?.json() || {}; } catch { d = { titel: "Bachkreis", text: e.data?.text() || "" }; }
-  e.waitUntil(self.registration.showNotification(d.titel || "Bachkreis", { body: d.text || "", icon: "icons/icon-192.png", badge: "icons/icon-192.png" }));
+  const d = e.notification.data || {};
+  // Notfall: Antippen oder „Verstanden“ = bestätigt (stoppt die Eskalation); sonst „geöffnet“
+  const art = d.kritisch ? "quittiert" : "geoeffnet";
+  const ziel = d.url || "./";
+  e.waitUntil(Promise.all([quittung(d, art), self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((l) => (l[0] ? l[0].focus() : self.clients.openWindow(ziel)))]));
 });

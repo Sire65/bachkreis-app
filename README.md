@@ -25,9 +25,10 @@ Oben in der App wechselt **„Ansicht als“** zwischen Leitung, Lehrkraft, För
 | `js/kern/schema.js` | **Tabellen-Registry**. Daraus entstehen Formulare, Listen, CSV und das Supabase-Schema. |
 | `js/kern/daten.js` + `adapter-*.js` | Datenfassade mit austauschbaren Adaptern: `lokal-demo` (IndexedDB) jetzt, `supabase` vorbereitet. |
 | `js/kern/logik.js` | Fachlogik: Gruppen, Besetzungsampel, Cockpit, Verteiler, ICS, CSV. Rein und getestet. |
-| `js/kern/versand.js` | Versand-Dienst mit Kanal-Adaptern: Push, Mail, App, WhatsApp-Übergabe. |
+| `js/kern/versand.js` | Versand über den BK Communicator (Echtbetrieb: Server; Vorführversion: dieselben Regeln, simuliert), Push-Abo, WhatsApp-Übergabe. |
+| `js/kern/kom-standard.js` | Startwerte des BK Communicators (Programme, Regeln, Vorlagen, Anbieter, Routen, Eskalationen). |
 | `supabase/migrations/` | Grundschema `bk_*` (**erzeugt** mit `npm run schema`) + Anmeldung/Sitzungen. |
-| `supabase/functions/` | Edge Function `bk-api` (Anmeldung, Abgleich, Rechte); Logik in `_shared/` – auch in den Tests gegen PostgreSQL geprüft. |
+| `supabase/functions/` | Edge Functions `bk-api` (Anmeldung, Abgleich, Rechte, Versand) und `bk-kom` (Communicator-Wartung, Quittungen); Logik in `_shared/` (BK Communicator: `_shared/kom/`) – auch in den Tests gegen PostgreSQL geprüft. |
 | `js/app/buehne.js`, `js/kern/musik.js` | Bühne mit Orchester (Eselsohr am Kopf oder Kachel „Bühne“): Melodien aus der Musik-Engine, Konzertaufnahmen, Mitschnitt. |
 | `sw.js` | Service Worker mit **atomarem Update**: neue Version erst nach „Jetzt aktualisieren“. |
 | `tests/` | Vertragstests (Version, SW-Dateiliste, Secrets, Aktionen/Ansichten, Migration), Logiktests und Browser-Rundgang. |
@@ -47,5 +48,5 @@ Es gilt der Entwicklervertrag in [`AGENTS.md`](AGENTS.md):
 - [Architektur](docs/ARCHITEKTUR.md): Adapter, Abgleich, Rollen, Sicherheit
 - [Funktionen](docs/FEATURES.md): Feature-IDs und Stand
 - [Echtbetrieb](docs/ECHTBETRIEB.md) – Umstellung auf Supabase Schritt für Schritt
-- [Kommunikation](docs/KOMMUNIKATION.md) – KC Communicator und Bachkreis
+- [Kommunikation](docs/KOMMUNIKATION.md) – BK Communicator (Nachbau des KC Communicators)
 - [Konten](docs/KONTEN.md): eigene kostenlose Konten des Bachkreises (Checkliste)

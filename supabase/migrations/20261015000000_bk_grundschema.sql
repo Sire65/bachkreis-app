@@ -558,16 +558,32 @@ alter table bk_zugaenge enable row level security;
 drop trigger if exists bk_zugaenge_stempel on bk_zugaenge;
 create trigger bk_zugaenge_stempel before update on bk_zugaenge for each row execute function bk_abgleich_stempel();
 
--- Versandprotokoll
+-- Versand-Aufträge
 create table if not exists bk_versand (
   id text primary key default gen_random_uuid()::text,
   zeit timestamptz,
-  kanal text check (kanal is null or kanal in ('push', 'mail', 'whatsapp', 'app')),
+  kanal text check (kanal is null or kanal in ('push', 'mail', 'app', 'whatsapp')),
   an_id text,
   betreff text,
-  status text check (status is null or status in ('vorgemerkt', 'simuliert', 'uebergeben', 'gesendet', 'fehler')),
+  status text check (status is null or status in ('wartend', 'in_arbeit', 'gesendet', 'zugestellt', 'angezeigt', 'geoeffnet', 'quittiert', 'erneut', 'tot', 'fehler', 'unterdrueckt', 'simuliert', 'uebergeben', 'vorgemerkt')),
   ereignis text,
+  programm text,
+  prioritaet text check (prioritaet is null or prioritaet in ('normal', 'hoch', 'kritisch')),
+  anbieter_id text,
+  versuche integer,
+  fehler_code text,
+  fehler_text text,
+  naechster_versuch timestamptz,
+  gesendet_am timestamptz,
+  korrelation text,
   info text,
+  vorlage text,
+  idempotenz text,
+  anbieter_nachricht_id text,
+  quittung_noetig boolean,
+  quittung_hash text,
+  status_am timestamptz,
+  meta jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -578,6 +594,201 @@ create index if not exists bk_versand_geaendert on bk_versand (geaendert_am);
 alter table bk_versand enable row level security;
 drop trigger if exists bk_versand_stempel on bk_versand;
 create trigger bk_versand_stempel before update on bk_versand for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Grundeinstellungen
+create table if not exists bk_kom_einstellungen (
+  id text primary key default gen_random_uuid()::text,
+  versand_aktiv boolean,
+  nur_kostenlos boolean,
+  max_pro_minute integer,
+  ruhe_von text,
+  ruhe_bis text,
+  max_versuche integer,
+  basis_sekunden integer,
+  max_sekunden integer,
+  absender_name text,
+  absender_email text,
+  antwort_an text,
+  app_url text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_einstellungen_geaendert on bk_kom_einstellungen (geaendert_am);
+alter table bk_kom_einstellungen enable row level security;
+drop trigger if exists bk_kom_einstellungen_stempel on bk_kom_einstellungen;
+create trigger bk_kom_einstellungen_stempel before update on bk_kom_einstellungen for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Programme
+create table if not exists bk_kom_programme (
+  id text primary key default gen_random_uuid()::text,
+  schluessel text not null,
+  name text not null,
+  aktiv boolean,
+  beschreibung text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_programme_geaendert on bk_kom_programme (geaendert_am);
+alter table bk_kom_programme enable row level security;
+drop trigger if exists bk_kom_programme_stempel on bk_kom_programme;
+create trigger bk_kom_programme_stempel before update on bk_kom_programme for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Vorlagen
+create table if not exists bk_kom_vorlagen (
+  id text primary key default gen_random_uuid()::text,
+  schluessel text not null,
+  name text not null,
+  betreff text,
+  text text,
+  varianten jsonb,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_vorlagen_geaendert on bk_kom_vorlagen (geaendert_am);
+alter table bk_kom_vorlagen enable row level security;
+drop trigger if exists bk_kom_vorlagen_stempel on bk_kom_vorlagen;
+create trigger bk_kom_vorlagen_stempel before update on bk_kom_vorlagen for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Regeln je Ereignis
+create table if not exists bk_kom_regeln (
+  id text primary key default gen_random_uuid()::text,
+  ereignis text not null check (ereignis is null or ereignis in ('termin_neu', 'termin_geaendert', 'erinnerung', 'nachfassen', 'nachricht', 'rundschreiben', 'genehmigung', 'instrument', 'sos', 'test', 'standard')),
+  programm_id text not null,
+  kanaele text[],
+  modus text check (modus is null or modus in ('rueckfall', 'alle')),
+  vorlage_id text,
+  prioritaet text check (prioritaet is null or prioritaet in ('normal', 'hoch', 'kritisch')),
+  ruhezeit text check (ruhezeit is null or ruhezeit in ('verschieben', 'ignorieren')),
+  quittung boolean,
+  eltern text check (eltern is null or eltern in ('auch', 'statt', 'nein')),
+  dedupe_sekunden integer,
+  aktiv boolean,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_regeln_geaendert on bk_kom_regeln (geaendert_am);
+alter table bk_kom_regeln enable row level security;
+drop trigger if exists bk_kom_regeln_stempel on bk_kom_regeln;
+create trigger bk_kom_regeln_stempel before update on bk_kom_regeln for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Anbieter
+create table if not exists bk_kom_anbieter (
+  id text primary key default gen_random_uuid()::text,
+  name text not null,
+  kanal text not null check (kanal is null or kanal in ('push', 'mail', 'alle')),
+  art text not null check (art is null or art in ('webpush', 'brevo', 'smtp', 'protokoll')),
+  kostenlos boolean,
+  aktiv boolean,
+  bremse_minute integer,
+  bremse_stunde integer,
+  tageslimit integer,
+  geheimnis text,
+  notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_anbieter_geaendert on bk_kom_anbieter (geaendert_am);
+alter table bk_kom_anbieter enable row level security;
+drop trigger if exists bk_kom_anbieter_stempel on bk_kom_anbieter;
+create trigger bk_kom_anbieter_stempel before update on bk_kom_anbieter for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Routen
+create table if not exists bk_kom_routen (
+  id text primary key default gen_random_uuid()::text,
+  kanal text not null check (kanal is null or kanal in ('push', 'mail')),
+  anbieter_id text not null,
+  rang integer,
+  auto_wechsel boolean,
+  aktiv boolean,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_routen_geaendert on bk_kom_routen (geaendert_am);
+alter table bk_kom_routen enable row level security;
+drop trigger if exists bk_kom_routen_stempel on bk_kom_routen;
+create trigger bk_kom_routen_stempel before update on bk_kom_routen for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Eskalationen
+create table if not exists bk_kom_eskalationen (
+  id text primary key default gen_random_uuid()::text,
+  name text not null,
+  ereignis text not null check (ereignis is null or ereignis in ('termin_neu', 'termin_geaendert', 'erinnerung', 'nachfassen', 'nachricht', 'rundschreiben', 'genehmigung', 'instrument', 'sos', 'test', 'standard')),
+  ausloeser text not null check (ausloeser is null or ausloeser in ('nicht_quittiert', 'fehlgeschlagen')),
+  warte_sekunden integer,
+  kanaele text[],
+  an text check (an is null or an in ('empfaenger', 'leitung')),
+  aktiv boolean,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_eskalationen_geaendert on bk_kom_eskalationen (geaendert_am);
+alter table bk_kom_eskalationen enable row level security;
+drop trigger if exists bk_kom_eskalationen_stempel on bk_kom_eskalationen;
+create trigger bk_kom_eskalationen_stempel before update on bk_kom_eskalationen for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Anbieter-Zustand
+create table if not exists bk_kom_zustand (
+  id text primary key default gen_random_uuid()::text,
+  anbieter_id text,
+  status text check (status is null or status in ('ok', 'gestoert', 'ausgefallen', 'nicht_eingerichtet', 'unbekannt')),
+  fehler_folge integer,
+  letzter_erfolg timestamptz,
+  letzter_fehler timestamptz,
+  fehler_text text,
+  gesendet_24h integer,
+  geprueft_am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_zustand_geaendert on bk_kom_zustand (geaendert_am);
+alter table bk_kom_zustand enable row level security;
+drop trigger if exists bk_kom_zustand_stempel on bk_kom_zustand;
+create trigger bk_kom_zustand_stempel before update on bk_kom_zustand for each row execute function bk_abgleich_stempel();
+
+-- Communicator: Ereignisprotokoll
+create table if not exists bk_kom_ereignisse (
+  id text primary key default gen_random_uuid()::text,
+  zeit timestamptz,
+  auftrag_id text,
+  art text,
+  kanal text,
+  anbieter_id text,
+  code text,
+  text text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kom_ereignisse_geaendert on bk_kom_ereignisse (geaendert_am);
+alter table bk_kom_ereignisse enable row level security;
+drop trigger if exists bk_kom_ereignisse_stempel on bk_kom_ereignisse;
+create trigger bk_kom_ereignisse_stempel before update on bk_kom_ereignisse for each row execute function bk_abgleich_stempel();
 
 -- Änderungsprotokoll (Abgleich)
 create table if not exists bk_aenderungen (
@@ -641,6 +852,11 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_aufga
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_aufgaben_ziel_gruppe_fk') then alter table bk_aufgaben add constraint bk_aufgaben_ziel_gruppe_fk foreign key (ziel_gruppe) references bk_gruppen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_zugaenge_person_id_fk') then alter table bk_zugaenge add constraint bk_zugaenge_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versand_an_id_fk') then alter table bk_versand add constraint bk_versand_an_id_fk foreign key (an_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versand_anbieter_id_fk') then alter table bk_versand add constraint bk_versand_anbieter_id_fk foreign key (anbieter_id) references bk_kom_anbieter(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kom_regeln_programm_id_fk') then alter table bk_kom_regeln add constraint bk_kom_regeln_programm_id_fk foreign key (programm_id) references bk_kom_programme(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kom_regeln_vorlage_id_fk') then alter table bk_kom_regeln add constraint bk_kom_regeln_vorlage_id_fk foreign key (vorlage_id) references bk_kom_vorlagen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kom_routen_anbieter_id_fk') then alter table bk_kom_routen add constraint bk_kom_routen_anbieter_id_fk foreign key (anbieter_id) references bk_kom_anbieter(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kom_zustand_anbieter_id_fk') then alter table bk_kom_zustand add constraint bk_kom_zustand_anbieter_id_fk foreign key (anbieter_id) references bk_kom_anbieter(id) on delete restrict; end if; end $$;
 
 -- Konfiguration (Schlüssel/Wert) und Push-Abos
 create table if not exists bk_konfig (schluessel text primary key, wert jsonb, geaendert_am timestamptz not null default now());

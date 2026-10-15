@@ -1,16 +1,31 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "datum": "2026-10-15",
   "stufe": "DEV",
   "neu": [
-    "Echtbetrieb vorbereitet: Edge Function bk-api (Anmeldung per Code/QR, Sitzungen, Delta-Abgleich, Speichern mit Versionsprüfung)",
-    "Datenschutz auf dem Server: Eltern sehen nur ihre Kinder, Schüler nur Eigenes, fremde Personen nur mit Namen, Gesundheitsangaben nur Leitung/Lehrkräfte",
-    "Supabase-Adapter: Kopie der erlaubten Daten auf dem Gerät, Abgleich alle 30 s, Ausgang auch offline, Konfliktmeldung",
-    "Anmeldeseite (App und PC-Verwaltung), Abmelden, Zugangscodes nur als Hash gespeichert, Schutz gegen Durchprobieren",
-    "Automatische Einrichtung per GitHub (Migrationen + Funktion) und Veröffentlichung Echtbetrieb mit Vorführversion unter /demo/",
-    "Tests: 13 Server-Tests gegen PostgreSQL (PGlite) und Browser-Test Echtbetrieb"
+    "BK Communicator – eigener Versand-Kern nach dem Vorbild des KC Communicators: Programme, Regeln je Ereignis, Vorlagen je Kanal, Anbieter mit Routen",
+    "Empfänger automatisch: Eltern Minderjähriger zusätzlich oder statt des Kindes (Genehmigungen immer an die Eltern), Vorlieben je Person, Erreichbarkeit",
+    "Zustellung: Web-Push (kostenlos), E-Mail über Brevo mit automatischem Wechsel auf ein eigenes Postfach (SMTP), Wiederholung mit Backoff, Rückfall auf den nächsten Kanal",
+    "Schutz: Zero-Cost-Sperre, Bremse und Tageslimit je Anbieter, Ratengrenze, Ruhezeit, Doppelte unterdrücken, Not-Aus – Notfälle (SOS) kommen immer durch",
+    "Eskalation: SOS nach 5 Min. unbestätigt per E-Mail, nach 15 Min. an die Leitung; Push-Quittungen angezeigt / geöffnet / bestätigt",
+    "Konsole in der PC-Verwaltung: Lämpchen je Anbieter, Not-Aus, Test-Push/-Mail, alle Aufträge mit Verlauf; alle Regeln und Vorlagen als Tabellen pflegbar",
+    "Push-Abo je Gerät im Echtbetrieb (Meins › Einstellungen › Push erlauben); Schlüssel und Wartung richtet die GitHub-Action ein",
+    "Tests: 11 Communicator-Tests gegen PostgreSQL (PGlite), Browser-Test Echtbetrieb mit Test-Mail"
   ],
   "verlauf": [
+    {
+      "version": "0.3.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Echtbetrieb vorbereitet: Edge Function bk-api (Anmeldung per Code/QR, Sitzungen, Delta-Abgleich, Speichern mit Versionsprüfung)",
+        "Datenschutz auf dem Server: Eltern sehen nur ihre Kinder, Schüler nur Eigenes, fremde Personen nur mit Namen, Gesundheitsangaben nur Leitung/Lehrkräfte",
+        "Supabase-Adapter: Kopie der erlaubten Daten auf dem Gerät, Abgleich alle 30 s, Ausgang auch offline, Konfliktmeldung",
+        "Anmeldeseite (App und PC-Verwaltung), Abmelden, Zugangscodes nur als Hash gespeichert, Schutz gegen Durchprobieren",
+        "Automatische Einrichtung per GitHub (Migrationen + Funktion) und Veröffentlichung Echtbetrieb mit Vorführversion unter /demo/",
+        "Tests: 13 Server-Tests gegen PostgreSQL (PGlite) und Browser-Test Echtbetrieb"
+      ]
+    },
     {
       "version": "0.2.1",
       "datum": "2026-10-15",

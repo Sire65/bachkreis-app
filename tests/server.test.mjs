@@ -2,16 +2,10 @@
 // und allen Demodaten. Prüft Anmeldung, Sichtbarkeit je Rolle (Datenschutz!), Schreibrechte, Versionskonflikte, Abgleich.
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
-import path from "node:path";
-import { PGlite } from "@electric-sql/pglite";
-import { erzeugeDemodaten } from "../js/kern/demodaten.js";
-import { TABELLEN, TABELLEN_NAMEN } from "../js/kern/schema.js";
 import { verarbeiten, sha256 } from "../supabase/functions/_shared/api.js";
+import { demoDatenbank } from "./demo-db.mjs";
 
-const W = path.resolve(import.meta.dirname, "..");
-let pg, db, d;
-const codes = {};
+let pg, db, d, codes;
 const rufe = (body, token, ip = "1.2.3.4") => verarbeiten(db, body, { token, ip });
 async function login(personId) {
   const r = await rufe({ aktion: "anmelden", code: codes[personId] });
@@ -20,22 +14,7 @@ async function login(personId) {
 }
 
 before(async () => {
-  pg = new PGlite();
-  db = { q: async (t, p = []) => (await pg.query(t, p)).rows };
-  for (const f of fs.readdirSync(path.join(W, "supabase/migrations")).sort()) await pg.exec(fs.readFileSync(path.join(W, "supabase/migrations", f), "utf8"));
-  d = erzeugeDemodaten(new Date("2026-10-15T10:00:00"));
-  await pg.exec("set session_replication_role = replica");
-  for (const t of TABELLEN_NAMEN) {
-    const def = TABELLEN[t];
-    const felder = [...def.felder, ...(def.intern || [])];
-    for (const z0 of d[t] || []) {
-      const z = { ...z0 };
-      if (t === "zugaenge") { codes[z.person_id] = z.code; z.code_hash = await sha256(z.code); z.code = null; }
-      const daten = Object.fromEntries(["id", ...felder.map((f) => f.k), ...(t === "zugaenge" ? ["code_hash"] : [])].map((k) => [k, z[k] === "" && ["datum", "zeit", "zahl", "geld"].includes(felder.find((f) => f.k === k)?.typ) ? null : z[k] ?? null]));
-      await pg.query(`insert into bk_${t} select * from jsonb_populate_record(null::bk_${t}, $1::jsonb)`, [JSON.stringify({ ...daten, version: 1, erstellt_am: new Date().toISOString(), geaendert_am: "2026-10-01T00:00:00Z" })]);
-    }
-  }
-  await pg.exec("set session_replication_role = origin");
+  ({ pg, db, d, codes } = await demoDatenbank({ jetzt: new Date("2026-10-15T10:00:00"), geaendert: "2026-10-01T00:00:00Z" }));
 });
 
 test("Anmeldung: falscher Code → 401, richtiger Code → Sitzung; ohne Sitzung kein Zugriff", async () => {
@@ -180,5 +159,5 @@ test("Versand vormerken: Eltern dürfen nicht an beliebige Personen senden", asy
   const e = await login(d.__konfig.demo_personen.eltern);
   assert.equal((await rufe({ aktion: "versenden", ereignis: "rundschreiben", an: ["p-leitung"], text: "x" }, e)).status, 403);
   const l = await rufe({ aktion: "versenden", ereignis: "rundschreiben", an: ["p-lk1", "p-lk2"], kanaele: ["push", "mail"], betreff: "Test", text: "Hallo" }, await login("p-leitung"));
-  assert.equal(l.json.vorgemerkt, 4);
+  assert.equal(l.json.vorgemerkt, 2); // Lehrkräfte ohne Push-Abo: E-Mail (Push nicht erreichbar)
 });

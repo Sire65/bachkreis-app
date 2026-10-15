@@ -43,6 +43,10 @@ try {
   await v.click('[data-a="zugKarten"]');
   const code = await v.$eval(".qr-karte code", (c) => c.textContent);
   await v.waitForTimeout(1500);
+  // BK Communicator: Konsole, Test-Mail an mich → Auftrag „gesendet“ über den (Protokoll-)Anbieter
+  await v.click('[data-a="vwAnsicht"][data-x="communicator"]'); await v.waitForSelector(".led");
+  await v.click('[data-a="komTest"][data-x="mail"]');
+  await v.waitForFunction(() => [...document.querySelectorAll(".vw-tabelle .badge")].some((b) => b.textContent === "gesendet"), null, { timeout: 15000 });
   const n = await seite();
   await n.goto(B + "/index.html?k=" + code); await n.waitForSelector(".kachel", { timeout: 20000 });
   assert.deepEqual(fehler.filter((x) => !/401/.test(x)), [], "keine Seitenfehler");

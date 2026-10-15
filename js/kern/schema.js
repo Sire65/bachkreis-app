@@ -32,6 +32,20 @@ export const PERSONEN_TYPEN = {
   ehemalig: "Ehemalige",
 };
 
+// BK Communicator: Kanäle, Status, Prioritäten, Ereignisse (gemeinsam für App, Verwaltung und Server)
+export const KOM_KANAELE = { push: "Push", mail: "E-Mail", app: "In der App", whatsapp: "WhatsApp-Übergabe" };
+export const KOM_KANAELE_VERSAND = { push: "Push", mail: "E-Mail", app: "In der App" };
+export const KOM_PRIORITAET = { normal: "normal", hoch: "hoch", kritisch: "kritisch (Notfall)" };
+export const KOM_STATUS = {
+  wartend: "wartet", in_arbeit: "in Arbeit", gesendet: "gesendet", zugestellt: "zugestellt", angezeigt: "angezeigt", geoeffnet: "geöffnet", quittiert: "bestätigt",
+  erneut: "Wiederholung geplant", tot: "aufgegeben", fehler: "Fehler", unterdrueckt: "unterdrückt", simuliert: "simuliert (Demo)", uebergeben: "übergeben", vorgemerkt: "vorgemerkt",
+};
+export const KOM_EREIGNISSE = {
+  termin_neu: "Neuer Termin", termin_geaendert: "Termin geändert/abgesagt", erinnerung: "Erinnerung vor Terminen", nachfassen: "Nachfassen bei fehlender Antwort",
+  nachricht: "Neue Nachricht", rundschreiben: "Rundschreiben", genehmigung: "Genehmigung angefragt", instrument: "Leihinstrument (Rückgabe, Schaden)", sos: "SOS / Notfall",
+  test: "Test", standard: "alle anderen (Standard)",
+};
+
 // Feldtypen: text, lang, email, tel, datum, zeit (Datum+Uhrzeit), zahl, geld, ja, wahl, ref, refs, farbe, liste (Textliste), json
 // „intern“ = Spalten, die die App selbst pflegt (nicht im Formular der Verwaltung).
 export const TABELLEN = {
@@ -386,18 +400,165 @@ export const TABELLEN = {
     ],
     liste: ["person_id", "art", "aktiv", "verwaltung", "zuletzt"],
   },
+  // ---------- BK Communicator (Versand-Kern nach dem Vorbild des KC Communicators) ----------
+  // versand = Auftrags-Tabelle: ein Auftrag je Empfänger und Kanal (Router legt an, Zustellung arbeitet ab).
   versand: {
-    titel: "Versandprotokoll", sym: "📨", gruppe: "System", lesen: L, schreiben: L, nurLesen: true,
+    titel: "Versand-Aufträge", sym: "📨", gruppe: "Communicator", lesen: L, schreiben: L, nurLesen: true, aufbewahrung_tage: 30,
+    anzeige: (z) => `${z.kanal} · ${z.betreff || ""}`,
     felder: [
       { k: "zeit", t: "Zeit", typ: "zeit" },
-      { k: "kanal", t: "Kanal", typ: "wahl", werte: { push: "Push", mail: "E-Mail", whatsapp: "WhatsApp-Übergabe", app: "App" } },
+      { k: "kanal", t: "Kanal", typ: "wahl", werte: KOM_KANAELE },
       { k: "an_id", t: "an", typ: "ref", ref: "personen" },
       { k: "betreff", t: "Betreff", typ: "text" },
-      { k: "status", t: "Status", typ: "wahl", werte: { vorgemerkt: "vorgemerkt", simuliert: "simuliert (Demo)", uebergeben: "übergeben", gesendet: "gesendet", fehler: "Fehler" } },
+      { k: "status", t: "Status", typ: "wahl", werte: KOM_STATUS },
       { k: "ereignis", t: "Ereignis", typ: "text" },
+      { k: "programm", t: "Programm", typ: "text" },
+      { k: "prioritaet", t: "Priorität", typ: "wahl", werte: KOM_PRIORITAET },
+      { k: "anbieter_id", t: "Anbieter", typ: "ref", ref: "kom_anbieter" },
+      { k: "versuche", t: "Versuche", typ: "zahl" },
+      { k: "fehler_code", t: "Fehlercode", typ: "text" },
+      { k: "fehler_text", t: "Fehler", typ: "text" },
+      { k: "naechster_versuch", t: "nächster Versuch", typ: "zeit" },
+      { k: "gesendet_am", t: "gesendet", typ: "zeit" },
+      { k: "korrelation", t: "Vorgang", typ: "text" },
     ],
-    liste: ["zeit", "kanal", "an_id", "betreff", "status"],
-    intern: [{ k: "info", typ: "text" }],
+    liste: ["zeit", "kanal", "an_id", "betreff", "status", "anbieter_id", "versuche"],
+    intern: [
+      { k: "info", typ: "text" }, { k: "vorlage", typ: "text" }, { k: "idempotenz", typ: "text" }, { k: "anbieter_nachricht_id", typ: "text" },
+      { k: "quittung_noetig", typ: "ja" }, { k: "quittung_hash", typ: "text" }, { k: "status_am", typ: "zeit" }, { k: "meta", typ: "json" },
+    ],
+  },
+  kom_einstellungen: {
+    titel: "Communicator: Grundeinstellungen", sym: "🎛️", gruppe: "Communicator", lesen: L, schreiben: L,
+    anzeige: () => "Grundeinstellungen",
+    felder: [
+      { k: "versand_aktiv", t: "Versand eingeschaltet (aus = Not-Aus; Notfälle „kritisch“ gehen trotzdem raus)", typ: "ja" },
+      { k: "nur_kostenlos", t: "Nur kostenlose Anbieter (Zero-Cost-Sperre)", typ: "ja" },
+      { k: "max_pro_minute", t: "Höchstens … Zustellungen je Minute (alle Anbieter)", typ: "zahl" },
+      { k: "ruhe_von", t: "Ruhezeit von (HH:MM)", typ: "text" },
+      { k: "ruhe_bis", t: "Ruhezeit bis (HH:MM)", typ: "text" },
+      { k: "max_versuche", t: "Versuche bis „aufgegeben“", typ: "zahl" },
+      { k: "basis_sekunden", t: "Wartezeit 1. Wiederholung (Sek.)", typ: "zahl" },
+      { k: "max_sekunden", t: "längste Wartezeit (Sek.)", typ: "zahl" },
+      { k: "absender_name", t: "Absender-Name (E-Mail)", typ: "text" },
+      { k: "absender_email", t: "Absender-Adresse (beim Mail-Anbieter bestätigt)", typ: "email" },
+      { k: "antwort_an", t: "Antworten an (E-Mail)", typ: "email" },
+      { k: "app_url", t: "Adresse der App (für Links in Mails/Push)", typ: "text" },
+    ],
+    liste: ["versand_aktiv", "nur_kostenlos", "max_pro_minute", "ruhe_von", "ruhe_bis"],
+  },
+  kom_programme: {
+    titel: "Communicator: Programme", sym: "🧩", gruppe: "Communicator", lesen: L, schreiben: L,
+    anzeige: (z) => z.name,
+    felder: [
+      { k: "schluessel", t: "Schlüssel", typ: "text", pflicht: true },
+      { k: "name", t: "Name", typ: "text", pflicht: true },
+      { k: "aktiv", t: "aktiv (aus = Programm darf nichts senden)", typ: "ja" },
+      { k: "beschreibung", t: "Beschreibung", typ: "lang" },
+    ],
+    liste: ["name", "schluessel", "aktiv"],
+  },
+  kom_vorlagen: {
+    titel: "Communicator: Vorlagen", sym: "📝", gruppe: "Communicator", lesen: L, schreiben: L,
+    anzeige: (z) => z.name,
+    felder: [
+      { k: "schluessel", t: "Schlüssel", typ: "text", pflicht: true },
+      { k: "name", t: "Name", typ: "text", pflicht: true },
+      { k: "betreff", t: "Betreff ({{betreff}}, {{vorname}}, {{absender}} …)", typ: "text" },
+      { k: "text", t: "Text ({{text}}, {{name}}, {{app_url}} …)", typ: "lang" },
+      { k: "varianten", t: "Varianten je Kanal (JSON, z. B. {\"mail\":{\"text\":\"…\"}})", typ: "json" },
+    ],
+    liste: ["name", "schluessel", "betreff"],
+  },
+  kom_regeln: {
+    titel: "Communicator: Regeln je Ereignis", sym: "🔀", gruppe: "Communicator", lesen: L, schreiben: L,
+    anzeige: (z) => `${KOM_EREIGNISSE[z.ereignis] || z.ereignis}`,
+    felder: [
+      { k: "ereignis", t: "Ereignis", typ: "wahl", werte: KOM_EREIGNISSE, pflicht: true },
+      { k: "programm_id", t: "Programm", typ: "ref", ref: "kom_programme", pflicht: true },
+      { k: "kanaele", t: "Kanäle (Rückfall in der Reihenfolge Push → E-Mail → App)", typ: "liste", werte: KOM_KANAELE_VERSAND },
+      { k: "modus", t: "Modus", typ: "wahl", werte: { rueckfall: "Rückfall – erster erreichbarer Kanal, bei Fehler der nächste", alle: "Alle Kanäle gleichzeitig" } },
+      { k: "vorlage_id", t: "Vorlage", typ: "ref", ref: "kom_vorlagen" },
+      { k: "prioritaet", t: "Priorität", typ: "wahl", werte: KOM_PRIORITAET },
+      { k: "ruhezeit", t: "In der Ruhezeit", typ: "wahl", werte: { verschieben: "bis zum Morgen verschieben", ignorieren: "trotzdem senden" } },
+      { k: "quittung", t: "Lesebestätigung nötig (sonst Eskalation)", typ: "ja" },
+      { k: "eltern", t: "Minderjährige", typ: "wahl", werte: { auch: "Eltern zusätzlich benachrichtigen", statt: "statt des Kindes die Eltern", nein: "nur das Kind" } },
+      { k: "dedupe_sekunden", t: "Doppelte gleiche Meldung unterdrücken (Sek.)", typ: "zahl" },
+      { k: "aktiv", t: "aktiv", typ: "ja" },
+    ],
+    liste: ["ereignis", "programm_id", "kanaele", "modus", "prioritaet", "aktiv"],
+  },
+  kom_anbieter: {
+    titel: "Communicator: Anbieter", sym: "🏭", gruppe: "Communicator", lesen: L, schreiben: L,
+    anzeige: (z) => z.name,
+    felder: [
+      { k: "name", t: "Name", typ: "text", pflicht: true },
+      { k: "kanal", t: "Kanal", typ: "wahl", werte: { push: "Push", mail: "E-Mail", alle: "alle (Test)" }, pflicht: true },
+      { k: "art", t: "Technik", typ: "wahl", werte: { webpush: "Web-Push (VAPID, kostenlos)", brevo: "Brevo (E-Mail-API, Gratis-Kontingent)", smtp: "SMTP (eigenes Postfach)", protokoll: "Protokoll (Test, sendet nichts)" }, pflicht: true },
+      { k: "kostenlos", t: "kostenlos", typ: "ja" },
+      { k: "aktiv", t: "aktiv", typ: "ja" },
+      { k: "bremse_minute", t: "Bremse: höchstens … je Minute", typ: "zahl" },
+      { k: "bremse_stunde", t: "Bremse: höchstens … je Stunde", typ: "zahl" },
+      { k: "tageslimit", t: "höchstens … je Tag (Gratis-Kontingent)", typ: "zahl" },
+      { k: "geheimnis", t: "Name des Server-Secrets (nur der NAME, nie der Schlüssel!)", typ: "text" },
+      { k: "notiz", t: "Notiz", typ: "lang" },
+    ],
+    liste: ["name", "kanal", "art", "kostenlos", "aktiv", "tageslimit"],
+  },
+  kom_routen: {
+    titel: "Communicator: Routen", sym: "🛣️", gruppe: "Communicator", lesen: L, schreiben: L,
+    anzeige: (z) => `${z.kanal} #${z.rang}`,
+    felder: [
+      { k: "kanal", t: "Kanal", typ: "wahl", werte: { push: "Push", mail: "E-Mail" }, pflicht: true },
+      { k: "anbieter_id", t: "Anbieter", typ: "ref", ref: "kom_anbieter", pflicht: true },
+      { k: "rang", t: "Rang (1 = zuerst)", typ: "zahl" },
+      { k: "auto_wechsel", t: "bei Störung automatisch zum nächsten Anbieter", typ: "ja" },
+      { k: "aktiv", t: "aktiv", typ: "ja" },
+    ],
+    liste: ["kanal", "rang", "anbieter_id", "auto_wechsel", "aktiv"],
+  },
+  kom_eskalationen: {
+    titel: "Communicator: Eskalationen", sym: "📣", gruppe: "Communicator", lesen: L, schreiben: L,
+    anzeige: (z) => z.name,
+    felder: [
+      { k: "name", t: "Name", typ: "text", pflicht: true },
+      { k: "ereignis", t: "Ereignis", typ: "wahl", werte: KOM_EREIGNISSE, pflicht: true },
+      { k: "ausloeser", t: "Auslöser", typ: "wahl", werte: { nicht_quittiert: "nicht bestätigt", fehlgeschlagen: "Zustellung fehlgeschlagen" }, pflicht: true },
+      { k: "warte_sekunden", t: "warten (Sek.)", typ: "zahl" },
+      { k: "kanaele", t: "dann über", typ: "liste", werte: KOM_KANAELE_VERSAND },
+      { k: "an", t: "an", typ: "wahl", werte: { empfaenger: "denselben Empfänger", leitung: "die Leitung" } },
+      { k: "aktiv", t: "aktiv", typ: "ja" },
+    ],
+    liste: ["name", "ereignis", "ausloeser", "warte_sekunden", "an", "aktiv"],
+  },
+  kom_zustand: {
+    titel: "Communicator: Anbieter-Zustand", sym: "🚦", gruppe: "Communicator", lesen: L, schreiben: [], nurLesen: true,
+    anzeige: (z) => z.anbieter_id,
+    felder: [
+      { k: "anbieter_id", t: "Anbieter", typ: "ref", ref: "kom_anbieter" },
+      { k: "status", t: "Zustand", typ: "wahl", werte: { ok: "ok", gestoert: "gestört", ausgefallen: "ausgefallen", nicht_eingerichtet: "nicht eingerichtet", unbekannt: "unbekannt" } },
+      { k: "fehler_folge", t: "Fehler in Folge", typ: "zahl" },
+      { k: "letzter_erfolg", t: "letzter Erfolg", typ: "zeit" },
+      { k: "letzter_fehler", t: "letzter Fehler", typ: "zeit" },
+      { k: "fehler_text", t: "Fehler", typ: "text" },
+      { k: "gesendet_24h", t: "gesendet (24 Std.)", typ: "zahl" },
+      { k: "geprueft_am", t: "geprüft", typ: "zeit" },
+    ],
+    liste: ["anbieter_id", "status", "fehler_folge", "gesendet_24h", "geprueft_am"],
+  },
+  kom_ereignisse: {
+    titel: "Communicator: Ereignisprotokoll", sym: "🧾", gruppe: "Communicator", lesen: L, schreiben: [], nurLesen: true, aufbewahrung_tage: 14,
+    anzeige: (z) => z.art,
+    felder: [
+      { k: "zeit", t: "Zeit", typ: "zeit" },
+      { k: "auftrag_id", t: "Auftrag", typ: "text" },
+      { k: "art", t: "Ereignis", typ: "text" },
+      { k: "kanal", t: "Kanal", typ: "text" },
+      { k: "anbieter_id", t: "Anbieter", typ: "text" },
+      { k: "code", t: "Code", typ: "text" },
+      { k: "text", t: "Text", typ: "text" },
+    ],
+    liste: ["zeit", "art", "kanal", "anbieter_id", "code", "text"],
   },
   aenderungen: {
     titel: "Änderungsprotokoll (Abgleich)", sym: "🔁", gruppe: "System", lesen: L, schreiben: [], nurLesen: true,

@@ -2,6 +2,7 @@
 // Die Daten werden relativ zum heutigen Tag erzeugt, damit die Vorführung immer „aktuell“ wirkt.
 // Deterministisch (fester Zufallsstartwert) – jede Vorführung sieht gleich aus.
 
+import { KOM_STANDARD } from "./kom-standard.js";
 function zufall(seed) {
   let s = seed >>> 0;
   return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -348,6 +349,8 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "au-2", titel: "Pressetext Herbstkonzert schreiben", art: "aufgabe", status: "in_arbeit", zustaendig_id: "p-lk2", von_id: "p-leitung", frist: isoTag(tag(konzertTag, -14)) },
   ];
   d.versand = [];
+  for (const [t, zeilen] of Object.entries(KOM_STANDARD)) d[t] = structuredClone(zeilen);
+  d.kom_ereignisse = [];
   d.aenderungen = [];
 
   d.__konfig = {

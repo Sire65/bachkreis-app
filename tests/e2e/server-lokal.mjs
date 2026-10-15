@@ -4,36 +4,22 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import { PGlite } from "@electric-sql/pglite";
-import { erzeugeDemodaten } from "../../js/kern/demodaten.js";
-import { TABELLEN, TABELLEN_NAMEN } from "../../js/kern/schema.js";
-import { verarbeiten, sha256 } from "../../supabase/functions/_shared/api.js";
+import { verarbeiten } from "../../supabase/functions/_shared/api.js";
+import { PROTOKOLL_ADAPTER as P } from "../../supabase/functions/_shared/kom/kern.js";
+import { demoDatenbank } from "../demo-db.mjs";
 
 const W = path.resolve(import.meta.dirname, "../..");
 const PORT = Number(process.argv[2] || 8790);
-const pg = new PGlite();
-const db = { q: async (t, p = []) => (await pg.query(t, p)).rows };
-for (const f of fs.readdirSync(path.join(W, "supabase/migrations")).sort()) await pg.exec(fs.readFileSync(path.join(W, "supabase/migrations", f), "utf8"));
-const d = erzeugeDemodaten();
-const codes = {};
-await pg.exec("set session_replication_role = replica");
-for (const t of TABELLEN_NAMEN) {
-  const felder = [...TABELLEN[t].felder, ...(TABELLEN[t].intern || [])];
-  for (const z0 of d[t] || []) {
-    const z = { ...z0 };
-    if (t === "zugaenge") { codes[z.person_id] = z.code; z.code_hash = await sha256(z.code); z.code = null; }
-    const daten = Object.fromEntries(["id", ...felder.map((f) => f.k), ...(t === "zugaenge" ? ["code_hash"] : [])].map((k) => [k, z[k] === "" && ["datum", "zeit", "zahl", "geld"].includes(felder.find((f) => f.k === k)?.typ) ? null : z[k] ?? null]));
-    await pg.query(`insert into bk_${t} select * from jsonb_populate_record(null::bk_${t}, $1::jsonb)`, [JSON.stringify({ ...daten, version: 1, erstellt_am: new Date().toISOString(), geaendert_am: new Date().toISOString() })]);
-  }
-}
-await pg.exec("set session_replication_role = origin");
+const { db, d, codes } = await demoDatenbank();
+// BK Communicator mit Protokoll-Anbietern (nichts verlässt den Rechner); ohne VAPID-Schlüssel → kein Web-Push
+const dienste = { adapter: { webpush: P, brevo: P, smtp: P, protokoll: P }, umgebung: { appUrl: `http://localhost:${PORT}/` } };
 
 const TYPEN = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css", ".png": "image/png", ".json": "application/json", ".webmanifest": "application/manifest+json", ".svg": "image/svg+xml" };
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, "http://x");
   if (u.pathname === "/api" && req.method === "POST") {
     let roh = ""; for await (const c of req) roh += c;
-    const r = await verarbeiten(db, JSON.parse(roh || "{}"), { token: req.headers["x-bk-token"], ip: req.socket.remoteAddress, geraet: req.headers["user-agent"] });
+    const r = await verarbeiten(db, JSON.parse(roh || "{}"), { token: req.headers["x-bk-token"], ip: req.socket.remoteAddress, geraet: req.headers["user-agent"] }, dienste);
     res.writeHead(r.status, { "Content-Type": "application/json" }); return res.end(JSON.stringify(r.json));
   }
   if (u.pathname === "/js/kern/umgebung.js") { // Echtbetrieb gegen diesen lokalen Server

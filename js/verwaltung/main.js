@@ -1,9 +1,11 @@
 // PC-Verwaltung für Leitung, Vorstand/Förderverein und Lehrkräfte: Stammdaten (Adressen, Instrumente, Gruppen …)
 // bequem am PC/Notebook pflegen. Formulare, Listen, CSV-Import/-Export entstehen aus der Tabellen-Registry (schema.js).
 // Zugänge (Codes/QR-Karten, Sperren, Verwaltungsrecht) werden HIER – außerhalb der App – gepflegt.
-import { datenStarten, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
+import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName } from "../kern/schema.js";
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO } from "../kern/ui.js";
+import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
+import { communicatorZustand, testAnMich, KOM_ZUSTAND } from "../kern/versand.js";
 import { csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon } from "../kern/logik.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 
@@ -57,13 +59,13 @@ function demoLeiste() {
 }
 
 // ---------- Rahmen ----------
-const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
+const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
 function seitenleiste() {
   const gruppen = {};
   for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
   const btn = (an, a, x, sym, t, anz = "") => `<button class="${an ? "an" : ""}" data-a="${a}" data-x="${x}">${sym} ${esc(t)}<span class="anz">${anz}</span></button>`;
   return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;opacity:.7">v${APP_VERSION} ${APP_STUFE}</div></div></div>
-    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
+    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "communicator" || darf("kom_einstellungen", "lesen")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
     ${Object.entries(gruppen).map(([g, ts]) => `<h4>${esc(g)}</h4>${ts.map((t) => btn(V.ansicht === "tabelle" && V.tab === t, "vwTabelle", t, TABELLEN[t].sym, TABELLEN[t].titel, liste(t).length)).join("")}`).join("")}
     <h4>Sitzung</h4><button data-a="vwApp">📱 App öffnen</button><button data-a="vwAbmelden">🚪 Abmelden</button>`;
 }
@@ -92,6 +94,7 @@ function zellWert(f, v) {
     case "zeit": return `${datumKurz(v)} ${new Date(v).toTimeString().slice(0, 5)}`;
     case "geld": return Number(v).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
     case "farbe": return `<span class="punkt" style="background:${esc(v)}"></span>${esc(v)}`;
+    case "json": return JSON.stringify(v);
     default: return String(v);
   }
 }
@@ -114,6 +117,7 @@ function feldEingabe(f, z, nurLesen) {
     case "liste": e = `<div class="wahlen">${Object.entries(f.werte).map(([k, t]) => `<label><input type="checkbox" name="${f.k}" data-mehr="1" value="${k}" ${(v || []).includes(k) ? "checked" : ""} ${dis}> ${esc(t)}</label>`).join("")}</div>`; break;
     case "ref": e = `<select ${n}><option value="">–</option>${optRef((id) => id === v)}</select>`; break;
     case "refs": e = `<select multiple ${n}>${optRef((id) => (v || []).includes(id))}</select>`; break;
+    case "json": e = `<textarea ${n} data-json="1" spellcheck="false" style="font-family:monospace;min-height:120px">${esc(v == null ? "" : JSON.stringify(v, null, 2))}</textarea>`; break;
     default: e = `<input ${n} value="${esc(v ?? "")}">`;
   }
   return `<div class="feld ${f.geschuetzt ? "geschuetzt" : ""}"><label>${esc(f.t)}${f.pflicht ? " *" : ""}${f.geschuetzt ? " 🔒" : ""}</label>${e}</div>`;
@@ -128,6 +132,7 @@ function formLesen(tab, wurzel) {
     else if (f.typ === "zeit") v = vonLokal(v);
     else if (f.typ === "ref" || f.typ === "wahl" || f.typ === "datum") v = v || null;
     else if (f.typ === "liste" || f.typ === "refs") v = v || [];
+    else if (f.typ === "json") { try { v = v ? JSON.parse(v) : null; } catch { throw new Error(`${f.t}: kein gültiges JSON`); } }
     o[f.k] = v;
   }
   return o;
@@ -190,7 +195,7 @@ AKTIONEN.vwNeu = () => { V.auswahl = "neu"; V.neuTyp = V.filter || ""; zeichne()
 AKTIONEN.vwSchliessen = () => { V.auswahl = null; zeichne(); };
 AKTIONEN.vwSpeichern = async () => {
   const def = TABELLEN[V.tab];
-  const o = formLesen(V.tab, $("#vwForm"));
+  let o; try { o = formLesen(V.tab, $("#vwForm")); } catch (e) { toast("⚠️ " + e.message, 4000); return; }
   const fehlt = def.felder.filter((f) => f.pflicht && (o[f.k] == null || o[f.k] === "" || (Array.isArray(o[f.k]) && !o[f.k].length)));
   if (fehlt.length) { toast("Pflichtfelder fehlen: " + fehlt.map((f) => f.t).join(", ")); return; }
   const alt = V.auswahl !== "neu" ? hole(V.tab, V.auswahl) : {};
@@ -397,6 +402,62 @@ ANSICHTEN.abgleich = () => {
     <div class="karte"><p>Datenquelle: <b>${esc(info.art)}</b> · ${esc(info.hinweis || "")}</p><p class="hinweis">Jede Tabelle hat die Abgleich-Spalten <code>version</code>, <code>geaendert_am</code>, <code>geaendert_von</code> und <code>geloescht_am</code> (weiches Löschen). Im Echtbetrieb übernimmt Supabase den Abgleich zwischen App und Verwaltung; ein Spiegel-Job kopiert nach Neon, Backups gehen nach B2.</p></div>
     <div class="vw-geteilt"><div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr><th>Tabelle</th><th>Datensätze</th><th>gelöscht</th><th>letzte Änderung</th></tr></thead><tbody>${TABELLEN_NAMEN.map((t) => { const alle = liste(t); const letzte = alle.reduce((m, z) => (z.geaendert_am > m ? z.geaendert_am : m), ""); return `<tr><td>${TABELLEN[t].sym} bk_${t}</td><td>${alle.length}</td><td>${listeMitGeloeschten(t).length - alle.length}</td><td>${letzte ? vorZeit(letzte) : "–"}</td></tr>`; }).join("")}</tbody></table></div>
     <div class="vw-form"><h3>Änderungsprotokoll</h3><ul class="liste">${prot.map((a) => `<li><div class="fl"><b>${esc(TABELLEN[a.tabelle]?.titel || a.tabelle)}</b> · ${esc(a.aktion)}<div class="zeile-unter">${esc(a.wer)} · ${esc(a.quelle)} · ${vorZeit(a.zeit)}</div></div></li>`).join("") || "<li>leer</li>"}</ul></div></div>`;
+};
+
+
+// ---------- BK Communicator: Konsole (Lämpchen, Not-Aus, Test, Aufträge mit Ereignissen) ----------
+const KOM_TABS = ["kom_einstellungen", "kom_regeln", "kom_vorlagen", "kom_anbieter", "kom_routen", "kom_eskalationen", "kom_programme", "kom_zustand", "kom_ereignisse", "versand"];
+const stFarbe = (st) => (["fehler", "tot"].includes(st) ? "b-rot" : ["wartend", "erneut", "in_arbeit"].includes(st) ? "b-gelb" : ["simuliert", "unterdrueckt", "uebergeben", "vorgemerkt"].includes(st) ? "b-grau" : "b-gruen");
+const zFarbe = { ok: "gruen", gestoert: "gelb", ausgefallen: "rot", nicht_eingerichtet: "gelb", unbekannt: "grau" };
+ANSICHTEN.communicator = () => {
+  const cz = communicatorZustand();
+  const e = hole("kom_einstellungen", "global") || {};
+  const darfK = darf("kom_einstellungen", "schreiben");
+  const tag = Date.now() - 86400000;
+  const v = liste("versand").sort((a, b) => String(b.zeit).localeCompare(String(a.zeit)));
+  const v24 = v.filter((x) => new Date(x.zeit).getTime() > tag);
+  const zaehl = {}; for (const x of v24) zaehl[x.status] = (zaehl[x.status] || 0) + 1;
+  const anbieter = liste("kom_anbieter").map((a) => ({ a, z: liste("kom_zustand", (x) => x.anbieter_id === a.id)[0], routen: liste("kom_routen", (r) => r.anbieter_id === a.id && r.aktiv !== false) }));
+  const gewaehlt = V.komAuftrag ? hole("versand", V.komAuftrag) : null;
+  const imVorgang = new Set(gewaehlt ? [gewaehlt.id, ...v.filter((y) => gewaehlt.korrelation && y.korrelation === gewaehlt.korrelation).map((y) => y.id)] : []);
+  const ev = liste("kom_ereignisse", (x) => imVorgang.has(x.auftrag_id)).sort((a, b) => String(a.zeit).localeCompare(String(b.zeit)));
+  const nameP = (id) => esc(name(hole("personen", id)));
+  return `<div class="vw-kopf"><h2>📡 BK Communicator</h2><span class="hinweis">Versand-Kern wie der KC Communicator: Regeln → Aufträge → Anbieter</span></div>
+    <div class="karte"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><i class="led ${cz.farbe}" style="width:18px;height:18px"></i><div class="fl"><b>${istEchtbetrieb() ? "Echtbetrieb" : "Vorführversion (simuliert, nichts wird verschickt)"}</b><div class="hinweis">${esc(cz.text)}</div></div>
+      ${darfK ? `<label class="schalter" style="margin:0"><span><b>Versand ${e.versand_aktiv === false ? "AUS" : "an"}</b><div class="hinweis">aus = Not-Aus (Notfälle gehen trotzdem)</div></span><input type="checkbox" data-c="komSchalter" ${e.versand_aktiv === false ? "" : "checked"}></label>` : ""}</div>
+      <div class="knopfreihe" style="margin-top:10px"><button class="knopf" data-a="komTest" data-x="push">🧪 Test-Push an mich</button><button class="knopf" data-a="komTest" data-x="mail">🧪 Test-Mail an mich</button>${istEchtbetrieb() && darfK ? `<button class="knopf" data-a="komJetzt">▶️ Jetzt zustellen & warten</button>` : ""}<button class="knopf" data-a="komNeu">↻ Aktualisieren</button></div>
+      <p class="hinweis">Zero-Cost-Sperre: <b>${e.nur_kostenlos === false ? "aus" : "an"}</b> · Ruhezeit ${esc(e.ruhe_von || "–")}–${esc(e.ruhe_bis || "–")} · höchstens ${esc(e.max_pro_minute ?? "–")}/Min. · ${esc(e.max_versuche ?? "–")} Versuche</p></div>
+    <div class="kennzahlen">${["wartend", "erneut", "gesendet", "zugestellt", "angezeigt", "geoeffnet", "quittiert", "fehler", "tot", "unterdrueckt", "simuliert"].map((k) => `<div class="kennzahl"><b>${zaehl[k] || 0}</b><small>${esc(KOM_STATUS[k])} (24 Std.)</small></div>`).join("")}</div>
+    <div class="karte"><h3>Anbieter</h3><ul class="liste">${anbieter.map(({ a, z, routen }) => `<li><i class="led ${a.aktiv === false ? "grau" : zFarbe[z?.status || "unbekannt"]}"></i><div class="fl"><b>${esc(a.name)}</b> <span class="hinweis">${esc(a.kanal)} · ${esc(a.art)}${a.kostenlos ? " · kostenlos" : " · kostenpflichtig"}${routen.length ? " · Route " + routen.map((r) => "#" + r.rang).join(", ") : " · keine Route"}${a.aktiv === false ? " · inaktiv" : ""}</span>
+      <div class="zeile-unter">${esc(KOM_ZUSTAND[z?.status] || "unbekannt")}${z?.fehler_folge ? ` · ${z.fehler_folge} Fehler in Folge` : ""}${z?.gesendet_24h ? ` · ${z.gesendet_24h} gesendet (24 Std.)` : ""}${z?.letzter_erfolg ? ` · zuletzt ok ${vorZeit(z.letzter_erfolg)}` : ""}${z?.fehler_text ? ` · ${esc(z.fehler_text)}` : ""}${a.geheimnis ? ` · Secret: <code>${esc(a.geheimnis)}</code>` : ""}</div></div></li>`).join("")}</ul></div>
+    <div class="karte"><h3>Einstellen</h3><div class="knopfreihe">${KOM_TABS.filter((t) => darf(t, "lesen")).map((t) => `<button class="knopf" data-a="vwTabelle" data-x="${t}">${TABELLEN[t].sym} ${esc(TABELLEN[t].titel.replace("Communicator: ", ""))}</button>`).join("")}</div></div>
+    <div class="vw-geteilt"><div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr><th>Zeit</th><th>Kanal</th><th>an</th><th>Betreff</th><th>Status</th><th>Anbieter</th><th>Vers.</th><th>Fehler</th></tr></thead><tbody>
+      ${v.slice(0, 300).map((x) => `<tr class="${V.komAuftrag === x.id ? "gewaehlt" : ""}" data-a="komWahl" data-x="${x.id}"><td>${vorZeit(x.zeit)}</td><td>${esc(KOM_KANAELE[x.kanal] || x.kanal)}</td><td>${nameP(x.an_id)}</td><td>${esc(x.betreff || "")}</td><td><span class="badge ${stFarbe(x.status)}">${esc(KOM_STATUS[x.status] || x.status)}</span></td><td>${esc(hole("kom_anbieter", x.anbieter_id)?.name || "")}</td><td>${x.versuche ?? ""}</td><td>${esc(x.fehler_code || "")}</td></tr>`).join("") || `<tr><td colspan="8" class="hinweis">noch keine Aufträge</td></tr>`}</tbody></table></div>
+    ${gewaehlt ? `<div class="vw-form"><h3>${esc(gewaehlt.betreff || "Auftrag")}</h3><p>${esc(KOM_KANAELE[gewaehlt.kanal] || gewaehlt.kanal)} → <b>${nameP(gewaehlt.an_id)}</b> · <span class="badge ${stFarbe(gewaehlt.status)}">${esc(KOM_STATUS[gewaehlt.status] || gewaehlt.status)}</span></p>
+      <p class="hinweis">Ereignis ${esc(gewaehlt.ereignis || "–")} · Programm ${esc(gewaehlt.programm || "–")} · Priorität ${esc(gewaehlt.prioritaet || "–")}${gewaehlt.naechster_versuch ? ` · nächster Versuch ${datumKurz(gewaehlt.naechster_versuch)} ${new Date(gewaehlt.naechster_versuch).toTimeString().slice(0, 5)}` : ""}${gewaehlt.fehler_text ? `<br>Fehler: ${esc(gewaehlt.fehler_text)}` : ""}</p>
+      <p style="white-space:pre-wrap">${esc(gewaehlt.info || "")}</p>
+      <h4>Verlauf des Vorgangs</h4><ul class="liste">${ev.map((x) => `<li><div class="fl"><b>${esc(x.art)}</b> ${esc(x.kanal || "")} ${x.code ? `<code>${esc(x.code)}</code>` : ""}<div class="zeile-unter">${vorZeit(x.zeit)} ${esc(hole("kom_anbieter", x.anbieter_id)?.name || "")} ${esc(x.text || "")}</div></div></li>`).join("") || "<li class='hinweis'>keine Ereignisse</li>"}</ul>
+      <div class="knopfreihe"><button class="knopf" data-a="komWahl" data-x="">Schließen</button></div></div>` : ""}</div>`;
+};
+AKTIONEN.komWahl = (id) => { V.komAuftrag = id || null; zeichne(); };
+AKTIONEN.komNeu = async () => { await jetztAbgleichen(); zeichne(); };
+AKTIONEN.komSchalter = async (_, el) => {
+  const e = hole("kom_einstellungen", "global");
+  if (!e) { toast("Grundeinstellungen fehlen"); return; }
+  if (!el.checked && !(await frage("Versand wirklich abschalten (Not-Aus)? Nur Notfälle gehen dann noch raus."))) { el.checked = true; return; }
+  await speichere("kom_einstellungen", { ...e, versand_aktiv: el.checked });
+  toast(el.checked ? "▶️ Versand eingeschaltet" : "⛔ Versand ausgeschaltet"); zeichne();
+};
+AKTIONEN.komTest = async (kanal) => {
+  const r = await testAnMich(V.ich, [kanal]).catch((e) => ({ fehler: 1, text: e.message }));
+  toast(r.echt ? `🧪 ${r.auftraege} Auftrag · ${r.gesendet} zugestellt · ${r.fehler} Fehler${r.unterdrueckt ? " · unterdrückt (kein Push-Abo bzw. keine E-Mail-Adresse?)" : ""}` : r.text ? "⚠️ " + r.text : "🧪 Vorführversion: Auftrag simuliert – siehe Liste", 4500);
+  await jetztAbgleichen(); zeichne();
+};
+AKTIONEN.komJetzt = async () => {
+  const r = await serverAktion("kom_wartung", {}).catch((e) => ({ ok: false, fehler: e.message }));
+  const z = r?.bericht?.zustellung;
+  toast(r?.ok ? `▶️ ${z?.gesendet || 0} gesendet · ${z?.wiederholung || 0} Wiederholung · ${r.bericht.eskaliert} eskaliert` : "⚠️ " + (r?.fehler || "nicht möglich"), 4500);
+  await jetztAbgleichen(); zeichne();
 };
 
 // ---------- Einstellungen (Konfiguration) ----------

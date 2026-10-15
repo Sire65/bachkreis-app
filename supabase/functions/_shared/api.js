@@ -2,22 +2,18 @@
 // db.q(sqlText, params) → Array von Zeilen. Alle Datensätze laufen als JSON (to_jsonb / jsonb_populate_record).
 //
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
+//            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
 import { TABELLEN, TABELLEN_NAMEN } from "./schema.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
+import { sha256, zufallsToken } from "./krypto.js";
+import * as kom from "./kom/kern.js";
 
 const SITZUNG_TAGE = 180;
 const MAX_FEHLVERSUCHE = 20; // je IP in 15 Minuten
 const UEBERLAPPUNG_MS = 5000; // Abgleich: kleine Überlappung gegen gleichzeitige Transaktionen
 
-export async function sha256(text) {
-  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(text)));
-  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
-}
-function zufallsToken() {
-  const a = new Uint8Array(32); crypto.getRandomValues(a);
-  return btoa(String.fromCharCode(...a)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
+export { sha256 };
 const spalten = (tab) => [...TABELLEN[tab].felder, ...(TABELLEN[tab].intern || [])].map((f) => f.k);
 const fehler = (status, code, extra = {}) => ({ status, json: { ok: false, fehler: code, ...extra } });
 const name = (p) => `${p?.vorname || ""} ${p?.nachname || ""}`.trim() || "Unbekannt";
@@ -70,9 +66,12 @@ async function laden(db, s, body) {
   const seit = body.seit ? new Date(new Date(body.seit).getTime() - UEBERLAPPUNG_MS).toISOString() : null;
   const daten = {};
   for (const tab of TABELLEN_NAMEN) {
+    // Protokoll-Tabellen (Versand, Communicator-Ereignisse) nur die letzten Tage – sonst wächst jedes Gerät endlos
+    const tage = TABELLEN[tab].aufbewahrung_tage;
+    const frist = tage ? ` and t.zeit > now() - interval '${Number(tage)} days'` : "";
     const zeilen = seit
-      ? (await db.q(`select to_jsonb(t) as z from bk_${tab} t where t.geaendert_am > $1::timestamptz`, [seit])).map((r) => r.z)
-      : await alleZeilen(db, tab);
+      ? (await db.q(`select to_jsonb(t) as z from bk_${tab} t where t.geaendert_am > $1::timestamptz${frist}`, [seit])).map((r) => r.z)
+      : (await db.q(`select to_jsonb(t) as z from bk_${tab} t where true${frist}`)).map((r) => r.z);
     // Beim Komplett-Laden gelöschte Zeilen weglassen; beim Delta mitschicken, damit Geräte sie entfernen
     const sichtbar = filtern(tab, seit ? zeilen : zeilen.filter((z) => !z.geloescht_am), ctx);
     if (sichtbar.length || !seit) daten[tab] = sichtbar;
@@ -117,30 +116,48 @@ async function speichern(db, s, body) {
   return { status: konflikte.length && !gespeichert.length ? 409 : 200, json: { ok: konflikte.length === 0, gespeichert, konflikte } };
 }
 
-// ---------- Versand vormerken (der Versand-Kern „Communicator“ arbeitet die Einträge ab) ----------
-async function versenden(db, s, body) {
+// ---------- Versand über den BK Communicator ----------
+// Rechte: Verwalter senden an beliebige Personen. Schüler/Eltern nur Chat-Nachrichten an Mitglieder einer sichtbaren
+// Unterhaltung, Instrumenten-Meldungen nur an Verwalter, und den Test nur an sich selbst. Priorität bestimmt die Regel.
+const VERWALTER_ROLLEN = ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"];
+async function versenden(db, s, body, dienste) {
   const ctx = await kontextLaden(db, s.person);
-  let an = Array.isArray(body.an) ? body.an.map(String).slice(0, 500) : [];
+  let an = Array.isArray(body.an) ? body.an.map(String).slice(0, 2000) : [];
+  const ereignis = String(body.ereignis || "standard");
   if (!ctx.istVerwalter) {
-    // Schüler/Eltern dürfen nur Mitglieder einer sichtbaren Unterhaltung benachrichtigen (Chat-Nachricht)
-    if (body.ereignis !== "nachricht" || !ctx.unterhaltungen.has(body.unterhaltung_id)) return fehler(403, "KEIN_VERSANDRECHT");
-    const u = (await db.q(`select to_jsonb(u) as z from bk_unterhaltungen u where id = $1`, [body.unterhaltung_id]))[0]?.z;
-    an = [...(u?.mitglieder || [])];
-    const [art, gid] = String(u?.verteiler || "").split(":");
-    if (art === "gruppe" && gid) an.push(...(await db.q(`select person_id from bk_gruppe_zuordnung where gruppe_id = $1 and geloescht_am is null`, [gid])).map((r) => r.person_id));
-    an = an.filter((p) => p !== ctx.ich);
+    if (ereignis === "nachricht") {
+      if (!ctx.unterhaltungen.has(body.unterhaltung_id)) return fehler(403, "KEIN_VERSANDRECHT");
+      const u = (await db.q(`select to_jsonb(u) as z from bk_unterhaltungen u where id = $1`, [body.unterhaltung_id]))[0]?.z;
+      an = [...(u?.mitglieder || [])];
+      const [art, gid] = String(u?.verteiler || "").split(":");
+      if (art === "gruppe" && gid) an.push(...(await db.q(`select person_id from bk_gruppe_zuordnung where gruppe_id = $1 and geloescht_am is null`, [gid])).map((r) => r.person_id));
+      an = an.filter((p) => p !== ctx.ich);
+    } else if (ereignis === "instrument") {
+      an = (await db.q(`select id from bk_personen where id = any($1::text[]) and geloescht_am is null and rollen && $2::text[]`, [an, VERWALTER_ROLLEN])).map((r) => r.id);
+    } else return fehler(403, "KEIN_VERSANDRECHT");
   }
-  const kanaele = Array.isArray(body.kanaele) && body.kanaele.length ? body.kanaele.filter((k) => ["push", "mail", "app"].includes(k)) : ["push", "app"];
-  let n = 0;
-  for (const id of new Set(an)) for (const k of kanaele) {
-    await db.q(`insert into bk_versand (zeit, kanal, an_id, betreff, status, ereignis, info, geaendert_von) values (now(), $1, $2, $3, 'vorgemerkt', $4, $5, $6)`,
-      [k, id, String(body.betreff || "").slice(0, 300), String(body.ereignis || "").slice(0, 60), String(body.text || "").slice(0, 2000), name(s.person)]);
-    n++;
-  }
-  return { status: 200, json: { ok: true, vorgemerkt: n } };
+  const r = await kom.annehmen(db, {
+    ereignis, an, betreff: body.betreff, text: body.text, kanaele: body.kanaele, korrelation: body.korrelation, ausloeser: name(s.person),
+    prioritaet: ctx.istVerwalter ? body.prioritaet : undefined, variablen: { absender_person: name(s.person) },
+  });
+  if (r.ok && dienste.adapter) dienste.hintergrund(kom.zustellen(db, dienste.adapter, dienste.umgebung, { korrelation: r.korrelation, limit: 100 }).catch((e) => console.error("bk-kom zustellen", e)));
+  return { status: 200, json: { ...r, vorgemerkt: r.auftraege } };
 }
 
-export async function verarbeiten(db, body, meta = {}) {
+// Push-Abo dieses Geräts speichern (Web-Push, VAPID). Der öffentliche Schlüssel kommt vom Server.
+async function pushAbo(db, s, body) {
+  const a = body.abo || {};
+  const endpoint = String(a.endpoint || "");
+  if (!/^https:\/\//.test(endpoint) || !a.keys?.p256dh || !a.keys?.auth) return fehler(400, "ABO_UNGUELTIG");
+  await db.q(`insert into bk_push_abos (person_id, endpoint, schluessel, aktiv, geraet) values ($1, $2, $3::jsonb, true, $4)
+    on conflict (endpoint) do update set person_id = excluded.person_id, schluessel = excluded.schluessel, aktiv = true, fehler = null, geraet = excluded.geraet`,
+    [s.person.id, endpoint.slice(0, 1000), JSON.stringify({ p256dh: String(a.keys.p256dh), auth: String(a.keys.auth) }), String(body.geraet || "").slice(0, 200)]);
+  return { status: 200, json: { ok: true } };
+}
+
+// dienste (nur Edge Function/Tests): { adapter, umgebung: { appUrl, quittungUrl, vapidPublic }, hintergrund(promise) }
+export async function verarbeiten(db, body, meta = {}, dienste = {}) {
+  dienste = { umgebung: {}, hintergrund: (p) => p, ...dienste };
   try {
     const aktion = String(body?.aktion || "");
     if (aktion === "anmelden") return await anmelden(db, body, meta);
@@ -148,7 +165,22 @@ export async function verarbeiten(db, body, meta = {}) {
     if (!s) return fehler(401, "NICHT_ANGEMELDET");
     if (aktion === "laden") return await laden(db, s, body);
     if (aktion === "speichern") return await speichern(db, s, body);
-    if (aktion === "versenden") return await versenden(db, s, body);
+    if (aktion === "versenden") return await versenden(db, s, body, dienste);
+    if (aktion === "push_schluessel") return { status: 200, json: { ok: !!dienste.umgebung.vapidPublic, schluessel: dienste.umgebung.vapidPublic || null } };
+    if (aktion === "push_abo") return await pushAbo(db, s, body);
+    if (aktion === "push_ab") { await db.q(`update bk_push_abos set aktiv = false, fehler = 'abgemeldet' where endpoint = $1 and person_id = $2`, [String(body.endpoint || ""), s.person.id]); return { status: 200, json: { ok: true } }; }
+    if (aktion === "push_status") { const r = await db.q(`select count(*)::int as n from bk_push_abos where person_id = $1 and aktiv`, [s.person.id]); return { status: 200, json: { ok: true, geraete: r[0].n, schluessel: !!dienste.umgebung.vapidPublic } }; }
+    if (aktion === "quittieren") return { status: 200, json: { ok: await kom.quittierenPerson(db, body.korrelation, s.person.id) } };
+    if (aktion === "kom_test") {
+      const r = await kom.annehmen(db, { ereignis: "test", an: [s.person.id], betreff: "Test vom Bachkreis", text: String(body.text || "Wenn du das liest, funktioniert der BK Communicator. 🎻").slice(0, 500), kanaele: body.kanaele, ausloeser: name(s.person) });
+      const z = dienste.adapter ? await kom.zustellen(db, dienste.adapter, dienste.umgebung, { korrelation: r.korrelation, limit: 10 }) : null;
+      return { status: 200, json: { ...r, zustellung: z } };
+    }
+    if (aktion === "kom_wartung") {
+      if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
+      if (!dienste.adapter) return fehler(503, "KEIN_VERSAND");
+      return { status: 200, json: { ok: true, bericht: await kom.wartung(db, dienste.adapter, dienste.umgebung) } };
+    }
     if (aktion === "konfig_setzen") {
       if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
       const k = String(body.schluessel || "");

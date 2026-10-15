@@ -3,3 +3,6 @@ project_id = "bachkreis-app"
 # Supabase-Projektkonfiguration (für „supabase functions deploy“). Die Projekt-ID kommt aus dem GitHub-Secret.
 [functions.bk-api]
 verify_jwt = false   # eigene Anmeldung per Zugangscode/Sitzung (x-bk-token), wie bei der KC Club App
+
+[functions.bk-kom]
+verify_jwt = false   # Wartung nur mit Planer-Schlüssel (x-bk-planer), Quittungen nur mit Einmal-Token je Auftrag

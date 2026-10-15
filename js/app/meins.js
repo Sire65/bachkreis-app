@@ -3,10 +3,10 @@
 import { S, VIEWS, db, zeige, zurueck, kopf, name, einst, einstSetzen, istLeitung, istEltern, istVerwalter, fehlerListe } from "./zustand.js";
 import { KACHELN, kachelnFuer, REGISTER_ALLE, adminZustaende } from "./start.js";
 import { esc, AKTIONEN, datumKurz, uhr, vorZeit, toast, blatt, formWerte, herunterladen, frage } from "../kern/ui.js";
-import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER } from "../kern/daten.js";
+import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
 import { kinderVon, elternVon, wirksameGruppen, instrumenteVon, tagIso } from "../kern/logik.js";
-import { EREIGNISSE, KANAELE, wahlVon, senden, versandStatistik, adapterInfo } from "../kern/versand.js";
+import { EREIGNISSE, KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 
 // ---------- Meine Daten (Auskunft) ----------
@@ -87,7 +87,10 @@ AKTIONEN.kachelnStandard = () => { einstSetzen("kachelnAus", []); einstSetzen("r
 AKTIONEN.pushErlauben = async () => {
   if (!("Notification" in globalThis)) { toast("Dieses Gerät unterstützt keine Benachrichtigungen"); return; }
   const r = await Notification.requestPermission();
-  toast(r === "granted" ? "🔔 Erlaubt – teste mit „Test an mich“" : "Nicht erlaubt (in den Browser-Einstellungen änderbar)");
+  if (r !== "granted") { toast("Nicht erlaubt (in den Browser-Einstellungen änderbar)"); return; }
+  if (!istEchtbetrieb()) { toast("🔔 Erlaubt – teste mit „Test an mich“"); return; }
+  const a = await pushAbonnieren().catch((e) => ({ ok: false, grund: e.message }));
+  toast(a.ok ? "🔔 Push für dieses Gerät eingerichtet" : `Push nicht eingerichtet: ${{ SERVER_OHNE_PUSH: "Server hat noch keinen Push-Schlüssel", NICHT_UNTERSTUETZT: "Browser kann kein Web-Push (iPhone: App zum Home-Bildschirm hinzufügen)" }[a.grund] || a.grund}`, 4500);
 };
 
 // ---------- Test an mich ----------
@@ -98,8 +101,8 @@ VIEWS.test = {
   },
 };
 AKTIONEN.testSenden = async () => {
-  const s = await senden({ an: [S.ich.id], betreff: "Test vom Bachkreis", text: "Wenn du das liest, funktionieren Benachrichtigungen. 🎻", ereignis: "nachricht", kanaele: ["push", "mail"] });
-  toast(`🧪 Test: ${s.push} Push, ${s.mail} Mail (simuliert)${globalThis.Notification?.permission === "granted" ? " + Benachrichtigung auf diesem Gerät" : ""}`);
+  const s = await testAnMich(S.ich, ["push", "mail"]).catch((e) => ({ fehler: 1, text: e.message }));
+  toast(s.echt ? `🧪 Test: ${s.gesendet} zugestellt · ${s.fehler} Fehler${s.unterdrueckt ? ` · ${s.unterdrueckt} unterdrückt (kein Push-Abo / keine E-Mail?)` : ""}` : `🧪 Test (Vorführversion, simuliert)${globalThis.Notification?.permission === "granted" ? " + Benachrichtigung auf diesem Gerät" : ""}`, 4500);
 };
 
 // ---------- Technik ----------
@@ -135,7 +138,7 @@ VIEWS.ueber = {
   render() {
     const i = datenInfo();
     return kopf("ℹ️ Über die App") + `<div class="karte"><h3>Bachkreis-App</h3><p>Version <b>${APP_VERSION} ${APP_STUFE}</b></p><p>Datenquelle: <b>${esc(ADAPTER[i.art]?.name || i.art)}</b><br><span class="hinweis">${esc(i.hinweis || "")} · Speicher: ${esc(i.speicher || "")}</span></p>
-      <p>Versand-Adapter: ${adapterInfo().map((a) => esc(a.name)).join(" · ")} · WhatsApp-Übergabe (wa.me)</p>
+      <p>Versand: <b>BK Communicator</b> – ${adapterInfo().map((a) => esc(a.name)).join(" · ")} · WhatsApp-Übergabe (wa.me)</p>
       <p class="hinweis">Abgeleitet aus der KC Club App (Muster für Termine, Zusagen, Nachrichten, SOS, Register & Kacheln). Kostenfrei: keine kostenpflichtigen Dienste oder APIs.</p>
       <p class="hinweis">Mitgelieferte Bibliothek: qrcode-generator (Kazuhiko Arase, MIT-Lizenz).</p></div>`;
   },
@@ -162,7 +165,11 @@ VIEWS.admin = {
     if (b === "versand") {
       const v = liste("versand").slice(-60).reverse();
       const st = versandStatistik();
-      inhalt = `<p>${st.gesamt} Einträge · heute ${st.heute} · Fehler ${st.fehler}</p><ul class="liste">${v.map((x) => `<li><div class="fl"><div class="zeile-titel">${esc(KANAELE[x.kanal] || x.kanal)} → ${esc(name(x.an_id))}</div><div class="zeile-unter">${esc(x.betreff || "")} · ${vorZeit(x.zeit)}</div></div><span class="badge ${x.status === "fehler" ? "b-rot" : x.status === "simuliert" ? "b-grau" : "b-gruen"}">${esc(x.status)}</span></li>`).join("") || "<li>noch nichts versendet</li>"}</ul>`;
+      const cz = communicatorZustand();
+      const farbe = (st) => (["fehler", "tot"].includes(st) ? "b-rot" : ["wartend", "erneut", "in_arbeit"].includes(st) ? "b-gelb" : ["simuliert", "unterdrueckt", "uebergeben"].includes(st) ? "b-grau" : "b-gruen");
+      inhalt = `<p><i class="led ${cz.farbe}"></i> <b>BK Communicator:</b> ${esc(cz.text)}</p><p>${st.gesamt} Aufträge · heute ${st.heute} · offen ${st.offen} · Fehler (24 Std.) ${st.fehler}</p>
+        <p class="hinweis">Regeln, Vorlagen, Anbieter, Not-Aus und Test: PC-Verwaltung › Communicator.</p>
+        <ul class="liste">${v.map((x) => `<li><div class="fl"><div class="zeile-titel">${esc(KANAELE[x.kanal] || x.kanal)} → ${esc(name(x.an_id))}</div><div class="zeile-unter">${esc(x.betreff || "")} · ${vorZeit(x.zeit)}${x.fehler_code ? " · " + esc(x.fehler_code) : ""}</div></div><span class="badge ${farbe(x.status)}">${esc(STATUS[x.status] || x.status)}</span></li>`).join("") || "<li>noch nichts versendet</li>"}</ul>`;
     } else if (b === "abgleich") {
       const a = liste("aenderungen").slice(-80).reverse();
       inhalt = `<p class="hinweis">Jede Änderung (App, PC-Verwaltung, Import) wird mit Version, Zeit und Person protokolliert. Im Echtbetrieb gleicht Supabase damit alle Geräte ab und spiegelt nach Neon.</p><ul class="liste">${a.map((x) => `<li><div class="fl"><div class="zeile-titel">${esc(TABELLEN[x.tabelle]?.titel || x.tabelle)} · ${esc(x.aktion)}</div><div class="zeile-unter">${esc(x.wer)} · ${esc(x.quelle)} · ${vorZeit(x.zeit)}</div></div></li>`).join("") || "<li>noch keine Änderungen</li>"}</ul>`;

@@ -1,4 +1,5 @@
-# Richtet das Bachkreis-Supabase-Projekt ein bzw. aktualisiert es: Datenbank-Migrationen + Edge Function bk-api.
+# Richtet das Bachkreis-Supabase-Projekt ein bzw. aktualisiert es: Datenbank-Migrationen, Edge Functions bk-api und
+# bk-kom (BK Communicator), Push-Schlüssel (VAPID, einmalig erzeugt) und die minütliche Wartung (pg_cron).
 # Benötigte Repository-Secrets (Settings › Secrets and variables › Actions › Secrets):
 #   SUPABASE_ACCESS_TOKEN  – persönlicher Zugangs-Token des Bachkreis-Supabase-Kontos
 #   SUPABASE_PROJECT_REF   – Projekt-Kennung (z. B. abcdefghijklmnopqrst)
@@ -39,10 +40,37 @@ jobs:
         run: |
           supabase link --project-ref "$PROJECT_REF" --password "$DB_PASSWORD"
           supabase db push --password "$DB_PASSWORD"
-      - name: Edge Function bk-api veröffentlichen
+      - name: Secrets des BK Communicators (VAPID einmalig, Wartungs-Schlüssel je Lauf neu)
+        if: steps.pruefen.outputs.los == 'ja'
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          APP_URL="https://$OWNER.github.io/${{ github.event.repository.name }}/"
+          VORHANDEN=$(supabase secrets list --project-ref "$PROJECT_REF" 2>/dev/null || true)
+          if ! echo "$VORHANDEN" | grep -q "BK_VAPID_PRIVATE"; then
+            npx --yes web-push@3.6.7 generate-vapid-keys --json > /tmp/vapid.json
+            PUB=$(node -e "console.log(require('/tmp/vapid.json').publicKey)")
+            PRIV=$(node -e "console.log(require('/tmp/vapid.json').privateKey)")
+            echo "::add-mask::$PRIV"
+            supabase secrets set --project-ref "$PROJECT_REF" BK_VAPID_PUBLIC="$PUB" BK_VAPID_PRIVATE="$PRIV" BK_VAPID_SUBJECT="$APP_URL" >/dev/null
+            rm -f /tmp/vapid.json
+            echo "::notice::Push-Schlüssel (VAPID) erzeugt."
+          fi
+          KOM_TOKEN=$(openssl rand -hex 32)
+          echo "::add-mask::$KOM_TOKEN"
+          echo "KOM_TOKEN=$KOM_TOKEN" >> "$GITHUB_ENV"
+          supabase secrets set --project-ref "$PROJECT_REF" BK_KOM_TOKEN="$KOM_TOKEN" BK_APP_URL="$APP_URL" BK_ERLAUBTE_URSPRUENGE="https://$OWNER.github.io" >/dev/null
+      - name: Edge Functions bk-api und bk-kom veröffentlichen
         if: steps.pruefen.outputs.los == 'ja'
         run: |
           supabase functions deploy bk-api --project-ref "$PROJECT_REF" --no-verify-jwt
-          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          supabase secrets set --project-ref "$PROJECT_REF" BK_ERLAUBTE_URSPRUENGE="https://$OWNER.github.io"
+          supabase functions deploy bk-kom --project-ref "$PROJECT_REF" --no-verify-jwt
           echo "::notice::bk-api: https://$PROJECT_REF.supabase.co/functions/v1/bk-api – als Variable BK_API_URL eintragen."
+      - name: Communicator-Wartung einrichten (Vault + pg_cron, jede Minute)
+        if: steps.pruefen.outputs.los == 'ja'
+        run: |
+          for i in 1 2 3 4 5 6; do
+            R=$(curl -s -X POST "https://$PROJECT_REF.supabase.co/functions/v1/bk-kom" -H "Content-Type: application/json" -H "x-bk-planer: $KOM_TOKEN" -d '{"aufgabe":"einrichten"}' || true)
+            if echo "$R" | grep -q '"ok":true'; then echo "Einrichtung: $R"; exit 0; fi
+            echo "Versuch $i: $R – warte auf neue Secrets …"; sleep 10
+          done
+          echo "::warning::Communicator-Wartung konnte nicht eingerichtet werden (siehe docs/KOMMUNIKATION.md)."

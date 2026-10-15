@@ -3,7 +3,7 @@ import { S, VIEWS, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istV
 import { esc, AKTIONEN, blatt, BACHKREIS_LOGO, datum, uhr } from "../kern/ui.js";
 import { liste, datenInfo } from "../kern/daten.js";
 import { cockpit, termineFuer, antwortVon, kinderVon, genehmigungStatus, ausleihenVon } from "../kern/logik.js";
-import { versandStatistik } from "../kern/versand.js";
+import { communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { ESELSOHR } from "./buehne.js";
 
@@ -77,7 +77,6 @@ export const KACHELN = {
 // Admin-Register: Leitstand mit Lämpchen (grün gut · gelb aufpassen · rot Problem · grau unbekannt – grau ist nie OK)
 export function adminZustaende() {
   const info = datenInfo();
-  const vs = versandStatistik();
   const fehler24 = fehlerListe().filter((f) => Date.now() - new Date(f.zeit).getTime() < 86400000).length;
   const zug = liste("zugaenge");
   const nieGesehen = zug.filter((z) => z.aktiv && !z.zuletzt).length;
@@ -88,7 +87,7 @@ export function adminZustaende() {
       : info.letzterAbgleich && Date.now() - new Date(info.letzterAbgleich).getTime() > 5 * 60000 ? ["gelb", "Stand veraltet – " + info.hinweis]
       : ["gruen", info.hinweis],
     abgleich: [info.server ? "gruen" : "grau", `${liste("aenderungen").length} Änderungen protokolliert`],
-    versand: [vs.fehler ? "gelb" : "grau", `${vs.gesamt} Einträge · simuliert`],
+    versand: (() => { const c = communicatorZustand(); return [c.farbe, c.text]; })(),
     push,
     zugaenge: [nieGesehen > 20 ? "gelb" : "gruen", `${zug.filter((z) => z.aktiv).length} aktiv · ${nieGesehen} nie angemeldet`],
     fehler: [fehler24 ? "rot" : "gruen", fehler24 ? `${fehler24} in 24 Std.` : "keine in 24 Std."],
@@ -97,7 +96,7 @@ export function adminZustaende() {
     backup: [info.server ? "grau" : "grau", info.server ? "Backup-Messung folgt" : "Demo: Export als Datei"],
   };
 }
-const AD_KACHELN = [["daten", "🗄️", "Datenquelle"], ["abgleich", "🔁", "Abgleich"], ["versand", "📨", "Versand"], ["push", "🔔", "Push"], ["zugaenge", "🔑", "Zugänge"], ["fehler", "🩺", "Fehler"], ["speicher", "💾", "Speicher"], ["version", "📱", "Versionen"], ["backup", "🛟", "Backup / Export"]];
+const AD_KACHELN = [["daten", "🗄️", "Datenquelle"], ["abgleich", "🔁", "Abgleich"], ["versand", "📡", "Communicator"], ["push", "🔔", "Push"], ["zugaenge", "🔑", "Zugänge"], ["fehler", "🩺", "Fehler"], ["speicher", "💾", "Speicher"], ["version", "📱", "Versionen"], ["backup", "🛟", "Backup / Export"]];
 KACHELN.admin = AD_KACHELN.map(([id, sym, t]) => ({ id: "ad-" + id, sym, t, v: "admin", p: { blatt: id }, u: () => adminZustaende()[id][1], klasse: () => `ad l-${adminZustaende()[id][0]}`, nur: () => istLeitung() }));
 
 const EINFACH = ["termine", "nachrichten", "sos", "meinetermine", "meinegenehmigungen", "meinenoten", "pinnwand", "cockpit"];

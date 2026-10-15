@@ -25,7 +25,7 @@ Server-Teil. Dieser ist **fertig gebaut und getestet**; er wird nur noch im Supa
 - **Abgleich:** Geräte holen nur Änderungen seit dem letzten Abgleich (alle 30 s und beim Öffnen).
   - Gleichzeitige Änderungen derselben Zeile werden erkannt (Versionsnummer) und nicht überschrieben.
   - Jede Änderung wird im Änderungsprotokoll festgehalten.
-- **Versand:** Benachrichtigungen werden in `bk_versand` vorgemerkt; der Versand-Kern stellt sie zu (siehe `KOMMUNIKATION.md`).
+- **Versand:** Der BK Communicator nimmt Benachrichtigungen an, legt Aufträge in `bk_versand` an und stellt sie über Web-Push und E-Mail zu. Die Edge Function `bk-kom` wartet jede Minute (siehe `KOMMUNIKATION.md`).
 
 Getestet wird in `tests/server.test.mjs` (13 Tests gegen PostgreSQL/PGlite) und `tests/e2e/echtbetrieb.mjs` (Browser).
 Lokal ausprobieren: `node tests/e2e/server-lokal.mjs` startet App und Server mit Demodaten. Die Zugangscodes erscheinen
@@ -39,7 +39,16 @@ in der Konsole.
    - `SUPABASE_ACCESS_TOKEN`
    - `SUPABASE_PROJECT_REF` (die Projekt-Kennung aus der Projekt-URL)
    - `SUPABASE_DB_PASSWORD`
-5. Unter Actions den Workflow **„Supabase“** ausführen. Er legt die Tabellen an und veröffentlicht `bk-api`.
+5. Unter Actions den Workflow **„Supabase“** ausführen. Er erledigt:
+   - Tabellen und Communicator-Startwerte anlegen;
+   - `bk-api` und `bk-kom` veröffentlichen;
+   - Push-Schlüssel (VAPID) erzeugen;
+   - die minütliche Wartung (pg_cron) einrichten.
+5a. **E-Mail einrichten (kostenlos):**
+   - Ein Brevo-Konto anlegen und dort die Absender-Adresse bestätigen.
+   - In Supabase unter Edge Functions › Secrets `BK_BREVO_API_KEY` eintragen.
+   - In der PC-Verwaltung unter Communicator › Grundeinstellungen die `absender_email` eintragen.
+   - Optional als Ersatzweg `BK_SMTP_URL` für ein eigenes Postfach eintragen.
 6. Unter Settings › Secrets and variables › Actions › **Variables** eintragen:
    - `BK_DATENQUELLE` = `supabase`
    - `BK_API_URL` = `https://<projekt-kennung>.supabase.co/functions/v1/bk-api`

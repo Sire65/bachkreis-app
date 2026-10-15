@@ -67,7 +67,7 @@ AKTIONEN.nachrichtSenden = async (id) => {
   if (!text) return;
   const u = hole("unterhaltungen", id);
   await speichere("nachrichten", { unterhaltung_id: id, von: S.ich.id, text, zeit: new Date().toISOString(), gelesen_von: [S.ich.id] });
-  await senden({ an: empfaengerVon(u).filter((p) => p !== S.ich.id), betreff: u.titel, text, ereignis: "nachricht", kanaele: ["push"] });
+  await senden({ an: empfaengerVon(u).filter((p) => p !== S.ich.id), betreff: u.titel, text, ereignis: "nachricht", kanaele: ["push"], unterhaltung_id: id });
   zeige(S.view, S.params, { ersetzen: true });
 };
 

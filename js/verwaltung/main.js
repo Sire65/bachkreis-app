@@ -1,7 +1,7 @@
 // PC-Verwaltung für Leitung, Vorstand/Förderverein und Lehrkräfte: Stammdaten (Adressen, Instrumente, Gruppen …)
 // bequem am PC/Notebook pflegen. Formulare, Listen, CSV-Import/-Export entstehen aus der Tabellen-Registry (schema.js).
 // Zugänge (Codes/QR-Karten, Sperren, Verwaltungsrecht) werden HIER – außerhalb der App – gepflegt.
-import { datenStarten, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
+import { datenStarten, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName } from "../kern/schema.js";
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO } from "../kern/ui.js";
 import { csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon } from "../kern/logik.js";
@@ -15,7 +15,21 @@ const darfGeschuetzt = () => (V.ich?.rollen || []).some((r) => ["leitung", "admi
 const name = (p) => (p ? `${p.vorname} ${p.nachname}` : "–");
 
 // ---------- Anmeldung ----------
+// Echtbetrieb: Anmeldung nur mit persönlichem Code (Recht „PC-Verwaltung“ prüft der Server)
+function anmeldungServer(meldung = "") {
+  $("#demoleiste")?.remove();
+  $("#vw").innerHTML = `<div class="vw-anmeldung karte"><div style="display:flex;gap:12px;align-items:center"><div style="width:60px">${BACHKREIS_LOGO}</div><div><h2 style="margin:0">PC-Verwaltung</h2><div class="hinweis">${esc(konfig().name || "Bachkreis Bergkamen")}</div></div></div>
+    ${meldung ? `<p class="badge b-rot">${esc(meldung)}</p>` : ""}
+    <div class="feld"><label>Persönlicher Zugangscode</label><input id="vwCode" placeholder="z. B. AB12CD34" autocomplete="one-time-code"></div><button class="knopf haupt breit" data-a="vwCodeServer">Anmelden</button>
+    <p class="hinweis">Nur für Leitung, Lehrkräfte und Vorstand mit dem Recht „PC-Verwaltung“.</p></div>`;
+}
+AKTIONEN.vwCodeServer = async () => {
+  const r = await serverAnmelden($("#vwCode").value.trim(), true).catch(() => ({ ok: false, fehler: "OFFLINE" }));
+  if (!r.ok) return anmeldungServer({ CODE_UNGUELTIG: "Code ungültig oder gesperrt.", KEIN_VERWALTUNGSRECHT: "Dieser Zugang darf die PC-Verwaltung nicht nutzen.", ZU_VIELE_VERSUCHE: "Zu viele Versuche – bitte später erneut." }[r.fehler] || "Anmeldung nicht möglich – Internetverbindung prüfen.");
+  location.reload();
+};
 function anmeldung() {
+  if (istEchtbetrieb()) return anmeldungServer();
   const verwalter = liste("zugaenge", (z) => z.aktiv && z.verwaltung).map((z) => hole("personen", z.person_id)).filter(Boolean);
   $("#vw").innerHTML = `<div class="vw-anmeldung karte"><div style="display:flex;gap:12px;align-items:center"><div style="width:60px">${BACHKREIS_LOGO}</div><div><h2 style="margin:0">PC-Verwaltung</h2><div class="hinweis">${esc(konfig().name || "Bachkreis")}</div></div></div>
     <div class="feld"><label>Zugangscode</label><input id="vwCode" placeholder="z. B. AB12CD34" autocomplete="off"></div><button class="knopf haupt breit" data-a="vwCode">Anmelden</button>
@@ -36,8 +50,9 @@ function anmelden(id) {
   demoLeiste();
   zeichne();
 }
-AKTIONEN.vwAbmelden = () => { V.ich = null; try { sessionStorage.removeItem("bk_vw_ich"); } catch {} demoLeiste(); anmeldung(); };
+AKTIONEN.vwAbmelden = async () => { if (istEchtbetrieb()) { await serverAbmelden(); return location.reload(); } V.ich = null; try { sessionStorage.removeItem("bk_vw_ich"); } catch {} demoLeiste(); anmeldung(); };
 function demoLeiste() {
+  if (istEchtbetrieb()) { $("#demoleiste")?.remove(); return; }
   $("#demoleiste").innerHTML = `🧪 VORFÜHRVERSION · PC-Verwaltung · Daten nur in diesem Browser – Änderungen erscheinen sofort in der App (gleicher Browser)${V.ich ? ` · angemeldet: ${esc(name(V.ich))}` : ""}`;
 }
 
@@ -181,7 +196,7 @@ AKTIONEN.vwSpeichern = async () => {
   const alt = V.auswahl !== "neu" ? hole(V.tab, V.auswahl) : {};
   const z = await speichere(V.tab, { ...alt, ...o });
   if (V.tab === "personen" && !liste("zugaenge", (x) => x.person_id === z.id).length && ["schueler", "eltern", "lehrkraft", "leitung", "foerderverein"].includes(z.typ))
-    await speichere("zugaenge", { person_id: z.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: ["leitung", "lehrkraft", "foerderverein"].includes(z.typ) });
+    await zugangSpeichern({ person_id: z.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: ["leitung", "lehrkraft", "foerderverein"].includes(z.typ) });
   V.auswahl = z.id; toast("💾 Gespeichert – in der App sofort sichtbar"); zeichne();
 };
 AKTIONEN.vwLoeschen = async () => {
@@ -271,6 +286,10 @@ AKTIONEN.sjAusfuehren = async () => {
 
 // ---------- Zugänge & QR-Karten ----------
 const ZEICHEN = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// Codes liegen auf dem Server nur als Hash. Ein Code ist deshalb nur direkt nach dem Erzeugen bekannt (für Karte/Link).
+const FRISCH = new Map();
+const codeVon = (z) => z?.code || FRISCH.get(z?.id) || null;
+async function zugangSpeichern(obj) { const code = obj.code; const z = await speichere("zugaenge", obj); if (code) FRISCH.set(z.id, code); return z; }
 function neuerCode() { const a = new Uint32Array(8); crypto.getRandomValues(a); return [...a].map((x) => ZEICHEN[x % ZEICHEN.length]).join(""); }
 const appLink = (code) => new URL(`index.html?k=${code}`, location.href).href;
 ANSICHTEN.zugaenge = () => {
@@ -282,19 +301,21 @@ ANSICHTEN.zugaenge = () => {
     <div class="karte"><p class="hinweis">Anmeldung ohne Passwort über einen persönlichen Link/QR-Code (wie in der Club-App). Codes werden nur hier gepflegt – sperren, neu erzeugen, Verwaltungsrecht vergeben. Im Echtbetrieb liegt nur ein Hash des Codes auf dem Server.</p></div>
     <div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Verwaltung</th><th>zuletzt</th><th></th></tr></thead><tbody>${personen.map((p) => {
       const z = liste("zugaenge", (x) => x.person_id === p.id)[0];
-      return `<tr><td>${esc(name(p))}</td><td><code>${esc(z?.code || "–")}</code></td><td>${z ? (z.aktiv ? "✅ aktiv" : "⛔ gesperrt") : "–"}</td><td>${z?.verwaltung ? "💻" : ""}</td><td>${z?.zuletzt ? vorZeit(z.zuletzt) : "nie"}</td>
-        <td style="white-space:nowrap">${schreiben ? (z ? `<button class="knopf klein" data-a="zugNeu" data-x="${z.id}">🔄 neuer Code</button> <button class="knopf klein" data-a="zugAktiv" data-x="${z.id}">${z.aktiv ? "sperren" : "freigeben"}</button> <button class="knopf klein" data-a="zugVw" data-x="${z.id}">💻</button>` : `<button class="knopf klein" data-a="zugAnlegen" data-x="${p.id}">anlegen</button>`) : ""} ${z ? `<button class="knopf klein" data-a="zugLink" data-x="${z.code}">🔗</button>` : ""}</td></tr>`;
+      return `<tr><td>${esc(name(p))}</td><td><code>${esc(codeVon(z) || (z ? "•••• (verschlüsselt)" : "–"))}</code></td><td>${z ? (z.aktiv ? "✅ aktiv" : "⛔ gesperrt") : "–"}</td><td>${z?.verwaltung ? "💻" : ""}</td><td>${z?.zuletzt ? vorZeit(z.zuletzt) : "nie"}</td>
+        <td style="white-space:nowrap">${schreiben ? (z ? `<button class="knopf klein" data-a="zugNeu" data-x="${z.id}">🔄 neuer Code</button> <button class="knopf klein" data-a="zugAktiv" data-x="${z.id}">${z.aktiv ? "sperren" : "freigeben"}</button> <button class="knopf klein" data-a="zugVw" data-x="${z.id}">💻</button>` : `<button class="knopf klein" data-a="zugAnlegen" data-x="${p.id}">anlegen</button>`) : ""} ${codeVon(z) ? `<button class="knopf klein" data-a="zugLink" data-x="${esc(codeVon(z))}">🔗</button>` : ""}</td></tr>`;
     }).join("")}</tbody></table></div><div id="qrBereich"></div>`;
 };
 AKTIONEN.vwZugTyp = (v) => { V.filter = v; zeichne(); };
-AKTIONEN.zugNeu = async (id) => { if (!(await frage("Neuen Code erzeugen? Der alte Link funktioniert dann nicht mehr."))) return; await speichere("zugaenge", { ...hole("zugaenge", id), code: neuerCode() }); zeichne(); };
+AKTIONEN.zugNeu = async (id) => { if (!(await frage("Neuen Code erzeugen? Der alte Link funktioniert dann nicht mehr."))) return; await zugangSpeichern({ ...hole("zugaenge", id), code: neuerCode() }); zeichne(); };
 AKTIONEN.zugAktiv = async (id) => { const z = hole("zugaenge", id); await speichere("zugaenge", { ...z, aktiv: !z.aktiv }); zeichne(); };
 AKTIONEN.zugVw = async (id) => { const z = hole("zugaenge", id); await speichere("zugaenge", { ...z, verwaltung: !z.verwaltung }); toast(z.verwaltung ? "Verwaltungsrecht entzogen" : "💻 darf jetzt die PC-Verwaltung nutzen"); zeichne(); };
-AKTIONEN.zugAnlegen = async (pid) => { await speichere("zugaenge", { person_id: pid, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }); zeichne(); };
+AKTIONEN.zugAnlegen = async (pid) => { await zugangSpeichern({ person_id: pid, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }); zeichne(); };
 AKTIONEN.zugAlleAnlegen = async () => {
   const typ = V.filter || "schueler";
   const ohne = liste("personen", (p) => p.typ === typ && !liste("zugaenge", (z) => z.person_id === p.id).length);
-  await speichereViele("zugaenge", ohne.map((p) => ({ person_id: p.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: false })));
+  const neu = ohne.map((p) => ({ person_id: p.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }));
+  const gespeichert = await speichereViele("zugaenge", neu);
+  gespeichert.forEach((z, i) => FRISCH.set(z.id, neu[i].code));
   toast(`${ohne.length} Zugänge angelegt`); zeichne();
 };
 AKTIONEN.zugLink = async (code) => { try { await navigator.clipboard.writeText(appLink(code)); toast("🔗 Link kopiert"); } catch { prompt("Link:", appLink(code)); } };
@@ -307,7 +328,11 @@ AKTIONEN.zugKarten = () => {
   const typ = V.filter || "schueler";
   const k = konfig();
   const karten = liste("personen", (p) => p.typ === typ).sort((a, b) => name(a).localeCompare(name(b))).map((p) => ({ p, z: liste("zugaenge", (x) => x.person_id === p.id && x.aktiv)[0] })).filter((x) => x.z);
-  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">Druckvorschau (${karten.length} Karten) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3><div class="qr-karten">${karten.map(({ p, z }) => `<div class="qr-karte">${BACHKREIS_LOGO}<b>${esc(k.name || "Bachkreis")}-App</b><div>${esc(name(p))}</div><img alt="QR-Code" src="${qrBild(appLink(z.code))}"><div>Code: <code>${esc(z.code)}</code></div><div class="hinweis">QR-Code mit dem Handy scannen – fertig. Karte nicht weitergeben.</div></div>`).join("")}</div>`;
+  const ohneCode = karten.filter((x) => !codeVon(x.z)).length;
+  const druckbar = karten.filter((x) => codeVon(x.z));
+  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">Druckvorschau (${druckbar.length} Karten) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3>
+    ${ohneCode ? `<p class="hinweis vw-noprint">${ohneCode} Zugänge ohne druckbaren Code: Codes sind verschlüsselt gespeichert und nur direkt nach dem Erzeugen sichtbar. Für eine neue Karte „🔄 neuer Code“ wählen.</p>` : ""}
+    <div class="qr-karten">${druckbar.map(({ p, z }) => `<div class="qr-karte">${BACHKREIS_LOGO}<b>${esc(k.name || "Bachkreis")}-App</b><div>${esc(name(p))}</div><img alt="QR-Code" src="${qrBild(appLink(codeVon(z)))}"><div>Code: <code>${esc(codeVon(z))}</code></div><div class="hinweis">QR-Code mit dem Handy scannen – fertig. Karte nicht weitergeben.</div></div>`).join("")}</div>`;
   $("#qrBereich").scrollIntoView({ behavior: "smooth" });
 };
 AKTIONEN.vwDrucken = () => window.print();
@@ -401,10 +426,18 @@ async function starten() {
   const dunkel = e.thema === "dunkel" || ((!e.thema || e.thema === "auto") && matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.classList.toggle("dunkel", dunkel);
   aktionenStarten();
-  await datenStarten({ quelle: "verwaltung" });
-  let id = null; try { id = sessionStorage.getItem("bk_vw_ich"); } catch {}
+  try { await datenStarten({ quelle: "verwaltung" }); }
+  catch (e) { if (e.code === "ANMELDUNG") return anmeldungServer(); throw e; }
   demoLeiste();
-  if (id && hole("personen", id)) anmelden(id); else anmeldung();
+  if (istEchtbetrieb()) {
+    beiHinweis((t) => toast("ℹ️ " + t, 4000));
+    const ich = datenInfo().ich;
+    if (!hole("personen", ich)) return anmeldungServer("Zugang nicht mehr aktiv.");
+    anmelden(ich);
+  } else {
+    let id = null; try { id = sessionStorage.getItem("bk_vw_ich"); } catch {}
+    if (id && hole("personen", id)) anmelden(id); else anmeldung();
+  }
   abonnieren(() => {
     const f = document.activeElement;
     if (f && /INPUT|TEXTAREA|SELECT/.test(f.tagName) && $("#vw").contains(f)) return;

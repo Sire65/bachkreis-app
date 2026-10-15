@@ -3,40 +3,11 @@
 // BroadcastChannel sofort an andere offene Fenster gemeldet – so lässt sich der spätere Abgleich über Supabase vorführen.
 import { TABELLEN_NAMEN } from "./schema.js";
 import { erzeugeDemodaten } from "./demodaten.js";
+import { idbOeffnen, idbLesen, idbSchreiben, idbLeeren } from "./speicher-idb.js";
 
 const DB_NAME = "bachkreis-demo";
 const DB_VERSION = 1;
 const KANAL = "bk-daten";
-
-function idbOeffnen() {
-  return new Promise((ok, fehler) => {
-    if (!("indexedDB" in globalThis)) return fehler(new Error("IndexedDB nicht verfügbar"));
-    const r = indexedDB.open(DB_NAME, DB_VERSION);
-    r.onupgradeneeded = () => { r.result.createObjectStore("tabellen"); };
-    r.onsuccess = () => ok(r.result);
-    r.onerror = () => fehler(r.error);
-  });
-}
-function idbLesen(db, key) {
-  return new Promise((ok, fehler) => {
-    const t = db.transaction("tabellen", "readonly").objectStore("tabellen").get(key);
-    t.onsuccess = () => ok(t.result); t.onerror = () => fehler(t.error);
-  });
-}
-function idbSchreiben(db, key, wert) {
-  return new Promise((ok, fehler) => {
-    const tx = db.transaction("tabellen", "readwrite");
-    tx.objectStore("tabellen").put(wert, key);
-    tx.oncomplete = () => ok(); tx.onerror = () => fehler(tx.error);
-  });
-}
-function idbLeeren(db) {
-  return new Promise((ok, fehler) => {
-    const tx = db.transaction("tabellen", "readwrite");
-    tx.objectStore("tabellen").clear();
-    tx.oncomplete = () => ok(); tx.onerror = () => fehler(tx.error);
-  });
-}
 
 export function erzeugeLokalAdapter() {
   let db = null;
@@ -67,7 +38,7 @@ export function erzeugeLokalAdapter() {
     art: "lokal-demo",
     beschreibung: "Vorführversion – Demodaten nur in diesem Browser",
     async starten() {
-      try { db = await idbOeffnen(); speicher = "indexeddb"; } catch { db = null; }
+      try { db = await idbOeffnen(DB_NAME, DB_VERSION); speicher = "indexeddb"; } catch { db = null; }
       const meta = db ? await idbLesen(db, "__meta") : null;
       if (!meta) await seed();
       else {

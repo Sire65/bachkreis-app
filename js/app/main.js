@@ -1,7 +1,7 @@
 // Start der Bachkreis-App: Datenquelle starten, Person bestimmen (Zugangscode ?k= / gemerkte Person / Demo-Rolle),
 // Ansichten laden, Service Worker mit atomarem Update (AGENTS.md Regel 16).
-import { datenStarten, liste, hole, abonnieren, konfig, speichere } from "../kern/daten.js";
-import { AKTIONEN, aktionenStarten, toast, esc, $ } from "../kern/ui.js";
+import { datenStarten, liste, hole, abonnieren, konfig, speichere, datenInfo, istEchtbetrieb, anmelden, abmelden, beiHinweis } from "../kern/daten.js";
+import { AKTIONEN, aktionenStarten, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
 import { S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
 import { setzeEmpfaengerGeraet } from "../kern/versand.js";
 import "./start.js";
@@ -48,24 +48,58 @@ async function anmeldenMitCode(code) {
   return alsPerson(z.person_id);
 }
 
+// ---------- Anmeldung (Echtbetrieb): persönlicher Code oder QR-Link ?k=CODE ----------
+function anmeldeSeite(meldung = "") {
+  $("#demoleiste")?.remove();
+  $("#lade")?.remove();
+  $("#inhalt").innerHTML = `<div class="karte" style="max-width:440px;margin:40px auto;text-align:center">
+    <div style="width:120px;margin:0 auto 10px">${BACHKREIS_LOGO}</div><h2>${esc(konfig().name || "Bachkreis Bergkamen")}</h2>
+    <p>Bitte mit deinem persönlichen Zugangscode anmelden.</p>
+    ${meldung ? `<p class="badge b-rot">${esc(meldung)}</p>` : ""}
+    <div class="feld"><input id="anmeldeCode" placeholder="z. B. AB12CD34" autocomplete="one-time-code" autocapitalize="characters" style="text-align:center;font-size:1.2rem;letter-spacing:.12em"></div>
+    <button class="knopf haupt breit" data-a="anmeldenCode">Anmelden</button>
+    <p class="hinweis">Tipp: Den QR-Code auf deiner Einrichtungskarte mit der Handy-Kamera scannen – dann geht es automatisch. Keine Karte? Bitte bei der Leitung melden.</p></div>`;
+  document.getElementById("anmeldeCode")?.addEventListener("keydown", (e) => { if (e.key === "Enter") AKTIONEN.anmeldenCode(); });
+}
+const FEHLERTEXT = { CODE_UNGUELTIG: "Dieser Code ist ungültig oder gesperrt.", ZU_VIELE_VERSUCHE: "Zu viele Versuche – bitte in 15 Minuten erneut probieren." };
+AKTIONEN.anmeldenCode = async () => {
+  const code = ($("#anmeldeCode")?.value || "").trim();
+  if (code.length < 6) { toast("Bitte den vollständigen Code eingeben"); return; }
+  const r = await anmelden(code).catch(() => ({ ok: false, fehler: "OFFLINE" }));
+  if (!r.ok) { anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung nicht möglich – bitte Internetverbindung prüfen."); return; }
+  location.reload();
+};
+AKTIONEN.abmeldenApp = async () => { if (!confirm("Von diesem Gerät abmelden?")) return; await abmelden(); location.reload(); };
+
 async function starten() {
   einstAnwenden();
   matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", einstAnwenden);
   aktionenStarten();
-  await datenStarten({ quelle: "app" });
   const url = new URL(location.href);
   const code = url.searchParams.get("k");
-  let ok = false;
-  if (code) {
-    ok = await anmeldenMitCode(code.trim().toUpperCase());
-    url.searchParams.delete("k"); history.replaceState(null, "", url.pathname + url.hash); // Code nicht in der Adresszeile lassen
+  if (code) { url.searchParams.delete("k"); history.replaceState(null, "", url.pathname + url.hash); } // Code nicht in der Adresszeile lassen
+  try {
+    await datenStarten({ quelle: "app" });
+  } catch (e) {
+    if (e.code !== "ANMELDUNG") throw e;
+    if (code) { const r = await anmelden(code.trim()).catch(() => ({ ok: false })); if (r.ok) return location.reload(); return anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung mit diesem Link nicht möglich."); }
+    return anmeldeSeite();
   }
-  if (!ok) { let id = null; try { id = localStorage.getItem("bk_ich"); } catch {} ok = id ? alsPerson(id) : false; }
-  if (!ok) ok = alsPerson(konfig().demo_personen?.leitung || konfig().leitung_id);
+  let ok = false;
+  if (istEchtbetrieb()) {
+    ok = alsPerson(datenInfo().ich);
+    if (!ok) return anmeldeSeite("Dein Zugang ist nicht mehr aktiv.");
+    $("#demoleiste")?.remove();
+    beiHinweis((t) => toast("ℹ️ " + t, 4000));
+  } else {
+    if (code) ok = await anmeldenMitCode(code.trim().toUpperCase());
+    if (!ok) { let id = null; try { id = localStorage.getItem("bk_ich"); } catch {} ok = id ? alsPerson(id) : false; }
+    if (!ok) ok = alsPerson(konfig().demo_personen?.leitung || konfig().leitung_id);
+  }
   S.ansicht = ansichtVonPerson(S.ich);
   S.register = einst().startRegister || "bachkreis";
   setzeEmpfaengerGeraet(S.ich.id);
-  demoLeiste();
+  if (!istEchtbetrieb()) demoLeiste();
   const view = location.hash.slice(1);
   zeige("start", {}, { ersetzen: true });
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
@@ -79,7 +113,7 @@ async function starten() {
     if (document.getElementById("heroRueck") || buehneLaeuft()) return; // Bühne nicht unterbrechen
     zeichne();
   });
-  $("#lade").remove();
+  $("#lade")?.remove();
   swStarten();
 }
 

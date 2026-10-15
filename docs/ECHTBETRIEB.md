@@ -1,0 +1,64 @@
+# Umstellung auf den Echtbetrieb (Supabase)
+
+Die App läuft heute als **Vorführversion**: Demodaten liegen nur im Browser. Für den Echtbetrieb gibt es zusätzlich einen
+Server-Teil. Dieser ist **fertig gebaut und getestet**; er wird nur noch im Supabase-Projekt des Bachkreises eingespielt.
+
+## Was der Server macht (Edge Function `bk-api`)
+- **Anmeldung** mit persönlichem Zugangscode bzw. QR-Link.
+  - Die Sitzung gilt 180 Tage.
+  - Auf dem Server liegt nur ein Hash des Codes.
+  - Wer zu viele falsche Codes probiert, wird gebremst.
+- **Datenschutz:** Der Server entscheidet, wer was sieht. Die Regeln stehen in `supabase/functions/_shared/regeln.js`.
+  - Eltern sehen nur ihre eigenen Kinder: Zusagen, Genehmigungen, Leihinstrumente, Adressen.
+  - Schüler sehen nur ihre eigenen Daten und die Termine ihrer Gruppen.
+  - Andere Personen erscheinen nur mit Namen.
+  - Gesundheitsangaben sehen nur Leitung und Lehrkräfte.
+  - Spenden, Einkäufe, Zugänge und Protokolle bekommen nur die zuständigen Rollen.
+- **Schreiben:** Schüler und Eltern dürfen nur Bestimmtes selbst ändern:
+  - Zusage/Absage für sich bzw. das eigene Kind
+  - Genehmigungen der eigenen Kinder
+  - Chat und Rückmeldungen
+  - Schadensmeldungen, Änderungsmeldungen, Wechselwünsche
+  - eigene Pinnwand-Zettel und Benachrichtigungs-Einstellungen
+
+  Alles andere ist den Verwalter-Rollen vorbehalten.
+- **Abgleich:** Geräte holen nur Änderungen seit dem letzten Abgleich (alle 30 s und beim Öffnen).
+  - Gleichzeitige Änderungen derselben Zeile werden erkannt (Versionsnummer) und nicht überschrieben.
+  - Jede Änderung wird im Änderungsprotokoll festgehalten.
+- **Versand:** Benachrichtigungen werden in `bk_versand` vorgemerkt; der Versand-Kern stellt sie zu (siehe `KOMMUNIKATION.md`).
+
+Getestet wird in `tests/server.test.mjs` (13 Tests gegen PostgreSQL/PGlite) und `tests/e2e/echtbetrieb.mjs` (Browser).
+Lokal ausprobieren: `node tests/e2e/server-lokal.mjs` startet App und Server mit Demodaten. Die Zugangscodes erscheinen
+in der Konsole.
+
+## Schritte (einmalig, ca. 1 Stunde)
+1. **Supabase-Konto des Bachkreises** anlegen (Funktions-Mailadresse, 2-Faktor).
+2. Darin ein **Projekt in Frankfurt** (eu-central-1) anlegen und das Datenbank-Passwort im Passwort-Tresor ablegen.
+3. Unter Account › Access Tokens einen **Zugangs-Token** erzeugen.
+4. Im GitHub-Repo unter Settings › Secrets and variables › Actions › **Secrets** eintragen:
+   - `SUPABASE_ACCESS_TOKEN`
+   - `SUPABASE_PROJECT_REF` (die Projekt-Kennung aus der Projekt-URL)
+   - `SUPABASE_DB_PASSWORD`
+5. Unter Actions den Workflow **„Supabase“** ausführen. Er legt die Tabellen an und veröffentlicht `bk-api`.
+6. Unter Settings › Secrets and variables › Actions › **Variables** eintragen:
+   - `BK_DATENQUELLE` = `supabase`
+   - `BK_API_URL` = `https://<projekt-kennung>.supabase.co/functions/v1/bk-api`
+7. Workflow **„Pages“** ausführen. Danach ist unter https://sire65.github.io/bachkreis-app/ der Echtbetrieb erreichbar, die
+   Vorführversion bleibt unter `/demo/` für Schulungen.
+8. **Erste Anmeldung der Leitung:** Den ersten Zugang einmalig per SQL im Supabase-Dashboard anlegen. Die Vorlage steht
+   unten. Danach erledigt die Leitung alles in der PC-Verwaltung:
+   - Personen per CSV-Import einspielen
+   - Zugänge und QR-Karten erzeugen
+
+### Erster Zugang (SQL-Vorlage, Code selbst wählen, mindestens 8 Zeichen)
+```sql
+insert into bk_personen (id, vorname, nachname, typ, status, rollen) values ('p-leitung', 'Bettina', 'Jacka', 'leitung', 'aktiv', '{leitung,admin}');
+insert into bk_zugaenge (person_id, code_hash, art, aktiv, verwaltung)
+values ('p-leitung', encode(sha256(upper('MEINCODE1')::bytea), 'hex'), 'link', true, true);
+```
+
+## Vor dem ersten echten Kind
+- Auftragsverarbeitungsvertrag (AVV) mit Supabase abschließen
+- Datenschutzbeauftragten der Schule einbeziehen
+- Datenschutzhinweise für Eltern bereitstellen
+- Einwilligungen (Vorlage „Teilnahme & Datenschutz“) einholen

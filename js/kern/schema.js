@@ -249,7 +249,7 @@ export const TABELLEN = {
     intern: [{ k: "register_id", typ: "ref", ref: "register" }],
   },
   unterhaltungen: {
-    titel: "Unterhaltungen", sym: "💬", gruppe: "Kommunikation", lesen: L, schreiben: L,
+    titel: "Unterhaltungen", sym: "💬", gruppe: "Kommunikation", lesen: L, schreiben: ALLE_VERWALTER,
     felder: [
       { k: "titel", t: "Titel", typ: "text", pflicht: true },
       { k: "art", t: "Art", typ: "wahl", werte: { gruppe: "Gruppe", einzel: "Einzelgespräch", verteiler: "Rundschreiben" } },
@@ -260,7 +260,7 @@ export const TABELLEN = {
     anzeige: (z) => z.titel,
   },
   nachrichten: {
-    titel: "Nachrichten", sym: "✉️", gruppe: "Kommunikation", lesen: L, schreiben: L,
+    titel: "Nachrichten", sym: "✉️", gruppe: "Kommunikation", lesen: L, schreiben: ALLE_VERWALTER,
     felder: [
       { k: "unterhaltung_id", t: "Unterhaltung", typ: "ref", ref: "unterhaltungen", pflicht: true },
       { k: "von", t: "von", typ: "ref", ref: "personen" },
@@ -393,7 +393,7 @@ export const TABELLEN = {
       { k: "kanal", t: "Kanal", typ: "wahl", werte: { push: "Push", mail: "E-Mail", whatsapp: "WhatsApp-Übergabe", app: "App" } },
       { k: "an_id", t: "an", typ: "ref", ref: "personen" },
       { k: "betreff", t: "Betreff", typ: "text" },
-      { k: "status", t: "Status", typ: "wahl", werte: { simuliert: "simuliert (Demo)", uebergeben: "übergeben", gesendet: "gesendet", fehler: "Fehler" } },
+      { k: "status", t: "Status", typ: "wahl", werte: { vorgemerkt: "vorgemerkt", simuliert: "simuliert (Demo)", uebergeben: "übergeben", gesendet: "gesendet", fehler: "Fehler" } },
       { k: "ereignis", t: "Ereignis", typ: "text" },
     ],
     liste: ["zeit", "kanal", "an_id", "betreff", "status"],

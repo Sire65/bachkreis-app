@@ -1,6 +1,6 @@
 # Funktionen (Feature-IDs aus dem Konzept)
 
-Stand v0.2.0 DEV (Vorführversion). DoD = Definition of Done.
+Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 
 **Erklärung der Spalte „Stand“:**
 - ✅ in der Vorführversion umgesetzt und getestet
@@ -44,4 +44,7 @@ Stand v0.2.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F34 | Datenschutz: Auskunft, Export, Audit | ✅ Auskunft/Export/Protokoll · ⏳ Löschfristen | – |
 | BK-F35 | PC-Verwaltung inkl. Zugänge, Import/Export, Abgleich | ✅ | Rundgang |
 | BK-F36 | Bühne mit Orchester: Melodien (Musik-Engine), Konzertaufnahmen, Mitschnitt, Eselsohr | ✅ | logik: Musik · Bühnen-Test |
+| BK-F38 | Echtbetrieb-Server bk-api: Anmeldung, Rechte & Sichtbarkeit je Rolle, Delta-Abgleich, Versionskonflikte | ✅ (eingespielt sobald Konto da) | server.test (13), e2e echtbetrieb |
+| BK-F39 | Supabase-Adapter im Browser (Kopie auf dem Gerät, Ausgang offline), Anmeldeseite, Abmelden | ✅ | e2e echtbetrieb |
+| BK-F40 | Versand-Kern bk-versand (Instanz des KC-Communicator-Kerns) | ⏳ Vormerkung fertig | – |
 | BK-F37 | Bachkreis-Logo überall (App-Symbol, Favicon, Kopf, Verwaltung, QR-Karten) | ✅ | Vertrag: SW-Dateiliste |

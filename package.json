@@ -1,13 +1,16 @@
 {
   "name": "bachkreis-app",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Bachkreis Bergkamen – Verwaltungs- und Termin-App (PWA, ohne Build-Schritt)",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "schema": "node tools/schema-sql.mjs > supabase/migrations/20261015000000_bk_grundschema.sql",
+    "schema": "node tools/schema-sql.mjs > supabase/migrations/20261015000000_bk_grundschema.sql && node tools/server-kopie.mjs",
     "start": "python3 -m http.server 8080"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.2.17"
+  }
 }

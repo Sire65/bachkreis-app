@@ -565,7 +565,7 @@ create table if not exists bk_versand (
   kanal text check (kanal is null or kanal in ('push', 'mail', 'whatsapp', 'app')),
   an_id text,
   betreff text,
-  status text check (status is null or status in ('simuliert', 'uebergeben', 'gesendet', 'fehler')),
+  status text check (status is null or status in ('vorgemerkt', 'simuliert', 'uebergeben', 'gesendet', 'fehler')),
   ereignis text,
   info text,
   version integer not null default 1,

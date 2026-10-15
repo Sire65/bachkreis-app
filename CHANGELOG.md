@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.3.0 DEV – 15.10.2026
+- Echtbetrieb vorbereitet: bk-api, Supabase-Adapter, Anmeldung, Rechte auf dem Server, CI-Einrichtung
+
 ## 0.2.1 DEV – 15.10.2026
 - Veröffentlichung über den Zweig gh-pages
 

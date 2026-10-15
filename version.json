@@ -1,11 +1,24 @@
 {
-  "version": "0.2.1",
+  "version": "0.3.0",
   "datum": "2026-10-15",
   "stufe": "DEV",
   "neu": [
-    "Veröffentlichung über den Zweig gh-pages (GitHub Pages ohne Sondereinstellung)"
+    "Echtbetrieb vorbereitet: Edge Function bk-api (Anmeldung per Code/QR, Sitzungen, Delta-Abgleich, Speichern mit Versionsprüfung)",
+    "Datenschutz auf dem Server: Eltern sehen nur ihre Kinder, Schüler nur Eigenes, fremde Personen nur mit Namen, Gesundheitsangaben nur Leitung/Lehrkräfte",
+    "Supabase-Adapter: Kopie der erlaubten Daten auf dem Gerät, Abgleich alle 30 s, Ausgang auch offline, Konfliktmeldung",
+    "Anmeldeseite (App und PC-Verwaltung), Abmelden, Zugangscodes nur als Hash gespeichert, Schutz gegen Durchprobieren",
+    "Automatische Einrichtung per GitHub (Migrationen + Funktion) und Veröffentlichung Echtbetrieb mit Vorführversion unter /demo/",
+    "Tests: 13 Server-Tests gegen PostgreSQL (PGlite) und Browser-Test Echtbetrieb"
   ],
   "verlauf": [
+    {
+      "version": "0.2.1",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Veröffentlichung über den Zweig gh-pages (GitHub Pages ohne Sondereinstellung)"
+      ]
+    },
     {
       "version": "0.2.0",
       "datum": "2026-10-15",

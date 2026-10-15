@@ -6,6 +6,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { APP_VERSION, APP_STUFE } from "../js/kern/version.js";
 import { erzeugeSql } from "../tools/schema-sql.mjs";
+import { serverSchema } from "../tools/server-kopie.mjs";
+import { UMGEBUNG } from "../js/kern/umgebung.js";
 
 const W = path.resolve(import.meta.dirname, "..");
 const lies = (p) => fs.readFileSync(path.join(W, p), "utf8");
@@ -65,4 +67,20 @@ test("Keine Inline-Event-Handler (CSP script-src 'self')", () => {
 
 test("Keine externen Skripte/Dienste im Browsercode (Zero-Cost, Datenschutz)", () => {
   for (const d of ["index.html", "verwaltung.html"]) assert.ok(!/<script[^>]+src="https?:/.test(lies(d)), d);
+});
+
+test("Server-Kopie der Tabellen-Registry ist aktuell (npm run schema)", () => {
+  assert.equal(lies("supabase/functions/_shared/schema.js"), serverSchema());
+});
+
+test("Repository steht auf Vorführversion – Echtbetrieb nur über die Veröffentlichung (Variablen)", () => {
+  assert.equal(UMGEBUNG.datenquelle, "lokal-demo");
+  assert.equal(UMGEBUNG.apiUrl, "");
+});
+
+test("Server-Code ohne Geheimnisse und ohne Service-Role im Browser-Adapter", () => {
+  for (const d of ["supabase/functions/_shared/api.js", "supabase/functions/_shared/regeln.js", "supabase/functions/bk-api/index.ts", "js/kern/adapter-supabase.js"]) {
+    const t = lies(d);
+    assert.ok(!/eyJhbGciOi[\w-]{20,}|service_role|sk_live/i.test(t), d);
+  }
 });

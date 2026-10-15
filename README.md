@@ -2,7 +2,7 @@
 
 Verwaltungs- und Termin-App für den **Bachkreis Bergkamen**. Die App bündelt Proben, Konzerte, Zusagen, Nachrichten, SOS, Instrumente, Noten, Genehmigungen und Förderverein. Dazu gehört eine **PC-Verwaltung** für Stammdaten und Zugänge.
 
-> **Stand: Vorführversion 0.2.0 DEV.** Alle Personen sind erfunden, die Daten liegen nur im Browser. Push und E-Mail sind simuliert, die WhatsApp-Übergabe funktioniert echt.
+> **Stand: 0.3.0 DEV – Vorführversion online, Echtbetrieb (Supabase) fertig vorbereitet, siehe [docs/ECHTBETRIEB.md](docs/ECHTBETRIEB.md).** Alle Personen sind erfunden, die Daten liegen nur im Browser. Push und E-Mail sind simuliert, die WhatsApp-Übergabe funktioniert echt.
 
 ## Starten
 
@@ -26,7 +26,8 @@ Oben in der App wechselt **„Ansicht als“** zwischen Leitung, Lehrkraft, För
 | `js/kern/daten.js` + `adapter-*.js` | Datenfassade mit austauschbaren Adaptern: `lokal-demo` (IndexedDB) jetzt, `supabase` vorbereitet. |
 | `js/kern/logik.js` | Fachlogik: Gruppen, Besetzungsampel, Cockpit, Verteiler, ICS, CSV. Rein und getestet. |
 | `js/kern/versand.js` | Versand-Dienst mit Kanal-Adaptern: Push, Mail, App, WhatsApp-Übergabe. |
-| `supabase/migrations/` | Grundschema `bk_*`, **erzeugt** mit `npm run schema`. |
+| `supabase/migrations/` | Grundschema `bk_*` (**erzeugt** mit `npm run schema`) + Anmeldung/Sitzungen. |
+| `supabase/functions/` | Edge Function `bk-api` (Anmeldung, Abgleich, Rechte); Logik in `_shared/` – auch in den Tests gegen PostgreSQL geprüft. |
 | `js/app/buehne.js`, `js/kern/musik.js` | Bühne mit Orchester (Eselsohr am Kopf oder Kachel „Bühne“): Melodien aus der Musik-Engine, Konzertaufnahmen, Mitschnitt. |
 | `sw.js` | Service Worker mit **atomarem Update**: neue Version erst nach „Jetzt aktualisieren“. |
 | `tests/` | Vertragstests (Version, SW-Dateiliste, Secrets, Aktionen/Ansichten, Migration), Logiktests und Browser-Rundgang. |
@@ -45,4 +46,6 @@ Es gilt der Entwicklervertrag in [`AGENTS.md`](AGENTS.md):
 - [Konzept](docs/KONZEPT.md): Gesamtkonzept, Recherche, Module
 - [Architektur](docs/ARCHITEKTUR.md): Adapter, Abgleich, Rollen, Sicherheit
 - [Funktionen](docs/FEATURES.md): Feature-IDs und Stand
+- [Echtbetrieb](docs/ECHTBETRIEB.md) – Umstellung auf Supabase Schritt für Schritt
+- [Kommunikation](docs/KOMMUNIKATION.md) – KC Communicator und Bachkreis
 - [Konten](docs/KONTEN.md): eigene kostenlose Konten des Bachkreises (Checkliste)

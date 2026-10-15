@@ -1,0 +1,50 @@
+// Browser-Test Echtbetrieb: startet tests/e2e/server-lokal.mjs (bk-api-Logik + PostgreSQL/PGlite) und prüft
+// Anmeldung, Datenschutz-Sicht der Eltern, Abgleich zwischen zwei Geräten, PC-Verwaltung und Zugangscodes.
+// Aufruf: node tests/e2e/echtbetrieb.mjs   (benötigt „playwright“ und „@electric-sql/pglite“)
+import { chromium } from "playwright";
+import { spawn } from "node:child_process";
+import assert from "node:assert/strict";
+
+const PORT = 8791, B = `http://localhost:${PORT}`;
+const srv = spawn(process.execPath, [new URL("./server-lokal.mjs", import.meta.url).pathname, String(PORT)], { stdio: ["ignore", "pipe", "inherit"] });
+const info = await new Promise((ok, f) => { srv.stdout.once("data", (d) => ok(JSON.parse(String(d).split("\n")[0]))); srv.once("exit", () => f(new Error("Server beendet"))); });
+const fehler = [];
+const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
+const seite = async (breite = 400) => {
+  const p = await (await b.newContext({ viewport: { width: breite, height: 860 }, serviceWorkers: "block" })).newPage();
+  p.on("pageerror", (e) => fehler.push(e.message)); p.on("dialog", (d) => d.accept()); return p;
+};
+const sicht = (p) => p.evaluate(async () => {
+  const m = await import("/js/kern/daten.js");
+  return { mitAdresse: m.liste("personen", (x) => x.strasse).length, zugaenge: m.liste("zugaenge").length, spenden: m.liste("spenden").length, info: m.datenInfo() };
+});
+try {
+  const p = await seite();
+  await p.goto(B + "/index.html"); await p.waitForSelector("#anmeldeCode");
+  assert.ok(!(await p.$("#demoleiste")), "keine Demo-Leiste im Echtbetrieb");
+  await p.fill("#anmeldeCode", "FALSCH12"); await p.click('[data-a="anmeldenCode"]'); await p.waitForSelector(".badge.b-rot");
+  await p.goto(B + "/index.html?k=" + info.codes.eltern.code); await p.waitForSelector(".kachel", { timeout: 20000 });
+  assert.ok(!p.url().includes("k="), "Code aus der Adresszeile entfernt");
+  const s = await sicht(p);
+  assert.equal(s.info.art, "supabase"); assert.equal(s.zugaenge, 0); assert.equal(s.spenden, 0);
+  assert.ok(s.mitAdresse <= 6, "nur eigene Familie mit Anschrift: " + s.mitAdresse);
+  await p.click('#raster .kachel[data-id="termine"]'); await p.waitForSelector('[data-a="antworten"]');
+  await p.click('[data-a="antworten"][data-x$="|ja"]'); await p.waitForTimeout(2500);
+  const l = await seite();
+  await l.goto(B + "/index.html?k=" + info.codes.leitung.code); await l.waitForSelector(".kachel", { timeout: 20000 });
+  const z = await l.evaluate(async () => (await import("/js/kern/daten.js")).liste("antworten", (a) => a.von_person_id && a.von_person_id !== a.person_id).length);
+  assert.ok(z >= 1, "Leitung sieht die Zusage der Eltern");
+  const v = await seite(1280);
+  await v.goto(B + "/verwaltung.html"); await v.waitForSelector("#vwCode");
+  await v.fill("#vwCode", info.codes.eltern.code); await v.click('[data-a="vwCodeServer"]'); await v.waitForSelector(".badge.b-rot");
+  await v.fill("#vwCode", info.codes.leitung.code); await v.click('[data-a="vwCodeServer"]'); await v.waitForSelector(".vw-seite", { timeout: 20000 });
+  await v.click('[data-a="vwAnsicht"][data-x="zugaenge"]');
+  await v.click('.vw-tabelle tbody tr [data-a="zugNeu"]'); await v.waitForTimeout(500);
+  await v.click('[data-a="zugKarten"]');
+  const code = await v.$eval(".qr-karte code", (c) => c.textContent);
+  await v.waitForTimeout(1500);
+  const n = await seite();
+  await n.goto(B + "/index.html?k=" + code); await n.waitForSelector(".kachel", { timeout: 20000 });
+  assert.deepEqual(fehler.filter((x) => !/401/.test(x)), [], "keine Seitenfehler");
+  console.log("Echtbetrieb-Test ✔");
+} finally { await b.close(); srv.kill(); }

@@ -1,7 +1,7 @@
 // Versand-Dienst mit austauschbaren Kanal-Adaptern (AGENTS.md Regel 18) – entspricht dem portablen Kern des
 // KC Communicators (Push, Mail, Vorlagen, Quittungen). In der Vorführversion werden Push und Mail SIMULIERT und
 // im Versandprotokoll vermerkt; die WhatsApp-Übergabe funktioniert echt (wa.me / Teilen), ohne kostenpflichtige API.
-import { liste, hole, speichere, speichereViele, konfig } from "./daten.js";
+import { liste, hole, speichere, speichereViele, konfig, istEchtbetrieb, serverAktion } from "./daten.js";
 import { waLink } from "./logik.js";
 
 export const KANAELE = { push: "🔔 Push", mail: "✉️ E-Mail", whatsapp: "🟢 WhatsApp", app: "💬 In der App" };
@@ -21,7 +21,13 @@ const ADAPTER = {
 };
 
 // Sendet an eine Liste von Personen. Rückgabe: Zusammenfassung je Kanal.
-export async function senden({ an, betreff, text, ereignis = "rundschreiben", kanaele = null }) {
+export async function senden({ an, betreff, text, ereignis = "rundschreiben", kanaele = null, unterhaltung_id = null }) {
+  if (istEchtbetrieb()) {
+    // Echtbetrieb: Server prüft Rechte und merkt den Versand vor; der Versand-Kern stellt zu (Push/Mail).
+    const r = await serverAktion("versenden", { an: [...new Set(an)], betreff, text, ereignis, kanaele, unterhaltung_id });
+    lokalerPush(an, betreff, text);
+    return { push: r?.vorgemerkt || 0, mail: 0, app: 0, fehler: r?.ok ? 0 : 1, vorgemerkt: r?.vorgemerkt || 0 };
+  }
   const zeilen = [];
   const summe = { push: 0, mail: 0, app: 0, fehler: 0 };
   for (const id of new Set(an)) {
@@ -41,7 +47,7 @@ export async function senden({ an, betreff, text, ereignis = "rundschreiben", ka
 
 // WhatsApp-Übergabe: an eine Nummer (wa.me) oder ohne Nummer (Auswahl in WhatsApp / Teilen-Menü). Wird protokolliert.
 export async function whatsapp(text, { nummer = "", anId = null, betreff = "WhatsApp" } = {}) {
-  await speichere("versand", { zeit: new Date().toISOString(), kanal: "whatsapp", an_id: anId, betreff, status: "uebergeben", ereignis: "whatsapp" });
+  if (!istEchtbetrieb()) await speichere("versand", { zeit: new Date().toISOString(), kanal: "whatsapp", an_id: anId, betreff, status: "uebergeben", ereignis: "whatsapp" });
   if (!nummer && navigator.share) {
     try { await navigator.share({ text }); return; } catch { /* abgebrochen → wa.me */ }
   }

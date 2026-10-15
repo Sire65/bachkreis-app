@@ -68,6 +68,7 @@ export const KACHELN = {
     { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt", v: "hilfe" },
     { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter() },
     { id: "ueber", sym: "ℹ️", t: "Über die App", u: "Version · Datenquelle · Lizenzen", v: "ueber" },
+    { id: "abmelden", sym: "🚪", t: "Abmelden", u: "Von diesem Gerät abmelden", aktion: "abmeldenApp", nur: () => datenInfo().server === true },
     { id: "demo", sym: "♻️", t: "Demo zurücksetzen", u: "Alle Demodaten neu erzeugen", aktion: "demoReset", nur: () => datenInfo().art === "lokal-demo" },
   ],
   admin: [],
@@ -82,7 +83,10 @@ export function adminZustaende() {
   const nieGesehen = zug.filter((z) => z.aktiv && !z.zuletzt).length;
   const push = !("Notification" in globalThis) ? ["grau", "nicht unterstützt"] : Notification.permission === "granted" ? ["gruen", "auf diesem Gerät erlaubt"] : Notification.permission === "denied" ? ["rot", "auf diesem Gerät blockiert"] : ["gelb", "noch nicht erlaubt"];
   return {
-    daten: info.server ? ["gruen", "Server verbunden"] : ["grau", "Demo – kein Server gemessen"],
+    daten: !info.server ? ["grau", "Demo – kein Server gemessen"]
+      : !info.online ? ["rot", info.hinweis]
+      : info.letzterAbgleich && Date.now() - new Date(info.letzterAbgleich).getTime() > 5 * 60000 ? ["gelb", "Stand veraltet – " + info.hinweis]
+      : ["gruen", info.hinweis],
     abgleich: [info.server ? "gruen" : "grau", `${liste("aenderungen").length} Änderungen protokolliert`],
     versand: [vs.fehler ? "gelb" : "grau", `${vs.gesamt} Einträge · simuliert`],
     push,

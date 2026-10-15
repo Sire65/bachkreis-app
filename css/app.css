@@ -159,3 +159,15 @@ a { color: var(--akzent); }
 .chip-wahl.an { background: #1a1500; color: var(--marke2); border-color: #1a1500; }
 :root.dunkel .chip-wahl.an { background: var(--marke); color: #1a1500; border-color: var(--marke); }
 a.knopf { text-decoration: none; display: inline-block; text-align: center; } a.knopf.breit { display: block; }
+/* Fußleiste wie in der KC Club App */
+.fuss-leiste { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(8px + env(safe-area-inset-bottom)); width: min(760px, calc(100% - 16px)); background: var(--karte); border-radius: 22px; box-shadow: 0 8px 24px rgba(0, 0, 0, .14); display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px; z-index: 20; }
+.fuss-leiste button { border: none; background: none; border-radius: 16px; padding: 8px 2px; font-size: .74rem; font-weight: 800; cursor: pointer; position: relative; color: var(--text); min-width: 0; }
+.fuss-leiste button span { display: block; font-size: 1.3rem; }
+.fuss-leiste button.an { background: #1a1500; color: var(--marke2); }
+:root.dunkel .fuss-leiste button.an { background: var(--marke); color: #1a1500; }
+.fuss-leiste .zaehler { position: absolute; top: 2px; right: 18%; background: var(--rot); color: #fff; border-radius: 10px; font-size: .7rem; padding: 1px 6px; font-style: normal; }
+:root.gross .fuss-leiste button, :root.riesig .fuss-leiste button { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 0; padding-right: 0; }
+:root.gross .fuss-leiste button span, :root.riesig .fuss-leiste button span { font-size: 1.45rem; }
+body.mit-fuss .seite { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+body.mit-fuss .jz-vorschau-aus { bottom: calc(84px + env(safe-area-inset-bottom)); }
+@media print { .fuss-leiste { display: none; } }

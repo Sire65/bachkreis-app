@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.5.1 DEV – 15.10.2026
+- Fußleiste wie in der KC Club App (Start, Termine, Nachrichten, Orchester/Kinder, Mehr)
+
 ## 0.5.0 DEV – 15.10.2026
 - Kopf wie in der KC Club App: Jalousie, Infofeld zum Blättern, Wetter, Jahreszeiten (ganzes Sortiment), Register-Effekte, Kuckucksuhr
 

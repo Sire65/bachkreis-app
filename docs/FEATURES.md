@@ -57,3 +57,4 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F47 | Wetter Bergkamen (Open-Meteo): 7 Tage, Details, Termin-Wetter, Szene | ✅ | e2e rundgang (nachgebildete Daten) |
 | BK-F48 | Jahreszeiten im Kopf (aus der KC Club App): Deko, Eiszapfen, Bühne mit allen Extras und Themen | ✅ | e2e rundgang |
 | BK-F49 | Register-Effekte, Kuckucksuhr, Konfetti | ✅ | e2e rundgang |
+| BK-F50 | Fußleiste wie KC (Start, Termine, Nachrichten mit Zähler, Orchester/Kinder, Mehr) | ✅ | e2e rundgang |

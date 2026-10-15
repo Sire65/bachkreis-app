@@ -236,3 +236,4 @@ function kopfDrehen(an) {
 }
 
 VIEWS.buehne = { render() { return kopf("🎭 Bühne") + buehneHtml(false); } };
+export const kopfVorne = () => { if (document.getElementById("heroRueck")) kopfDrehen(false); };

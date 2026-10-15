@@ -11,6 +11,7 @@ import "./orchester.js";
 import "./instrumente.js";
 import "./leitung.js";
 import "./meins.js";
+import "./fuss.js";
 import { buehneLaeuft } from "./buehne.js";
 
 window.addEventListener("error", (e) => fehlerMerken(e.error || e.message));

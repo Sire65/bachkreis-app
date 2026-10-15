@@ -25,6 +25,7 @@ Oben in der App wechselt **„Ansicht als“** zwischen Leitung, Lehrkraft, För
 | `js/kern/schema.js` | **Tabellen-Registry**. Daraus entstehen Formulare, Listen, CSV und das Supabase-Schema. |
 | `js/kern/daten.js` + `adapter-*.js` | Datenfassade mit austauschbaren Adaptern: `lokal-demo` (IndexedDB) jetzt, `supabase` vorbereitet. |
 | `js/kern/logik.js` | Fachlogik: Gruppen, Besetzungsampel, Cockpit, Verteiler, ICS, CSV. Rein und getestet. |
+| `js/app/einstellungen.js`, `darstellung.js`, `effekte.js` | ⚙️ Mehr wie in der KC Club App: Farbdesigns, Themen mit Schriften (`schriften/`, freie Lizenzen), Tag/Nacht, Schrift-Zoom, Chat-Farben, Sparmodus, Sende-Effekte, Fee, Reißwolf. |
 | `js/app/kopf.js`, `wetter.js`, `jahreszeiten.js` | Kopf der Startseite wie in der KC Club App: Jalousie, Infofeld zum Blättern, Wetter (Open-Meteo), Jahreszeiten-Bühne, Register-Effekte, Kuckucksuhr. |
 | `js/kern/versand.js` | Versand über den BK Communicator (Echtbetrieb: Server; Vorführversion: dieselben Regeln, simuliert), Push-Abo, WhatsApp-Übergabe. |
 | `js/kern/kom-standard.js` | Startwerte des BK Communicators (Programme, Regeln, Vorlagen, Anbieter, Routen, Eskalationen). |

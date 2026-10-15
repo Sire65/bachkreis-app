@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.6.0 DEV – 15.10.2026
+- ⚙️ Mehr: alle Einstellungen wie in der KC Club App (Farbdesigns, Themen mit Schriften, Tag/Nacht, Schriftgröße, Chat-Farben, Sparmodus, Effekte, Privatsphäre, Installation)
+
 ## 0.5.1 DEV – 15.10.2026
 - Fußleiste wie in der KC Club App (Start, Termine, Nachrichten, Orchester/Kinder, Mehr)
 

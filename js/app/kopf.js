@@ -14,8 +14,9 @@ import { termineFuer, antwortVon, kinderVon, cockpit, ausleihenVon } from "../ke
 import { communicatorZustand, versandStatistik } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { WET, WETTER_NEU_MIN, wetterLaden, infoWetter, wetterSzene, wetterTagDetails } from "./wetter.js";
-import { jahreszeitKopf, jzEisLaenge, jzVorschauLeiste, JZ_KONTEXT, istNacht } from "./jahreszeiten.js";
+import { jahreszeitKopf, jzEisLaenge, jzVorschauLeiste, jzPruefen, JZ_KONTEXT, istNacht } from "./jahreszeiten.js";
 import { ESELSOHR } from "./buehne.js";
+import { anwendenDesign } from "./darstellung.js";
 
 const $ = (id) => document.getElementById(id);
 const K = { hero: null, glanzGelaufen: false, infoLetztes: "", adminZustaende: () => ({}), ungelesen: () => 0, meineUnterhaltungen: () => [], offeneGenehmigungen: () => 0 };
@@ -100,7 +101,7 @@ export function kopfEinsetzen(platz) {
     try { const w = localStorage.getItem(KOPF_ROLLO); kopfRolloSetzen(w === "1" ? "ganz" : w === "halb" ? "halb" : "offen"); } catch {}
     requestAnimationFrame(() => { jzEisLaenge(); });
   }
-  if (!K.hero.querySelector(".jz-schicht")) jahreszeitKopf();
+  if (!K.hero.querySelector(".jz-schicht")) jahreszeitKopf(); else jzPruefen();
   jzVorschauLeiste(S.view);
   if (!K.glanzGelaufen) { K.glanzGelaufen = true; kopfGlanzStarten(); }
 }
@@ -111,7 +112,7 @@ export function kopfAuffrischen() {
   h.querySelector("#kopfMarke").textContent = (konfig().name || "Bachkreis Bergkamen").toUpperCase();
   h.querySelector("#begruessung").textContent = `${gruss()}, ${S.ich.vorname}!`;
   h.querySelector("#statusChip").textContent = `${ANSICHTEN[S.ansicht] || "🎻"} ▾`;
-  h.querySelector("#modusKnopf").textContent = document.documentElement.classList.contains("dunkel") ? "☀️" : "🌙";
+  anwendenDesign(); // Mond/Sonne mit A/T/N am Knopf
   h.querySelector("#kopfVersion").textContent = `v${APP_VERSION}`;
   const led = (id, [f, t], n) => { const e = h.querySelector("#" + id); e.className = "led " + f; e.title = `${n}: ${t}`; };
   if (az.daten) led("ledDaten", az.daten, "Daten");
@@ -133,7 +134,7 @@ const INFO_ALLE = [
   { id: "leitung", t: "Leitungszentrale", html: () => infoLeitung(), nur: () => istLehrkraft() || istVorstand() },
 ];
 let INFO_FELDER = INFO_ALLE.filter((f) => !f.nur);
-let INFO_I = (() => { try { return Math.max(0, INFO_ALLE.findIndex((f) => f.id === localStorage.getItem("bk_infofeld"))); } catch { return 0; } })();
+let INFO_I = (() => { try { return Math.max(0, INFO_ALLE.findIndex((f) => f.id === (einst().infoStart || localStorage.getItem("bk_infofeld")))); } catch { return 0; } })();
 function infoFelderAktualisieren() {
   const aktuell = INFO_FELDER[INFO_I]?.id || INFO_ALLE[INFO_I]?.id;
   INFO_FELDER = INFO_ALLE.filter((f) => !f.nur || f.nur());
@@ -196,7 +197,7 @@ function infoFuerDich() {
   const aufg = liste("aufgaben", (a) => a.zustaendig_id === S.ich.id && a.status !== "erledigt").length;
   if (aufg) z.push(zeile("🗂️", `<b>${aufg}</b> offene Aufgabe${aufg > 1 ? "n" : ""}`, "kachel", "cockpit"));
   const heute = new Date(), md = `${String(heute.getMonth() + 1).padStart(2, "0")}-${String(heute.getDate()).padStart(2, "0")}`;
-  const gb = liste("personen", (p) => p.typ === "schueler" && (p.geburtsdatum || "").slice(5, 10) === md && p.status === "aktiv");
+  const gb = liste("personen", (p) => p.status === "aktiv" && (p.id === S.ich.id ? (p.geburtsdatum || "").slice(5, 10) === md : (p.freigaben?.geburtstag || p.gb_md) && (p.gb_md || (p.geburtsdatum || "").slice(5, 10)) === md));
   for (const p of gb.slice(0, 3)) z.push(zeile("🎂", p.id === S.ich.id ? "<b>Herzlichen Glückwunsch zum Geburtstag!</b> 🎉" : `<b>${esc(name(p))}</b> hat heute Geburtstag`, p.id === S.ich.id ? "konfetti" : "nix"));
   if (!z.length) return `<h2>👍 Alles erledigt</h2><div class="unter">Gerade ist nichts Offenes für dich. Schön! 🎶</div>`;
   const MAX = 4;

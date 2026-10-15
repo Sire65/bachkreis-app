@@ -5,6 +5,7 @@
 import { S, einst as bkEinst, einstSetzen, zeige } from "./zustand.js";
 import { esc, toast } from "../kern/ui.js";
 import { WET, WETTER_VERALTET_MIN, wetterArt } from "./wetter.js";
+import { themaWert, themaEigenSetzen, SPAR, jahreszeitArtSetzen, beiThemaWechsel } from "./darstellung.js";
 
 // ---------- Anbindung an die Bachkreis-App (statt der globalen KC-Hilfen) ----------
 const $ = (id) => document.getElementById(id);
@@ -12,12 +13,10 @@ const EINST_NAME = { animiert: "effekte" };
 const einst = (k, std) => { const v = bkEinst()[EINST_NAME[k] || k]; return v === undefined ? std : v; };
 const einstellung = (k, v) => einstSetzen(EINST_NAME[k] || k, v);
 const einfach = () => !!bkEinst().einfach;
-const fxAn = () => einst("animiert", true) && typeof document !== "undefined" && !!document.body?.animate;
+const fxAn = () => einst("animiert", true) && !SPAR.an && typeof document !== "undefined" && !!document.body?.animate;
 const fxAusHinweis = () => toast("Effekte sind aus – unter Meins › Einstellungen „Kachel-Effekte“ einschalten.", 4000);
 const melde = (t) => toast(t, 3000);
-const themaWert = () => undefined; // die Bachkreis-App hat (noch) keine Themen
-const themaEigenSetzen = () => false;
-const SPAR = { an: false }, RG = { an: false }, KOCH = { ok: true, bild: null };
+const RG = { an: false }, KOCH = { ok: true, bild: null };
 const rgSichtbar = (e) => { if (!e?.isConnected) return false; const r = e.getBoundingClientRect(); return r.height > 0 && r.width > 0 && getComputedStyle(e).visibility !== "hidden"; };
 const TZ = "Europe/Berlin";
 const tagPlus = (iso, n) => { const d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -2226,4 +2225,7 @@ function jzVorschauLeiste(v = S.view) {
 }
 
 // ---------- Schnittstelle für die Bachkreis-App ----------
-export { jahreszeitKopf, jahreszeitArt, jahreszeitAktuell, jahreszeitVorschau, jzWahl, jzWahlSetzen, JZ_WAHL, jzDekoWahl, jzDekoSetzen, JZ_DEKO_WAHL, jzAnfaenge, jzEisLaenge, jzDekoMalen, jzVorschauLeiste, JZB, JZB_EXTRAS, JZ_VORSCHAU_NAME };
+// Kopf wieder sichtbar (z. B. nach Themenwechsel in den Einstellungen): Jahreszeit neu zeichnen, wenn sie sich geändert hat
+function jzPruefen() { if (JZB.vorschau) return; if (JZ_LETZTE.art !== jahreszeitAktuell()) jahreszeitKopf(); }
+jahreszeitArtSetzen(jahreszeitArt); beiThemaWechsel(() => { if (!JZB.vorschau) jahreszeitKopf(); });
+export { jzPruefen, jahreszeitKopf, jahreszeitArt, jahreszeitAktuell, jahreszeitVorschau, jzWahl, jzWahlSetzen, JZ_WAHL, jzDekoWahl, jzDekoSetzen, JZ_DEKO_WAHL, jzAnfaenge, jzEisLaenge, jzDekoMalen, jzVorschauLeiste, JZB, JZB_EXTRAS, JZ_VORSCHAU_NAME };

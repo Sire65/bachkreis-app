@@ -18,12 +18,10 @@ export function einstSetzen(k, v) {
 }
 export function einstAnwenden() {
   const e = einst(), r = document.documentElement;
-  const dunkel = e.thema === "dunkel" || (e.thema === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
-  r.classList.toggle("dunkel", dunkel);
   r.classList.toggle("gross", e.schrift === "gross");
   r.classList.toggle("riesig", e.schrift === "riesig");
   r.classList.toggle("ohne-effekt", !e.effekte);
-  const meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.content = dunkel ? "#15140f" : "#1a1500";
+  document.dispatchEvent(new CustomEvent("bk-einst")); // Farbdesign/Tag-Nacht: darstellung.js
 }
 
 // ---------- Personen & Rechte ----------

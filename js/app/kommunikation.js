@@ -6,6 +6,16 @@ import { esc, AKTIONEN, datumKurz, uhr, vorZeit, toast, blatt, blattZu, formWert
 import { liste, hole, speichere, loesche, konfig } from "../kern/daten.js";
 import { verteilerListe, verteilerAufloesen, kinderVon, elternVon, waLink, wirksameGruppen } from "../kern/logik.js";
 import { senden, whatsapp, KANAELE } from "../kern/versand.js";
+import { papierflieger, reisswolf, zettelAnpinnen } from "./effekte.js";
+import { cfAnwenden } from "./darstellung.js";
+import { einst } from "./zustand.js";
+
+// 🔊 Neue Nachrichten vorlesen (KC: „Neue Nachrichten vorlesen“) – nur im geöffneten Chat, nur fremde, noch ungelesene
+function nachrichtenVorlesen(uid) {
+  if (einst().vorlesen !== true || !("speechSynthesis" in globalThis)) return;
+  const neu = liste("nachrichten", (x) => x.unterhaltung_id === uid && x.von !== S.ich.id && !(x.gelesen_von || []).includes(S.ich.id)).slice(-3);
+  for (const n of neu) { const u = new SpeechSynthesisUtterance(`${name(n.von)} schreibt: ${n.text}`); u.lang = "de-DE"; speechSynthesis.speak(u); }
+}
 
 // ---------- Unterhaltungen ----------
 VIEWS.nachrichten = {
@@ -27,15 +37,17 @@ VIEWS.unterhaltung = {
     const ns = liste("nachrichten", (x) => x.unterhaltung_id === id).sort((a, b) => a.zeit.localeCompare(b.zeit));
     const darfSchreiben = u.art !== "verteiler" || istVerwalter();
     const empf = empfaengerVon(u);
-    return kopf(esc(u.titel), `<span class="hinweis">${empf.length} Pers.</span>`) + `<div class="chat">${ns.map((n) => {
+    return kopf(esc(u.titel), `<span class="hinweis">${empf.length} Pers.</span>`) + `<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat">${ns.map((n) => {
       const ich = n.von === S.ich.id;
       const rueck = n.rueckmeldung ? rueckmeldungHtml(n) : "";
-      return `<div class="blase ${ich ? "ich" : ""}">${ich ? "" : `<div class="von">${esc(name(n.von))}</div>`}${esc(n.text).replace(/\n/g, "<br>")}${rueck}<div class="zeit">${datumKurz(n.zeit)} ${uhr(n.zeit)}${istLeitung() && ich ? ` · gelesen ${(n.gelesen_von || []).length - 1}/${empf.length - 1}` : ""}</div></div>`;
+      return `<div class="blase ${ich ? "ich" : ""}" id="msg-${n.id}">${ich ? "" : `<div class="von">${esc(name(n.von))}</div>`}${esc(n.text).replace(/\n/g, "<br>")}${rueck}<div class="zeit">${datumKurz(n.zeit)} ${uhr(n.zeit)}${istLeitung() && ich ? ` · gelesen ${(n.gelesen_von || []).length - 1}/${empf.length - 1}` : ""}</div></div>`;
     }).join("") || '<div class="leer">Noch keine Nachrichten.</div>'}</div>
     ${darfSchreiben ? `<div class="eingabe"><textarea id="nachrichtText" placeholder="Nachricht …" rows="1"></textarea><button class="knopf haupt" data-a="nachrichtSenden" data-x="${id}">➤</button></div>` : '<p class="hinweis">Rundschreiben – nur die Leitung kann hier schreiben.</p>'}`;
   },
   async nach(_, { id }) {
     window.scrollTo(0, document.body.scrollHeight);
+    cfAnwenden(); // Chat-Hintergrund
+    nachrichtenVorlesen(id);
     // als gelesen markieren (läuft im Hintergrund weiter, auch wenn schon eine andere Ansicht offen ist)
     const ich = S.ich.id;
     for (const n of liste("nachrichten", (x) => x.unterhaltung_id === id && !(x.gelesen_von || []).includes(ich)))
@@ -66,6 +78,7 @@ AKTIONEN.nachrichtSenden = async (id) => {
   const text = document.getElementById("nachrichtText").value.trim();
   if (!text) return;
   const u = hole("unterhaltungen", id);
+  papierflieger(document.querySelector('[data-a="nachrichtSenden"]'), false); // Sende-Effekt (Papierflieger, Taube, Postauto …)
   await speichere("nachrichten", { unterhaltung_id: id, von: S.ich.id, text, zeit: new Date().toISOString(), gelesen_von: [S.ich.id] });
   await senden({ an: empfaengerVon(u).filter((p) => p !== S.ich.id), betreff: u.titel, text, ereignis: "nachricht", kanaele: ["push"], unterhaltung_id: id });
   zeige(S.view, S.params, { ersetzen: true });
@@ -106,6 +119,7 @@ AKTIONEN.rsVorschau = () => {
 AKTIONEN.rsSenden = async () => {
   const f = formWerte(document.getElementById("rsForm"));
   if (!f.text.trim()) { toast("Bitte Text eingeben"); return; }
+  papierflieger(document.querySelector('[data-a="rsSenden"]'), false); // Sende-Effekt
   const ids = verteilerAufloesen(db, f.verteiler);
   const vname = verteilerListe(db).find((x) => x.key === f.verteiler)?.name || f.verteiler;
   // Unterhaltung für den Verteiler suchen/anlegen, damit Rückmeldungen in der App sichtbar sind
@@ -125,15 +139,15 @@ AKTIONEN.rsWhatsapp = () => {
 VIEWS.pinnwand = {
   render() {
     const z = liste("pinnwand").sort((a, b) => (a.erledigt - b.erledigt) || (b.wichtig - a.wichtig) || b.zeit.localeCompare(a.zeit));
-    return kopf("📌 Pinnwand", `<button class="knopf haupt klein" data-a="pwNeu">＋ Zettel</button>`) + z.map((x) => `<div class="karte" style="${x.wichtig ? "border-left:6px solid var(--rot)" : ""};${x.erledigt ? "opacity:.55" : ""}">
+    return kopf("📌 Pinnwand", `<button class="knopf haupt klein" data-a="pwNeu">＋ Zettel</button>`) + z.map((x) => `<div class="karte" data-pw="${x.id}" style="${x.wichtig ? "border-left:6px solid var(--rot)" : ""};${x.erledigt ? "opacity:.55" : ""}">
       <div>${x.wichtig ? "❗ " : ""}${esc(x.text)}</div><div class="hinweis">${esc(name(x.von))} · ${vorZeit(x.zeit)}</div>
       ${x.von === S.ich.id || istLehrkraft() ? `<div class="knopfreihe"><button class="knopf klein" data-a="pwErledigt" data-x="${x.id}">${x.erledigt ? "↩️ wieder offen" : "✔️ erledigt"}</button><button class="knopf klein rot" data-a="pwLoeschen" data-x="${x.id}">🗑️</button></div>` : ""}</div>`).join("") || '<div class="leer">Die Pinnwand ist leer.</div>';
   },
 };
 AKTIONEN.pwNeu = () => blatt("Neuer Zettel", `<div id="pwForm"><div class="feld"><textarea name="text" placeholder="Was soll an die Pinnwand?"></textarea></div><label class="schalter"><span>wichtig</span><input type="checkbox" name="wichtig"></label><button class="knopf haupt breit" data-a="pwSpeichern">📌 Anheften</button></div>`);
-AKTIONEN.pwSpeichern = async () => { const f = formWerte(document.getElementById("pwForm")); if (!f.text.trim()) return; await speichere("pinnwand", { text: f.text, wichtig: f.wichtig, erledigt: false, von: S.ich.id, zeit: new Date().toISOString() }); blattZu(); zeige("pinnwand", {}, { ersetzen: true }); };
+AKTIONEN.pwSpeichern = async () => { const f = formWerte(document.getElementById("pwForm")); if (!f.text.trim()) return; const neu = await speichere("pinnwand", { text: f.text, wichtig: f.wichtig, erledigt: false, von: S.ich.id, zeit: new Date().toISOString() }); blattZu(); zeige("pinnwand", {}, { ersetzen: true }); zettelAnpinnen(document.querySelector(`[data-pw="${neu.id}"]`)); };
 AKTIONEN.pwErledigt = async (id) => { const x = hole("pinnwand", id); await speichere("pinnwand", { ...x, erledigt: !x.erledigt }); zeige("pinnwand", {}, { ersetzen: true }); };
-AKTIONEN.pwLoeschen = async (id) => { if (await frage("Zettel löschen?")) { await loesche("pinnwand", id); zeige("pinnwand", {}, { ersetzen: true }); } };
+AKTIONEN.pwLoeschen = async (id, el) => { if (await frage("Zettel löschen?")) { await reisswolf(el?.closest(".karte")); await loesche("pinnwand", id); zeige("pinnwand", {}, { ersetzen: true }); } };
 
 // ---------- SOS ----------
 VIEWS.sos = {

@@ -36,6 +36,19 @@ for (const x of ["herbst", "advent", "winter", "fruehling", "sommer", "kirmes", 
 }
 await p.evaluate(async () => (await import("/js/app/jahreszeiten.js")).jahreszeitVorschau("heute"));
 await p.screenshot({ path: `${BILDER}kopf.png` });
+// ⚙️ Mehr wie KC: alle Klappbereiche, Farbdesign, Thema mit Schrift, Tag/Nacht, Chat-Farben, Sende-Effekt, Sparmodus
+await p.evaluate(() => document.getElementById("blattHg")?.remove());
+await p.click('#fuss [data-x="einstellungen"]'); await p.waitForSelector("details.einst");
+await p.$$eval("details.einst", (l) => l.forEach((d) => { d.open = true; }));
+for (const [a, x] of [["designWahl", "nordsee"], ["designWahl", "disko"], ["themaWahl", "weihnachten"], ["themaWahl", "auto"], ["themaWahl", "aus"], ["modusWahl", "nacht"], ["modusWahl", "auto"], ["sendeEffektWahl", "taube"], ["sparWahl", "auto"], ["designStandard", ""]]) {
+  await p.evaluate(([a, x]) => document.querySelector(`[data-a="${a}"]${x ? `[data-x="${x}"]` : ""}`).click(), [a, x]); await p.waitForTimeout(120);
+}
+await p.evaluate(() => document.querySelector('[data-a="cfOeffnen"]').click()); await p.waitForSelector(".cf-farben");
+await p.evaluate(() => document.querySelector('[data-a="cfSetzen"][data-x="hintergrund:noten"]').click());
+await p.evaluate(() => document.querySelector('[data-a="cfStandard"]').click());
+await p.screenshot({ path: `${BILDER}einstellungen.png` });
+await p.evaluate(() => document.getElementById("blattHg")?.remove());
+await p.click('#fuss [data-x="start"]'); await p.waitForSelector("#bkHero");
 for (const rolle of ["leitung", "lehrkraft", "vorstand", "schueler", "eltern"]) {
   await p.selectOption("#demoleiste select", rolle);
   await p.waitForTimeout(300);

@@ -353,6 +353,8 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.kom_ereignisse = [];
   d.aenderungen = [];
 
+  // Privatsphäre (⚙️ Mehr): etwa die Hälfte der Schüler zeigt ihren Geburtstag
+  d.personen.forEach((p, i) => { if (p.typ === "schueler" && i % 2 === 0) p.freigaben = { geburtstag: true }; });
   d.__konfig = {
     name: "Bachkreis Bergkamen",
     untertitel: "Jugendsinfonieorchester",

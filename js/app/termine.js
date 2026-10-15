@@ -1,9 +1,9 @@
 // Termine: Liste/Kalender, Zu-/Absage (auch Eltern für ihre Kinder), Besetzungsampel, Nachfassen, Serientermine,
 // Abwesenheit (Zeitraum auf einmal absagen), Kalender-Export (.ics). Vorbild: KC Club „treffen“/„teilnahme“.
-import { S, VIEWS, db, zeige, zurueck, kopf, name, vorname, istLehrkraft, istLeitung, istEltern } from "./zustand.js";
+import { S, VIEWS, db, einst, zeige, zurueck, kopf, name, vorname, istLehrkraft, istLeitung, istEltern } from "./zustand.js";
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
-import { termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, tagIso, registerVon, instrumenteVon } from "../kern/logik.js";
+import { feiertageNRW, termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, tagIso, registerVon, instrumenteVon } from "../kern/logik.js";
 import { senden, whatsapp } from "../kern/versand.js";
 
 const ANTW = { ja: ["✅", "Zusage"], vielleicht: ["🤔", "Vielleicht"], nein: ["❌", "Absage"] };
@@ -63,7 +63,8 @@ function monatsKalender(ts, monat) {
     const d = new Date(start); d.setDate(start.getDate() + i);
     const tag = tagIso(d);
     const an = ts.filter((t) => tagIso(t.beginn) === tag);
-    html += `<div class="tag ${d.getMonth() !== m ? "fremd" : ""} ${tag === heute ? "heute" : ""}" data-a="${an.length ? "oeffne" : "nix"}" data-x="${an.length ? "termin|" + an[0].id : ""}">${d.getDate()}${an.map((t) => `<i style="background:${esc(art(t).farbe)}" title="${esc(t.titel)}"></i>`).join("")}</div>`;
+    const ft = einst().feiertage !== false ? feiertageNRW(d.getFullYear())[tag] : null;
+    html += `<div class="tag ${d.getMonth() !== m ? "fremd" : ""} ${tag === heute ? "heute" : ""} ${ft ? "feiertag" : ""}" ${ft ? `title="${esc(ft)}"` : ""} data-a="${an.length ? "oeffne" : "nix"}" data-x="${an.length ? "termin|" + an[0].id : ""}">${d.getDate()}${ft ? `<small class="ft">${esc(ft)}</small>` : ""}${an.map((t) => `<i style="background:${esc(art(t).farbe)}" title="${esc(t.titel)}"></i>`).join("")}</div>`;
   }
   return html + "</div>";
 }

@@ -1,10 +1,10 @@
 /* Kopf der Startseite – übernommen aus der KC Club App (index.html: KC-CLUB-KOPF-ORDNUNG, -KOPF-ROLLO, -KOPF-GLANZ,
    -INFOFELD, -WETTER, -JAHRESZEIT-BUEHNE, -DEKO, -KUCKUCKSUHR, -REGISTER-EFFEKTE) in den Bachkreis-Farben Schwarz/Gold. */
-:root { --hero1: #0d0c08; --hero4: #8a6400; --heroschatten: rgba(60, 45, 0, .38); --linie-gold: #d4a017; }
+:root { --heroschatten: rgba(60, 45, 0, .38); }
 
 /* Kopf */
 #v-start .hero { position: relative; }
-.hero { background: radial-gradient(circle at 96% 0, rgba(242, 183, 5, .38), transparent 42%), linear-gradient(135deg, var(--hero1) 0%, #26231b 40%, #3b3110 72%, var(--hero4) 100%);
+.hero { background: radial-gradient(circle at 96% 0, color-mix(in srgb, var(--gold) 38%, transparent), transparent 42%), var(--heroverlauf, linear-gradient(135deg, var(--hero1) 0%, var(--haupt) 40%, var(--haupt2) 72%, var(--hero4) 100%));
   color: #fff; border-radius: 26px; padding: 22px 18px 18px; box-shadow: 0 12px 30px var(--heroschatten); }
 .kopfzeile { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
 .kopflogo { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
@@ -13,7 +13,7 @@
 .kopf-version { border: none; background: none; padding: 0 2px; color: rgba(255, 255, 255, .85); font: 700 .7rem/1.1 system-ui, sans-serif; letter-spacing: .02em; white-space: nowrap; cursor: pointer; position: relative; }
 .kopf-version::after { content: ""; position: absolute; inset: -4px -2px; }
 .kopftext { flex: 1; min-width: 0; }
-.marke-klein { font-size: .92rem; letter-spacing: .03em; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; color: var(--marke2); }
+.marke-klein { font-size: .92rem; letter-spacing: .03em; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; color: var(--kopf-marke); }
 .kopftext .gruss { display: block; font-weight: 800; font-size: 1.2rem; line-height: 1.2; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kopfrechts { flex: none; align-self: center; }
 .kopfrechts .knopfreihe { display: flex; gap: 8px; margin: 0; }
@@ -153,8 +153,8 @@ body.einfach .statusleiste, :root.einfach .statusleiste { background: none; }
 @media (prefers-reduced-motion: reduce) { .wszene *, .wszene *::before, .ifeld { animation: none !important; } .wtropfen, .wflocke, .wwind, .wblitz { display: none; } }
 
 /* Register: laufender Rahmen beim Wechsel, Wisch-Hinweis */
-.register button.reg-lauf { outline: 3px dashed color-mix(in srgb, var(--marke) 70%, #fff); outline-offset: -3px; animation: regLauf 1.6s ease-out 1 both; }
-@keyframes regLauf { 0% { outline-color: var(--marke2); } 100% { outline-color: transparent; } }
+.register button.reg-lauf { outline: 3px dashed color-mix(in srgb, var(--gold) 70%, #fff); outline-offset: -3px; animation: regLauf 1.6s ease-out 1 both; }
+@keyframes regLauf { 0% { outline-color: var(--gold); } 100% { outline-color: transparent; } }
 .rein-links { animation: reinLinks .22s ease-out; } .rein-rechts { animation: reinRechts .22s ease-out; }
 @keyframes reinLinks { from { opacity: 0; transform: translateX(30px); } } @keyframes reinRechts { from { opacity: 0; transform: translateX(-30px); } }
 .wischhinweis { text-align: center; font-size: .78rem; color: var(--grau); margin: 6px 0 2px; }
@@ -189,7 +189,7 @@ body.einfach .statusleiste, :root.einfach .statusleiste { background: none; }
 .hero .jz-silvester i { top: auto; bottom: 20%; opacity: 0; animation-name: jzFeuerwerk; } @keyframes jzFeuerwerk { 0% { transform: translateY(0) scale(.3); opacity: 0; } 40% { transform: translateY(-120px) scale(.5); opacity: .9; } 55% { transform: translateY(-140px) scale(1.6); opacity: 1; } 100% { transform: translateY(-120px) scale(2); opacity: 0; } }
 :root.ohne-effekt .jz-schicht { display: none; }
 .jz-vorschau-aus { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 60; border: 0; border-radius: 999px; padding: 10px 16px; min-height: 44px;
-  background: #1a1500; color: var(--marke2); font-weight: 700; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); cursor: pointer; max-width: calc(100vw - 24px); }
+  background: var(--haupt); color: var(--haupt-text); font-weight: 700; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); cursor: pointer; max-width: calc(100vw - 24px); }
 
 /* Kuckucksuhr */
 .kuckuck { position: fixed; left: 50%; top: max(12px, env(safe-area-inset-top)); z-index: 9500; width: 150px; transform: translate(-50%, -130%); transition: transform .5s cubic-bezier(.3, 1.4, .5, 1); cursor: pointer; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, .35)); }
@@ -211,3 +211,10 @@ body.einfach .statusleiste, :root.einfach .statusleiste { background: none; }
 
 /* Ruhe nach 45 s ohne Bedienung: Endlos-Animationen halten an (KC-CLUB-AKKU-2) */
 :root.bk-ruhe .led.rot, :root.bk-ruhe .zticker span, :root.bk-ruhe .wszene *, :root.bk-ruhe .wszene *::before, :root.bk-ruhe .jz-deko .fk { animation-play-state: paused !important; }
+
+:root.heroschrift .hero { text-shadow: 0 1px 3px rgba(0, 0, 0, .55); }
+:root.schwarzlicht .hero { box-shadow: 0 0 0 1px rgba(255, 43, 214, .55), 0 0 22px rgba(255, 43, 214, .45), 0 0 44px rgba(0, 229, 255, .25); }
+:root.schwarzlicht .register button.an, :root.schwarzlicht .knopf.haupt { box-shadow: 0 0 10px rgba(255, 43, 214, .7), 0 0 20px rgba(0, 229, 255, .3); }
+#modusKnopf { position: relative; }
+#modusKnopf .modusbuchstabe { position: absolute; right: -3px; bottom: -3px; min-width: 17px; height: 17px; border-radius: 9px; background: #fff; color: var(--haupt); font: 800 .66rem/17px system-ui, sans-serif; text-align: center; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
+:root[data-thema-schrift] #v-start .gruss #begruessung { font-family: var(--thema-schrift), system-ui, sans-serif; font-weight: var(--thema-schrift-gewicht); font-size: calc(1em * var(--thema-schrift-gr)); letter-spacing: .01em; }

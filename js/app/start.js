@@ -6,6 +6,7 @@ import { cockpit, termineFuer, antwortVon, kinderVon, genehmigungStatus, ausleih
 import { communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { kopfEinsetzen, kopfVerbinden, regEffekt } from "./kopf.js";
+import { dunkelUmschalten } from "./darstellung.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
 const registerSichtbar = () => REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung());
@@ -194,7 +195,7 @@ AKTIONEN.kachel = (id) => {
   zeige(k.v, k.p || {});
 };
 AKTIONEN.ansichtWechseln = () => { einstSetzen("einfach", !einst().einfach); zeige("start", {}, { ersetzen: true }); };
-AKTIONEN.themaUmschalten = () => { einstSetzen("thema", document.documentElement.classList.contains("dunkel") ? "hell" : "dunkel"); zeige("start", {}, { ersetzen: true }); };
+AKTIONEN.themaUmschalten = () => dunkelUmschalten(); // reihum A → T → N wie in der KC Club App
 AKTIONEN.ledBlatt = () => {
   const az = adminZustaende();
   const z = (f, t, x) => `<li><i class="led ${f}"></i><div class="fl"><b>${t}</b><div class="zeile-unter">${esc(x)}</div></div></li>`;

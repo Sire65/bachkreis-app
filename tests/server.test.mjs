@@ -161,3 +161,21 @@ test("Versand vormerken: Eltern dürfen nicht an beliebige Personen senden", asy
   const l = await rufe({ aktion: "versenden", ereignis: "rundschreiben", an: ["p-lk1", "p-lk2"], kanaele: ["push", "mail"], betreff: "Test", text: "Hallo" }, await login("p-leitung"));
   assert.equal(l.json.vorgemerkt, 2); // Lehrkräfte ohne Push-Abo: E-Mail (Push nicht erreichbar)
 });
+
+test("Privatsphäre: Freigaben setzt nur die Person selbst; andere sehen nur Freigegebenes; andere Geräte abmelden", async () => {
+  const sId = d.__konfig.demo_personen.schueler;
+  const t1 = await login(sId), t2 = await login(sId);
+  const ich = (await rufe({ aktion: "laden" }, t1)).json.daten.personen.find((p) => p.id === sId);
+  const r = await rufe({ aktion: "speichern", tab: "personen", zeilen: [{ ...ich, freigaben: { mobil: true, geburtstag: true, adresse: false, boese: true }, rollen: ["admin"], basis_version: ich.version }] }, t1);
+  assert.equal(r.status, 200, JSON.stringify(r.json));
+  const roh = (await db.q(`select freigaben, rollen from bk_personen where id = $1`, [sId]))[0];
+  assert.deepEqual(roh.freigaben, { geburtstag: true, mobil: true, email: false, adresse: false });
+  assert.ok(!(roh.rollen || []).includes("admin"), "Rollen kann man sich nicht selbst geben");
+  const e = await login(d.__konfig.demo_personen.eltern);
+  const fremd = (await rufe({ aktion: "laden" }, e)).json.daten.personen.find((p) => p.id === sId);
+  if (fremd) { assert.equal(fremd.strasse, undefined); assert.ok("mobil" in fremd); assert.equal(fremd.geburtsdatum, undefined); }
+  const ab = await rufe({ aktion: "abmelden_andere" }, t1);
+  assert.ok(ab.json.anzahl >= 1);
+  assert.equal((await rufe({ aktion: "laden" }, t2)).status, 401, "anderes Gerät ist abgemeldet");
+  assert.equal((await rufe({ aktion: "laden" }, t1)).status, 200, "dieses Gerät bleibt angemeldet");
+});

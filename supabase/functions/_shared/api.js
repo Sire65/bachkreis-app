@@ -188,6 +188,10 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
       await db.q(`insert into bk_konfig (schluessel, wert, geaendert_am) values ($1, $2::jsonb, now()) on conflict (schluessel) do update set wert = excluded.wert, geaendert_am = now()`, [k, JSON.stringify(body.wert ?? null)]);
       return { status: 200, json: { ok: true } };
     }
+    if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
+      const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);
+      return { status: 200, json: { ok: true, anzahl: r.length } };
+    }
     if (aktion === "abmelden") { await db.q(`update bk_sitzungen set widerrufen_am = now() where id = $1`, [s.sid]); return { status: 200, json: { ok: true } }; }
     return fehler(400, "UNBEKANNTE_AKTION");
   } catch (e) {

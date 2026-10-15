@@ -270,3 +270,18 @@ export function csvEin(text) {
   if (!kopf) return [];
   return rest.map((z) => Object.fromEntries(kopf.map((k, i) => [k.trim(), z[i] ?? ""])));
 }
+
+// Gesetzliche Feiertage NRW (wie in der KC Club App) – für den Kalender
+function osterSonntagIso(jahr) {
+  const a = jahr % 19, b = Math.floor(jahr / 100), c = jahr % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const monat = Math.floor((h + l - 7 * m + 114) / 31), tag = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${jahr}-${String(monat).padStart(2, "0")}-${String(tag).padStart(2, "0")}`;
+}
+const plusTage = (iso, n) => { const x = new Date(iso + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+export function feiertageNRW(jahr) {
+  const o = osterSonntagIso(jahr);
+  return Object.fromEntries([[`${jahr}-01-01`, "Neujahr"], [plusTage(o, -2), "Karfreitag"], [plusTage(o, 1), "Ostermontag"], [`${jahr}-05-01`, "Tag der Arbeit"],
+    [plusTage(o, 39), "Christi Himmelfahrt"], [plusTage(o, 50), "Pfingstmontag"], [plusTage(o, 60), "Fronleichnam"], [`${jahr}-10-03`, "Tag der Deutschen Einheit"],
+    [`${jahr}-11-01`, "Allerheiligen"], [`${jahr}-12-25`, "1. Weihnachtstag"], [`${jahr}-12-26`, "2. Weihnachtstag"]]);
+}

@@ -73,6 +73,12 @@ function kuerzen(tab, z, ctx, alleLesen) {
   if (tab === "personen" && !alleLesen && !ctx.meine.has(z.id) && !ctx.eltern.has(z.id)) {
     out = Object.fromEntries(NUR_NAME.map((k) => [k, z[k]]));
     if (["leitung", "lehrkraft"].includes(z.typ)) { out.mobil = z.mobil; out.email = z.email; } // Ansprechpartner (SOS)
+    // Privatsphäre: was die Person selbst freigegeben hat (⚙️ Mehr › Privatsphäre)
+    const fg = z.freigaben || {};
+    if (fg.mobil) out.mobil = z.mobil;
+    if (fg.email) out.email = z.email;
+    if (fg.adresse) { out.strasse = z.strasse; out.plz = z.plz; out.ort = z.ort; }
+    if (fg.geburtstag && z.geburtsdatum) out.gb_md = String(z.geburtsdatum).slice(5, 10); // nur Tag und Monat, kein Jahr
   }
   if (tab === "zugaenge") out = { ...out, code: null, code_hash: undefined };
   if (tab === "versand" && out.quittung_hash !== undefined) { out = { ...out }; delete out.quittung_hash; } // Einmal-Token der Push-Quittung
@@ -142,7 +148,8 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "text", "wichtig", "erledigt", "geloescht_am"]), von: ctx.ich, zeit: alt?.zeit || jetzt } };
     case "personen":
       if (!alt || alt.id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_EINSTELLUNGEN" };
-      return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung } };
+      { const fg = neu.freigaben && typeof neu.freigaben === "object" ? Object.fromEntries(["geburtstag", "mobil", "email", "adresse"].map((k) => [k, neu.freigaben[k] === true])) : alt.freigaben;
+        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg } }; }
     default:
       return { ok: false, grund: "KEIN_SCHREIBRECHT" };
   }

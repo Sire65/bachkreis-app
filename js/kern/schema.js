@@ -74,7 +74,7 @@ export const TABELLEN = {
       { k: "notiz", t: "Notiz", typ: "lang" },
     ],
     liste: ["nachname", "vorname", "typ", "jahrgang", "email", "mobil", "ort"],
-    intern: [{ k: "benachrichtigung", typ: "json" }],
+    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }], // freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
     anzeige: (z) => `${z.vorname || ""} ${z.nachname || ""}`.trim(),
   },
   eltern_kind: {

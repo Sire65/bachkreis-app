@@ -12,6 +12,8 @@ import "./instrumente.js";
 import "./leitung.js";
 import "./meins.js";
 import "./fuss.js";
+import { anwendenDesign } from "./darstellung.js";
+import { beimStart } from "./einstellungen.js";
 import { buehneLaeuft } from "./buehne.js";
 
 window.addEventListener("error", (e) => fehlerMerken(e.error || e.message));
@@ -73,7 +75,7 @@ AKTIONEN.anmeldenCode = async () => {
 AKTIONEN.abmeldenApp = async () => { if (!confirm("Von diesem Gerät abmelden?")) return; await abmelden(); location.reload(); };
 
 async function starten() {
-  einstAnwenden();
+  einstAnwenden(); anwendenDesign();
   matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", einstAnwenden);
   aktionenStarten();
   const url = new URL(location.href);
@@ -105,6 +107,7 @@ async function starten() {
   else if (globalThis.Notification?.permission === "granted") pushAbonnieren().catch((e) => console.warn("Push-Abo", e));
   const view = location.hash.slice(1);
   zeige("start", {}, { ersetzen: true });
+  beimStart(); // Tipp des Tages, „Was ist neu“, ab und zu die Fee
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
   // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird

@@ -33,6 +33,7 @@ create table if not exists bk_personen (
   foto_ok boolean,
   notiz text,
   benachrichtigung jsonb,
+  freigaben jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),

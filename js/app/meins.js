@@ -46,37 +46,7 @@ AKTIONEN.aeSenden = async () => {
   toast("✏️ Änderung gemeldet"); zurueck();
 };
 
-// ---------- Einstellungen ----------
-VIEWS.einstellungen = {
-  render() {
-    const e = einst();
-    const sch = (k, t, x = "") => `<label class="schalter"><span><b>${t}</b>${x ? `<div class="hinweis">${x}</div>` : ""}</span><input type="checkbox" data-c="einstSchalter" data-x="${k}" ${e[k] ? "checked" : ""}></label>`;
-    const wahl = (k, t, opts) => `<div class="feld"><label>${t}</label><div class="umschalter">${opts.map(([v, n]) => `<button class="${e[k] === v ? "an" : ""}" data-a="einstWahl" data-x="${k}|${v}">${n}</button>`).join("")}</div></div>`;
-    const ereignisse = Object.entries(EREIGNISSE);
-    const kanaele = ["push", "mail", "app"];
-    return kopf("⚙️ Meine Einstellungen") + `<div class="karte"><h3>Darstellung <span class="hinweis">(dieses Gerät)</span></h3>
-      ${wahl("thema", "Design", [["auto", "Automatisch"], ["hell", "☀️ Tag"], ["dunkel", "🌙 Nacht"]])}
-      ${wahl("schrift", "Schriftgröße", [["normal", "Normal"], ["gross", "Groß"], ["riesig", "Sehr groß"]])}
-      ${sch("einfach", "Einfache Ansicht", "Große Kacheln, nur das Wichtigste – ohne Register")}
-      ${sch("effekte", "Kachel-Effekte", "Kacheln erscheinen mit kleiner Animation")}
-      ${sch("eselsohr", "Eselsohr am Kopf", "Doppelt tippen dreht den Kopf um – dahinter die Bühne mit dem Orchester")}
-      <div class="feld"><label>Start-Register</label><select data-c="einstStartReg">${REGISTER_ALLE.map(([r, n]) => `<option value="${r}" ${e.startRegister === r ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
-      <div class="karte"><h3>🎨 Kopf & Effekte <span class="hinweis">(dieses Gerät)</span></h3>
-        <label class="schalter"><span><b>🍂 Jahreszeiten im Kopf</b><div class="hinweis">Laub, Schnee, Blumen, Schneemann mit Zylinder, Deko an der Leiste – wie in der KC Club App</div></span><input type="checkbox" data-c="jzSchalter" ${e.jahreszeit !== false ? "checked" : ""}></label>
-        <div class="feld"><label>Jahreszeit</label><div class="wahlen">${JZ_WAHL.map(([k, t]) => `<button type="button" class="chip-wahl ${jzWahl() === k ? "an" : ""}" data-a="jzWahlKnopf" data-x="${k}">${t}</button>`).join("")}</div></div>
-        <div class="feld"><label>Deko an der Leiste</label><div class="wahlen">${JZ_DEKO_WAHL.map(([k, t]) => `<button type="button" class="chip-wahl ${jzDekoWahl() === k ? "an" : ""}" data-a="jzDekoKnopf" data-x="${k}">${t}</button>`).join("")}</div></div>
-        <div class="feld"><label>Vorschau im Kopf der Startseite</label><div class="wahlen">${JZ_VORSCHAUEN.map(([x, t]) => `<button type="button" class="chip-wahl" data-a="jzVorschauKnopf" data-x="${x}">${t}</button>`).join("")}</div></div>
-        <div class="feld"><label>Kacheln beim Register-Wechsel</label><div class="wahlen">${REG_EFFEKTE.map(([k, t]) => `<button type="button" class="chip-wahl ${regEffektWahl() === k ? "an" : ""}" data-a="regEffektKnopf" data-x="${k}">${t}</button>`).join("")}</div></div>
-        <label class="schalter"><span><b>🐦 Kuckucksuhr zur vollen Stunde</b><div class="hinweis">Nur wenn die App offen ist; nachts ohne Ton</div></span><span><button type="button" class="knopf klein" data-a="kuckuckProbe">🔊 Probe</button> <input type="checkbox" data-c="einstSchalter" data-x="kuckuck" ${e.kuckuck !== false ? "checked" : ""}></span></label>
-        <label class="schalter"><span><b>🔔 Töne</b><div class="hinweis">Kuckuck und Klänge der App</div></span><input type="checkbox" data-c="einstSchalter" data-x="ton" ${e.ton !== false ? "checked" : ""}></label></div>
-      <div class="karte"><h3>Benachrichtigungen</h3><p class="hinweis">Wähle für jedes Ereignis, wie du benachrichtigt wirst.</p>
-      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th></th>${kanaele.map((k) => `<th style="font-size:.8rem">${KANAELE[k]}</th>`).join("")}</tr>${ereignisse.map(([k, t]) => `<tr><td style="padding:6px 0;font-weight:700;font-size:.9rem">${t}</td>${kanaele.map((c) => `<td style="text-align:center"><input type="checkbox" data-c="benachWahl" data-x="${k}|${c}" ${wahlVon(S.ich, k).includes(c) ? "checked" : ""} ${k === "sos" && c === "push" ? "disabled" : ""}></td>`).join("")}</tr>`).join("")}</table></div>
-      ${sch("ruhe", "Nicht stören", `Keine Push-Töne von ${e.ruheVon} bis ${e.ruheBis} Uhr (SOS kommt immer durch)`)}
-      <div class="knopfreihe"><button class="knopf" data-a="pushErlauben">🔔 Push auf diesem Gerät erlauben</button></div></div>
-      <div class="karte"><h3>Kacheln</h3><p class="hinweis">Ausgeblendete Kacheln bleiben hier erreichbar.</p>${["bachkreis", "meins", "technik"].map((r) => `<h4>${REGISTER_ALLE.find(([x]) => x === r)[1]}</h4>${KACHELN[r].filter((k) => !k.nur || k.nur()).map((k) => `<label class="schalter"><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span><span><button class="knopf klein" data-a="kachelSchieben" data-x="${r}|${k.id}|-1">▲</button> <input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}></span></label>`).join("")}`).join("")}
-      <button class="knopf" data-a="kachelnStandard">↺ Standard</button></div>`;
-  },
-};
+// Einstellungen: siehe einstellungen.js (⚙️ Mehr, wie in der KC Club App)
 AKTIONEN.einstSchalter = (_, el) => { einstSetzen(el.dataset.x, el.checked); zeige("einstellungen", {}, { ersetzen: true }); };
 AKTIONEN.einstWahl = (x) => { const [k, v] = x.split("|"); einstSetzen(k, v); zeige("einstellungen", {}, { ersetzen: true }); };
 AKTIONEN.einstStartReg = (v) => einstSetzen("startRegister", v);

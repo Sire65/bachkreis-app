@@ -58,3 +58,6 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F48 | Jahreszeiten im Kopf (aus der KC Club App): Deko, Eiszapfen, Bühne mit allen Extras und Themen | ✅ | e2e rundgang |
 | BK-F49 | Register-Effekte, Kuckucksuhr, Konfetti | ✅ | e2e rundgang |
 | BK-F50 | Fußleiste wie KC (Start, Termine, Nachrichten mit Zähler, Orchester/Kinder, Mehr) | ✅ | e2e rundgang |
+| BK-F51 | Einstellungen wie KC: Farbdesigns, Themen + Schriften, Tag/Nacht A/T/N, Schrift-Zoom, Chat-Farben, Sparmodus | ✅ | e2e rundgang |
+| BK-F52 | Effekte wie KC: Sende-Effekte, Fee, Reißwolf, Anpinnen, Tipp des Tages, Was ist neu, Vorlesen, Feiertage | ✅ | e2e rundgang |
+| BK-F53 | Privatsphäre-Freigaben (Geburtstag, Handy, E-Mail, Adresse), andere Geräte abmelden | ✅ | server.test |

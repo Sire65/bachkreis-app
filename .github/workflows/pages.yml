@@ -28,7 +28,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Seite zusammenstellen
         run: |
-          WEB="index.html verwaltung.html manifest.webmanifest sw.js version.json css js lib icons ton"
+          WEB="index.html verwaltung.html manifest.webmanifest sw.js version.json css js lib icons ton schriften"
           mkdir _site
           if [ "$BK_DATENQUELLE" = "supabase" ] && [ -n "$BK_API_URL" ]; then
             cp -r $WEB _site/

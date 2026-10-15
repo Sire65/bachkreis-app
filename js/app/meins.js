@@ -8,6 +8,13 @@ import { TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
 import { kinderVon, elternVon, wirksameGruppen, instrumenteVon, tagIso } from "../kern/logik.js";
 import { EREIGNISSE, KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
+import { JZ_WAHL, jzWahl, jzWahlSetzen, JZ_DEKO_WAHL, jzDekoWahl, jzDekoSetzen, jahreszeitVorschau, jahreszeitKopf } from "./jahreszeiten.js";
+import { REG_EFFEKTE, regEffektWahl, regEffektSetzen, regEffekt } from "./kopf.js";
+
+// Vorschauen wie in der KC Club App (Art:Extra)
+const JZ_VORSCHAUEN = [["herbst", "🍂 Herbst"], ["advent", "🕯️ Advent"], ["winter", "⛄ Winter"], ["fruehling", "🌱 Frühling"], ["sommer", "🌻 Sommer"],
+  ["kirmes", "🎡 Kirmes"], ["wiesn", "🥨 Oktoberfest"], ["karibik", "🌴 Karibik"], ["karneval", "🎭 Karneval"], ["halloween", "🎃 Halloween"],
+  ["advent:nikolaus", "🥾 Nikolaus"], [":regen", "☔ Regen"], [":topf", "🎼 Probentag"], ["fruehling:ostern", "🥚 Ostern"], ["herbst:igel", "🦔 Igel"], ["herbst:twinkey", "🧹 Orchesterwart"], ["heute", "📅 Heute (beenden)"]];
 
 // ---------- Meine Daten (Auskunft) ----------
 VIEWS.meinedaten = {
@@ -54,6 +61,14 @@ VIEWS.einstellungen = {
       ${sch("effekte", "Kachel-Effekte", "Kacheln erscheinen mit kleiner Animation")}
       ${sch("eselsohr", "Eselsohr am Kopf", "Doppelt tippen dreht den Kopf um – dahinter die Bühne mit dem Orchester")}
       <div class="feld"><label>Start-Register</label><select data-c="einstStartReg">${REGISTER_ALLE.map(([r, n]) => `<option value="${r}" ${e.startRegister === r ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
+      <div class="karte"><h3>🎨 Kopf & Effekte <span class="hinweis">(dieses Gerät)</span></h3>
+        <label class="schalter"><span><b>🍂 Jahreszeiten im Kopf</b><div class="hinweis">Laub, Schnee, Blumen, Schneemann mit Zylinder, Deko an der Leiste – wie in der KC Club App</div></span><input type="checkbox" data-c="jzSchalter" ${e.jahreszeit !== false ? "checked" : ""}></label>
+        <div class="feld"><label>Jahreszeit</label><div class="wahlen">${JZ_WAHL.map(([k, t]) => `<button type="button" class="chip-wahl ${jzWahl() === k ? "an" : ""}" data-a="jzWahlKnopf" data-x="${k}">${t}</button>`).join("")}</div></div>
+        <div class="feld"><label>Deko an der Leiste</label><div class="wahlen">${JZ_DEKO_WAHL.map(([k, t]) => `<button type="button" class="chip-wahl ${jzDekoWahl() === k ? "an" : ""}" data-a="jzDekoKnopf" data-x="${k}">${t}</button>`).join("")}</div></div>
+        <div class="feld"><label>Vorschau im Kopf der Startseite</label><div class="wahlen">${JZ_VORSCHAUEN.map(([x, t]) => `<button type="button" class="chip-wahl" data-a="jzVorschauKnopf" data-x="${x}">${t}</button>`).join("")}</div></div>
+        <div class="feld"><label>Kacheln beim Register-Wechsel</label><div class="wahlen">${REG_EFFEKTE.map(([k, t]) => `<button type="button" class="chip-wahl ${regEffektWahl() === k ? "an" : ""}" data-a="regEffektKnopf" data-x="${k}">${t}</button>`).join("")}</div></div>
+        <label class="schalter"><span><b>🐦 Kuckucksuhr zur vollen Stunde</b><div class="hinweis">Nur wenn die App offen ist; nachts ohne Ton</div></span><span><button type="button" class="knopf klein" data-a="kuckuckProbe">🔊 Probe</button> <input type="checkbox" data-c="einstSchalter" data-x="kuckuck" ${e.kuckuck !== false ? "checked" : ""}></span></label>
+        <label class="schalter"><span><b>🔔 Töne</b><div class="hinweis">Kuckuck und Klänge der App</div></span><input type="checkbox" data-c="einstSchalter" data-x="ton" ${e.ton !== false ? "checked" : ""}></label></div>
       <div class="karte"><h3>Benachrichtigungen</h3><p class="hinweis">Wähle für jedes Ereignis, wie du benachrichtigt wirst.</p>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th></th>${kanaele.map((k) => `<th style="font-size:.8rem">${KANAELE[k]}</th>`).join("")}</tr>${ereignisse.map(([k, t]) => `<tr><td style="padding:6px 0;font-weight:700;font-size:.9rem">${t}</td>${kanaele.map((c) => `<td style="text-align:center"><input type="checkbox" data-c="benachWahl" data-x="${k}|${c}" ${wahlVon(S.ich, k).includes(c) ? "checked" : ""} ${k === "sos" && c === "push" ? "disabled" : ""}></td>`).join("")}</tr>`).join("")}</table></div>
       ${sch("ruhe", "Nicht stören", `Keine Push-Töne von ${e.ruheVon} bis ${e.ruheBis} Uhr (SOS kommt immer durch)`)}
@@ -65,6 +80,11 @@ VIEWS.einstellungen = {
 AKTIONEN.einstSchalter = (_, el) => { einstSetzen(el.dataset.x, el.checked); zeige("einstellungen", {}, { ersetzen: true }); };
 AKTIONEN.einstWahl = (x) => { const [k, v] = x.split("|"); einstSetzen(k, v); zeige("einstellungen", {}, { ersetzen: true }); };
 AKTIONEN.einstStartReg = (v) => einstSetzen("startRegister", v);
+AKTIONEN.jzSchalter = (_, el) => { einstSetzen("jahreszeit", el.checked); jahreszeitKopf(); toast(el.checked ? "🍂 Jahreszeiten im Kopf an" : "Jahreszeiten im Kopf aus"); };
+AKTIONEN.jzWahlKnopf = (k) => { jzWahlSetzen(k); zeige("einstellungen", {}, { ersetzen: true }); };
+AKTIONEN.jzDekoKnopf = (k) => { jzDekoSetzen(k); zeige("einstellungen", {}, { ersetzen: true }); };
+AKTIONEN.jzVorschauKnopf = (x) => { const [art, extra] = String(x).split(":"); jahreszeitVorschau(art, extra); };
+AKTIONEN.regEffektKnopf = (k) => { regEffektSetzen(k); zeige("start", {}, { ersetzen: true }); setTimeout(() => { if (!regEffekt(1, k === "aus" ? "jalousie" : undefined)) toast("Effekte sind aus – „Kachel-Effekte“ einschalten."); }, 350); };
 AKTIONEN.benachWahl = async (_, el) => {
   const [ereignis, kanal] = el.dataset.x.split("|");
   const b = { ...(S.ich.benachrichtigung || {}) };

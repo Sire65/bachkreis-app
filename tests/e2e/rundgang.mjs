@@ -13,8 +13,29 @@ const p = await (await b.newContext({ viewport: { width: 400, height: 860 } })).
 p.on("pageerror", (e) => fehler.push("Seitenfehler: " + e.message));
 p.on("console", (m) => { if (m.type() === "error") fehler.push("Konsole: " + m.text()); });
 p.on("dialog", (d) => d.dismiss());
+// Wetter: nachgebildete Open-Meteo-Antwort (Test ohne Internet und immer gleich)
+await p.route("https://api.open-meteo.com/**", (r) => {
+  const t0 = new Date(), iso = (i) => new Date(t0.getTime() + i * 86400000).toISOString().slice(0, 10), n = 16, a = (f) => Array.from({ length: n }, (_, i) => f(i));
+  const stunden = Array.from({ length: 7 * 24 }, (_, i) => i);
+  r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({
+    current: { temperature_2m: 11, apparent_temperature: 9, weather_code: 61, wind_speed_10m: 12, wind_gusts_10m: 25, precipitation: 0.2, is_day: 1 },
+    daily: { time: a(iso), weather_code: a((i) => [61, 3, 0, 95, 71, 45, 2][i % 7]), temperature_2m_max: a(() => 13), temperature_2m_min: a(() => 5), precipitation_probability_max: a((i) => i * 5), sunrise: a((i) => iso(i) + "T07:50"), sunset: a((i) => iso(i) + "T18:30"),
+      precipitation_sum: a(() => 1), wind_speed_10m_max: a(() => 20), wind_gusts_10m_max: a(() => 30), uv_index_max: a(() => 2), sunshine_duration: a(() => 7200) },
+    hourly: { time: stunden.map((i) => `${iso(Math.floor(i / 24))}T${String(i % 24).padStart(2, "0")}:00`), temperature_2m: stunden.map(() => 10), weather_code: stunden.map(() => 3), precipitation_probability: stunden.map(() => 20), is_day: stunden.map((i) => (i % 24 > 7 && i % 24 < 19 ? 1 : 0)) },
+  }) });
+});
 await p.goto(BASIS + "/index.html");
 await p.waitForSelector(".kachel");
+// Kopf wie KC: alle Infofeld-Karten, Wetter-Tag, Jalousie halb/ganz, Jahreszeiten-Vorschauen
+const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);
+for (let i = 0; i < karten; i++) { await p.click(`#infoPunkte .ipunkt[data-x="${i}"]`); await p.waitForTimeout(150); }
+await p.click('[data-a="infoGehe"][data-x="1"]'); await p.waitForSelector(".wtag", { timeout: 8000 }); await p.click('.wtag[data-wtag="2"]');
+for (const art of ["halb", "ganz", "ganz"]) { await p.click(`[data-a="kopfRollo"][data-x="${art}"]`); await p.waitForTimeout(2300); }
+for (const x of ["herbst", "advent", "winter", "fruehling", "sommer", "kirmes", "wiesn", "karibik", "karneval", "halloween"]) {
+  await p.evaluate(async (x) => (await import("/js/app/jahreszeiten.js")).jahreszeitVorschau(x), x); await p.waitForTimeout(700);
+}
+await p.evaluate(async () => (await import("/js/app/jahreszeiten.js")).jahreszeitVorschau("heute"));
+await p.screenshot({ path: `${BILDER}kopf.png` });
 for (const rolle of ["leitung", "lehrkraft", "vorstand", "schueler", "eltern"]) {
   await p.selectOption("#demoleiste select", rolle);
   await p.waitForTimeout(300);

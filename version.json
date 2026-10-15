@@ -1,18 +1,32 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "datum": "2026-10-15",
   "stufe": "DEV",
   "neu": [
-    "BK Communicator – eigener Versand-Kern nach dem Vorbild des KC Communicators: Programme, Regeln je Ereignis, Vorlagen je Kanal, Anbieter mit Routen",
-    "Empfänger automatisch: Eltern Minderjähriger zusätzlich oder statt des Kindes (Genehmigungen immer an die Eltern), Vorlieben je Person, Erreichbarkeit",
-    "Zustellung: Web-Push (kostenlos), E-Mail über Brevo mit automatischem Wechsel auf ein eigenes Postfach (SMTP), Wiederholung mit Backoff, Rückfall auf den nächsten Kanal",
-    "Schutz: Zero-Cost-Sperre, Bremse und Tageslimit je Anbieter, Ratengrenze, Ruhezeit, Doppelte unterdrücken, Not-Aus – Notfälle (SOS) kommen immer durch",
-    "Eskalation: SOS nach 5 Min. unbestätigt per E-Mail, nach 15 Min. an die Leitung; Push-Quittungen angezeigt / geöffnet / bestätigt",
-    "Konsole in der PC-Verwaltung: Lämpchen je Anbieter, Not-Aus, Test-Push/-Mail, alle Aufträge mit Verlauf; alle Regeln und Vorlagen als Tabellen pflegbar",
-    "Push-Abo je Gerät im Echtbetrieb (Meins › Einstellungen › Push erlauben); Schlüssel und Wartung richtet die GitHub-Action ein",
-    "Tests: 11 Communicator-Tests gegen PostgreSQL (PGlite), Browser-Test Echtbetrieb mit Test-Mail"
+    "Kopf wie in der KC Club App: Kopfzeile mit Logo und Version, Begrüßung, Tag/Nacht, Aktualisieren, Statusleiste mit LEDs, Lichtschein beim Öffnen",
+    "Jalousie: links ⌃ rollt das Infofeld ein, rechts ⌃⌃ den ganzen Kopf – mit Lamellen wie eine echte Jalousie",
+    "Infofeld zum Blättern mit ‹ › und « », Punkten und Wischen: Nächster Termin (mit Zu-/Absage), Wetter, Für dich, Demnächst, Kommunikationszentrale, Leitungszentrale",
+    "Wetter für Bergkamen (Open-Meteo, kostenlos): jetzt und 7 Tage, Tag antippen, lange drücken = Details, Wetter beim nächsten Termin, bewegte Wetter-Szene",
+    "Jahreszeiten im Kopf – das ganze Sortiment der KC Club App: Laub, Schnee mit Eiszapfen und Tropfen, Schneemann mit Dirigenten-Zylinder, Iglu, Huskys, Pistenraupe, Frühlingsblumen, Osterhase, Sonnenblume, Igel, Eichhörnchen, Laubbläser, Pilze, Hund, Regen mit Pfützen, Nikolaus-Stiefel",
+    "Deko an der Leiste (Wimpel, Lichterkette, Laternen), Themen-Bühnen Kirmes, Oktoberfest, Karibik, Karneval, Halloween; Notenständer am Probentag; Vorschau in den Einstellungen",
+    "Register-Wechsel mit Effekt (Jalousie, Kartenstapel, Umdrehen, Zufall) und Wischen; Kuckucksuhr zur vollen Stunde; Konfetti zum Geburtstag"
   ],
   "verlauf": [
+    {
+      "version": "0.4.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "BK Communicator – eigener Versand-Kern nach dem Vorbild des KC Communicators: Programme, Regeln je Ereignis, Vorlagen je Kanal, Anbieter mit Routen",
+        "Empfänger automatisch: Eltern Minderjähriger zusätzlich oder statt des Kindes (Genehmigungen immer an die Eltern), Vorlieben je Person, Erreichbarkeit",
+        "Zustellung: Web-Push (kostenlos), E-Mail über Brevo mit automatischem Wechsel auf ein eigenes Postfach (SMTP), Wiederholung mit Backoff, Rückfall auf den nächsten Kanal",
+        "Schutz: Zero-Cost-Sperre, Bremse und Tageslimit je Anbieter, Ratengrenze, Ruhezeit, Doppelte unterdrücken, Not-Aus – Notfälle (SOS) kommen immer durch",
+        "Eskalation: SOS nach 5 Min. unbestätigt per E-Mail, nach 15 Min. an die Leitung; Push-Quittungen angezeigt / geöffnet / bestätigt",
+        "Konsole in der PC-Verwaltung: Lämpchen je Anbieter, Not-Aus, Test-Push/-Mail, alle Aufträge mit Verlauf; alle Regeln und Vorlagen als Tabellen pflegbar",
+        "Push-Abo je Gerät im Echtbetrieb (Meins › Einstellungen › Push erlauben); Schlüssel und Wartung richtet die GitHub-Action ein",
+        "Tests: 11 Communicator-Tests gegen PostgreSQL (PGlite), Browser-Test Echtbetrieb mit Test-Mail"
+      ]
+    },
     {
       "version": "0.3.0",
       "datum": "2026-10-15",

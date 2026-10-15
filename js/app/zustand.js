@@ -7,7 +7,7 @@ export const S = { ich: null, ansicht: "leitung", view: "start", params: {}, reg
 export const VIEWS = {};
 
 // ---------- Geräte-Einstellungen (nur dieses Gerät, wie „Gilt für dieses Gerät“ in der Club-App) ----------
-const STANDARD = { eselsohr: true, thema: "auto", schrift: "normal", einfach: false, effekte: true, startRegister: "bachkreis", ruheVon: "21:00", ruheBis: "07:00", ruhe: false, kachelnAus: [], reihenfolge: {} };
+const STANDARD = { eselsohr: true, jahreszeit: true, ton: true, kuckuck: true, thema: "auto", schrift: "normal", einfach: false, effekte: true, startRegister: "bachkreis", ruheVon: "21:00", ruheBis: "07:00", ruhe: false, kachelnAus: [], reihenfolge: {} };
 export function einst() {
   try { return { ...STANDARD, ...JSON.parse(localStorage.getItem("bk_einstellungen") || "{}") }; } catch { return { ...STANDARD }; }
 }

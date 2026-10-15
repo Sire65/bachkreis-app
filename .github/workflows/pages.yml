@@ -28,14 +28,14 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Seite zusammenstellen
         run: |
-          WEB="index.html verwaltung.html manifest.webmanifest sw.js version.json css js lib icons"
+          WEB="index.html verwaltung.html manifest.webmanifest sw.js version.json css js lib icons ton"
           mkdir _site
           if [ "$BK_DATENQUELLE" = "supabase" ] && [ -n "$BK_API_URL" ]; then
             cp -r $WEB _site/
             mkdir _site/demo && cp -r $WEB _site/demo/
             printf 'export const UMGEBUNG = { datenquelle: "supabase", apiUrl: "%s" };\n' "$BK_API_URL" > _site/js/kern/umgebung.js
             HERKUNFT=$(echo "$BK_API_URL" | sed -E 's#^(https://[^/]+).*#\1#')
-            sed -i "s#connect-src 'self';#connect-src 'self' $HERKUNFT;#" _site/index.html _site/verwaltung.html
+            sed -i "s#connect-src 'self'#connect-src 'self' $HERKUNFT#" _site/index.html _site/verwaltung.html
             echo "Echtbetrieb: $HERKUNFT · Vorführversion unter /demo/"
           else
             cp -r $WEB _site/

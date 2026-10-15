@@ -30,23 +30,9 @@ a { color: var(--akzent); }
 .demoleiste { position: sticky; top: 0; z-index: 30; background: repeating-linear-gradient(135deg, var(--marke) 0 14px, var(--marke2) 14px 28px); color: #1a1500; font-weight: 800; font-size: .82rem; padding: 6px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: center; box-shadow: 0 2px 8px #0002; }
 .demoleiste select { border: 2px solid #1a1500; border-radius: 10px; padding: 3px 6px; background: #fff8dc; color: #1a1500; font-weight: 800; }
 
-/* Kopfbereich */
-.hero { background: var(--hero); color: #fff; border-radius: 26px; padding: 16px 16px 14px; box-shadow: 0 12px 30px rgba(60, 45, 0, .35); position: relative; overflow: hidden; }
-.hero::after { content: ""; position: absolute; right: -50px; top: -50px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(242, 183, 5, .35), transparent 70%); }
-.kopfzeile { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
-.logo { width: 56px; height: 56px; border-radius: 50%; background: none; display: grid; place-items: center; flex: none; box-shadow: 0 0 0 3px #0006, 0 4px 12px #0007; border: none; padding: 0; cursor: pointer; }
+/* Kopfbereich: siehe css/kopf.css (aufgebaut wie die KC Club App) */
 .bk-logo { display: block; width: 100%; height: auto; border-radius: 50%; }
-.kopftext { flex: 1; min-width: 0; }
-.marke-klein { font-size: .72rem; letter-spacing: .14em; font-weight: 900; color: var(--marke2); }
-.gruss { font-size: 1.3rem; font-weight: 900; }
-.rund { width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(255, 255, 255, .14); color: #fff; font-size: 1.1rem; cursor: pointer; }
-.statusleiste { display: flex; align-items: center; gap: 8px; margin-top: 12px; position: relative; z-index: 1; flex-wrap: wrap; }
 .chip { border: none; border-radius: 999px; padding: 5px 11px; background: rgba(255, 255, 255, .15); color: #fff; font-weight: 800; font-size: .82rem; cursor: pointer; }
-.leds { margin-left: auto; display: flex; gap: 6px; align-items: center; background: rgba(0, 0, 0, .3); border: none; border-radius: 999px; padding: 6px 10px; cursor: pointer; }
-.led { width: 11px; height: 11px; border-radius: 50%; display: inline-block; box-shadow: 0 0 0 2px #0005; }
-.led.gruen { background: #3ddc84; box-shadow: 0 0 8px #3ddc84; } .led.gelb { background: #ffd166; } .led.rot { background: #ff4d5e; box-shadow: 0 0 8px #ff4d5e; } .led.grau { background: #8d8a80; }
-.hero .info { position: relative; z-index: 1; margin-top: 12px; background: rgba(255, 255, 255, .1); border-radius: 16px; padding: 10px 12px; }
-.hero .info h2 { margin: 0; font-size: 1.05rem; } .hero .info .unter { color: #f5e7b5; font-size: .88rem; font-weight: 600; }
 
 /* Register & Kacheln */
 .abschnitt h3 { margin: 16px 2px 8px; font-size: .95rem; color: var(--grau); text-transform: uppercase; letter-spacing: .06em; }
@@ -169,3 +155,7 @@ a { color: var(--akzent); }
 .tuer { display: block; margin: 18px auto 0; border: none; background: none; color: var(--grau); font-weight: 800; cursor: pointer; }
 .fusszeile { text-align: center; color: var(--grau); font-size: .78rem; margin-top: 18px; }
 @media print { .demoleiste, .kopf2 .zurueck, .knopfreihe, .eingabe, .tuer { display: none !important; } body { background: #fff; } .karte { box-shadow: none; border: 1px solid #ccc; } }
+.chip-wahl { border: 2px solid var(--linie); border-radius: 999px; padding: 6px 11px; background: var(--karte2); font-weight: 700; font-size: .88rem; cursor: pointer; }
+.chip-wahl.an { background: #1a1500; color: var(--marke2); border-color: #1a1500; }
+:root.dunkel .chip-wahl.an { background: var(--marke); color: #1a1500; border-color: var(--marke); }
+a.knopf { text-decoration: none; display: inline-block; text-align: center; } a.knopf.breit { display: block; }

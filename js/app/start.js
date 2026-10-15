@@ -1,11 +1,11 @@
 // Startseite nach Club-Vorbild: Kopf mit Statusleiste/LEDs, Register (Bachkreis · Meins · Technik · Admin), Kacheln.
 import { S, VIEWS, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istVerwalter, istVorstand, istEltern, istSchueler, hatRolle, vorname, ANSICHTEN, fehlerListe } from "./zustand.js";
-import { esc, AKTIONEN, blatt, BACHKREIS_LOGO, datum, uhr } from "../kern/ui.js";
+import { esc, AKTIONEN, blatt, datum, uhr } from "../kern/ui.js";
 import { liste, datenInfo } from "../kern/daten.js";
 import { cockpit, termineFuer, antwortVon, kinderVon, genehmigungStatus, ausleihenVon } from "../kern/logik.js";
 import { communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
-import { ESELSOHR } from "./buehne.js";
+import { kopfEinsetzen, kopfVerbinden, regEffekt } from "./kopf.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
 const registerSichtbar = () => REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung());
@@ -132,62 +132,61 @@ function heuteWichtig() {
   return zeilen.length ? `<ul class="liste">${zeilen.join("")}</ul>` : `<p class="hinweis">Heute steht nichts Dringendes an. 🎶</p>`;
 }
 
-function led(farbe, titel) { return `<i class="led ${farbe}" title="${esc(titel)}"></i>`; }
-
 VIEWS.start = {
   render() {
     const e = einst();
-    const k = db.konfig();
     if (!registerSichtbar().find(([r]) => r === S.register)) S.register = "bachkreis";
-    const az = adminZustaende();
-    const stunde = new Date().getHours();
-    const gruss = stunde < 11 ? "Guten Morgen" : stunde < 18 ? "Hallo" : "Guten Abend";
     let raster;
     if (e.einfach) {
       const alle = [...KACHELN.bachkreis, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()));
       raster = `<div class="raster einfach" id="raster">${alle.map(kachelHtml).join("")}</div>`;
-    } else {
-      const reg = registerSichtbar().map(([r, n]) => `<button class="${r === S.register ? "an" : ""}" data-a="register" data-x="${r}" data-r="${r}">${n}<span class="anz">${kachelnFuer(r).length}</span></button>`).join("");
-      raster = `<div class="register" id="register">${reg}</div><div class="raster" id="raster">${kachelnFuer(S.register).map(kachelHtml).join("")}</div>`;
-    }
-    return `
-      <div class="hero">
-        <div class="kopfzeile">
-          <button class="logo" data-a="kachel" data-x="ueber" aria-label="Über die App">${BACHKREIS_LOGO}</button>
-          <div class="kopftext"><div class="marke-klein">${esc((k.name || "Bachkreis").toUpperCase())}</div><div class="gruss">${gruss}, ${esc(S.ich.vorname)}!</div></div>
-          <button class="rund" data-a="themaUmschalten" title="Tag/Nacht" aria-label="Tag/Nacht umschalten">${document.documentElement.classList.contains("dunkel") ? "☀️" : "🌙"}</button>
-        </div>
-        <div class="statusleiste">
-          <button class="chip" data-a="kachel" data-x="meinedaten">${esc(ANSICHTEN[S.ansicht] || "")}</button>
-          <button class="leds" data-a="ledBlatt" aria-label="Verbindungsstatus">${led(az.daten[0], "Daten: " + az.daten[1])}${led(az.versand[0], "Versand: " + az.versand[1])}${led(az.push[0], "Push: " + az.push[1])}</button>
-        </div>
-        <div class="info"><h2>${esc(k.untertitel || "")}</h2><div class="unter">${datum(new Date())}</div></div>
-        ${einst().eselsohr === false ? "" : ESELSOHR}
-      </div>
+    } else raster = `<div class="register" id="register">${registerHtml()}</div><div class="raster" id="raster">${rasterHtml()}</div>`;
+    // Der Kopf (kopf.js) ist ein dauerhaftes Element – hier nur sein Platz
+    return `<section id="v-start">
+      <div id="kopfPlatz"></div>
       <div id="updateHinweis"></div>
       <div class="abschnitt"><h3>${e.einfach ? "Einfache Ansicht" : "Schnellzugriff"}</h3></div>
       ${raster}
+      ${e.einfach ? "" : `<div class="wischhinweis">‹ wischen für weitere Bereiche ›</div>`}
       <div class="karte"><h3>Heute wichtig</h3>${heuteWichtig()}</div>
       <button class="knopf breit" data-a="ansichtWechseln">${e.einfach ? "🔧 Erweiterte Ansicht" : "🙂 Einfache Ansicht"}</button>
-      <div class="fusszeile">Bachkreis-App v${APP_VERSION} ${APP_STUFE} · ${esc(datenInfo().hinweis || "")}</div>`;
+      <div class="fusszeile">Bachkreis-App v${APP_VERSION} ${APP_STUFE} · ${esc(datenInfo().hinweis || "")}</div></section>`;
   },
   nach() {
-    // Wischen zwischen Registern (wie Club-App)
-    const r = document.getElementById("raster");
-    if (!r || einst().einfach) return;
-    let x0 = null;
-    r.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
-    r.addEventListener("touchend", (e) => {
-      if (x0 == null) return;
-      const dx = e.changedTouches[0].clientX - x0; x0 = null;
-      if (Math.abs(dx) < 70) return;
-      const regs = registerSichtbar().map(([x]) => x); const i = regs.indexOf(S.register);
-      const n = regs[i + (dx < 0 ? 1 : -1)]; if (n) { S.register = n; zeige("start", {}, { ersetzen: true }); }
-    });
+    kopfEinsetzen(document.getElementById("kopfPlatz"));
+    if (einst().einfach) return;
+    // Wischen links/rechts über Kacheln oder Register wechselt das Register (wie Club-App)
+    for (const el of [document.getElementById("raster"), document.getElementById("register")]) {
+      let x0 = null, y0 = 0;
+      el?.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+      el?.addEventListener("touchend", (e) => {
+        if (x0 == null) return;
+        const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) registerWischen(dx < 0 ? 1 : -1);
+      }, { passive: true });
+    }
   },
 };
+const registerHtml = () => registerSichtbar().map(([r, n]) => `<button class="${r === S.register ? "an reg-lauf" : ""}" data-a="register" data-x="${r}" data-r="${r}">${n}<span class="anz">${kachelnFuer(r).length}</span></button>`).join("");
+const rasterHtml = () => kachelnFuer(S.register).map(kachelHtml).join("");
+function registerWechseln(r, richtung) {
+  const neu = r !== S.register; S.register = r;
+  const reg = document.getElementById("register"), ra = document.getElementById("raster");
+  if (S.view !== "start" || !reg || !ra) return zeige("start", {}, { ersetzen: true });
+  reg.innerHTML = registerHtml(); ra.innerHTML = rasterHtml();
+  if (neu && !regEffekt(richtung || 1) && richtung) { ra.classList.remove("rein-links", "rein-rechts"); void ra.offsetWidth; ra.classList.add(richtung > 0 ? "rein-links" : "rein-rechts"); }
+}
+function registerWischen(schritt) {
+  const regs = registerSichtbar().map(([x]) => x), i = regs.indexOf(S.register), n = regs[i + schritt];
+  if (n) registerWechseln(n, schritt);
+}
+kopfVerbinden({ adminZustaende, ungelesen, meineUnterhaltungen, offeneGenehmigungen });
 
-AKTIONEN.register = (r) => { S.register = r; zeige("start", {}, { ersetzen: true }); };
+AKTIONEN.register = (r) => {
+  if (S.view !== "start") { S.register = r; return zeige("start", {}, { ersetzen: true }); }
+  const regs = registerSichtbar().map(([x]) => x);
+  registerWechseln(r, regs.indexOf(r) >= regs.indexOf(S.register) ? 1 : -1);
+};
 AKTIONEN.kachel = (id) => {
   const k = Object.values(KACHELN).flat().find((x) => x.id === id);
   if (!k) return zeige(id);

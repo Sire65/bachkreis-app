@@ -52,3 +52,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F43 | Web-Push-Abo je Gerät (VAPID), Test an mich, Rechte beim Versand | ✅ | kom.test 11 |
 | BK-F44 | Communicator-Konsole in der PC-Verwaltung (Lämpchen, Not-Aus, Test, Aufträge mit Verlauf) | ✅ | e2e echtbetrieb |
 | BK-F37 | Bachkreis-Logo überall (App-Symbol, Favicon, Kopf, Verwaltung, QR-Karten) | ✅ | Vertrag: SW-Dateiliste |
+| BK-F45 | Kopf wie KC: Kopfzeile, Statusleiste mit LEDs, Lichtschein, Jalousie halb/ganz | ✅ | e2e rundgang |
+| BK-F46 | Infofeld zum Blättern (‹ › « », Punkte, Wischen): Termin, Wetter, Für dich, Demnächst, Zentrale, Leitung | ✅ | e2e rundgang |
+| BK-F47 | Wetter Bergkamen (Open-Meteo): 7 Tage, Details, Termin-Wetter, Szene | ✅ | e2e rundgang (nachgebildete Daten) |
+| BK-F48 | Jahreszeiten im Kopf (aus der KC Club App): Deko, Eiszapfen, Bühne mit allen Extras und Themen | ✅ | e2e rundgang |
+| BK-F49 | Register-Effekte, Kuckucksuhr, Konfetti | ✅ | e2e rundgang |

@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.5.0 DEV – 15.10.2026
+- Kopf wie in der KC Club App: Jalousie, Infofeld zum Blättern, Wetter, Jahreszeiten (ganzes Sortiment), Register-Effekte, Kuckucksuhr
+
 ## 0.4.0 DEV – 15.10.2026
 - BK Communicator: Versand-Kern wie der KC Communicator (Router, Zustellung, Wartung, Eskalation, Quittungen), Web-Push, Brevo/SMTP, Konsole in der PC-Verwaltung
 

@@ -11,6 +11,7 @@ import "./orchester.js";
 import "./instrumente.js";
 import "./leitung.js";
 import "./meins.js";
+import { buehneLaeuft } from "./buehne.js";
 
 window.addEventListener("error", (e) => fehlerMerken(e.error || e.message));
 window.addEventListener("unhandledrejection", (e) => fehlerMerken(e.reason));
@@ -75,6 +76,7 @@ async function starten() {
     const fokus = document.activeElement;
     if (fokus && $("#inhalt").contains(fokus) && /INPUT|TEXTAREA|SELECT/.test(fokus.tagName)) return;
     if (document.getElementById("blattHg")) return;
+    if (document.getElementById("heroRueck") || buehneLaeuft()) return; // Bühne nicht unterbrechen
     zeichne();
   });
   $("#lade").remove();
@@ -101,8 +103,10 @@ async function swStarten() {
       w?.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) updateLeiste(w); });
     });
     document.addEventListener("bk-update", (e) => updateLeiste(e.detail));
+    // Neu laden nur bei einem echten Update (vorher gab es schon eine aktive Version) – nicht beim allerersten Besuch.
+    const hatteVersion = !!navigator.serviceWorker.controller;
     let neu = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => { if (neu) return; neu = true; location.reload(); });
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hatteVersion || neu) return; neu = true; location.reload(); });
   } catch (e) { console.warn("Service Worker nicht registriert", e); }
 }
 

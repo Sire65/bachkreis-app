@@ -2,7 +2,7 @@
 
 Verwaltungs- und Termin-App für den **Bachkreis Bergkamen**. Die App bündelt Proben, Konzerte, Zusagen, Nachrichten, SOS, Instrumente, Noten, Genehmigungen und Förderverein. Dazu gehört eine **PC-Verwaltung** für Stammdaten und Zugänge.
 
-> **Stand: Vorführversion 0.1.0 DEV.** Alle Personen sind erfunden, die Daten liegen nur im Browser. Push und E-Mail sind simuliert, die WhatsApp-Übergabe funktioniert echt.
+> **Stand: Vorführversion 0.2.0 DEV.** Alle Personen sind erfunden, die Daten liegen nur im Browser. Push und E-Mail sind simuliert, die WhatsApp-Übergabe funktioniert echt.
 
 ## Starten
 
@@ -27,6 +27,7 @@ Oben in der App wechselt **„Ansicht als“** zwischen Leitung, Lehrkraft, För
 | `js/kern/logik.js` | Fachlogik: Gruppen, Besetzungsampel, Cockpit, Verteiler, ICS, CSV. Rein und getestet. |
 | `js/kern/versand.js` | Versand-Dienst mit Kanal-Adaptern: Push, Mail, App, WhatsApp-Übergabe. |
 | `supabase/migrations/` | Grundschema `bk_*`, **erzeugt** mit `npm run schema`. |
+| `js/app/buehne.js`, `js/kern/musik.js` | Bühne mit Orchester (Eselsohr am Kopf oder Kachel „Bühne“): Melodien aus der Musik-Engine, Konzertaufnahmen, Mitschnitt. |
 | `sw.js` | Service Worker mit **atomarem Update**: neue Version erst nach „Jetzt aktualisieren“. |
 | `tests/` | Vertragstests (Version, SW-Dateiliste, Secrets, Aktionen/Ansichten, Migration), Logiktests und Browser-Rundgang. |
 

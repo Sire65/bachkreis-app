@@ -294,6 +294,13 @@ export function erzeugeDemodaten(heute = new Date()) {
   // Sonderzuteilung: Solostimme
   if (demoSchueler) d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: "w-2", bezeichnung: "Violoncello Solo", register_id: null, person_id: demoSchueler.id, datei: "" });
 
+  // --- Konzertaufnahmen (Demo: ohne Datei – im Echtbetrieb im geschützten Speicher) ---
+  d.aufnahmen = [
+    { id: "au-k1", titel: "Herbstkonzert (Vorjahr) – Mitschnitt", datum: isoTag(tag(jetzt, -340)), projekt_id: null, datei: "", quelle_url: "", freigabe: "mitglieder", notiz: "Demo-Eintrag: Datei folgt" },
+    { id: "au-k2", titel: "Frühlingskonzert – Brandenburgisches Konzert Nr. 3", datum: isoTag(tag(jetzt, -150)), projekt_id: null, datei: "", quelle_url: "", freigabe: "intern", notiz: "Demo-Eintrag: Einwilligungen prüfen" },
+    { id: "au-k3", titel: "Bachkreis Bergkamen auf YouTube", datum: null, projekt_id: null, datei: "", quelle_url: "https://www.youtube.com/channel/UC1dNrcYTR2Bf2f9wpFbL8oQ", freigabe: "oeffentlich", notiz: "öffentlicher Kanal" },
+  ];
+
   // --- Genehmigungen ---
   d.genehmigung_vorlagen = [
     { id: "gv-1", titel: "Teilnahme & Datenschutz", text: "Ich bin einverstanden, dass mein Kind am Bachkreis teilnimmt und die für die Organisation nötigen Daten (Name, Kontakt, Instrument, Gruppe, Termine) in der Bachkreis-App verarbeitet werden. Die Datenschutzhinweise habe ich gelesen.", fassung: 1, gueltig_monate: null },

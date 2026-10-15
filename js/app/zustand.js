@@ -7,7 +7,7 @@ export const S = { ich: null, ansicht: "leitung", view: "start", params: {}, reg
 export const VIEWS = {};
 
 // ---------- Geräte-Einstellungen (nur dieses Gerät, wie „Gilt für dieses Gerät“ in der Club-App) ----------
-const STANDARD = { thema: "auto", schrift: "normal", einfach: false, effekte: true, startRegister: "bachkreis", ruheVon: "21:00", ruheBis: "07:00", ruhe: false, kachelnAus: [], reihenfolge: {} };
+const STANDARD = { eselsohr: true, thema: "auto", schrift: "normal", einfach: false, effekte: true, startRegister: "bachkreis", ruheVon: "21:00", ruheBis: "07:00", ruhe: false, kachelnAus: [], reihenfolge: {} };
 export function einst() {
   try { return { ...STANDARD, ...JSON.parse(localStorage.getItem("bk_einstellungen") || "{}") }; } catch { return { ...STANDARD }; }
 }
@@ -64,6 +64,7 @@ export function zurueck() {
   zeichne();
 }
 export function zeichne() {
+  document.dispatchEvent(new CustomEvent("bk-ansicht"));
   const v = VIEWS[S.view] || VIEWS.start;
   const ziel = $("#inhalt");
   try {

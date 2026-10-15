@@ -5,6 +5,7 @@ import { liste, datenInfo } from "../kern/daten.js";
 import { cockpit, termineFuer, antwortVon, kinderVon, genehmigungStatus, ausleihenVon } from "../kern/logik.js";
 import { versandStatistik } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
+import { ESELSOHR } from "./buehne.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
 const registerSichtbar = () => REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung());
@@ -38,6 +39,7 @@ export const KACHELN = {
     { id: "sos", sym: "🆘", t: "SOS – Notfall", u: "Notruf · Kontakte im Notfall", v: "sos", klasse: "sos" },
     { id: "nachrichten", sym: "💬", t: "Nachrichten", u: "Gruppen · Rundschreiben", v: "nachrichten", zahl: () => ungelesen() },
     { id: "orchester", sym: "🎼", t: "Orchester", u: "Gruppen A–D · Register", v: "orchester", nur: () => !istEltern() },
+    { id: "buehne", sym: "🎭", t: "Bühne", u: "Das Orchester spielt · Konzertaufnahmen", v: "buehne" },
     { id: "pinnwand", sym: "📌", t: "Pinnwand", u: "Kurze Zettel · wichtig & erledigt", v: "pinnwand" },
     { id: "projekte", sym: "🎭", t: "Konzerte & Projekte", u: "Programm · Ablauf · Checkliste", v: "projekte" },
     { id: "noten", sym: "📚", t: "Notenarchiv", u: "Werke · Stimmen · Zuteilung", v: "noten", nur: () => istVerwalter() },
@@ -157,6 +159,7 @@ VIEWS.start = {
           <button class="leds" data-a="ledBlatt" aria-label="Verbindungsstatus">${led(az.daten[0], "Daten: " + az.daten[1])}${led(az.versand[0], "Versand: " + az.versand[1])}${led(az.push[0], "Push: " + az.push[1])}</button>
         </div>
         <div class="info"><h2>${esc(k.untertitel || "")}</h2><div class="unter">${datum(new Date())}</div></div>
+        ${einst().eselsohr === false ? "" : ESELSOHR}
       </div>
       <div id="updateHinweis"></div>
       <div class="abschnitt"><h3>${e.einfach ? "Einfache Ansicht" : "Schnellzugriff"}</h3></div>

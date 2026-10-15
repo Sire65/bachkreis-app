@@ -333,6 +333,21 @@ export const TABELLEN = {
     ],
     liste: ["werk_id", "bezeichnung", "register_id", "gruppe_id", "datei"],
   },
+  aufnahmen: {
+    titel: "Konzertaufnahmen", sym: "🎧", gruppe: "Noten", lesen: ALLE_VERWALTER, schreiben: LL,
+    felder: [
+      { k: "titel", t: "Titel", typ: "text", pflicht: true },
+      { k: "datum", t: "Datum", typ: "datum" },
+      { k: "projekt_id", t: "Projekt / Konzert", typ: "ref", ref: "projekte" },
+      { k: "datei", t: "Datei (Speicher-Adapter)", typ: "text" },
+      { k: "quelle_url", t: "Link (z. B. YouTube)", typ: "text" },
+      { k: "dauer_sek", t: "Dauer (Sekunden)", typ: "zahl" },
+      { k: "freigabe", t: "Sichtbar für", typ: "wahl", werte: { intern: "nur Leitung", mitglieder: "Mitglieder & Eltern", oeffentlich: "öffentlich" } },
+      { k: "notiz", t: "Notiz (Einwilligungen, Rechte)", typ: "lang" },
+    ],
+    liste: ["datum", "titel", "projekt_id", "freigabe"],
+    anzeige: (z) => z.titel,
+  },
   spenden: {
     titel: "Unterstützer & Spenden", sym: "💛", gruppe: "Förderverein", lesen: [...L, "vorstand"], schreiben: [...L, "vorstand"],
     felder: [

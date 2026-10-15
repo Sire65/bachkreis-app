@@ -52,6 +52,7 @@ VIEWS.einstellungen = {
       ${wahl("schrift", "Schriftgröße", [["normal", "Normal"], ["gross", "Groß"], ["riesig", "Sehr groß"]])}
       ${sch("einfach", "Einfache Ansicht", "Große Kacheln, nur das Wichtigste – ohne Register")}
       ${sch("effekte", "Kachel-Effekte", "Kacheln erscheinen mit kleiner Animation")}
+      ${sch("eselsohr", "Eselsohr am Kopf", "Doppelt tippen dreht den Kopf um – dahinter die Bühne mit dem Orchester")}
       <div class="feld"><label>Start-Register</label><select data-c="einstStartReg">${REGISTER_ALLE.map(([r, n]) => `<option value="${r}" ${e.startRegister === r ? "selected" : ""}>${n}</option>`).join("")}</select></div></div>
       <div class="karte"><h3>Benachrichtigungen</h3><p class="hinweis">Wähle für jedes Ereignis, wie du benachrichtigt wirst.</p>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th></th>${kanaele.map((k) => `<th style="font-size:.8rem">${KANAELE[k]}</th>`).join("")}</tr>${ereignisse.map(([k, t]) => `<tr><td style="padding:6px 0;font-weight:700;font-size:.9rem">${t}</td>${kanaele.map((c) => `<td style="text-align:center"><input type="checkbox" data-c="benachWahl" data-x="${k}|${c}" ${wahlVon(S.ich, k).includes(c) ? "checked" : ""} ${k === "sos" && c === "push" ? "disabled" : ""}></td>`).join("")}</tr>`).join("")}</table></div>

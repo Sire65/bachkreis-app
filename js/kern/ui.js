@@ -84,4 +84,4 @@ export function formWerte(wurzel) {
   return o;
 }
 
-export const BACHKREIS_LOGO = `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="#f2b705" stroke="#1a1500" stroke-width="4"/><circle cx="50" cy="50" r="30" fill="none" stroke="#1a1500" stroke-width="5"/><path d="M50 30a20 20 0 1 1-17 9" fill="none" stroke="#1a1500" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="50" r="7" fill="#1a1500"/><text x="50" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#1a1500" font-family="Arial">BACHKREIS</text></svg>`;
+export const BACHKREIS_LOGO = `<img class="bk-logo" src="icons/logo.png" alt="Bachkreis Bergkamen" width="256" height="256">`;

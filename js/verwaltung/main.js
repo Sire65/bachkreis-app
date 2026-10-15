@@ -307,7 +307,7 @@ AKTIONEN.zugKarten = () => {
   const typ = V.filter || "schueler";
   const k = konfig();
   const karten = liste("personen", (p) => p.typ === typ).sort((a, b) => name(a).localeCompare(name(b))).map((p) => ({ p, z: liste("zugaenge", (x) => x.person_id === p.id && x.aktiv)[0] })).filter((x) => x.z);
-  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">Druckvorschau (${karten.length} Karten) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3><div class="qr-karten">${karten.map(({ p, z }) => `<div class="qr-karte"><b>${esc(k.name || "Bachkreis")}-App</b><div>${esc(name(p))}</div><img alt="QR-Code" src="${qrBild(appLink(z.code))}"><div>Code: <code>${esc(z.code)}</code></div><div class="hinweis">QR-Code mit dem Handy scannen – fertig. Karte nicht weitergeben.</div></div>`).join("")}</div>`;
+  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">Druckvorschau (${karten.length} Karten) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3><div class="qr-karten">${karten.map(({ p, z }) => `<div class="qr-karte">${BACHKREIS_LOGO}<b>${esc(k.name || "Bachkreis")}-App</b><div>${esc(name(p))}</div><img alt="QR-Code" src="${qrBild(appLink(z.code))}"><div>Code: <code>${esc(z.code)}</code></div><div class="hinweis">QR-Code mit dem Handy scannen – fertig. Karte nicht weitergeben.</div></div>`).join("")}</div>`;
   $("#qrBereich").scrollIntoView({ behavior: "smooth" });
 };
 AKTIONEN.vwDrucken = () => window.print();

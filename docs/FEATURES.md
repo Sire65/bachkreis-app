@@ -1,6 +1,6 @@
 # Funktionen (Feature-IDs aus dem Konzept)
 
-Stand v0.1.0 DEV (Vorführversion). DoD = Definition of Done.
+Stand v0.2.0 DEV (Vorführversion). DoD = Definition of Done.
 
 **Erklärung der Spalte „Stand“:**
 - ✅ in der Vorführversion umgesetzt und getestet
@@ -43,3 +43,5 @@ Stand v0.1.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F33 | Schuljahreswechsel | ✅ (Verwaltung) | – |
 | BK-F34 | Datenschutz: Auskunft, Export, Audit | ✅ Auskunft/Export/Protokoll · ⏳ Löschfristen | – |
 | BK-F35 | PC-Verwaltung inkl. Zugänge, Import/Export, Abgleich | ✅ | Rundgang |
+| BK-F36 | Bühne mit Orchester: Melodien (Musik-Engine), Konzertaufnahmen, Mitschnitt, Eselsohr | ✅ | logik: Musik · Bühnen-Test |
+| BK-F37 | Bachkreis-Logo überall (App-Symbol, Favicon, Kopf, Verwaltung, QR-Karten) | ✅ | Vertrag: SW-Dateiliste |

@@ -91,3 +91,15 @@ test("ICS und WhatsApp-Link", () => {
   assert.ok(ics.includes("BEGIN:VEVENT") && ics.includes("SUMMARY:Probe\\; A") && ics.trim().endsWith("END:VCALENDAR"), ics);
   assert.equal(L.waLink("Hallo", "0151 123"), "https://wa.me/49151123?text=Hallo");
 });
+
+test("Musik: jedes Stück geht auf – Melodie und Begleitung gleich lang, ganze Takte, gültige Noten", async () => {
+  const M = await import("../js/kern/musik.js");
+  for (const s of M.STUECKE) {
+    const mel = M.parseNoten(s.melodie).reduce((a, n) => a + n.dauer, 0);
+    const akk = M.parseAkkorde(s.akkorde).reduce((a, n) => a + n.dauer, 0);
+    assert.equal(mel, akk, `${s.id}: Melodie ${mel} ≠ Begleitung ${akk}`);
+    assert.equal(mel % s.takt, 0, `${s.id}: kein ganzer Takt`);
+    for (const n of M.parseNoten(s.melodie)) if (n.ton != null) assert.ok(n.ton >= 45 && n.ton <= 93, `${s.id}: Ton ${n.ton} außerhalb`);
+  }
+  assert.equal(M.midi("A4"), 69); assert.equal(Math.round(M.hz(69)), 440);
+});

@@ -474,6 +474,28 @@ alter table bk_stimmen enable row level security;
 drop trigger if exists bk_stimmen_stempel on bk_stimmen;
 create trigger bk_stimmen_stempel before update on bk_stimmen for each row execute function bk_abgleich_stempel();
 
+-- Konzertaufnahmen
+create table if not exists bk_aufnahmen (
+  id text primary key default gen_random_uuid()::text,
+  titel text not null,
+  datum date,
+  projekt_id text,
+  datei text,
+  quelle_url text,
+  dauer_sek integer,
+  freigabe text check (freigabe is null or freigabe in ('intern', 'mitglieder', 'oeffentlich')),
+  notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_aufnahmen_geaendert on bk_aufnahmen (geaendert_am);
+alter table bk_aufnahmen enable row level security;
+drop trigger if exists bk_aufnahmen_stempel on bk_aufnahmen;
+create trigger bk_aufnahmen_stempel before update on bk_aufnahmen for each row execute function bk_abgleich_stempel();
+
 -- Unterstützer & Spenden
 create table if not exists bk_spenden (
   id text primary key default gen_random_uuid()::text,
@@ -612,6 +634,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_stimm
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_stimmen_register_id_fk') then alter table bk_stimmen add constraint bk_stimmen_register_id_fk foreign key (register_id) references bk_register(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_stimmen_gruppe_id_fk') then alter table bk_stimmen add constraint bk_stimmen_gruppe_id_fk foreign key (gruppe_id) references bk_gruppen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_stimmen_person_id_fk') then alter table bk_stimmen add constraint bk_stimmen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_aufnahmen_projekt_id_fk') then alter table bk_aufnahmen add constraint bk_aufnahmen_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_spenden_person_id_fk') then alter table bk_spenden add constraint bk_spenden_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_aufgaben_zustaendig_id_fk') then alter table bk_aufgaben add constraint bk_aufgaben_zustaendig_id_fk foreign key (zustaendig_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_aufgaben_von_id_fk') then alter table bk_aufgaben add constraint bk_aufgaben_von_id_fk foreign key (von_id) references bk_personen(id) on delete restrict; end if; end $$;

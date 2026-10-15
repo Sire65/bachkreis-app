@@ -170,3 +170,16 @@ body.mit-fuss .seite { padding-bottom: calc(100px + env(safe-area-inset-bottom))
 body.mit-fuss .jz-vorschau-aus { bottom: calc(84px + env(safe-area-inset-bottom)); }
 @media print { .fuss-leiste { display: none; } }
 .monat .tag.feiertag { color: var(--rot); font-weight: 900; } .monat .tag .ft { display: block; font-size: .55rem; line-height: 1.05; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* BK-WARTEN (0.6.1, wie KC-CLUB-WARTEN / KC-CLUB-MUETZE-SINCE): drehendes Bachkreis-Logo, Rückseite „since 1969“ */
+.warten { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 90; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: color-mix(in srgb, var(--karte) 92%, transparent); border-radius: 22px; padding: 18px 22px; box-shadow: 0 12px 36px rgba(0,0,0,.25); opacity: 0; transition: opacity .2s; }
+.warten.an { opacity: 1; }
+.warten b { font-size: .95rem; color: var(--text); text-align: center; max-width: 220px; }
+.warte-logo { position: relative; width: 72px; height: 72px; border-radius: 50%; transform-style: preserve-3d; animation: bkLogoDreh 1.6s linear infinite; }
+.warte-logo img { width: 100%; height: 100%; display: block; border-radius: 50%; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.warte-logo::after { content: "since\A 1969"; white-space: pre; position: absolute; inset: 0; display: grid; place-items: center; border-radius: 50%;
+  background: #111; color: #f5c400; box-shadow: inset 0 0 0 3px #f5c400; transform: rotateY(180deg); backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  font-weight: 800; font-size: .82rem; line-height: 1.05; text-align: center; letter-spacing: .02em; }
+.lade-start { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 28px 16px; }
+@keyframes bkLogoDreh { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+@media (prefers-reduced-motion: reduce) { .warte-logo { animation-duration: 3s; } }

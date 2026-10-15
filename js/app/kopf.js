@@ -44,7 +44,7 @@ function kopfBauen() {
     <button type="button" class="kopf-pfeil kp-ganz" id="kopfPfeil" data-a="kopfRollo" data-x="ganz" title="Kopf ganz einrollen – nur die Kopfzeile bleibt" aria-label="Kopf ganz einrollen" aria-expanded="true"><span class="kp-doppel">⌃<b>⌃</b></span></button>
     <div class="kopf-glanz" id="kopfGlanz" aria-hidden="true"><b></b><u></u></div>
     <div class="kopfzeile">
-      <div class="kopflogo"><button class="logo" data-a="kachel" data-x="ueber" aria-label="Über die App">${BACHKREIS_LOGO}</button><button class="kopf-version" id="kopfVersion" data-a="updatePruefen" title="Update prüfen" aria-label="Version – Update prüfen">v${APP_VERSION}</button></div>
+      <div class="kopflogo"><button class="logo" data-a="webseite" aria-label="Internetseite des Bachkreises öffnen" title="Zur Bachkreis-Internetseite">${BACHKREIS_LOGO}</button><button class="kopf-version" id="kopfVersion" data-a="updatePruefen" title="Update prüfen" aria-label="Version – Update prüfen">v${APP_VERSION}</button></div>
       <div class="kopftext"><div class="marke-klein" id="kopfMarke"></div><div class="gruss"><span id="begruessung">Hallo!</span></div></div>
       <div class="kopfrechts"><div class="knopfreihe">
         <button class="rund" id="modusKnopf" data-a="themaUmschalten" title="Tag/Nacht umschalten" aria-label="Tag/Nacht umschalten">🌙</button>
@@ -166,6 +166,17 @@ function infoSpringen(d) { if (einst().einfach) return; const ziel = d < 0 ? 0 :
 AKTIONEN.infoBlaettern = (x) => infoBlaettern(+x);
 AKTIONEN.infoSpringen = (x) => infoSpringen(+x);
 AKTIONEN.infoGehe = (x) => infoGehe(+x);
+// BK-WEBSEITE (0.6.1, wie KC webseite()): Logo oben links öffnet direkt die Internetseite des Bachkreises.
+// Adresse steht in der Konfiguration (PC-Verwaltung → Einstellungen); nur http(s) wird geöffnet.
+export const WEBSEITE_STANDARD = "https://www.gymnasium-bergkamen.de/bachkreis/";
+export function webseiteUrl() {
+  const u = String(konfig().webseite ?? WEBSEITE_STANDARD).trim();
+  return /^https?:\/\/[^\s]+$/i.test(u) ? u : "";
+}
+AKTIONEN.webseite = () => {
+  const u = webseiteUrl();
+  if (u) window.open(u, "_blank", "noopener"); else toast("🌐 Für die Internetseite ist noch keine Adresse eingetragen (PC-Verwaltung → Einstellungen).");
+};
 export const infoKarten = () => INFO_ALLE.filter((f) => !f.nur || f.nur()).map((f) => [f.id, f.t]);
 
 // Karte 1: Nächster Termin mit Zu-/Absage direkt im Kopf

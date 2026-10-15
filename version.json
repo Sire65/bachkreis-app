@@ -1,18 +1,27 @@
 {
-  "version": "0.6.0",
+  "version": "0.6.1",
   "datum": "2026-10-15",
   "stufe": "DEV",
   "neu": [
-    "⚙️ Mehr – alle Einstellungen wie in der KC Club App, in Klappbereichen und mit Suche: Das Wichtigste, Benachrichtigungen, Ansagen & Tipps, Privatsphäre, Kalender, Darstellung, Effekte, Startseite, App-Installation, App-Info",
-    "Farbdesigns: Bachkreis Schwarz-Gold (Standard), Blau-Gold und alle Farbschemen der KC-App inkl. weiterer und ausgefallener (Disko, Regenbogen, Polarlicht …)",
-    "Tag/Nacht automatisch nach Sonnenstand in Bergkamen – der Mond-Knopf schaltet reihum A (Automatik) · T (immer Tag) · N (immer Nacht)",
-    "Themen (Weihnachten, Karneval, Ostern, Karibik, Oktoberfest, Halloween …) mit passender Farbe, Jahreszeit, Sende-Effekt und Schrift – auf Wunsch nach Kalender",
-    "Schrift: Große Schrift für die ganze App und Schriftgröße der Texte 70–200 % (auch mit zwei Fingern)",
-    "Chat-Farben & Hintergrund, Sparmodus, Effekt beim Senden (Papierflieger, Brieftaube, Postauto, Fahrrad, Flaschenpost, Rakete, Luftballon, Münchhausen; wichtig = Blaulicht), die kleine Fee, Reißwolf beim Löschen, Zettel werden angepinnt",
-    "Tipp des Tages, „Was ist neu“ nach Updates, Nachrichten vorlesen, Rechtschreibprüfung, Feiertage NRW im Kalender, Info-Feld-Startkarte",
-    "Privatsphäre: Geburtstag, Handy, E-Mail, Adresse selbst freigeben; alle anderen Geräte abmelden"
+    "Warten wie in der KC Club App: das Bachkreis-Logo dreht sich – auf der Rückseite steht „since 1969“ (beim Start, Anmelden, Speichern und Abgleichen)",
+    "Logo oben links öffnet direkt die Internetseite des Bachkreises (Adresse änderbar in PC-Verwaltung → Einstellungen)"
   ],
   "verlauf": [
+    {
+      "version": "0.6.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "⚙️ Mehr – alle Einstellungen wie in der KC Club App, in Klappbereichen und mit Suche: Das Wichtigste, Benachrichtigungen, Ansagen & Tipps, Privatsphäre, Kalender, Darstellung, Effekte, Startseite, App-Installation, App-Info",
+        "Farbdesigns: Bachkreis Schwarz-Gold (Standard), Blau-Gold und alle Farbschemen der KC-App inkl. weiterer und ausgefallener (Disko, Regenbogen, Polarlicht …)",
+        "Tag/Nacht automatisch nach Sonnenstand in Bergkamen – der Mond-Knopf schaltet reihum A (Automatik) · T (immer Tag) · N (immer Nacht)",
+        "Themen (Weihnachten, Karneval, Ostern, Karibik, Oktoberfest, Halloween …) mit passender Farbe, Jahreszeit, Sende-Effekt und Schrift – auf Wunsch nach Kalender",
+        "Schrift: Große Schrift für die ganze App und Schriftgröße der Texte 70–200 % (auch mit zwei Fingern)",
+        "Chat-Farben & Hintergrund, Sparmodus, Effekt beim Senden (Papierflieger, Brieftaube, Postauto, Fahrrad, Flaschenpost, Rakete, Luftballon, Münchhausen; wichtig = Blaulicht), die kleine Fee, Reißwolf beim Löschen, Zettel werden angepinnt",
+        "Tipp des Tages, „Was ist neu“ nach Updates, Nachrichten vorlesen, Rechtschreibprüfung, Feiertage NRW im Kalender, Info-Feld-Startkarte",
+        "Privatsphäre: Geburtstag, Handy, E-Mail, Adresse selbst freigeben; alle anderen Geräte abmelden"
+      ]
+    },
     {
       "version": "0.5.1",
       "datum": "2026-10-15",

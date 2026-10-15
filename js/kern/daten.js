@@ -4,6 +4,7 @@ import { erzeugeLokalAdapter } from "./adapter-lokal.js";
 import { erzeugeSupabaseAdapter } from "./adapter-supabase.js";
 import { TABELLEN } from "./schema.js";
 import { UMGEBUNG } from "./umgebung.js";
+import { mitWarten } from "./warten.js";
 
 export const ADAPTER = {
   "lokal-demo": { name: "Vorführversion (Demodaten im Browser)", erzeugen: () => erzeugeLokalAdapter() },
@@ -31,11 +32,11 @@ export async function datenStarten(opts = {}) {
 }
 export const datenArt = () => A?.art || UMGEBUNG.datenquelle;
 export const istEchtbetrieb = () => datenArt() === "supabase";
-export const anmelden = (code, verwaltung = false) => A.anmelden(code, verwaltung);
+export const anmelden = (code, verwaltung = false) => mitWarten(() => A.anmelden(code, verwaltung), "Anmelden …", true);
 export const abmelden = () => A.abmelden?.();
-export const serverAktion = (aktion, nutzlast) => A.aktion?.(aktion, nutzlast);
+export const serverAktion = (aktion, nutzlast) => mitWarten(() => A.aktion?.(aktion, nutzlast), /speichern|setzen|aendern/.test(aktion) ? "Wird gespeichert …" : "Einen Moment …");
 export const beiHinweis = (f) => A?.beiHinweis?.(f);
-export const jetztAbgleichen = () => A?.abgleichen?.();
+export const jetztAbgleichen = () => mitWarten(() => A?.abgleichen?.(), "Wird abgeglichen …");
 
 export const datenInfo = () => A?.info() || { art: "unbekannt", server: false };
 export const setzeWer = (name) => { wer = name || "System"; };

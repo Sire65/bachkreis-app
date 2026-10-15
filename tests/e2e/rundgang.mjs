@@ -36,6 +36,15 @@ for (const x of ["herbst", "advent", "winter", "fruehling", "sommer", "kirmes", 
 }
 await p.evaluate(async () => (await import("/js/app/jahreszeiten.js")).jahreszeitVorschau("heute"));
 await p.screenshot({ path: `${BILDER}kopf.png` });
+// Logo oben links → Internetseite (neuer Tab, nicht wirklich laden); Warten: drehendes Logo mit „since 1969“
+await p.context().route("https://www.gymnasium-bergkamen.de/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: "<title>Bachkreis</title>" }));
+const [tab] = await Promise.all([p.context().waitForEvent("page"), p.click('#bkHero .kopflogo [data-a="webseite"]')]);
+await tab.waitForLoadState(); if (!tab.url().startsWith("https://www.gymnasium-bergkamen.de/bachkreis")) fehler.push("Logo öffnet falsche Seite: " + tab.url()); await tab.close();
+await p.evaluate(async () => (await import("/js/kern/warten.js")).wartenStart("Einen Moment …", true)); await p.waitForSelector("#warten.an");
+const rueck = await p.$eval(".warten .warte-logo", (el) => getComputedStyle(el, "::after").content);
+if (!/since\\A 1969|since\n 1969|since.*1969/.test(rueck)) fehler.push("Rückseite ohne since 1969: " + rueck);
+await p.waitForTimeout(400); await p.screenshot({ path: `${BILDER}warten.png` });
+await p.evaluate(async () => (await import("/js/kern/warten.js")).wartenEnde()); await p.waitForSelector("#warten.versteckt", { state: "attached" });
 // ⚙️ Mehr wie KC: alle Klappbereiche, Farbdesign, Thema mit Schrift, Tag/Nacht, Chat-Farben, Sende-Effekt, Sparmodus
 await p.evaluate(() => document.getElementById("blattHg")?.remove());
 await p.click('#fuss [data-x="einstellungen"]'); await p.waitForSelector("details.einst");

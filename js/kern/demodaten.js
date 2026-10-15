@@ -358,6 +358,7 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.__konfig = {
     name: "Bachkreis Bergkamen",
     untertitel: "Jugendsinfonieorchester",
+    webseite: "https://www.gymnasium-bergkamen.de/bachkreis/",
     leitung_id: "p-leitung",
     demo_personen: { leitung: "p-leitung", lehrkraft: "p-lk1", vorstand: "p-fv2", schueler: demoSchueler?.id, eltern: demoEltern?.id },
     notrufe: [["🚑", "Notruf / Rettungsdienst", "112"], ["🚓", "Polizei", "110"], ["🩺", "Ärztlicher Bereitschaftsdienst", "116117"], ["☠️", "Giftnotruf NRW (Bonn)", "0228 19240"]],

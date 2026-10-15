@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.6.1 DEV – 15.10.2026
+- Warten wie in der KC Club App: das Bachkreis-Logo dreht sich, hinten steht „since 1969“ (Start, Anmelden, Server-Aktionen, Abgleich)
+- Logo oben links öffnet direkt die Internetseite des Bachkreises (Adresse in PC-Verwaltung → Einstellungen)
+
 ## 0.6.0 DEV – 15.10.2026
 - ⚙️ Mehr: alle Einstellungen wie in der KC Club App (Farbdesigns, Themen mit Schriften, Tag/Nacht, Schriftgröße, Chat-Farben, Sparmodus, Effekte, Privatsphäre, Installation)
 

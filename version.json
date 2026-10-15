@@ -1,0 +1,19 @@
+{
+  "version": "0.1.0",
+  "datum": "2026-10-15",
+  "stufe": "DEV",
+  "neu": [
+    "Vorführversion der Bachkreis-App: Register Bachkreis · Meins · Technik · Admin nach Vorbild der KC Club App",
+    "Termine mit Zusage/Vielleicht/Absage (auch Eltern für Kinder), Besetzungsampel, Nachfassen, Serien, Abwesenheit, Kalender-Export",
+    "Gruppen A–D mit generellem und temporärem Wechsel, Wechselwunsch, Schuljahreswechsel-Assistent",
+    "Mehrere Instrumente je Teilnehmer, Instrumentenwahl je Termin",
+    "Nachrichten, Rundschreiben an automatische Zielgruppen mit Rückmeldung, Pinnwand, SOS",
+    "Instrumente: Inventar, Verleih mit Leihvertrag, Reparatur mit Freigabe, Einkauf, Förderverein & Spenden",
+    "Genehmigungen der Eltern mit Fristen, Erinnerung, Widerruf und Papier-Eingang",
+    "Notenarchiv und „Meine Noten“ je Instrument/Gruppe/Projekt",
+    "Leitungs-Cockpit und Admin-Leitstand (grau = unbekannt, nie OK)",
+    "PC-Verwaltung: Stammdaten, Zugänge & QR-Karten, Gruppen-Board, CSV-Import/-Export, Abgleich-Protokoll",
+    "Datenadapter lokal-demo (IndexedDB) – Supabase-Adapter und Schema vorbereitet"
+  ],
+  "verlauf": []
+}

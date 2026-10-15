@@ -1,4 +1,5 @@
-# Veröffentlicht die Vorführversion kostenlos auf GitHub Pages (nur bei grünen Tests auf main).
+# Veröffentlicht die Vorführversion kostenlos auf GitHub Pages – nur bei grünen Tests auf main.
+# Weg über den Zweig gh-pages (Pages-Quelle „Deploy from a branch“), damit keine Sondereinstellung nötig ist.
 name: Pages
 on:
   workflow_run:
@@ -7,9 +8,7 @@ on:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -17,18 +16,19 @@ jobs:
   veroeffentlichen:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Nur Web-Dateien veröffentlichen
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Nur Web-Dateien nach gh-pages
         run: |
           mkdir _site
           cp -r index.html verwaltung.html manifest.webmanifest sw.js version.json css js lib icons _site/
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-      - id: deploy
-        uses: actions/deploy-pages@v4
+          touch _site/.nojekyll
+          cd _site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Veröffentlichung $(jq -r .version version.json) aus ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" gh-pages

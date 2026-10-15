@@ -1,15 +1,23 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "datum": "2026-10-15",
   "stufe": "DEV",
   "neu": [
-    "Bühne mit Orchester (statt Twinkey): Vorhang auf, Dirigent, Musiker spielen mit – 6 gemeinfreie Melodien per Musik-Engine im Gerät (ohne Internet)",
-    "Konzertaufnahmen auf der Bühne: Aufnahme vom Gerät abspielen, Mitschnitt per Mikrofon (Leitung/Lehrkräfte), Orchester bewegt sich zur Musik",
-    "Eselsohr am Kopf: doppelt tippen dreht den Kopf um – dahinter die Bühne (abschaltbar in den Einstellungen)",
-    "Echtes Bachkreis-Logo überall: Kopf, Bühne, App-Symbol, Favicon, PC-Verwaltung, QR-Zugangskarten",
-    "Neue Tabelle Konzertaufnahmen (bk_aufnahmen) mit Freigabe-Stufen"
+    "Veröffentlichung über den Zweig gh-pages (GitHub Pages ohne Sondereinstellung)"
   ],
   "verlauf": [
+    {
+      "version": "0.2.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Bühne mit Orchester (statt Twinkey): Vorhang auf, Dirigent, Musiker spielen mit – 6 gemeinfreie Melodien per Musik-Engine im Gerät (ohne Internet)",
+        "Konzertaufnahmen auf der Bühne: Aufnahme vom Gerät abspielen, Mitschnitt per Mikrofon (Leitung/Lehrkräfte), Orchester bewegt sich zur Musik",
+        "Eselsohr am Kopf: doppelt tippen dreht den Kopf um – dahinter die Bühne (abschaltbar in den Einstellungen)",
+        "Echtes Bachkreis-Logo überall: Kopf, Bühne, App-Symbol, Favicon, PC-Verwaltung, QR-Zugangskarten",
+        "Neue Tabelle Konzertaufnahmen (bk_aufnahmen) mit Freigabe-Stufen"
+      ]
+    },
     {
       "version": "0.1.0",
       "datum": "2026-10-15",

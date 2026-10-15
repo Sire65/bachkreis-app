@@ -4,7 +4,7 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { TABELLEN, TABELLEN_NAMEN } from "./schema.js";
+import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger } from "./schema.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
 import { sha256, zufallsToken } from "./krypto.js";
 import * as kom from "./kom/kern.js";
@@ -22,7 +22,7 @@ async function alleZeilen(db, tab) {
   return (await db.q(`select to_jsonb(t) as z from bk_${tab} t`)).map((r) => r.z);
 }
 async function kontextLaden(db, person) {
-  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "unterhaltungen"];
+  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "unterhaltungen", "pinnwand", "personen"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   return kontext(person, alle);
@@ -109,6 +109,7 @@ async function speichern(db, s, body) {
       `insert into bk_${tab} (${cols.join(", ")}) select ${cols.join(", ")} from jsonb_populate_record(null::bk_${tab}, $1::jsonb)
        on conflict (id) do update set ${upd} returning to_jsonb(bk_${tab}.*) as z`, [JSON.stringify(daten)]);
     const zeile = r[0].z;
+    if (tab === "pinnwand") ctx.pw.set(zeile.id, zeile); // mehrere Zettel in einem Rutsch: Grenze und Farben stimmen weiter
     await db.q(`insert into bk_aenderungen (zeit, tabelle, zeile_id, aktion, wer, quelle) values (now(), $1, $2, $3, $4, $5)`,
       [tab, zeile.id, z.geloescht_am && !alt?.geloescht_am ? "geloescht" : alt ? "geaendert" : "neu", name(s.person), body.quelle === "verwaltung" ? "verwaltung" : "app"]);
     gespeichert.push(filtern(tab, [zeile], ctx)[0] || { id: zeile.id, version: zeile.version });
@@ -124,7 +125,16 @@ async function versenden(db, s, body, dienste) {
   const ctx = await kontextLaden(db, s.person);
   let an = Array.isArray(body.an) ? body.an.map(String).slice(0, 2000) : [];
   const ereignis = String(body.ereignis || "standard");
-  if (!ctx.istVerwalter) {
+  let korrelation = body.korrelation;
+  if (ereignis === "pinnwand") {
+    // BK-PINNWAND: Bescheid nur durch den Verfasser, Empfänger bestimmt der Server aus dem Zettel – je Zettel (und „jetzt wichtig“) nur einmal
+    const z = ctx.pw.get(String(body.zettel_id || ""));
+    if (!z || z.geloescht_am || z.von !== ctx.ich || z.fuer === "ich") return fehler(403, "KEIN_VERSANDRECHT");
+    korrelation = `pinnwand:${z.id}${body.wichtig ? ":wichtig" : ""}`;
+    if ((await db.q(`select 1 from bk_versand where korrelation = $1 limit 1`, [korrelation])).length) return { status: 200, json: { ok: true, schon: true, auftraege: 0 } };
+    const fertig = new Set(body.wichtig ? (await db.q(`select person_id from bk_pinnwand_gelesen where zettel_id = $1 and erledigt_am is not null and geloescht_am is null`, [z.id])).map((r) => r.person_id) : []);
+    an = pwEmpfaenger(z, ctx.personen).filter((id) => !fertig.has(id));
+  } else if (!ctx.istVerwalter) {
     if (ereignis === "nachricht") {
       if (!ctx.unterhaltungen.has(body.unterhaltung_id)) return fehler(403, "KEIN_VERSANDRECHT");
       const u = (await db.q(`select to_jsonb(u) as z from bk_unterhaltungen u where id = $1`, [body.unterhaltung_id]))[0]?.z;
@@ -137,7 +147,7 @@ async function versenden(db, s, body, dienste) {
     } else return fehler(403, "KEIN_VERSANDRECHT");
   }
   const r = await kom.annehmen(db, {
-    ereignis, an, betreff: body.betreff, text: body.text, kanaele: body.kanaele, korrelation: body.korrelation, ausloeser: name(s.person),
+    ereignis, an, betreff: body.betreff, text: body.text, kanaele: body.kanaele, korrelation, ausloeser: name(s.person),
     prioritaet: ctx.istVerwalter ? body.prioritaet : undefined, variablen: { absender_person: name(s.person) },
   });
   if (r.ok && dienste.adapter) dienste.hintergrund(kom.zustellen(db, dienste.adapter, dienste.umgebung, { korrelation: r.korrelation, limit: 100 }).catch((e) => console.error("bk-kom zustellen", e)));

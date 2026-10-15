@@ -26,6 +26,20 @@ await p.route("https://api.open-meteo.com/**", (r) => {
 });
 await p.goto(BASIS + "/index.html");
 await p.waitForSelector(".kachel");
+// 📌 Pinnwand wie KC: neue Zettel gehen beim Öffnen als Post-it-Fenster auf → Zur Pinnwand, Zettel anheften, erledigt abhaken
+await p.waitForSelector("#pwFensterHg", { timeout: 4000 }); await p.screenshot({ path: `${BILDER}pinnwand-fenster.png` });
+await p.click('[data-a="pwFensterWand"]'); await p.waitForSelector("#pwWand .zettel");
+if (!(await p.$("#pwWand .zettel.f2.wichtig"))) fehler.push("Pinnwand: wichtiger rosé Zettel fehlt");
+await p.click("#pwNeuKnopf"); await p.fill("#pwText", "Notenständer nach der Probe wegräumen"); await p.click('[data-a="pwEmo"][data-x="🎻"]');
+await p.click('[data-a="pwFuer"][data-x="personen"]'); await p.fill("#pwSuche", "sommer");
+if ((await p.$$eval("#pwListe label", (l) => l.filter((x) => x.offsetParent).length)) !== 1) fehler.push("Pinnwand: Namenssuche filtert nicht");
+await p.click("#pwListe label:not([hidden]) input"); await p.click('[data-a="pwAnheften"]'); await p.waitForTimeout(900);
+const neuZ = await p.$$eval("#pwWand .zettel", (l) => l.filter((z) => z.textContent.includes("Notenständer")).map((z) => z.className + " " + z.textContent));
+if (!neuZ.length || !/\bf4\b/.test(neuZ[0]) || !/für Martin/.test(neuZ[0])) fehler.push("Pinnwand: neuer Zettel falsch: " + neuZ[0]);
+if (!(await p.$("#pwNeuKnopf .pwStand.voll"))) fehler.push("Pinnwand: 4/4 nicht als voll markiert");
+await p.click('.zettel [data-a="pwErledigt"]'); await p.waitForSelector(".zettel .erl");
+await p.screenshot({ path: `${BILDER}pinnwand.png`, fullPage: true });
+await p.click('[data-a="zurueck"]'); await p.waitForSelector(".kachel");
 // Kopf wie KC: alle Infofeld-Karten, Wetter-Tag, Jalousie halb/ganz, Jahreszeiten-Vorschauen
 const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);
 for (let i = 0; i < karten; i++) { await p.click(`#infoPunkte .ipunkt[data-x="${i}"]`); await p.waitForTimeout(150); }

@@ -40,6 +40,7 @@ export const KOM_STANDARD = {
     R("erinnerung", "kp-termine", ["push", "app"], "rueckfall", "kv-termin", { dedupe_sekunden: 3600 }),
     R("nachfassen", "kp-termine", ["push", "mail", "app"], "rueckfall", "kv-termin", { dedupe_sekunden: 3600 }),
     R("genehmigung", "kp-verwaltung", ["push", "mail", "app"], "alle", "kv-genehmigung", { eltern: "statt" }),
+    R("pinnwand", "kp-app", ["push", "app"], "rueckfall", "kv-standard", { eltern: "nein" }),
     R("instrument", "kp-verwaltung", ["push", "mail", "app"], "rueckfall", "kv-standard"),
     R("sos", "kp-sos", ["push", "mail", "app"], "alle", "kv-sos", { prioritaet: "kritisch", ruhezeit: "ignorieren", quittung: true, eltern: "nein" }),
     R("test", "kp-system", ["push", "mail"], "alle", "kv-test", { ruhezeit: "ignorieren", eltern: "nein" }),

@@ -179,3 +179,50 @@ test("Privatsphäre: Freigaben setzt nur die Person selbst; andere sehen nur Fre
   assert.equal((await rufe({ aktion: "laden" }, t2)).status, 401, "anderes Gerät ist abgemeldet");
   assert.equal((await rufe({ aktion: "laden" }, t1)).status, 200, "dieses Gerät bleibt angemeldet");
 });
+
+test("Pinnwand wie KC: privat bleibt privat (auch vor der Leitung), Farben 1–4, höchstens 4 Zettel, 200 Zeichen", async () => {
+  const s = d.__konfig.demo_personen.schueler, anderer = d.pinnwand.find((z) => z.id === "pw-5").von;
+  const leitung = await login("p-leitung"), schueler = await login(s), zweiter = await login(anderer);
+  const ids = async (t) => (await rufe({ aktion: "laden" }, t)).json.daten.pinnwand.map((z) => z.id);
+  assert.ok((await ids(schueler)).includes("pw-6"), "Empfänger sieht den privaten Zettel");
+  assert.ok(!(await ids(zweiter)).includes("pw-6"), "andere Schüler nicht");
+  assert.ok(!(await ids(leitung)).includes("pw-6"), "auch die Leitung nicht");
+  assert.ok(!(await ids(schueler)).includes("pw-4"), "„nur für mich“ sieht nur der Verfasser");
+  // anheften: Farbe vergibt der Server, die fünfte geht nicht
+  const neu = (i, mehr = {}) => ({ id: `pw-t${i}`, text: `Zettel ${i}`, von: s, fuer: "alle", farbe: 4, ...mehr });
+  for (let i = 1; i <= 4; i++) {
+    const r = await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [neu(i)] }, schueler);
+    assert.equal(r.json.ok, true, JSON.stringify(r.json)); assert.equal(r.json.gespeichert[0].farbe, i); assert.ok(r.json.gespeichert[0].anzahl > 10);
+  }
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [neu(5)] }, schueler)).json.konflikte[0].grund, "PINNWAND_VOLL");
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [neu(6, { von: anderer, text: "x".repeat(201) })] }, zweiter)).json.konflikte[0].grund, "TEXT_ZU_LANG");
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [neu(7, { von: anderer, fuer: "personen", personen: [d.__konfig.demo_personen.eltern] })] }, zweiter)).json.konflikte[0].grund, "EMPFAENGER_FEHLT", "fremde Eltern sind für Schüler nicht wählbar");
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [neu(8, { von: s })] }, zweiter)).json.konflikte[0].grund, "NUR_EIGENE_ZETTEL");
+  // fremden Zettel ändern geht nicht; abnehmen: Verfasser oder Leitung
+  const pw5 = (await rufe({ aktion: "laden" }, leitung)).json.daten.pinnwand.find((z) => z.id === "pw-5");
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [{ ...pw5, text: "gehackt" }] }, schueler)).json.konflikte[0].grund, "NUR_EIGENE_ZETTEL");
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [{ ...pw5, geloescht_am: new Date().toISOString() }] }, schueler)).json.ok, false);
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand", zeilen: [{ ...pw5, geloescht_am: new Date().toISOString() }] }, leitung)).json.ok, true, "Leitung darf sichtbare Zettel abnehmen");
+});
+
+test("Pinnwand: gesehen/erledigt nur für sich selbst; der Verfasser sieht, wer gelesen hat; Bescheid nur einmal und nur vom Verfasser", async () => {
+  const s = d.__konfig.demo_personen.schueler, anderer = d.pinnwand.find((z) => z.id === "pw-5").von;
+  const leitung = await login("p-leitung"), schueler = await login(s), zweiter = await login(anderer);
+  const g = { id: `pw-2:${s}`, zettel_id: "pw-2", person_id: s, gesehen_am: "2000-01-01T00:00:00Z", erledigt_am: "2000-01-01T00:00:00Z" };
+  const r = await rufe({ aktion: "speichern", tab: "pinnwand_gelesen", zeilen: [g] }, schueler);
+  assert.equal(r.json.ok, true, JSON.stringify(r.json)); assert.notEqual(r.json.gespeichert[0].gesehen_am, g.gesehen_am, "Zeit setzt der Server");
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand_gelesen", zeilen: [{ ...g, id: `pw-2:${anderer}`, person_id: anderer }] }, schueler)).json.konflikte[0].grund, "NUR_EIGENE");
+  assert.equal((await rufe({ aktion: "speichern", tab: "pinnwand_gelesen", zeilen: [{ ...g, id: `pw-4:${s}`, zettel_id: "pw-4" }] }, schueler)).json.konflikte[0].grund, "ZETTEL_NICHT_SICHTBAR");
+  const fremd = (await rufe({ aktion: "laden" }, zweiter)).json.daten.pinnwand_gelesen;
+  assert.ok(fremd.every((x) => x.person_id === anderer), "Schüler sehen nur ihr eigenes „gelesen“");
+  const autor = (await rufe({ aktion: "laden" }, leitung)).json.daten.pinnwand_gelesen;
+  assert.ok(autor.some((x) => x.zettel_id === "pw-2" && x.person_id === s && x.erledigt_am), "Verfasser sieht, wer erledigt hat");
+  // Bescheid über den Communicator
+  assert.equal((await rufe({ aktion: "versenden", ereignis: "pinnwand", zettel_id: "pw-2", text: "x" }, schueler)).status, 403, "nur der Verfasser");
+  const b1 = await rufe({ aktion: "versenden", ereignis: "pinnwand", zettel_id: "pw-6", betreff: "📌 Post-it", text: "x" }, await login("p-lk1"));
+  assert.equal(b1.json.ok, true); assert.ok(b1.json.auftraege >= 1);
+  const b2 = await rufe({ aktion: "versenden", ereignis: "pinnwand", zettel_id: "pw-6", betreff: "📌 Post-it", text: "x" }, await login("p-lk1"));
+  assert.equal(b2.json.schon, true, "je Zettel nur einmal");
+  const an = (await db.q(`select distinct an_id from bk_versand where korrelation = 'pinnwand:pw-6'`)).map((x) => x.an_id);
+  assert.deepEqual(an, [s], "nur der Empfänger des privaten Zettels (Eltern nicht – Regel eltern: nein)");
+});

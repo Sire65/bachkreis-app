@@ -7,6 +7,7 @@ import { setzeEmpfaengerGeraet, pushAbonnieren } from "../kern/versand.js";
 import "./start.js";
 import "./termine.js";
 import "./kommunikation.js";
+import { pinnwandStart } from "./pinnwand.js";
 import "./orchester.js";
 import "./instrumente.js";
 import "./leitung.js";
@@ -107,7 +108,8 @@ async function starten() {
   else if (globalThis.Notification?.permission === "granted") pushAbonnieren().catch((e) => console.warn("Push-Abo", e));
   const view = location.hash.slice(1);
   zeige("start", {}, { ersetzen: true });
-  beimStart(); // Tipp des Tages, „Was ist neu“, ab und zu die Fee
+  // Pinnwand zuerst (neue Zettel, wichtige, Erinnerung – wie KC pwStart); dann Tipp des Tages, „Was ist neu“, ab und zu die Fee
+  beimStart(pinnwandStart());
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
   // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird

@@ -1,12 +1,25 @@
 {
-  "version": "0.6.1",
+  "version": "0.7.0",
   "datum": "2026-10-15",
   "stufe": "DEV",
   "neu": [
-    "Warten wie in der KC Club App: das Bachkreis-Logo dreht sich – auf der Rückseite steht „since 1969“ (beim Start, Anmelden, Speichern und Abgleichen)",
-    "Logo oben links öffnet direkt die Internetseite des Bachkreises (Adresse änderbar in PC-Verwaltung → Einstellungen)"
+    "📌 Pinnwand wie in der KC Club App: Korkwand mit Post-its in vier Farben (1. gelb, 2. rosé, 3. hellgrün, 4. hellblau), leicht schräg mit Nadel",
+    "Bis zu 4 Zettel je Person mit je 200 Zeichen und Emoji-Schnellreihe; Wichtigkeit (❗ Hoch – beim Öffnen zeigen), für wen (nur ich · alle · bestimmte Personen), mit oder ohne Antwort-Knopf",
+    "✍️ Antworten mit privatem Gegen-Zettel, ✓ Erledigt je Person, 👁️ der Verfasser sieht, wer gelesen und erledigt hat; nachträglich ❗ wichtig machen – auf Wunsch mit erneutem Bescheid",
+    "Neue Zettel gehen beim Öffnen als Post-it-Fenster auf (✓ Gelesen · 📌 Zur Pinnwand · ✍️ Antworten); wichtige offene Zettel öffnen die Pinnwand; Erinnerung an eigene Zettel nach 3 Tagen (Hängen lassen = 7 Tage Ruhe)",
+    "🎂 Geburtstags-Aushang an der Pinnwand mit „Ich möchte gratulieren“; Bescheid per Push über den BK Communicator (Regel „Pinnwand-Zettel“)",
+    "Datenschutz: private Zettel sieht wirklich nur, an wen sie gerichtet sind – auch die Leitung nicht; die Leitung darf sichtbare Zettel abnehmen"
   ],
   "verlauf": [
+    {
+      "version": "0.6.1",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Warten wie in der KC Club App: das Bachkreis-Logo dreht sich – auf der Rückseite steht „since 1969“ (beim Start, Anmelden, Speichern und Abgleichen)",
+        "Logo oben links öffnet direkt die Internetseite des Bachkreises (Adresse änderbar in PC-Verwaltung → Einstellungen)"
+      ]
+    },
     {
       "version": "0.6.0",
       "datum": "2026-10-15",

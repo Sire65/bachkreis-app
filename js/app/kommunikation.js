@@ -3,10 +3,10 @@
 import { S, VIEWS, db, zeige, kopf, name, istLeitung, istLehrkraft, istVerwalter, istEltern } from "./zustand.js";
 import { meineUnterhaltungen } from "./start.js";
 import { esc, AKTIONEN, datumKurz, uhr, vorZeit, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
-import { liste, hole, speichere, loesche, konfig } from "../kern/daten.js";
+import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { verteilerListe, verteilerAufloesen, kinderVon, elternVon, waLink, wirksameGruppen } from "../kern/logik.js";
 import { senden, whatsapp, KANAELE } from "../kern/versand.js";
-import { papierflieger, reisswolf, zettelAnpinnen } from "./effekte.js";
+import { papierflieger } from "./effekte.js";
 import { cfAnwenden } from "./darstellung.js";
 import { einst } from "./zustand.js";
 
@@ -135,19 +135,7 @@ AKTIONEN.rsWhatsapp = () => {
   whatsapp(`${f.betreff ? "*" + f.betreff + "*\n\n" : ""}${f.text.replace(/\{vorname\}/g, "zusammen")}`, { betreff: f.betreff || "Rundschreiben" });
 };
 
-// ---------- Pinnwand ----------
-VIEWS.pinnwand = {
-  render() {
-    const z = liste("pinnwand").sort((a, b) => (a.erledigt - b.erledigt) || (b.wichtig - a.wichtig) || b.zeit.localeCompare(a.zeit));
-    return kopf("📌 Pinnwand", `<button class="knopf haupt klein" data-a="pwNeu">＋ Zettel</button>`) + z.map((x) => `<div class="karte" data-pw="${x.id}" style="${x.wichtig ? "border-left:6px solid var(--rot)" : ""};${x.erledigt ? "opacity:.55" : ""}">
-      <div>${x.wichtig ? "❗ " : ""}${esc(x.text)}</div><div class="hinweis">${esc(name(x.von))} · ${vorZeit(x.zeit)}</div>
-      ${x.von === S.ich.id || istLehrkraft() ? `<div class="knopfreihe"><button class="knopf klein" data-a="pwErledigt" data-x="${x.id}">${x.erledigt ? "↩️ wieder offen" : "✔️ erledigt"}</button><button class="knopf klein rot" data-a="pwLoeschen" data-x="${x.id}">🗑️</button></div>` : ""}</div>`).join("") || '<div class="leer">Die Pinnwand ist leer.</div>';
-  },
-};
-AKTIONEN.pwNeu = () => blatt("Neuer Zettel", `<div id="pwForm"><div class="feld"><textarea name="text" placeholder="Was soll an die Pinnwand?"></textarea></div><label class="schalter"><span>wichtig</span><input type="checkbox" name="wichtig"></label><button class="knopf haupt breit" data-a="pwSpeichern">📌 Anheften</button></div>`);
-AKTIONEN.pwSpeichern = async () => { const f = formWerte(document.getElementById("pwForm")); if (!f.text.trim()) return; const neu = await speichere("pinnwand", { text: f.text, wichtig: f.wichtig, erledigt: false, von: S.ich.id, zeit: new Date().toISOString() }); blattZu(); zeige("pinnwand", {}, { ersetzen: true }); zettelAnpinnen(document.querySelector(`[data-pw="${neu.id}"]`)); };
-AKTIONEN.pwErledigt = async (id) => { const x = hole("pinnwand", id); await speichere("pinnwand", { ...x, erledigt: !x.erledigt }); zeige("pinnwand", {}, { ersetzen: true }); };
-AKTIONEN.pwLoeschen = async (id, el) => { if (await frage("Zettel löschen?")) { await reisswolf(el?.closest(".karte")); await loesche("pinnwand", id); zeige("pinnwand", {}, { ersetzen: true }); } };
+// Pinnwand: eigenes Modul pinnwand.js (wie KC Club App)
 
 // ---------- SOS ----------
 VIEWS.sos = {

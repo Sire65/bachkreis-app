@@ -21,32 +21,9 @@ begin
   return new;
 end $$;`);
   z.push("");
-  for (const t of TABELLEN_NAMEN) {
-    const d = TABELLEN[t];
-    const spalten = [`  id text primary key default gen_random_uuid()::text`];
-    for (const f of [...d.felder, ...(d.intern || [])]) {
-      let s = `  ${f.k} ${TYP[f.typ] || "text"}`;
-      if (f.pflicht) s += " not null";
-      if (f.typ === "wahl") s += ` check (${f.k} is null or ${f.k} in (${Object.keys(f.werte).map(q).join(", ")}))`;
-      spalten.push(s);
-    }
-    spalten.push("  version integer not null default 1", "  erstellt_am timestamptz not null default now()", "  geaendert_am timestamptz not null default now()", "  geaendert_von text", "  geloescht_am timestamptz");
-    z.push(`-- ${d.titel}`);
-    z.push(`create table if not exists bk_${t} (\n${spalten.join(",\n")}\n);`);
-    z.push(`create index if not exists bk_${t}_geaendert on bk_${t} (geaendert_am);`);
-    z.push(`alter table bk_${t} enable row level security;`);
-    z.push(`drop trigger if exists bk_${t}_stempel on bk_${t};`);
-    z.push(`create trigger bk_${t}_stempel before update on bk_${t} for each row execute function bk_abgleich_stempel();`);
-    z.push("");
-  }
+  for (const t of TABELLEN_NAMEN) z.push(...tabelleSql(t));
   z.push("-- Fremdschlüssel (nach allen Tabellen, damit die Reihenfolge egal ist)");
-  for (const t of TABELLEN_NAMEN) {
-    for (const f of [...TABELLEN[t].felder, ...(TABELLEN[t].intern || [])]) {
-      if (f.typ !== "ref") continue;
-      const n = `bk_${t}_${f.k}_fk`;
-      z.push(`do $$ begin if not exists (select 1 from pg_constraint where conname = ${q(n)}) then alter table bk_${t} add constraint ${n} foreign key (${f.k}) references bk_${f.ref}(id) on delete restrict; end if; end $$;`);
-    }
-  }
+  for (const t of TABELLEN_NAMEN) z.push(...fkSql(t));
   z.push("");
   z.push("-- Konfiguration (Schlüssel/Wert) und Push-Abos");
   z.push("create table if not exists bk_konfig (schluessel text primary key, wert jsonb, geaendert_am timestamptz not null default now());");
@@ -59,15 +36,68 @@ end $$;`);
   return z.join("\n") + "\n";
 }
 
+// Eine Tabelle (Spalten aus der Registry, Abgleich-Spalten, Index, RLS, Versions-Trigger)
+function tabelleSql(t) {
+  const d = TABELLEN[t], z = [];
+  const spalten = [`  id text primary key default gen_random_uuid()::text`];
+  for (const f of [...d.felder, ...(d.intern || [])]) {
+    let s = `  ${f.k} ${TYP[f.typ] || "text"}`;
+    if (f.pflicht) s += " not null";
+    if (f.typ === "wahl") s += ` check (${wahlPruefung(f)})`;
+    spalten.push(s);
+  }
+  spalten.push("  version integer not null default 1", "  erstellt_am timestamptz not null default now()", "  geaendert_am timestamptz not null default now()", "  geaendert_von text", "  geloescht_am timestamptz");
+  z.push(`-- ${d.titel}`);
+  z.push(`create table if not exists bk_${t} (\n${spalten.join(",\n")}\n);`);
+  z.push(`create index if not exists bk_${t}_geaendert on bk_${t} (geaendert_am);`);
+  z.push(`alter table bk_${t} enable row level security;`);
+  z.push(`drop trigger if exists bk_${t}_stempel on bk_${t};`);
+  z.push(`create trigger bk_${t}_stempel before update on bk_${t} for each row execute function bk_abgleich_stempel();`);
+  z.push("");
+  return z;
+}
+const wahlPruefung = (f) => `${f.k} is null or ${f.k} in (${Object.keys(f.werte).map(q).join(", ")})`;
+function fkSql(t) {
+  const z = [];
+  for (const f of [...TABELLEN[t].felder, ...(TABELLEN[t].intern || [])]) {
+    if (f.typ !== "ref") continue;
+    const n = `bk_${t}_${f.k}_fk`;
+    z.push(`do $$ begin if not exists (select 1 from pg_constraint where conname = ${q(n)}) then alter table bk_${t} add constraint ${n} foreign key (${f.k}) references bk_${f.ref}(id) on delete restrict; end if; end $$;`);
+  }
+  return z;
+}
+const komZeile = (t, r) => `insert into bk_${t} select * from jsonb_populate_record(null::bk_${t}, jsonb_build_object('version', 1, 'erstellt_am', now(), 'geaendert_am', now(), 'geaendert_von', 'Standard') || ${q(JSON.stringify(r))}::jsonb) on conflict (id) do nothing;`;
+
+// Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
+// geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
+export const NACHTRAEGE = {
+  "20261018000000_bk_pinnwand.sql": { titel: "Pinnwand wie in der KC Club App (0.7.0)", tabellen: ["pinnwand", "pinnwand_gelesen"], pruefungen: [["kom_regeln", "ereignis"], ["kom_eskalationen", "ereignis"]], kom: { kom_regeln: ["kr-pinnwand"] } },
+};
+export function erzeugeNachtragSql(datei) {
+  const n = NACHTRAEGE[datei], z = [`-- Bachkreis-App – Nachtrag: ${n.titel} (automatisch erzeugt mit tools/schema-sql.mjs – nicht von Hand ändern)`, ""];
+  const pruefung = (t, f) => [`alter table bk_${t} drop constraint if exists bk_${t}_${f.k}_check;`, `alter table bk_${t} add constraint bk_${t}_${f.k}_check check (${wahlPruefung(f)});`];
+  for (const t of n.tabellen) {
+    z.push(...tabelleSql(t));
+    for (const f of [...TABELLEN[t].felder, ...(TABELLEN[t].intern || [])]) {
+      z.push(`alter table bk_${t} add column if not exists ${f.k} ${TYP[f.typ] || "text"};`);
+      if (f.typ === "wahl") z.push(...pruefung(t, f));
+    }
+    z.push(...fkSql(t), "");
+  }
+  for (const [t, k] of n.pruefungen || []) z.push(...pruefung(t, TABELLEN[t].felder.find((f) => f.k === k)));
+  for (const [t, ids] of Object.entries(n.kom || {})) for (const id of ids) z.push(komZeile(t, KOM_STANDARD[t].find((r) => r.id === id)));
+  return z.join("\n") + "\n";
+}
+
 // Startwerte des BK Communicators (js/kern/kom-standard.js). Bestehende Zeilen bleiben unangetastet (on conflict do nothing).
 export function erzeugeKomStandardSql() {
   const z = ["-- BK Communicator – Startwerte (automatisch erzeugt aus js/kern/kom-standard.js mit tools/schema-sql.mjs – nicht von Hand ändern)"];
   for (const [t, zeilen] of Object.entries(KOM_STANDARD)) {
     for (const r of zeilen) {
-      z.push(`insert into bk_${t} select * from jsonb_populate_record(null::bk_${t}, jsonb_build_object('version', 1, 'erstellt_am', now(), 'geaendert_am', now(), 'geaendert_von', 'Standard') || ${q(JSON.stringify(r))}::jsonb) on conflict (id) do nothing;`);
+      z.push(komZeile(t, r));
     }
   }
   return z.join("\n") + "\n";
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) process.stdout.write(process.argv[2] === "kom" ? erzeugeKomStandardSql() : erzeugeSql());
+if (import.meta.url === `file://${process.argv[1]}`) process.stdout.write(process.argv[2] === "kom" ? erzeugeKomStandardSql() : process.argv[2] === "nachtrag" ? erzeugeNachtragSql(process.argv[3]) : erzeugeSql());

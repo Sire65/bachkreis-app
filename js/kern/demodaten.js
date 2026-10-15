@@ -3,6 +3,7 @@
 // Deterministisch (fester Zufallsstartwert) – jede Vorführung sieht gleich aus.
 
 import { KOM_STANDARD } from "./kom-standard.js";
+import { pwAppPerson, pwEmpfaenger, pwGelesenId } from "./schema.js";
 function zufall(seed) {
   let s = seed >>> 0;
   return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -339,11 +340,25 @@ export function erzeugeDemodaten(heute = new Date()) {
   nachricht("u-eb", "p-leitung", "Liebe Eltern, für das Herbstkonzert suchen wir Helfer beim Kuchenverkauf und beim Transport der Instrumente. Bitte kurz zurückmelden!", 60 * 30, { rueckmeldung: true });
   nachricht("u-fv", "p-fv2", "Kostenvoranschlag für das Cello ist da (280 €). Freigabe über die App?", 60 * 3);
   nachricht("u-lk", "p-lk1", "Ich habe die Air-Bearbeitung ins Notenarchiv gestellt.", 60 * 48);
+  // Pinnwand wie KC: Post-its in 4 Farben (je Verfasser 1 gelb, 2 rosé, 3 hellgrün, 4 hellblau), für alle / bestimmte / nur mich
+  const andererSchueler = d.personen.find((p) => p.typ === "schueler" && p.id !== demoSchueler?.id);
   d.pinnwand = [
-    { id: "pw-1", text: "Fundsache: schwarzer Cellobogen im Musiksaal – bei Frau Jacka abholen.", von: "p-leitung", wichtig: false, erledigt: false, zeit: iso(tag(jetzt, -2, 12)) },
-    { id: "pw-2", text: "Herbstkonzert: Kleidung komplett schwarz!", von: "p-leitung", wichtig: true, erledigt: false, zeit: iso(tag(jetzt, -6, 9)) },
-    { id: "pw-3", text: "Plakate fürs Herbstkonzert hängen ab Montag in der Pausenhalle.", von: "p-lk2", wichtig: false, erledigt: true, zeit: iso(tag(jetzt, -9, 9)) },
+    { id: "pw-1", text: "Fundsache: schwarzer Cellobogen im Musiksaal – bei Frau Jacka abholen. 🎻", von: "p-leitung", wichtig: false, fuer: "alle", personen: [], farbe: 1, antworten: true, zeit: iso(tag(jetzt, -2, 12)) },
+    { id: "pw-2", text: "Herbstkonzert: Kleidung komplett schwarz! 🖤", von: "p-leitung", wichtig: true, fuer: "alle", personen: [], farbe: 2, antworten: true, zeit: iso(tag(jetzt, -6, 9)) },
+    { id: "pw-3", text: "Plakate fürs Herbstkonzert hängen ab Montag in der Pausenhalle.", von: "p-lk2", wichtig: false, fuer: "alle", personen: [], farbe: 1, antworten: false, zeit: iso(tag(jetzt, -9, 9)) },
+    { id: "pw-4", text: "Stimmzettel für die Bratschen vorbereiten 📝", von: "p-leitung", wichtig: false, fuer: "ich", personen: [], farbe: 3, antworten: false, zeit: iso(tag(jetzt, -1, 8)) },
   ];
+  if (andererSchueler) d.pinnwand.push({ id: "pw-5", text: "Wer kann mich am Donnerstag zur Probe mitnehmen? 🚗", von: andererSchueler.id, wichtig: false, fuer: "alle", personen: [], farbe: 1, antworten: true, zeit: iso(new Date(jetzt.getTime() - 3 * 3600000)) });
+  if (demoSchueler) d.pinnwand.push({ id: "pw-6", text: `Super Solo heute, ${demoSchueler.vorname}! 👏 Bitte die Cello-Stimme bis Freitag üben.`, von: "p-lk1", wichtig: false, fuer: "personen", personen: [demoSchueler.id], farbe: 1, antworten: true, zeit: iso(new Date(jetzt.getTime() - 40 * 60000)) });
+  const pwAlle = d.personen.filter((p) => pwAppPerson(p));
+  for (const z of d.pinnwand) z.anzahl = pwEmpfaenger(z, pwAlle).length;
+  // gesehen / erledigt: etwa die Hälfte hat den wichtigen Zettel schon gelesen, ein Teil abgehakt
+  d.pinnwand_gelesen = [];
+  pwAlle.filter((p) => p.id !== "p-leitung" && p.id !== demoSchueler?.id).forEach((p, i) => {
+    if (i % 2) return;
+    d.pinnwand_gelesen.push({ id: pwGelesenId("pw-2", p.id), zettel_id: "pw-2", person_id: p.id, gesehen_am: iso(tag(jetzt, -5, 10 + (i % 8))), erledigt_am: i % 4 ? null : iso(tag(jetzt, -4, 18)) });
+    if (i % 3 === 0) d.pinnwand_gelesen.push({ id: pwGelesenId("pw-1", p.id), zettel_id: "pw-1", person_id: p.id, gesehen_am: iso(tag(jetzt, -1, 17)), erledigt_am: null });
+  });
   d.aufgaben = [
     { id: "au-1", titel: "Neue Anschrift melden", art: "aenderung", status: "offen", von_id: demoEltern?.id || null, zustaendig_id: "p-leitung", text: "Wir sind umgezogen: Am Römerberg 12, 59192 Bergkamen.", frist: isoTag(tag(jetzt, 7)) },
     { id: "au-2", titel: "Pressetext Herbstkonzert schreiben", art: "aufgabe", status: "in_arbeit", zustaendig_id: "p-lk2", von_id: "p-leitung", frist: isoTag(tag(konzertTag, -14)) },
@@ -365,6 +380,8 @@ export function erzeugeDemodaten(heute = new Date()) {
     schule_telefon: "02307 964440",
     freigabe_grenze_eur: 250,
     nachfass_tage: 3,
+    pinnwand_erinnern_tage: 3,
+    pinnwand_pause_tage: 7,
   };
   for (const t of Object.keys(d)) if (Array.isArray(d[t])) for (const z of d[t]) { z.version = 1; z.erstellt_am = z.erstellt_am || iso(jetzt); z.geaendert_am = z.geaendert_am || iso(jetzt); z.geaendert_von = "Demodaten"; }
   return d;

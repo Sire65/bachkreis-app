@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { APP_VERSION, APP_STUFE } from "../js/kern/version.js";
-import { erzeugeSql } from "../tools/schema-sql.mjs";
+import { erzeugeSql, erzeugeNachtragSql, NACHTRAEGE } from "../tools/schema-sql.mjs";
 import { serverSchema } from "../tools/server-kopie.mjs";
 import { UMGEBUNG } from "../js/kern/umgebung.js";
 
@@ -59,6 +59,7 @@ test("Jede Aktion (data-a/data-c) ist registriert und jede Ansicht (zeige/oeffne
 
 test("Supabase-Migration ist aus dem aktuellen Schema erzeugt (npm run schema)", () => {
   assert.equal(lies("supabase/migrations/20261015000000_bk_grundschema.sql"), erzeugeSql());
+  for (const datei of Object.keys(NACHTRAEGE)) assert.equal(lies("supabase/migrations/" + datei), erzeugeNachtragSql(datei), datei);
 });
 
 test("Keine Inline-Event-Handler (CSP script-src 'self')", () => {

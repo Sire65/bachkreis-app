@@ -20,6 +20,13 @@ Server-Teil. Dieser ist **fertig gebaut und getestet**; er wird nur noch im Supa
   - Chat und Rückmeldungen
   - Schadensmeldungen, Änderungsmeldungen, Wechselwünsche
   - eigene Pinnwand-Zettel und Benachrichtigungs-Einstellungen
+- **Pinnwand (wie KC):** Die Regeln prüft der Server, nicht die App.
+  - Wer einen Zettel sieht: der Verfasser, die Empfänger, bei „für alle“ alle. Private Zettel sieht auch die Leitung nicht.
+  - Anheften: höchstens 4 Zettel je Person, je 200 Zeichen. Farbe (1–4), Zeit und Empfängerzahl setzt der Server.
+  - „Gesehen“ und „Erledigt“ setzt jede Person nur für sich (Tabelle `pinnwand_gelesen`, ID `zettel:person`). Wer gelesen hat, sieht nur der Verfasser (und die Leitung bei sichtbaren Zetteln).
+  - Abnehmen darf der Verfasser oder die Leitung. Ändern darf nur der Verfasser, und nur die Wichtigkeit.
+  - Bescheid (Ereignis `pinnwand`) darf nur der Verfasser auslösen, je Zettel einmal (und einmal für „jetzt wichtig“). Die Empfänger bestimmt der Server aus dem Zettel.
+  - Schon eingespielte Datenbanken bekommen die neuen Spalten mit der Nachtrags-Migration `20261018000000_bk_pinnwand.sql`.
 
   Alles andere ist den Verwalter-Rollen vorbehalten.
 - **Abgleich:** Geräte holen nur Änderungen seit dem letzten Abgleich (alle 30 s und beim Öffnen).
@@ -27,7 +34,7 @@ Server-Teil. Dieser ist **fertig gebaut und getestet**; er wird nur noch im Supa
   - Jede Änderung wird im Änderungsprotokoll festgehalten.
 - **Versand:** Der BK Communicator nimmt Benachrichtigungen an, legt Aufträge in `bk_versand` an und stellt sie über Web-Push und E-Mail zu. Die Edge Function `bk-kom` wartet jede Minute (siehe `KOMMUNIKATION.md`).
 
-Getestet wird in `tests/server.test.mjs` (13 Tests gegen PostgreSQL/PGlite) und `tests/e2e/echtbetrieb.mjs` (Browser).
+Getestet wird in `tests/server.test.mjs` (16 Tests gegen PostgreSQL/PGlite) und `tests/e2e/echtbetrieb.mjs` (Browser).
 Lokal ausprobieren: `node tests/e2e/server-lokal.mjs` startet App und Server mit Demodaten. Die Zugangscodes erscheinen
 in der Konsole.
 

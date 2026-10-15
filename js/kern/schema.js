@@ -42,9 +42,17 @@ export const KOM_STATUS = {
 };
 export const KOM_EREIGNISSE = {
   termin_neu: "Neuer Termin", termin_geaendert: "Termin geändert/abgesagt", erinnerung: "Erinnerung vor Terminen", nachfassen: "Nachfassen bei fehlender Antwort",
-  nachricht: "Neue Nachricht", rundschreiben: "Rundschreiben", genehmigung: "Genehmigung angefragt", instrument: "Leihinstrument (Rückgabe, Schaden)", sos: "SOS / Notfall",
+  nachricht: "Neue Nachricht", rundschreiben: "Rundschreiben", genehmigung: "Genehmigung angefragt", instrument: "Leihinstrument (Rückgabe, Schaden)", pinnwand: "Pinnwand-Zettel", sos: "SOS / Notfall",
   test: "Test", standard: "alle anderen (Standard)",
 };
+
+// ---------- Pinnwand (gemeinsam für App und Server) ----------
+export const PINNWAND = { max: 4, zeichen: 200, erinnernTage: 3, pauseTage: 7 };
+// Wer bekommt einen Zettel „für alle“? Alle aktiven Personen mit App (Schüler, Eltern, Leitung, Lehrkräfte, Verwalter) außer dem Verfasser.
+export const pwAppPerson = (p) => !!p && !p.geloescht_am && p.status !== "ausgetreten" && (["schueler", "eltern", "leitung", "lehrkraft"].includes(p.typ) || (p.rollen || []).some((r) => VERWALTER.includes(r)));
+export const pwSichtbar = (z, ich) => !!z && (z.von === ich || (z.fuer || "alle") === "alle" || (z.fuer === "personen" && (z.personen || []).includes(ich)));
+export const pwEmpfaenger = (z, personen) => (z.fuer === "ich" ? [] : z.fuer === "personen" ? [...new Set(z.personen || [])].filter((id) => id !== z.von) : personen.filter((p) => pwAppPerson(p) && p.id !== z.von).map((p) => p.id));
+export const pwGelesenId = (zettelId, personId) => `${zettelId}:${personId}`;
 
 // Feldtypen: text, lang, email, tel, datum, zeit (Datum+Uhrzeit), zahl, geld, ja, wahl, ref, refs, farbe, liste (Textliste), json
 // „intern“ = Spalten, die die App selbst pflegt (nicht im Formular der Verwaltung).
@@ -285,16 +293,33 @@ export const TABELLEN = {
     liste: ["unterhaltung_id", "von", "text", "zeit"],
     intern: [{ k: "gelesen_von", typ: "refs", ref: "personen" }, { k: "rueckmeldungen", typ: "json" }],
   },
+  // BK-PINNWAND (0.7.0, wie KC-CLUB-PINNWAND): Post-its – höchstens PINNWAND.max je Person, je höchstens PINNWAND.zeichen Zeichen,
+  // Farbe 1–4 vergibt der Server (gelb, rosé, hellgrün, hellblau). Sichtbar nur für Verfasser, Empfänger bzw. alle (fuer = alle) –
+  // auch Verwalter sehen fremde private Zettel NICHT (Regel in regeln.js). Ändern nur über die Selbstbedienungs-Regeln.
   pinnwand: {
-    titel: "Pinnwand", sym: "📌", gruppe: "Kommunikation", lesen: ALLE_VERWALTER, schreiben: LL,
+    titel: "Pinnwand", sym: "📌", gruppe: "Kommunikation", lesen: ALLE_VERWALTER, schreiben: [],
     felder: [
       { k: "text", t: "Text", typ: "lang", pflicht: true },
       { k: "von", t: "von", typ: "ref", ref: "personen" },
       { k: "wichtig", t: "wichtig", typ: "ja" },
-      { k: "erledigt", t: "erledigt", typ: "ja" },
-      { k: "zeit", t: "Zeit", typ: "zeit" },
+      { k: "fuer", t: "für", typ: "wahl", werte: { ich: "nur für mich", alle: "für alle", personen: "bestimmte Personen" } },
+      { k: "personen", t: "Empfänger", typ: "refs", ref: "personen" },
+      { k: "farbe", t: "Farbe (1–4)", typ: "zahl" },
+      { k: "antworten", t: "mit Antwort-Knopf", typ: "ja" },
+      { k: "zeit", t: "angepinnt", typ: "zeit" },
     ],
-    liste: ["text", "von", "wichtig", "erledigt", "zeit"],
+    liste: ["text", "von", "fuer", "wichtig", "zeit"],
+    intern: [{ k: "anzahl", typ: "zahl" }],
+  },
+  pinnwand_gelesen: {
+    titel: "Pinnwand: gesehen & erledigt", sym: "👁️", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "zettel_id", t: "Zettel", typ: "ref", ref: "pinnwand", pflicht: true },
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "gesehen_am", t: "gesehen", typ: "zeit" },
+      { k: "erledigt_am", t: "erledigt", typ: "zeit" },
+    ],
+    liste: ["zettel_id", "person_id", "gesehen_am", "erledigt_am"],
   },
   genehmigung_vorlagen: {
     titel: "Genehmigungs-Vorlagen", sym: "📝", gruppe: "Genehmigungen", lesen: ALLE_VERWALTER, schreiben: L,

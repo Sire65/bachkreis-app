@@ -196,7 +196,8 @@ export async function wasNeuZeigen() {
 }
 AKTIONEN.wasNeuZeigen = wasNeuZeigen;
 // Beim Start: einmal am Tag ein Tipp, nach einem Update „Was ist neu“, jede 20. Öffnung die Fee
-export function beimStart() {
+export function beimStart(ohneAnsagen = false) {
+  if (ohneAnsagen) return; // die Pinnwand hat gerade etwas gezeigt – Tipp/„Was ist neu“ kommen beim nächsten Öffnen
   const e = einst(), heute = new Date().toISOString().slice(0, 10);
   let zuletzt = null; try { zuletzt = localStorage.getItem("bk_version_gesehen"); localStorage.setItem("bk_version_gesehen", APP_VERSION); } catch {}
   if (zuletzt && zuletzt !== APP_VERSION && e.wasNeu !== false) setTimeout(wasNeuZeigen, 1500);

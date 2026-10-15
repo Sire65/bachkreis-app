@@ -18,6 +18,11 @@ const sicht = (p) => p.evaluate(async () => {
   const m = await import("/js/kern/daten.js");
   return { mitAdresse: m.liste("personen", (x) => x.strasse).length, zugaenge: m.liste("zugaenge").length, spenden: m.liste("spenden").length, info: m.datenInfo() };
 });
+// 📌 Pinnwand: neue Zettel gehen beim Öffnen als Post-it-Fenster auf – „✓ Gelesen“ meldet es dem Server
+async function pinnwandGelesen(pg) {
+  await pg.waitForSelector("#pwFensterHg", { timeout: 6000 });
+  await pg.click('[data-a="pwFensterGelesen"]'); await pg.waitForSelector("#pwFensterHg", { state: "detached" });
+}
 try {
   const p = await seite();
   await p.goto(B + "/index.html"); await p.waitForSelector("#anmeldeCode");
@@ -25,6 +30,7 @@ try {
   await p.fill("#anmeldeCode", "FALSCH12"); await p.click('[data-a="anmeldenCode"]'); await p.waitForSelector(".badge.b-rot");
   await p.goto(B + "/index.html?k=" + info.codes.eltern.code); await p.waitForSelector(".kachel", { timeout: 20000 });
   assert.ok(!p.url().includes("k="), "Code aus der Adresszeile entfernt");
+  await pinnwandGelesen(p);
   const s = await sicht(p);
   assert.equal(s.info.art, "supabase"); assert.equal(s.zugaenge, 0); assert.equal(s.spenden, 0);
   assert.ok(s.mitAdresse <= 6, "nur eigene Familie mit Anschrift: " + s.mitAdresse);
@@ -32,6 +38,9 @@ try {
   await p.click('[data-a="antworten"][data-x$="|ja"]'); await p.waitForTimeout(2500);
   const l = await seite();
   await l.goto(B + "/index.html?k=" + info.codes.leitung.code); await l.waitForSelector(".kachel", { timeout: 20000 });
+  await pinnwandGelesen(l);
+  const gl = await l.evaluate(async (e) => (await import("/js/kern/daten.js")).liste("pinnwand_gelesen", (g) => g.zettel_id === "pw-2" && g.person_id === e).length, info.codes.eltern.id);
+  assert.equal(gl, 1, "Verfasserin sieht, dass die Eltern den Zettel gelesen haben");
   const z = await l.evaluate(async () => (await import("/js/kern/daten.js")).liste("antworten", (a) => a.von_person_id && a.von_person_id !== a.person_id).length);
   assert.ok(z >= 1, "Leitung sieht die Zusage der Eltern");
   const v = await seite(1280);
@@ -49,6 +58,7 @@ try {
   await v.waitForFunction(() => [...document.querySelectorAll(".vw-tabelle .badge")].some((b) => b.textContent === "gesendet"), null, { timeout: 15000 });
   const n = await seite();
   await n.goto(B + "/index.html?k=" + code); await n.waitForSelector(".kachel", { timeout: 20000 });
+  await pinnwandGelesen(n);
   assert.deepEqual(fehler.filter((x) => !/401/.test(x)), [], "keine Seitenfehler");
   console.log("Echtbetrieb-Test ✔");
 } finally { await b.close(); srv.kill(); }

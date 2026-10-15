@@ -22,10 +22,10 @@ export function wahlVon(person, ereignis) {
 }
 
 // Sendet an eine Liste von Personen. Rückgabe: Zusammenfassung je Kanal.
-export async function senden({ an, betreff, text, ereignis = "rundschreiben", kanaele = null, unterhaltung_id = null, prioritaet = undefined }) {
+export async function senden({ an, betreff, text, ereignis = "rundschreiben", kanaele = null, unterhaltung_id = null, prioritaet = undefined, zettel_id = undefined, wichtig = undefined }) {
   const korrelation = neueId();
   if (istEchtbetrieb()) {
-    const r = await serverAktion("versenden", { an: [...new Set(an)], betreff, text, ereignis, kanaele, unterhaltung_id, korrelation, prioritaet });
+    const r = await serverAktion("versenden", { an: [...new Set(an)], betreff, text, ereignis, kanaele, unterhaltung_id, korrelation, prioritaet, zettel_id, wichtig });
     lokalerPush(an, betreff, text);
     const k = r?.kanaele || {};
     return { push: k.push || 0, mail: k.mail || 0, app: k.app || 0, fehler: r?.ok === false ? 1 : 0, unterdrueckt: r?.unterdrueckt || 0, vorgemerkt: r?.auftraege || 0 };

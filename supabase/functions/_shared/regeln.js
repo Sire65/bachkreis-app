@@ -7,11 +7,14 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { TABELLEN } from "./schema.js";
+import { TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
-const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "pinnwand"]);
+const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke"]);
+// Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen"]);
+const MODERATION = ["admin", "leitung"]; // dürfen sichtbare fremde Zettel abnehmen und sehen, wer gelesen hat
 
 export function kontext(person, alle) {
   const rollen = person?.rollen || [];
@@ -27,6 +30,11 @@ export function kontext(person, alle) {
   const ctx = { person, ich, rollen, kinder: new Set(kinder), meine, eltern, gruppen, register, inventar, termine, istVerwalter };
   const unterhaltungen = new Set((alle.unterhaltungen || []).filter((u) => unterhaltungSichtbar(u, ctx, alle)).map((u) => u.id));
   ctx.unterhaltungen = unterhaltungen;
+  // Pinnwand: alle Zettel (auch abgenommene – für den Abgleich) und die Personen, die man als Empfänger wählen darf
+  ctx.pw = new Map((alle.pinnwand || []).map((z) => [z.id, z]));
+  ctx.personen = alle.personen || [];
+  const alleP = hatRolle(ctx, TABELLEN.personen.lesen);
+  ctx.personenIds = new Set(ctx.personen.filter((p) => pwAppPerson(p) && (alleP || zeileSichtbar("personen", p, ctx))).map((p) => p.id));
   return ctx;
 }
 
@@ -62,6 +70,12 @@ function zeileSichtbar(tab, z, ctx) {
     case "stimmen": return ctx.meine.has(z.person_id) || (!z.person_id && (!z.register_id || ctx.register.has(z.register_id)));
     case "aufnahmen": return z.freigabe === "mitglieder" || z.freigabe === "oeffentlich";
     case "aufgaben": return ctx.meine.has(z.von_id);
+    case "pinnwand": return pwSichtbar(z, ctx.ich);
+    case "pinnwand_gelesen": {
+      if (z.person_id === ctx.ich) return true;
+      const zettel = ctx.pw?.get(z.zettel_id);
+      return !!zettel && (zettel.von === ctx.ich || (hatRolle(ctx, MODERATION) && pwSichtbar(zettel, ctx.ich)));
+    }
     default: return false; // einkaeufe, spenden, zugaenge, versand, aenderungen
   }
 }
@@ -92,7 +106,7 @@ function kuerzen(tab, z, ctx, alleLesen) {
 
 // Liefert die für ctx sichtbaren, gekürzten Zeilen einer Tabelle (inkl. Lösch-Markierungen für den Abgleich).
 export function filtern(tab, zeilen, ctx) {
-  const alle = darfAlleLesen(tab, ctx);
+  const alle = darfAlleLesen(tab, ctx) && !PRIVAT.has(tab);
   return zeilen.filter((z) => alle || zeileSichtbar(tab, z, ctx)).map((z) => kuerzen(tab, z, ctx, alle));
 }
 
@@ -143,9 +157,41 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (alt) return { ok: false, grund: "NUR_NEU" };
       if (!neu.inventar_id || !(ctx.inventar.has(neu.inventar_id) || ctx.istVerwalter)) return { ok: false, grund: "INSTRUMENT_NICHT_MEINS" };
       return { ok: true, zeile: { ...nur(neu, ["id", "inventar_id", "meldung"]), status: "gemeldet", gemeldet_von: ctx.ich, gemeldet_am: jetzt.slice(0, 10) } };
-    case "pinnwand":
-      if (!neuOderEigen("von")) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
-      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "text", "wichtig", "erledigt", "geloescht_am"]), von: ctx.ich, zeit: alt?.zeit || jetzt } };
+    case "pinnwand": {
+      // BK-PINNWAND (wie KC pinnwand_anheften / _wichtig / _abnehmen): Farbe, Zeit und Empfängerzahl setzt der Server
+      if (!alt) {
+        if (neu.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
+        const text = String(neu.text ?? "").trim();
+        if (!text) return { ok: false, grund: "TEXT_FEHLT" };
+        if ([...text].length > PINNWAND.zeichen) return { ok: false, grund: "TEXT_ZU_LANG" };
+        const fuer = ["ich", "alle", "personen"].includes(neu.fuer) ? neu.fuer : null;
+        if (!fuer) return { ok: false, grund: "FUER_FEHLT" };
+        const personen = fuer === "personen" ? [...new Set((Array.isArray(neu.personen) ? neu.personen : []).map(String))].filter((id) => id !== ctx.ich && ctx.personenIds.has(id)).slice(0, 60) : [];
+        if (fuer === "personen" && !personen.length) return { ok: false, grund: "EMPFAENGER_FEHLT" };
+        const meine = [...ctx.pw.values()].filter((z) => z.von === ctx.ich && !z.geloescht_am);
+        if (meine.length >= PINNWAND.max) return { ok: false, grund: "PINNWAND_VOLL" };
+        const belegt = new Set(meine.map((z) => Number(z.farbe)));
+        const z = { ...nur(neu, ["id"]), text, von: ctx.ich, wichtig: !!neu.wichtig, fuer, personen, farbe: [1, 2, 3, 4].find((n) => !belegt.has(n)) ?? 1, antworten: neu.antworten !== false, zeit: jetzt };
+        z.anzahl = pwEmpfaenger(z, ctx.personen).length;
+        return { ok: true, zeile: z };
+      }
+      if (!pwSichtbar(alt, ctx.ich)) return { ok: false, grund: "NICHT_SICHTBAR" };
+      if (neu.geloescht_am && !alt.geloescht_am) {
+        if (alt.von !== ctx.ich && !hatRolle(ctx, MODERATION)) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
+        return { ok: true, zeile: { ...alt, geloescht_am: jetzt }, zusammenfuehren: true };
+      }
+      if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
+      return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "pinnwand_gelesen": {
+      const z = ctx.pw.get(neu.zettel_id);
+      if (!z || z.geloescht_am || !pwSichtbar(z, ctx.ich) || z.von === ctx.ich) return { ok: false, grund: "ZETTEL_NICHT_SICHTBAR" };
+      if (neu.person_id !== ctx.ich || (alt && alt.person_id !== ctx.ich)) return { ok: false, grund: "NUR_EIGENE" };
+      const id = pwGelesenId(z.id, ctx.ich);
+      if (neu.id !== id) return { ok: false, grund: "ID_UNGUELTIG" };
+      const erledigt = z.fuer !== "ich" && neu.erledigt_am ? alt?.erledigt_am || jetzt : null;
+      return { ok: true, zeile: { ...(alt || {}), id, zettel_id: z.id, person_id: ctx.ich, gesehen_am: alt?.gesehen_am || jetzt, erledigt_am: erledigt }, zusammenfuehren: true };
+    }
     case "personen":
       if (!alt || alt.id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_EINSTELLUNGEN" };
       { const fg = neu.freigaben && typeof neu.freigaben === "object" ? Object.fromEntries(["geburtstag", "mobil", "email", "adresse"].map((k) => [k, neu.freigaben[k] === true])) : alt.freigaben;

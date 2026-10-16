@@ -93,6 +93,15 @@ if (!(await p.$(".ue-liste li"))) fehler.push("Üben: Eintrag fehlt im Tagebuch"
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("kalender")); await p.waitForSelector('[data-a="alleIcs"]');
 await p.evaluate(async () => { const { liste } = await import("/js/kern/daten.js"); const t = liste("termine").find((x) => new Date(x.beginn) > new Date()); (await import("/js/app/zustand.js")).zeige("termin", { id: t.id }); });
 await p.click('[data-a="terminIcs"]'); await p.waitForSelector('.kal-wahl a[href^="https://calendar.google.com/"]'); await p.click('[data-a="blattZu"]');
+// 📅 Termine kinderleicht: Filter, eigener Termin, Absage mit Grund · 🟢 Online-Leiste und 👋 Anklopfen
+await p.evaluate(() => document.getElementById("blattHg")?.remove());
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("termine")); await p.waitForSelector(".t-filter");
+await p.click('[data-a="eigenNeu"]'); await p.waitForSelector("#eigenForm"); await p.click('[data-a="eigenSpeichern"]'); await p.waitForTimeout(300);
+await p.click('[data-a="termineFilter"][data-x="meine_eigene"]'); await p.waitForTimeout(200);
+if (!(await p.$(".termin.eigen"))) fehler.push("Termine: eigener Termin fehlt");
+await p.click('[data-a="terminNeu"]'); await p.waitForSelector('#terminForm input[name="fuer_alle"]'); await p.evaluate(() => document.getElementById("blattHg")?.remove());
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("nachrichten")); await p.waitForTimeout(300);
+if (!(await p.$("#onLeiste"))) fehler.push("Online-Leiste fehlt (Leitung)");
 // 🎼 Orchester mit Gesichtern, 🎺 Instrumentenkunde, 🙂 Mein Gesicht
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("orchester")); await p.waitForSelector(".sitzplan .gesicht");
 for (const x of ["register", "besetzung", "sitzplan"]) { await p.click(`[data-a="orchAnsicht"][data-x="${x}"]`); await p.waitForTimeout(150); }

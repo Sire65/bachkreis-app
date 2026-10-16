@@ -303,7 +303,9 @@ create table if not exists bk_termine (
   beginn timestamptz not null,
   ende timestamptz,
   ort text,
+  fuer_alle boolean,
   gruppen text[],
+  teilnahme text check (teilnahme is null or teilnahme in ('pflicht', 'erwuenscht', 'info')),
   projekt_id text,
   frist date,
   status text check (status is null or status in ('geplant', 'abgesagt')),
@@ -331,6 +333,7 @@ create table if not exists bk_antworten (
   von_person_id text,
   anwesend text check (anwesend is null or anwesend in ('', 'ja', 'nein')),
   register_id text,
+  nachfragen_am date,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -341,6 +344,48 @@ create index if not exists bk_antworten_geaendert on bk_antworten (geaendert_am)
 alter table bk_antworten enable row level security;
 drop trigger if exists bk_antworten_stempel on bk_antworten;
 create trigger bk_antworten_stempel before update on bk_antworten for each row execute function bk_abgleich_stempel();
+
+-- Eigene Termine
+create table if not exists bk_eigene_termine (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  art text check (art is null or art in ('ueben', 'unterricht', 'vorspiel', 'sonstiges')),
+  titel text not null,
+  beginn timestamptz not null,
+  ende timestamptz,
+  ort text,
+  woechentlich_bis date,
+  erinnerung integer,
+  notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_eigene_termine_geaendert on bk_eigene_termine (geaendert_am);
+alter table bk_eigene_termine enable row level security;
+drop trigger if exists bk_eigene_termine_stempel on bk_eigene_termine;
+create trigger bk_eigene_termine_stempel before update on bk_eigene_termine for each row execute function bk_abgleich_stempel();
+
+-- Anklopfen
+create table if not exists bk_klopfen (
+  id text primary key default gen_random_uuid()::text,
+  von text not null,
+  an text not null,
+  zeit timestamptz not null,
+  antwort text check (antwort is null or antwort in ('ja', 'spaeter', 'nein')),
+  antwort_am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_klopfen_geaendert on bk_klopfen (geaendert_am);
+alter table bk_klopfen enable row level security;
+drop trigger if exists bk_klopfen_stempel on bk_klopfen;
+create trigger bk_klopfen_stempel before update on bk_klopfen for each row execute function bk_abgleich_stempel();
 
 -- Unterhaltungen
 create table if not exists bk_unterhaltungen (
@@ -924,6 +969,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_antwo
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_antworten_person_id_fk') then alter table bk_antworten add constraint bk_antworten_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_antworten_von_person_id_fk') then alter table bk_antworten add constraint bk_antworten_von_person_id_fk foreign key (von_person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_antworten_register_id_fk') then alter table bk_antworten add constraint bk_antworten_register_id_fk foreign key (register_id) references bk_register(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_eigene_termine_person_id_fk') then alter table bk_eigene_termine add constraint bk_eigene_termine_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_klopfen_von_fk') then alter table bk_klopfen add constraint bk_klopfen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_klopfen_an_fk') then alter table bk_klopfen add constraint bk_klopfen_an_fk foreign key (an) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_unterhaltung_id_fk') then alter table bk_nachrichten add constraint bk_nachrichten_unterhaltung_id_fk foreign key (unterhaltung_id) references bk_unterhaltungen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_von_fk') then alter table bk_nachrichten add constraint bk_nachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_nachricht_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_nachricht_id_fk foreign key (nachricht_id) references bk_nachrichten(id) on delete restrict; end if; end $$;
@@ -966,6 +1014,9 @@ alter table bk_dateien enable row level security;
 -- 📆 Kalender-Abo: nur die Zählnummer je Person (neuer Link = +1, alter ungültig) – der Link selbst wird nie gespeichert
 create table if not exists bk_kalender_abos (person_id text primary key references bk_personen(id) on delete cascade, epoche integer not null default 0, zuletzt timestamptz);
 alter table bk_kalender_abos enable row level security;
+-- 🟢 Wer ist online: nur Zeitpunkt der letzten Meldung je Person (wird nie an Geräte geladen)
+create table if not exists bk_online (person_id text primary key references bk_personen(id) on delete cascade, zuletzt timestamptz not null default now(), sichtbar boolean not null default true);
+alter table bk_online enable row level security;
 -- Zugangscodes nur als Hash speichern (Spalte code bleibt für die Vorführversion, im Echtbetrieb leer)
 alter table bk_zugaenge add column if not exists code_hash text;
 create unique index if not exists bk_zugaenge_code_hash on bk_zugaenge (code_hash) where code_hash is not null;

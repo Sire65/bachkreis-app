@@ -13,7 +13,7 @@ export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "ko
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen"]);
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen"]);
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -29,9 +29,10 @@ export function kontext(person, alle) {
   const gruppen = new Set((alle.gruppe_zuordnung || []).filter((z) => meine.has(z.person_id) && !z.geloescht_am).map((z) => z.gruppe_id));
   const register = new Set((alle.person_instrument || []).filter((x) => meine.has(x.person_id) && !x.geloescht_am).map((x) => x.register_id).filter(Boolean));
   const inventar = new Set((alle.ausleihen || []).filter((a) => meine.has(a.person_id) && !a.geloescht_am).map((a) => a.inventar_id));
-  const termine = new Set((alle.termine || []).filter((t) => (t.gruppen || []).some((g) => gruppen.has(g))).map((t) => t.id));
   const istVerwalter = rollen.some((r) => ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"].includes(r));
-  const ctx = { person, ich, rollen, kinder: new Set(kinder), meine, eltern, gruppen, register, inventar, termine, istVerwalter };
+  // 🌍 Termine „für alle“ sieht jeder, der (bzw. dessen Kind) in einem Orchester ist – und wer Termine plant
+  const termine = new Set((alle.termine || []).filter((t) => (t.gruppen || []).some((g) => gruppen.has(g)) || (t.fuer_alle && (gruppen.size > 0 || istVerwalter || rollen.includes("terminplaner")))).map((t) => t.id));
+  const ctx = { person, ich, rollen, kinder: new Set(kinder), meine, eltern, gruppen, register, inventar, termine, istVerwalter, tMap: new Map((alle.termine || []).map((t) => [t.id, t])), terminarten: alle.terminarten || [] };
   const unterhaltungen = new Set((alle.unterhaltungen || []).filter((u) => unterhaltungSichtbar(u, ctx, alle)).map((u) => u.id));
   ctx.unterhaltungen = unterhaltungen;
   ctx.uMap = new Map((alle.unterhaltungen || []).map((u) => [u.id, u]));
@@ -66,6 +67,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "eltern_kind": return ctx.meine.has(z.kind_id) || ctx.meine.has(z.eltern_id);
     case "gruppe_zuordnung": case "person_instrument": return ctx.person?.typ === "schueler" || ctx.meine.has(z.person_id);
     case "inventar": return ctx.inventar.has(z.id);
+    case "eigene_termine": return ctx.meine.has(z.person_id);
+    case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
     case "ausleihen": return ctx.meine.has(z.person_id);
     case "reparaturen": return z.gemeldet_von === ctx.ich || ctx.inventar.has(z.inventar_id);
@@ -176,7 +179,31 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (!ctx.meine.has(neu.person_id) || (alt && alt.person_id !== neu.person_id)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
       if (!ctx.termine.has(neu.termin_id)) return { ok: false, grund: "TERMIN_NICHT_SICHTBAR" };
       if (!["ja", "vielleicht", "nein"].includes(neu.antwort)) return { ok: false, grund: "ANTWORT_UNGUELTIG" };
-      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "termin_id", "person_id", "antwort", "notiz", "register_id"]), von_person_id: ctx.ich } };
+      { // ℹ️ Info-Termine brauchen keine Antwort; ❗ bei erforderlicher Teilnahme braucht eine Absage einen Grund
+        const t = ctx.tMap?.get(neu.termin_id), art = (ctx.terminarten || []).find((a) => a.id === t?.art_id);
+        const teilnahme = t?.teilnahme || (art?.pflicht ? "pflicht" : "erwuenscht");
+        if (teilnahme === "info") return { ok: false, grund: "NUR_INFO" };
+        if (teilnahme === "pflicht" && neu.antwort === "nein" && !String(neu.notiz || "").trim()) return { ok: false, grund: "GRUND_FEHLT" };
+      }
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "termin_id", "person_id", "antwort", "notiz", "register_id", "nachfragen_am"]), von_person_id: ctx.ich } };
+    case "eigene_termine": {
+      // 🙋 eigene Termine: für sich selbst oder die eigenen Kinder; nur einfache Felder
+      if (!ctx.meine.has(neu.person_id) || (alt && alt.person_id !== neu.person_id)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+      if (!neu.geloescht_am) {
+        if (!String(neu.titel || "").trim() || Number.isNaN(new Date(neu.beginn).getTime())) return { ok: false, grund: "TITEL_ODER_ZEIT_FEHLT" };
+        if (neu.ende && new Date(neu.ende) < new Date(neu.beginn)) return { ok: false, grund: "ENDE_VOR_BEGINN" };
+      }
+      const art = ["ueben", "unterricht", "vorspiel", "sonstiges"].includes(neu.art) ? neu.art : "sonstiges";
+      const bis = /^\d{4}-\d{2}-\d{2}$/.test(String(neu.woechentlich_bis || "")) ? neu.woechentlich_bis : null;
+      const er = [0, 5, 10, 15, 30, 60, 120].includes(Number(neu.erinnerung)) ? Number(neu.erinnerung) : 0;
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "person_id", "beginn", "ende", "geloescht_am"]), art, titel: String(neu.titel || "").slice(0, 80), ort: String(neu.ort || "").slice(0, 80), notiz: String(neu.notiz || "").slice(0, 300), woechentlich_bis: bis, erinnerung: er } };
+    }
+    case "klopfen":
+      // 👋 angelegt wird nur über die Server-Aktion „anklopfen“; der Empfänger beantwortet
+      if (!alt) return { ok: false, grund: "NUR_UEBER_ANKLOPFEN" };
+      if (alt.an !== ctx.ich) return { ok: false, grund: "NICHT_AN_MICH" };
+      if (!["ja", "spaeter", "nein"].includes(neu.antwort)) return { ok: false, grund: "ANTWORT_UNGUELTIG" };
+      return { ok: true, zeile: { ...alt, antwort: neu.antwort, antwort_am: new Date().toISOString() } };
     case "nachrichten": {
       // BK-NACHRICHTEN (wie KC nachricht_senden / _bearbeiten / _loeschen / reagieren / geplant_speichern)
       const u = ctx.uMap.get(alt ? alt.unterhaltung_id : neu.unterhaltung_id);

@@ -10,6 +10,7 @@ import { KACHELN, REGISTER_ALLE } from "./start.js";
 import { REG_EFFEKTE, regEffektWahl, infoKarten } from "./kopf.js";
 import { JZ_WAHL, jzWahl, JZ_DEKO_WAHL, jzDekoWahl } from "./jahreszeiten.js";
 import * as D from "./darstellung.js";
+import { onlineEinstellungenHtml } from "./online.js";
 import { SENDE_EFFEKTE, sendeEffektWahl, sendeEffektSetzen, sendeEffektVorschau, blaulichtVorschau, feeKommt, reisswolf } from "./effekte.js";
 
 const JZ_VORSCHAUEN = [["herbst", "🍂 Herbst"], ["advent", "🕯️ Advent"], ["winter", "⛄ Winter"], ["fruehling", "🌱 Frühling"], ["sommer", "🌻 Sommer"],
@@ -129,6 +130,7 @@ VIEWS.einstellungen = {
         <h4>Was willst du wie bekommen?</h4>${matrix}`)
       + bereich("nachrichten", "💬 Nachrichten", nachrichtenEinst(e))
       + bereich("ansagen", "🗣️ Ansagen, Töne & Tipps", tipps)
+      + bereich("online", "🟢 Wer ist online & Anklopfen", onlineEinstellungenHtml())
       + bereich("privat", "🔒 Privatsphäre", privat)
       + bereich("kalender", "📆 Termine im Handy-Kalender", `<p>Deine Termine im Apple-, Google- oder Outlook-Kalender – als Abo automatisch aktuell, mit Erinnerung vor jedem Termin.</p><button class="knopf" data-a="kachel" data-x="kalender">📆 Kalender einrichten</button>
         ${schalter("uebeHinweis", "🎻 Übe-Erinnerung beim Öffnen", "An Übetagen fragt die App nach der Übezeit einmal: „Heute ist Übetag – schon geübt?“", e.uebeHinweis !== false)}`)

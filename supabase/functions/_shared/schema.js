@@ -12,6 +12,7 @@ export const ROLLEN = {
   instrumentenwart: "Instrumentenwart",
   notenwart: "Notenwart",
   registerfuehrer: "Registerführer",
+  terminplaner: "Terminplaner (trägt Termine ein)",
   schueler: "Schüler",
   eltern: "Eltern",
 };
@@ -19,6 +20,9 @@ export const VERWALTER = ["admin", "leitung", "lehrkraft", "vorstand", "instrume
 const L = ["admin", "leitung"];
 const LL = ["admin", "leitung", "lehrkraft"];
 const ALLE_VERWALTER = VERWALTER;
+const PLANER = [...VERWALTER, "terminplaner"]; // dürfen alle Termine und Rückmeldungen sehen
+export const TERMIN_PLANER = ["admin", "leitung", "lehrkraft", "terminplaner"]; // dürfen Termine anlegen und ändern
+export const TEILNAHME = { pflicht: ["❗", "Teilnahme erforderlich"], erwuenscht: ["🙂", "Teilnahme erwünscht"], info: ["ℹ️", "Nur zur Info"] };
 
 export const PERSONEN_TYPEN = {
   schueler: "Schüler/in",
@@ -74,6 +78,15 @@ export function chatPartnerErlaubt(ich, p, { verwandt = false, schuelerUntereina
 // ---------- Pinnwand (gemeinsam für App und Server) ----------
 export const PINNWAND = { max: 4, zeichen: 200, erinnernTage: 3, pauseTage: 7 };
 // Wer bekommt einen Zettel „für alle“? Alle aktiven Personen mit App (Schüler, Eltern, Leitung, Lehrkräfte, Verwalter) außer dem Verfasser.
+// 🟢 Wer ist online / 👋 Anklopfen (wie KC): welche Personenkreise das nutzen, stellt die Leitung im Zahnrad ein (konfig.online_fuer)
+export const ONLINE_KREISE = { leitung: "Leitung & Lehrkräfte", schueler: "Schülerinnen & Schüler", eltern: "Eltern" };
+export function onlineKreis(p) {
+  if (!p) return null;
+  if (["leitung", "lehrkraft"].includes(p.typ) || (p.rollen || []).some((r) => VERWALTER.includes(r))) return "leitung";
+  return p.typ === "schueler" ? "schueler" : p.typ === "eltern" ? "eltern" : null;
+}
+export const onlineFuer = (konfig) => (Array.isArray(konfig?.online_fuer) ? konfig.online_fuer.filter((k) => k in ONLINE_KREISE) : ["leitung"]);
+export const onlineErlaubt = (p, konfig) => { const k = onlineKreis(p); return !!k && onlineFuer(konfig).includes(k); };
 export const pwAppPerson = (p) => !!p && !p.geloescht_am && p.status !== "ausgetreten" && (["schueler", "eltern", "leitung", "lehrkraft"].includes(p.typ) || (p.rollen || []).some((r) => VERWALTER.includes(r)));
 export const pwSichtbar = (z, ich) => !!z && (z.von === ich || (z.fuer || "alle") === "alle" || (z.fuer === "personen" && (z.personen || []).includes(ich)));
 export const pwEmpfaenger = (z, personen) => (z.fuer === "ich" ? [] : z.fuer === "personen" ? [...new Set(z.personen || [])].filter((id) => id !== z.von) : personen.filter((p) => pwAppPerson(p) && p.id !== z.von).map((p) => p.id));
@@ -135,7 +148,7 @@ export const TABELLEN = {
     anzeige: (z) => `${z.kuerzel} – ${z.name}`,
   },
   gruppe_zuordnung: {
-    titel: "Gruppen-Zuordnung", sym: "🔀", gruppe: "Orchester", lesen: ALLE_VERWALTER, schreiben: LL,
+    titel: "Gruppen-Zuordnung", sym: "🔀", gruppe: "Orchester", lesen: PLANER, schreiben: LL,
     felder: [
       { k: "person_id", t: "Person", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler" || p.typ === "ehemalig", pflicht: true },
       { k: "gruppe_id", t: "Gruppe", typ: "ref", ref: "gruppen", pflicht: true },
@@ -171,7 +184,7 @@ export const TABELLEN = {
     anzeige: (z) => z.name,
   },
   person_instrument: {
-    titel: "Instrumente je Person", sym: "🎺", gruppe: "Orchester", lesen: ALLE_VERWALTER, schreiben: LL,
+    titel: "Instrumente je Person", sym: "🎺", gruppe: "Orchester", lesen: PLANER, schreiben: LL,
     felder: [
       { k: "person_id", t: "Person", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler" || p.typ === "ehemalig", pflicht: true },
       { k: "typ_id", t: "Instrument", typ: "ref", ref: "instrument_typen", pflicht: true },
@@ -268,14 +281,16 @@ export const TABELLEN = {
     anzeige: (z) => `${z.sym || ""} ${z.name}`.trim(),
   },
   termine: {
-    titel: "Termine", sym: "📅", gruppe: "Termine", lesen: ALLE_VERWALTER, schreiben: LL,
+    titel: "Termine", sym: "📅", gruppe: "Termine", lesen: PLANER, schreiben: TERMIN_PLANER,
     felder: [
       { k: "titel", t: "Titel", typ: "text", pflicht: true },
       { k: "art_id", t: "Art", typ: "ref", ref: "terminarten", pflicht: true },
       { k: "beginn", t: "Beginn", typ: "zeit", pflicht: true },
       { k: "ende", t: "Ende", typ: "zeit" },
       { k: "ort", t: "Ort", typ: "text" },
+      { k: "fuer_alle", t: "Für alle (ganzer Bachkreis, z. B. Weihnachtsfeier)", typ: "ja" },
       { k: "gruppen", t: "Eingeladene Gruppen", typ: "refs", ref: "gruppen" },
+      { k: "teilnahme", t: "Teilnahme", typ: "wahl", werte: { pflicht: "erforderlich", erwuenscht: "erwünscht", info: "nur zur Info" } },
       { k: "projekt_id", t: "Projekt", typ: "ref", ref: "projekte" },
       { k: "frist", t: "Antwort bis", typ: "datum" },
       { k: "status", t: "Status", typ: "wahl", werte: { geplant: "geplant", abgesagt: "abgesagt" } },
@@ -286,17 +301,45 @@ export const TABELLEN = {
     anzeige: (z) => z.titel,
   },
   antworten: {
-    titel: "Zu-/Absagen", sym: "✅", gruppe: "Termine", lesen: ALLE_VERWALTER, schreiben: LL,
+    titel: "Zu-/Absagen", sym: "✅", gruppe: "Termine", lesen: PLANER, schreiben: TERMIN_PLANER,
     felder: [
       { k: "termin_id", t: "Termin", typ: "ref", ref: "termine", pflicht: true },
       { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
-      { k: "antwort", t: "Antwort", typ: "wahl", werte: { ja: "Zusage", vielleicht: "vielleicht", nein: "Absage" }, pflicht: true },
+      { k: "antwort", t: "Antwort", typ: "wahl", werte: { ja: "Zusage", vielleicht: "weiß noch nicht", nein: "Absage" }, pflicht: true },
       { k: "notiz", t: "Notiz", typ: "text" },
       { k: "von_person_id", t: "beantwortet von", typ: "ref", ref: "personen" },
       { k: "anwesend", t: "tatsächlich anwesend", typ: "wahl", werte: { "": "nicht erfasst", ja: "anwesend", nein: "fehlte" } },
     ],
     liste: ["termin_id", "person_id", "antwort", "notiz", "anwesend"],
-    intern: [{ k: "register_id", typ: "ref", ref: "register" }],
+    intern: [{ k: "register_id", typ: "ref", ref: "register" }, { k: "nachfragen_am", typ: "datum" }],
+  },
+  eigene_termine: {
+    // 🙋 Eigene Termine (Üben, Unterricht, Vorspiel …): privat – nur die Person selbst und ihre Eltern
+    titel: "Eigene Termine", sym: "🙋", gruppe: "Termine", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: { ueben: "Üben", unterricht: "Unterricht", vorspiel: "Vorspiel", sonstiges: "Sonstiges" } },
+      { k: "titel", t: "Titel", typ: "text", pflicht: true },
+      { k: "beginn", t: "Beginn", typ: "zeit", pflicht: true },
+      { k: "ende", t: "Ende", typ: "zeit" },
+      { k: "ort", t: "Ort", typ: "text" },
+      { k: "woechentlich_bis", t: "jede Woche bis", typ: "datum" },
+      { k: "erinnerung", t: "Erinnerung (Minuten vorher)", typ: "zahl" },
+      { k: "notiz", t: "Notiz", typ: "text" },
+    ],
+    liste: ["person_id", "beginn", "titel", "art"],
+  },
+  klopfen: {
+    // 👋 Anklopfen (wie KC): „Hast du gerade Zeit?“ – sehen nur Absender und Empfänger
+    titel: "Anklopfen", sym: "👋", gruppe: "Kommunikation", lesen: [], schreiben: [],
+    felder: [
+      { k: "von", t: "von", typ: "ref", ref: "personen", pflicht: true },
+      { k: "an", t: "an", typ: "ref", ref: "personen", pflicht: true },
+      { k: "zeit", t: "Zeit", typ: "zeit", pflicht: true },
+      { k: "antwort", t: "Antwort", typ: "wahl", werte: { ja: "ja, jetzt", spaeter: "später", nein: "gerade nicht" } },
+      { k: "antwort_am", t: "beantwortet", typ: "zeit" },
+    ],
+    liste: ["zeit", "von", "an", "antwort"], aufbewahrung_tage: 7,
   },
   unterhaltungen: {
     titel: "Unterhaltungen", sym: "💬", gruppe: "Kommunikation", lesen: L, schreiben: ALLE_VERWALTER,

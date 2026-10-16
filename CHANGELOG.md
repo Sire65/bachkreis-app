@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.16.0 DEV – 16.10.2026
+- 📅 Termine kinderleicht: Abschnitte, große Antwort-Knöpfe, Antwort-Stand mit „ändern“, Absage-Gründe zum Antippen, „Weiß noch nicht“ mit Nachfrage-Tag (antworten.nachfragen_am) und Erinnerung beim Öffnen, Filter Noch antworten/Mein Orchester/Für alle/Eigene
+- termine.fuer_alle (🌍 ganzer Bachkreis) und termine.teilnahme (❗ erforderlich · 🙂 erwünscht · ℹ️ Info); Server: Info-Termine ohne Antwort, Absage bei erforderlicher Teilnahme nur mit Grund
+- 🙋 eigene_termine (privat, auch wöchentlich, im Kalender-Abo und in der Kalenderdatei); Rolle „terminplaner“ darf Termine anlegen
+- 🟢 Online/👋 Anklopfen: Server-Aktionen online/anklopfen (Tabelle bk_online, Tabelle klopfen), konfig.online_fuer im Zahnrad, Kinderschutz über chatPartnerErlaubt, „Mich als online zeigen“
+- Nachtrags-Migration 20261025000000_bk_termine_online.sql
+
 ## 0.15.0 DEV – 16.10.2026
 - 🎭 Bühne: Gesichter der Mitglieder (erstes Orchester, nach Register), neue Instrumenten-Zeichnungen mit Armen und Händen, Spielhaltung/Pausenhaltung, Kopfnicken, Posaunenzug, Podeste, Rampenlicht, Dirigentin von hinten
 

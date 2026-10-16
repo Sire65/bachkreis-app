@@ -4,12 +4,12 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen } from "./schema.js";
+import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
 import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
-import { termineFuer, ics } from "./logik.js";
+import { termineFuer, ics, eigeneVorkommen } from "./logik.js";
 import * as kom from "./kom/kern.js";
 
 const SITZUNG_TAGE = 180;
@@ -25,7 +25,7 @@ async function alleZeilen(db, tab) {
   return (await db.q(`select to_jsonb(t) as z from bk_${tab} t`)).map((r) => r.z);
 }
 async function kontextLaden(db, person) {
-  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "unterhaltungen", "pinnwand", "personen"];
+  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   const ctx = kontext(person, alle);
@@ -267,16 +267,51 @@ export async function kalenderFeed(db, token, geheimnis) {
   const p = (await db.q(`select to_jsonb(p) as p from bk_personen p where id = $1 and geloescht_am is null`, [pid]))[0]?.p;
   if (!p || p.status === "ausgetreten") return leer;
   const alle = {};
-  for (const t of ["termine", "gruppe_zuordnung", "person_instrument", "instrument_typen", "eltern_kind", "personen"]) alle[t] = (await alleZeilen(db, t)).filter((z) => !z.geloescht_am);
+  for (const t of ["termine", "gruppe_zuordnung", "person_instrument", "instrument_typen", "eltern_kind", "personen", "eigene_termine"]) alle[t] = (await alleZeilen(db, t)).filter((z) => !z.geloescht_am);
   const mini = { liste: (t, f = () => true) => (alle[t] || []).filter(f), hole: (t, id) => (alle[t] || []).find((z) => z.id === id) || null };
   const kinder = alle.eltern_kind.filter((e) => e.eltern_id === pid).map((e) => e.kind_id);
   const wer = [...new Set([pid, ...kinder])], seit = new Date(Date.now() - 60 * 86400000);
   const jeTermin = new Map();
   for (const w of wer) for (const t of termineFuer(mini, w, { abHeute: true, heute: seit })) (jeTermin.get(t.id) || jeTermin.set(t.id, { t, wer: new Set() }).get(t.id)).wer.add(w);
   const vorname = (id) => mini.hole("personen", id)?.vorname || "";
+  // 🙋 eigene Termine (Üben, Unterricht …) der Person bzw. ihrer Kinder mit in den Kalender
+  for (const e of alle.eigene_termine.filter((x) => wer.includes(x.person_id))) for (const v of eigeneVorkommen(e, seit, new Date(Date.now() + 400 * 86400000))) jeTermin.set(v.id, { t: { ...v, titel: "🙋 " + v.titel }, wer: new Set([e.person_id]) });
   const titelVor = kinder.length ? (t) => [...jeTermin.get(t.id).wer].filter((w) => w !== pid).map(vorname).join(" & ") : null;
   await db.q(`insert into bk_kalender_abos (person_id, epoche, zuletzt) values ($1, 0, now()) on conflict (person_id) do update set zuletzt = now()`, [pid]);
   return { status: 200, text: ics([...jeTermin.values()].map((x) => x.t), "Bachkreis", { alarm: Number(p.kalender_alarm) || 0, uebe: p.uebe_plan ? { ...p.uebe_plan, id: pid } : null, titelVor }) };
+}
+
+// ---------- 🟢 Wer ist online · 👋 Anklopfen ----------
+// Jedes Gerät meldet sich alle ~45 s („online“); zurück kommt, wer in den letzten 2 Minuten da war – nur Personenkreise, die die Leitung
+// freigegeben hat (konfig.online_fuer), nur sichtbare („Mich als online zeigen“) und nur, wem man auch privat schreiben darf (Kinderschutz).
+const ONLINE_SEK = 120;
+async function onlineListe(db, s, ctx) {
+  const k = ctx.konfig, verw = new Set([...ctx.kinder, ...ctx.eltern]);
+  const r = (await db.q(`select to_jsonb(p) as z from bk_online o join bk_personen p on p.id = o.person_id
+    where o.zuletzt > now() - ($2 || ' seconds')::interval and o.sichtbar and p.id <> $1 and p.geloescht_am is null`, [s.person.id, String(ONLINE_SEK)])).map((x) => x.z);
+  return r.filter((p) => onlineErlaubt(p, k) && chatPartnerErlaubt(s.person, p, { verwandt: verw.has(p.id), schuelerUntereinander: k.chat_schueler_untereinander !== false }))
+    .map((p) => ({ id: p.id, vorname: p.vorname, name: `${p.vorname || ""} ${p.nachname || ""}`.trim(), typ: p.typ }));
+}
+async function online(db, s, body) {
+  const ctx = await kontextLaden(db, s.person);
+  const sichtbar = body.sichtbar !== false && onlineErlaubt(s.person, ctx.konfig);
+  await db.q(`insert into bk_online (person_id, zuletzt, sichtbar) values ($1, now(), $2) on conflict (person_id) do update set zuletzt = now(), sichtbar = excluded.sichtbar`, [s.person.id, sichtbar]);
+  if (!onlineErlaubt(s.person, ctx.konfig)) return { status: 200, json: { ok: true, erlaubt: false, liste: [] } };
+  return { status: 200, json: { ok: true, erlaubt: true, liste: await onlineListe(db, s, ctx) } };
+}
+async function anklopfen(db, s, body, dienste) {
+  const ctx = await kontextLaden(db, s.person), an = String(body.an || "");
+  if (!onlineErlaubt(s.person, ctx.konfig)) return fehler(403, "ANKLOPFEN_AUS");
+  if (!(await onlineListe(db, s, ctx)).some((p) => p.id === an)) return fehler(409, "NICHT_ONLINE");
+  const kurz = await db.q(`select 1 from bk_klopfen where von = $1 and an = $2 and zeit > now() - interval '60 seconds' and geloescht_am is null`, [s.person.id, an]);
+  if (kurz.length) return fehler(429, "GERADE_ANGEKLOPFT");
+  const stunde = (await db.q(`select count(*)::int as n from bk_klopfen where von = $1 and zeit > now() - interval '1 hour'`, [s.person.id]))[0].n;
+  if (stunde >= 20) return fehler(429, "ZU_OFT");
+  const id = crypto.randomUUID();
+  await db.q(`insert into bk_klopfen (id, von, an, zeit, geaendert_von) values ($1, $2, $3, now(), $4)`, [id, s.person.id, an, name(s.person)]);
+  const r = await kom.annehmen(db, { ereignis: "anklopfen", an: [an], betreff: `👋 ${s.person.vorname || name(s.person)} klopft an`, text: "Hast du gerade kurz Zeit? Antippen und antworten.", kanaele: ["push"], korrelation: `klopfen:${id}`, ausloeser: name(s.person) });
+  if (r.ok && dienste.adapter) dienste.hintergrund(kom.zustellen(db, dienste.adapter, dienste.umgebung, { korrelation: r.korrelation, limit: 5 }).catch((e) => console.error("bk-kom klopfen", e)));
+  return { status: 200, json: { ok: true, id } };
 }
 
 // dienste (nur Edge Function/Tests): { adapter, umgebung: { appUrl, quittungUrl, vapidPublic }, hintergrund(promise) }
@@ -316,6 +351,8 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
       return { status: 200, json: { ok: true } };
     }
     if (aktion === "kalender_link") return await kalenderLink(db, s, body, dienste);
+    if (aktion === "online") return await online(db, s, body);
+    if (aktion === "anklopfen") return await anklopfen(db, s, body, dienste);
     if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
       const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);
       return { status: 200, json: { ok: true, anzahl: r.length } };

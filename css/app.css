@@ -183,3 +183,33 @@ body.mit-fuss .jz-vorschau-aus { bottom: calc(84px + env(safe-area-inset-bottom)
 .lade-start { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 28px 16px; }
 @keyframes bkLogoDreh { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
 @media (prefers-reduced-motion: reduce) { .warte-logo { animation-duration: 3s; } }
+/* 0.16.0 – 📅 Termine kinderleicht */
+.t-abschnitt { margin: 14px 2px 6px; font-size: .95rem; color: var(--grau); text-transform: uppercase; letter-spacing: .04em; }
+.t-marken { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.badge.tn-pflicht { background: var(--rotbg); color: var(--rot); font-weight: 800; } .badge.tn-erwuenscht { background: var(--gruenbg); color: var(--gruen); } .badge.tn-info { background: var(--karte2); color: var(--grau); }
+.badge.b-alle { background: #e8f0fe; color: #1a56c4; font-weight: 800; } .badge.b-eigen { background: #f1e6fa; color: #7b3fa0; font-weight: 800; }
+:root.dunkel .badge.b-alle { background: #1e2c45; color: #9cc0ff; } :root.dunkel .badge.b-eigen { background: #33233f; color: #d7b4f0; }
+.termin.eigen { border-left-color: #7b3fa0 !important; background: linear-gradient(90deg, rgba(123, 63, 160, .06), transparent 40%), var(--karte); }
+.antworten.gross button { display: grid; gap: 2px; justify-items: center; font-size: 1.35rem; padding: 10px 4px; }
+.antworten.gross button b { font-size: .82rem; }
+.t-wer { font-weight: 800; margin-top: 10px; }
+.t-stand { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding: 9px 12px; border-radius: 12px; font-weight: 800; }
+.t-stand.ja { background: var(--gruenbg); color: var(--gruen); } .t-stand.nein { background: var(--rotbg); color: var(--rot); } .t-stand.vielleicht { background: var(--gelbbg); color: var(--gelb); }
+.t-stand small { font-weight: 600; } .t-stand .link { flex: none; }
+.t-info { margin-top: 10px; padding: 9px 12px; border-radius: 12px; background: var(--karte2); color: var(--grau); font-weight: 700; font-size: .9rem; }
+.t-hinweis { display: flex; align-items: center; gap: 8px; width: 100%; border: 2px solid #e0a800; background: var(--gelbbg); color: var(--text); text-align: left; font: inherit; cursor: pointer; }
+.t-hinweis span { margin-left: auto; color: var(--grau); font-weight: 700; }
+.t-filter button.t-offen b { background: #e0a800; color: #1a1500; border-radius: 999px; padding: 0 6px; opacity: 1; }
+.t-gruende { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 10px 0; }
+.t-gruende button { border: 2px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 14px; padding: 12px 8px; font: inherit; font-weight: 800; font-size: .95rem; cursor: pointer; }
+.t-gruende button:active { border-color: var(--haupt); }
+.t-wahl { display: flex; flex-wrap: wrap; gap: 6px; }
+.t-chip { position: relative; cursor: pointer; } .t-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.t-chip span { display: inline-block; border: 2px solid var(--linie); background: var(--karte); border-radius: 999px; padding: 6px 12px; font-weight: 800; font-size: .88rem; }
+.t-chip input:checked + span { background: var(--haupt); border-color: var(--haupt); color: var(--haupt-text); }
+.t-chip.tn-pflicht input:checked + span { background: var(--rot); border-color: var(--rot); color: #fff; }
+.t-chip.alle input:checked + span { background: #1a56c4; border-color: #1a56c4; color: #fff; }
+.t-chip input:focus-visible + span { outline: 3px solid var(--haupt); outline-offset: 2px; }
+.et-zeit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.t-nachfrage { margin: 8px 0; }
+#eigenForm .et-bis { display: none; } #eigenForm:has(input[name=woechentlich]:checked) .et-bis { display: grid; }

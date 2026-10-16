@@ -171,3 +171,16 @@ button.tag-trenner { border: none; background: none; font: inherit; cursor: poin
 .nz-tabelle { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 6px 0; } .nz-tabelle td { padding: 4px 2px; border-bottom: 1px solid var(--linie); } .nz-tabelle td:first-child { color: var(--grau); }
 .kopf2 .na-netz + h2 { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: clamp(.95rem, 4.2vw, 1.25rem); }
 .kopf2:has(.na-netz) { gap: 6px; }
+/* 0.16.0 – 🟢 Wer ist online · 👋 Anklopfen */
+.on-leiste { margin: 0 0 8px; padding: 8px 10px; border-radius: 14px; background: var(--karte); box-shadow: var(--schatten); }
+.on-kopf { display: flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--grau); margin-bottom: 6px; } .on-kopf b { color: var(--text); }
+.on-punkt { width: 10px; height: 10px; border-radius: 50%; background: #2e9d5b; box-shadow: 0 0 0 3px rgba(46, 157, 91, .25); animation: onPuls 1.8s ease-in-out infinite; }
+@keyframes onPuls { 50% { box-shadow: 0 0 0 6px rgba(46, 157, 91, 0); } }
+.on-knoepfe { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; } .on-knoepfe::-webkit-scrollbar { display: none; }
+.on-knoepfe button { flex: none; display: grid; justify-items: center; gap: 2px; border: none; background: none; font: inherit; font-size: .78rem; font-weight: 800; color: var(--text); cursor: pointer; width: 62px; }
+.on-bild { position: relative; width: 46px; height: 46px; } .on-bild svg { width: 46px; height: 46px; border-radius: 50%; }
+.on-bild i { position: absolute; right: 0; bottom: 0; width: 13px; height: 13px; border-radius: 50%; background: #2e9d5b; border: 2px solid var(--karte); }
+.on-gross { display: flex; justify-content: center; margin: 4px 0 8px; } .on-gross svg { width: 86px; height: 86px; border-radius: 50%; }
+.on-gross.klopft svg { animation: onKlopf 1s ease-in-out infinite; } @keyframes onKlopf { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-4deg); } }
+.on-uhr { text-align: center; font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .on-punkt, .on-gross.klopft svg { animation: none; } }

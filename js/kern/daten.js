@@ -36,6 +36,8 @@ export const anmelden = (code, verwaltung = false) => mitWarten(() => A.anmelden
 export const abmelden = () => A.abmelden?.();
 export const serverAktion = (aktion, nutzlast) => mitWarten(() => A.aktion?.(aktion, nutzlast), /speichern|setzen|aendern/.test(aktion) ? "Wird gespeichert …" : "Einen Moment …");
 export const beiHinweis = (f) => A?.beiHinweis?.(f);
+// still im Hintergrund (ohne „Einen Moment …“), z. B. 🟢 Online-Meldung alle 45 s
+export const serverAktionStill = (aktion, nutzlast) => A?.aktion?.(aktion, nutzlast);
 export const jetztAbgleichen = () => mitWarten(() => A?.abgleichen?.(), "Wird abgeglichen …");
 
 export const datenInfo = () => A?.info() || { art: "unbekannt", server: false };

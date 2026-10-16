@@ -57,16 +57,27 @@ export function registerVon(db, personId, antwort = null) {
 // ---------- Termine ----------
 export function eingeladen(db, termin, personId) {
   const gr = wirksameGruppen(db, personId, termin.beginn, termin.projekt_id);
+  if (termin.fuer_alle) return gr.length > 0; // 🌍 für alle: jeder, der in irgendeinem Orchester ist (auch Ehemalige)
   if (!gr.some((g) => (termin.gruppen || []).includes(g))) return false;
   if (termin.register?.length) return termin.register.includes(registerVon(db, personId));
   return true;
 }
 export function eingeladene(db, termin) {
-  const kandidaten = new Set(db.liste("gruppe_zuordnung", (z) => (termin.gruppen || []).includes(z.gruppe_id)).map((z) => z.person_id));
+  const kandidaten = new Set(db.liste("gruppe_zuordnung", (z) => termin.fuer_alle || (termin.gruppen || []).includes(z.gruppe_id)).map((z) => z.person_id));
   return [...kandidaten].filter((p) => {
     const person = db.hole("personen", p);
     return person && person.status !== "ausgetreten" && eingeladen(db, termin, p);
   });
+}
+// ❗ erforderlich · 🙂 erwünscht · ℹ️ nur zur Info – ohne Angabe: Pflicht-Terminart → erforderlich, sonst erwünscht
+export const teilnahmeVon = (db, t) => t?.teilnahme || (db.hole("terminarten", t?.art_id)?.pflicht ? "pflicht" : "erwuenscht");
+// 🙋 eigene Termine (auch „jede Woche bis …“) als einzelne Vorkommen im Zeitraum
+export function eigeneVorkommen(e, von, bis) {
+  const out = [], dauer = e.ende ? new Date(e.ende) - new Date(e.beginn) : 0, ende = e.woechentlich_bis ? new Date(e.woechentlich_bis + "T23:59:59") : new Date(e.beginn);
+  for (let b = new Date(e.beginn), n = 0; b <= ende && n < 60; b = new Date(b.getTime() + 7 * 86400000), n++) {
+    if (b >= von && b <= bis) out.push({ ...e, id: `${e.id}@${n}`, eigen_id: e.id, beginn: b.toISOString(), ende: dauer ? new Date(b.getTime() + dauer).toISOString() : null, eigen: true });
+  }
+  return out;
 }
 export const antwortVon = (db, terminId, personId) => db.liste("antworten", (a) => a.termin_id === terminId && a.person_id === personId)[0] || null;
 

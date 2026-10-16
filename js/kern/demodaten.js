@@ -201,6 +201,10 @@ export function erzeugeDemodaten(heute = new Date()) {
   termin({ titel: "Fördervereinsfest", art_id: "ta-fest", beginn: iso(tag(konzertTag, 21, 15, 0)), ende: iso(tag(konzertTag, 21, 19, 0)), ort: "Forum der Schule", gruppen: ["g-a", "g-b", "g-c", "g-d"], frist: isoTag(tag(konzertTag, 14)) });
   termin({ titel: "Ehemaligen-Probe", art_id: "ta-probe", beginn: iso(tag(naechsterWochentag(tag(jetzt, 10), 6), 0, 14, 0)), ende: iso(tag(naechsterWochentag(tag(jetzt, 10), 6), 0, 17, 0)), ort: "Musiksaal", gruppen: ["g-d"] });
   termin({ titel: "Orchesterklasse Vorspiel", art_id: "ta-sonst", beginn: iso(tag(naechsterWochentag(tag(jetzt, 12), 3), 0, 15, 0)), ende: iso(tag(naechsterWochentag(tag(jetzt, 12), 3), 0, 16, 0)), ort: "Aula", gruppen: ["g-c"] });
+  // 🌍 für alle: Weihnachtsfeier (erwünscht) · ℹ️ nur zur Info: Elternabend-Hinweis
+  termin({ titel: "Weihnachtsfeier des Bachkreises", art_id: "ta-fest", beginn: iso(tag(konzertTag, 35, 17, 0)), ende: iso(tag(konzertTag, 35, 20, 0)), ort: "Forum der Schule", fuer_alle: true, gruppen: [], teilnahme: "erwuenscht", beschreibung: "Für alle – mit Familie! Bitte etwas fürs Buffet mitbringen." });
+  termin({ titel: "Ferien – keine Proben", art_id: "ta-sonst", beginn: iso(tag(konzertTag, 7, 8, 0)), ende: iso(tag(konzertTag, 13, 18, 0)), ort: "", fuer_alle: true, gruppen: [], teilnahme: "info", beschreibung: "In den Herbstferien finden keine Proben statt." });
+  for (const t of d.termine) if (["ta-gp", "ta-konzert"].includes(t.art_id) && !t.teilnahme) t.teilnahme = "pflicht";
 
   // temporäre Aushilfe B → A fürs Herbstkonzert, genereller Wechsel eines Schülers ab Halbjahr
   if (bGeiger) d.gruppe_zuordnung.push({ id: `gz-${d.gruppe_zuordnung.length + 1}`, person_id: bGeiger.id, gruppe_id: "g-a", art: "temporaer", von: isoTag(tag(konzertTag, -14)), bis: isoTag(konzertTag), projekt_id: "pr-herbst", grund: "Aushilfe 2. Violine fürs Herbstkonzert" });
@@ -295,6 +299,14 @@ export function erzeugeDemodaten(heute = new Date()) {
       if (["w-6", "w-7"].includes(w.id) && reg.familie !== "streicher" && !(w.id === "w-6" && reg.familie === "holz")) continue;
       d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: reg.name, register_id: reg.id, gruppe_id: w.id === "w-3" && reg.id === "r-v1" ? null : null, datei: "" });
     }
+  }
+  // 🙋 eigene Termine des Demo-Schülers: Geigenunterricht jede Woche, Vorspiel; 👋 Anklopfen der Leitung (beantwortet)
+  d.eigene_termine = []; d.klopfen = [];
+  if (demoSchueler) {
+    const mo = naechsterWochentag(tag(jetzt, 0), 1);
+    d.eigene_termine.push({ id: "et-1", person_id: demoSchueler.id, art: "unterricht", titel: "Geigenunterricht Musikschule", beginn: iso(tag(mo, 0, 15, 30)), ende: iso(tag(mo, 0, 16, 15)), ort: "Musikschule Bergkamen", woechentlich_bis: isoTag(tag(mo, 56)), erinnerung: 30, notiz: "" });
+    d.eigene_termine.push({ id: "et-2", person_id: demoSchueler.id, art: "vorspiel", titel: "Vorspiel bei Oma", beginn: iso(tag(jetzt, 5, 16, 0)), ende: iso(tag(jetzt, 5, 17, 0)), ort: "", woechentlich_bis: null, erinnerung: 60, notiz: "Air üben!" });
+    d.klopfen.push({ id: "kl-1", von: "p-leitung", an: demoSchueler.id, zeit: iso(tag(jetzt, -1, 18, 5)), antwort: "ja", antwort_am: iso(tag(jetzt, -1, 18, 6)) });
   }
   // 🎻 Übe-Tagebuch: der Demo-Schüler übt fast täglich, Übezeiten Mo/Mi/Fr/So 17:30 (Wochenziel 150 Min.)
   d.uebungen = [];

@@ -20,6 +20,7 @@ import { papierflieger } from "./effekte.js";
 import { cfAnwenden } from "./darstellung.js";
 import { gesicht } from "./gesichter.js";
 import { netzSymbolHtml } from "./netzsymbol.js";
+import { onlineLeisteHtml } from "./online.js";
 
 const ich = () => S.ich?.id;
 const jetztIso = () => new Date().toISOString();
@@ -101,7 +102,7 @@ VIEWS.nachrichten = {
     const l = chatEintraege().filter(({ u, letzte }) => !q || chatTitel(u).toLowerCase().includes(q) || String(letzte?.text || "").toLowerCase().includes(q));
     const rechts = `${spracheMoeglich() && einst().sprachsteuerung !== false ? `<button class="knopf klein" data-a="sprachsteuerung" title="Sprachsteuerung" aria-label="Sprachsteuerung">🎤</button>` : ""}<button class="knopf haupt klein" data-a="chatNeu" title="Neue Nachricht" aria-label="Neue Nachricht">＋ Neu</button>${istVerwalter() ? `<button class="knopf klein" data-a="kachel" data-x="rundschreiben" title="Rundschreiben">📣</button>` : ""}`;
     const netz = netzSymbolHtml(); // 📡 statt 💬 vorn, wenn das Verbindungs-Symbol an ist
-    return kopf(netz ? "Nachrichten" : "💬 Nachrichten", rechts).replace("<h2>", netz + "<h2>") + `<input class="chat-suche" type="search" id="chatSuche" placeholder="🔍 Chats und Nachrichten durchsuchen" value="${esc(C.suche)}" aria-label="Chats durchsuchen">
+    return kopf(netz ? "Nachrichten" : "💬 Nachrichten", rechts).replace("<h2>", netz + "<h2>") + onlineLeisteHtml() + `<input class="chat-suche" type="search" id="chatSuche" placeholder="🔍 Chats und Nachrichten durchsuchen" value="${esc(C.suche)}" aria-label="Chats durchsuchen">
       <div class="karte chatliste"><ul class="liste">${l.map(({ u, letzte, neu, plan, expressNeu }) => {
         const vorschau = letzte ? (letzte.zurueckgezogen_am ? "🚫 Nachricht gelöscht" : `${letzte.von === ich() ? "" : u.art === "einzel" ? "" : esc(vorn(letzte.von)) + ": "}${letzte.express ? "🏎️ " : letzte.wichtig ? "❗ " : ""}${esc(nachrichtKurz(letzte).slice(0, 70))}`) : "noch keine Nachricht";
         return `<li class="klick" data-a="oeffne" data-x="unterhaltung|${esc(u.id)}">${chatBild(u)}

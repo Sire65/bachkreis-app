@@ -56,7 +56,8 @@ test("Schüler: nur Termine der eigenen Gruppen, nur eigene Antworten, Gruppench
   const gruppen = d.gruppe_zuordnung.filter((z) => z.person_id === s).map((z) => z.gruppe_id);
   const r = await rufe({ aktion: "laden" }, await login(s));
   const D = r.json.daten;
-  assert.ok(D.termine.length > 0 && D.termine.every((t) => t.gruppen.some((g) => gruppen.includes(g))));
+  assert.ok(D.termine.length > 0 && D.termine.every((t) => t.fuer_alle || t.gruppen.some((g) => gruppen.includes(g))));
+  assert.ok(D.termine.some((t) => t.fuer_alle), "Termine für alle sind dabei");
   assert.ok(D.antworten.every((a) => a.person_id === s));
   assert.ok(D.unterhaltungen.some((u) => u.id === "u-a"));
   assert.ok(!D.unterhaltungen.some((u) => u.id === "u-fv"), "Vorstands-Chat unsichtbar");

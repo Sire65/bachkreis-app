@@ -6,7 +6,8 @@
 import { S, VIEWS, db, zeichne, kopf, istEltern, vorname } from "./zustand.js";
 import { esc, AKTIONEN, toast, herunterladen, frage } from "../kern/ui.js";
 import { hole, speichere, istEchtbetrieb, serverAktion } from "../kern/daten.js";
-import { termineFuer, kinderVon, ics } from "../kern/logik.js";
+import { termineFuer, kinderVon, ics, eigeneVorkommen } from "../kern/logik.js";
+import { liste } from "../kern/daten.js";
 
 const ALARME = [[0, "keine"], [15, "15 Min. vorher"], [30, "30 Min. vorher"], [60, "1 Std. vorher"], [120, "2 Std. vorher"], [1440, "1 Tag vorher"]];
 const KAL = { link: null, laeuft: false, fehler: "" };
@@ -63,5 +64,8 @@ AKTIONEN.kalAlarm = async (v) => { await speichere("personen", { ...ich(), kalen
 AKTIONEN.alleIcs = () => {
   const p = ich(), termine = [...new Map(wer().flatMap((x) => termineFuer(db, x).map((t) => [t.id, { t, x }]))).values()];
   const titelVor = istEltern() ? (t) => vorname(termine.find((e) => e.t.id === t.id)?.x) : null;
+  const von = new Date(), bis = new Date(Date.now() + 400 * 86400000); // 🙋 eigene Termine mit in die Datei
+  const eigen = liste("eigene_termine", (e) => wer().includes(e.person_id)).flatMap((e) => eigeneVorkommen(e, von, bis).map((v) => ({ t: { ...v, titel: "🙋 " + v.titel }, x: e.person_id })));
+  termine.push(...eigen);
   herunterladen("bachkreis-termine.ics", ics(termine.map((e) => e.t), "Bachkreis", { alarm: Number(p.kalender_alarm) || 0, uebe: p.uebe_plan ? { ...p.uebe_plan, id: S.ich.id } : null, titelVor }), "text/calendar");
 };

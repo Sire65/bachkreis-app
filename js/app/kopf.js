@@ -441,17 +441,41 @@ export function kuckuckZeigen(h = kkJetzt().h, tonImmer = false) {
     <path d="M30 128 h90" stroke="#3a1f0a" stroke-width="3"/><path d="M40 112 q8 -10 16 0 M94 112 q8 -10 16 0" fill="none" stroke="#2e7d32" stroke-width="3" stroke-linecap="round"/>
   </svg><div class="kk-zahl" aria-hidden="true">${h}</div>`;
   const zu = () => { clearTimeout(u._t); u.classList.remove("an"); setTimeout(() => u.remove(), 600); };
-  u.addEventListener("click", zu); document.body.appendChild(u);
+  u.addEventListener("click", (e) => (u._tipp ? u._tipp(e) : zu())); document.body.appendChild(u);
   requestAnimationFrame(() => requestAnimationFrame(() => u.classList.add("an")));
   if (mitTon) try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume?.(); kkAufnahmeLaden(); } catch {}
-  let i = 0;
+  let i = 0, gespielt = 0;
+  // Wie KC 2.428.0: Android gibt den Ton erst nach einem Tippen in der App frei. Ist er noch gesperrt (App zur vollen Stunde geöffnet),
+  // wartet die Uhr bis zu 20 s mit „🔊 Antippen“; ruft sie stumm, bietet sie danach eine Minute „nochmal mit Ton“ an.
+  const hinweis = (text) => {
+    u.querySelector(".kk-tonhinweis")?.remove(); u.insertAdjacentHTML("beforeend", `<div class="kk-tonhinweis">${text}</div>`);
+    u._tipp = (e) => {
+      e.stopPropagation(); u._tipp = null; u.querySelector(".kk-tonhinweis")?.remove(); clearTimeout(u._t);
+      try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume?.(); kkAufnahmeLaden(); } catch {} // im Tippen = erlaubt
+      i = 0; gespielt = 0; u._nochmal = true; u.classList.add("offen");
+      Promise.race([Promise.resolve(audio?.resume?.()), new Promise((r) => setTimeout(r, 1500))]).catch(() => {}).then(() => { if (u.isConnected) u._t = setTimeout(ruf, 350); });
+    };
+  };
   const ruf = () => {
     if (!u.isConnected) return;
-    if (i >= n) { u.classList.remove("offen"); u._t = setTimeout(zu, 1400); return; }
+    if (i >= n) {
+      u.classList.remove("offen");
+      if (mitTon && !gespielt && !u._nochmal) { hinweis(`🔊 Antippen – ${n}× mit Ton`); u._t = setTimeout(zu, 60000); return; }
+      u._t = setTimeout(zu, 1400); return;
+    }
     i++; u.classList.add("ruft"); setTimeout(() => u.classList.remove("ruft"), 350);
-    if (mitTon && audio && audio.state === "running") try { if (KK_AUFNAHME.puffer) kkAufnahmeSpielen(audio.currentTime + 0.02); else kkTon(audio.currentTime + 0.02); } catch {}
+    if (mitTon && audio) try { // läuft der Ton nicht, wecken – gespielt wird nur, wenn er binnen 0,4 s läuft (nie übereinander)
+      const spielen = () => { gespielt++; if (KK_AUFNAHME.puffer) kkAufnahmeSpielen(audio.currentTime + 0.02); else kkTon(audio.currentTime + 0.02); };
+      if (audio.state === "running") spielen();
+      else { const ab = Date.now(); Promise.resolve(audio.resume?.()).then(() => { if (audio.state === "running" && Date.now() - ab < 400 && u.isConnected) spielen(); }, () => {}); }
+    } catch {}
     u._t = setTimeout(ruf, KK_AUFNAHME.puffer && mitTon ? Math.round(KK_AUFNAHME.puffer.duration * 1000) : KK_TAKT_MS);
   };
+  if (mitTon && (!audio || audio.state !== "running") && navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+    hinweis(`🔊 Antippen – der Kuckuck ruft ${n}×`);
+    u._t = setTimeout(() => { u._tipp = null; u.querySelector(".kk-tonhinweis")?.remove(); u.classList.add("offen"); u._t = setTimeout(ruf, 350); }, 20000);
+    return n;
+  }
   const bereit = mitTon && audio ? Promise.race([Promise.resolve(audio.resume?.()).then(() => true, () => false), new Promise((r) => setTimeout(() => r(false), 1500))]) : Promise.resolve(false);
   u._t = setTimeout(() => { u.classList.add("offen"); bereit.then(() => { if (u.isConnected) u._t = setTimeout(ruf, 350); }); }, 700);
   return n;

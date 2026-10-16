@@ -218,3 +218,5 @@ body.einfach .statusleiste, :root.einfach .statusleiste { background: none; }
 #modusKnopf { position: relative; }
 #modusKnopf .modusbuchstabe { position: absolute; right: -3px; bottom: -3px; min-width: 17px; height: 17px; border-radius: 9px; background: #fff; color: var(--haupt); font: 800 .66rem/17px system-ui, sans-serif; text-align: center; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); }
 :root[data-thema-schrift] #v-start .gruss #begruessung { font-family: var(--thema-schrift), system-ui, sans-serif; font-weight: var(--thema-schrift-gewicht); font-size: calc(1em * var(--thema-schrift-gr)); letter-spacing: .01em; }
+.kuckuck .kk-tonhinweis { position: absolute; left: 50%; bottom: -30px; transform: translateX(-50%); white-space: nowrap; padding: 5px 12px; border-radius: 999px; background: #3a1f0a; color: #fff8e1; font: 800 .85rem system-ui, sans-serif; box-shadow: 0 3px 10px rgba(0,0,0,.3); animation: kkHinweis 1.2s ease-in-out infinite alternate; cursor: pointer; }
+@keyframes kkHinweis { from { transform: translateX(-50%) scale(1); } to { transform: translateX(-50%) scale(1.06); } }

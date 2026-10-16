@@ -1,13 +1,21 @@
 {
-  "version": "0.12.0",
+  "version": "0.12.1",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "📡 In 💬 Nachrichten oben links: blinkender Router im WLAN, blinkender Satellit im Mobilfunk – die Wellen zeigen die Verbindungsqualität (grün gut, gelb mäßig, rot schwach, grau unbekannt, ✕ keine Verbindung)",
-    "Antippen zeigt Netzart (selbst wählbar, wo das Handy sie nicht verrät), Antwortzeit, Tempo laut Handy und „📏 Jetzt messen“",
-    "⚙️ › 💬 Nachrichten: Symbol an/aus · ⚙️ › ✨ Effekte: Blinken an/aus"
+    "🐦 Kuckuck: Ist der Ton beim Öffnen zur vollen Stunde noch gesperrt, wartet die Uhr mit „🔊 Antippen“ und ruft dann hörbar so oft, wie es Uhr ist – vorher rief er stumm"
   ],
   "verlauf": [
+    {
+      "version": "0.12.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📡 In 💬 Nachrichten oben links: blinkender Router im WLAN, blinkender Satellit im Mobilfunk – die Wellen zeigen die Verbindungsqualität (grün gut, gelb mäßig, rot schwach, grau unbekannt, ✕ keine Verbindung)",
+        "Antippen zeigt Netzart (selbst wählbar, wo das Handy sie nicht verrät), Antwortzeit, Tempo laut Handy und „📏 Jetzt messen“",
+        "⚙️ › 💬 Nachrichten: Symbol an/aus · ⚙️ › ✨ Effekte: Blinken an/aus"
+      ]
+    },
     {
       "version": "0.11.0",
       "datum": "2026-10-16",

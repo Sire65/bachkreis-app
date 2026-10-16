@@ -1,7 +1,7 @@
 // Service Worker der Bachkreis-App – atomares Update (AGENTS.md Regel 16):
 // Eine Version = ein Cache mit ALLEN Dateien. Die neue Version wird erst aktiv, wenn die App „jetzt-aktivieren“ sendet
 // (Knopf „Jetzt aktualisieren“). Bis dahin liefert der alte Worker ausschließlich Dateien der alten Version – kein Mischstand.
-const VERSION = "0.12.0";
+const VERSION = "0.12.1";
 const CACHE = "bk-" + VERSION;
 const DATEIEN = [
   "./", "index.html", "verwaltung.html", "manifest.webmanifest",

@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.12.0 DEV – 16.10.2026
+- 📡 Verbindungs-Symbol in Nachrichten (wie KC Club 2.428.0): Router (WLAN) / Satellit (Mobilfunk), Qualität aus echten Antwortzeiten (js/kern/netz.js, Messung im Supabase-Adapter), Info-Blatt mit „Jetzt messen“, Schalter in den Einstellungen
+
 ## 0.11.0 DEV – 16.10.2026
 - 🎼 Orchester: Sitzplan mit Gesichtern, Register, Besetzung Soll/Ist, Zusagen der nächsten Probe, 🏷️ Leihinstrumente koordinieren
 - 🙂 Gezeichnete Gesichter (personen.avatar, nur Zahlen) mit Editor „Mein Gesicht“, auch in Chats

@@ -55,6 +55,7 @@ function nachrichtenEinst(e) {
     ${schalter("entwuerfe", "✏️ Entwürfe merken", "Angefangene Nachrichten bleiben je Chat stehen – auch nach dem Schließen", e.entwuerfe !== false)}
     ${schalter("chatEinklappen", "📂 Vergangene Tage einklappen", "Im Chat nur heute und Ungelesenes offen – frühere Tage als Zeile mit Datum rechts (z. B. „Mo, 11.11.26“), antippen zum Aufklappen", e.chatEinklappen !== false)}
     ${schalter("chatKW", "🗓️ Ältere Wochen als Kalenderwoche", "Alles, was älter als eine Woche ist, als „KW 45/26“ zusammenfassen", e.chatKW !== false)}
+    ${schalter("netzSymbol", "📡 Verbindungs-Symbol oben links", "Router im WLAN, Satellit im Mobilfunk – die Wellen zeigen die Qualität, antippen zeigt Messwerte", e.netzSymbol !== false)}
     ${schalter("fotosLaden", "📷 Fotos automatisch laden", "Aus: Fotos erst beim Antippen laden – spart Datenvolumen", e.fotosLaden !== false)}
     ${schalter("sprachsteuerung", "🎤 Sprachsteuerung", "Mikrofon oben im Kopf und in den Nachrichten: „Öffne Termine“, „Nachricht an Bettina: …“, „Lies meine Nachrichten“", e.sprachsteuerung !== false)}
     ${schalter("enterSendet", "⏎ Enter-Taste sendet", "Für PC und Tablet mit Tastatur – Umschalt+Enter = neue Zeile", e.enterSendet === true)}
@@ -90,6 +91,7 @@ VIEWS.einstellungen = {
       <h4>🎭 Themen</h4>${themaWahlHtml()}
       <h4>🎨 Farbdesign</h4>${designWahlHtml()}<button class="knopf" data-a="designStandard">↺ Standard wiederherstellen</button>`;
     const effekte = `${schalter("effekte", "✨ Animierte Knöpfe", "Bewegungen und Effekte in der ganzen App", e.effekte !== false)}
+    ${schalter("netzBlinken", "📡 Verbindungs-Symbol blinkt", "Router bzw. Satellit in 💬 Nachrichten mit blinkenden Wellen und Lämpchen (aus = ruhiges Symbol)", e.netzBlinken !== false)}
       <div class="schalter"><span><b>🐦 Kuckucksuhr zur vollen Stunde</b><div class="hinweis">Nur wenn die App offen ist; nachts ohne Ton</div></span><span><button type="button" class="knopf klein" data-a="kuckuckProbe">🔊 Probe</button> <input type="checkbox" data-c="einstSchalter2" data-x="kuckuck" ${e.kuckuck !== false ? "checked" : ""}></span></div>
       <div class="schalter"><span><b>🧚 Die kleine Fee</b><div class="hinweis">Ab und zu schwebt eine Fee durchs Startbild – antippen = ein schöner Spruch</div></span><span><button type="button" class="knopf klein" data-a="feeAnsehen">🧚 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="fee" ${e.fee !== false ? "checked" : ""}></span></div>
       ${schalter("jahreszeit", "🍂 Jahreszeiten im Kopf", "Laub, Schnee, Blumen, Schneemann mit Zylinder – wie in der KC Club App", e.jahreszeit !== false, "jzSchalter")}

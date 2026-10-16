@@ -1,15 +1,25 @@
 {
-  "version": "0.11.0",
+  "version": "0.12.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🎼 Orchester neu: 🪑 Sitzplan wie auf der Bühne (Streicher vorn, Holz, Blech, Schlagwerk hinten) mit Gesichtern, 👥 Register-Karten und 📊 Besetzung mit Soll/Ist je Register",
-    "📅 Zusagen zur nächsten Probe direkt im Sitzplan: ✓ kommt, ✗ fehlt, ~ vielleicht, ? offen – so sieht man sofort, welches Register dünn besetzt ist",
-    "🏷️ Leihinstrumente koordinieren: wer braucht noch ein Instrument, wie viele sind frei – mit einem Tipp zum passenden Instrument",
-    "🙂 Mein Gesicht: eigenes gezeichnetes Gesicht gestalten (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Farbe) – erscheint im Orchester, in Chats und in der Instrumentenkunde",
-    "🎺 Instrumentenkunde: 16 Orchesterinstrumente – deine Figur hält das Instrument, ▶ Melodie/Tonleiter/tief bis hoch zum Anhören, Steckbrief, worauf es ankommt, Pflege, Einstieg und „Schon gewusst?“"
+    "📡 In 💬 Nachrichten oben links: blinkender Router im WLAN, blinkender Satellit im Mobilfunk – die Wellen zeigen die Verbindungsqualität (grün gut, gelb mäßig, rot schwach, grau unbekannt, ✕ keine Verbindung)",
+    "Antippen zeigt Netzart (selbst wählbar, wo das Handy sie nicht verrät), Antwortzeit, Tempo laut Handy und „📏 Jetzt messen“",
+    "⚙️ › 💬 Nachrichten: Symbol an/aus · ⚙️ › ✨ Effekte: Blinken an/aus"
   ],
   "verlauf": [
+    {
+      "version": "0.11.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎼 Orchester neu: 🪑 Sitzplan wie auf der Bühne (Streicher vorn, Holz, Blech, Schlagwerk hinten) mit Gesichtern, 👥 Register-Karten und 📊 Besetzung mit Soll/Ist je Register",
+        "📅 Zusagen zur nächsten Probe direkt im Sitzplan: ✓ kommt, ✗ fehlt, ~ vielleicht, ? offen – so sieht man sofort, welches Register dünn besetzt ist",
+        "🏷️ Leihinstrumente koordinieren: wer braucht noch ein Instrument, wie viele sind frei – mit einem Tipp zum passenden Instrument",
+        "🙂 Mein Gesicht: eigenes gezeichnetes Gesicht gestalten (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Farbe) – erscheint im Orchester, in Chats und in der Instrumentenkunde",
+        "🎺 Instrumentenkunde: 16 Orchesterinstrumente – deine Figur hält das Instrument, ▶ Melodie/Tonleiter/tief bis hoch zum Anhören, Steckbrief, worauf es ankommt, Pflege, Einstieg und „Schon gewusst?“"
+      ]
+    },
     {
       "version": "0.10.0",
       "datum": "2026-10-16",

@@ -155,3 +155,19 @@ button.tag-trenner { border: none; background: none; font: inherit; cursor: poin
 .sprach-ohr { display: grid; justify-items: center; gap: 14px; padding: 10px 0 16px; }
 .sprach-welle { width: 70px; height: 70px; border-radius: 50%; background: radial-gradient(circle, #e53935 35%, rgba(229,57,53,.25) 36%); animation: diktatPuls 1.1s infinite; }
 .sprach-text { font-size: 1.15rem; font-weight: 700; text-align: center; min-height: 2.6em; }
+/* 0.12.0 – 📡 Verbindungs-Symbol oben links: Router (WLAN) / Satellit (Mobilfunk), Wellen = Qualität */
+.kopf2 .na-netz { flex: none; border: none; background: none; padding: 0; width: 42px; height: 34px; cursor: pointer; }
+.nz-svg { width: 40px; height: 32px; display: block; }
+.nz-gross { display: flex; justify-content: center; } .nz-gross .nz-svg { width: 96px; height: 77px; }
+.nz-blink .nz-w { animation: nzWelle 1.8s ease-in-out infinite; } .nz-blink .nz-w2 { animation-delay: .3s; } .nz-blink .nz-w3 { animation-delay: .6s; }
+.nz-blink .nz-led { animation: nzLed 1.1s steps(2, jump-none) infinite; } .nz-blink .nz-l2 { animation-delay: .35s; } .nz-blink .nz-l3 { animation-delay: .7s; }
+@keyframes nzWelle { 0%, 100% { opacity: .25; } 45% { opacity: 1; } }
+@keyframes nzLed { 0% { opacity: 1; } 100% { opacity: .2; } }
+@media (prefers-reduced-motion: reduce) { .nz-blink .nz-w, .nz-blink .nz-led { animation: none; } }
+.nz-mitte { text-align: center; justify-content: center; margin: 4px 0; }
+.nz-balken { display: inline-flex; align-items: flex-end; gap: 2px; height: 16px; margin-right: 8px; vertical-align: -2px; }
+.nz-balken i { width: 4px; border-radius: 1px; background: rgba(128,128,128,.3); } .nz-balken i:nth-child(1) { height: 25%; } .nz-balken i:nth-child(2) { height: 50%; } .nz-balken i:nth-child(3) { height: 75%; } .nz-balken i:nth-child(4) { height: 100%; }
+.nz-balken.gruen.s4 i, .nz-balken.gruen.s3 i:nth-child(-n+3) { background: #2e9d5b; } .nz-balken.gelb.s2 i:nth-child(-n+2) { background: #d9a21b; } .nz-balken.rot.s1 i:nth-child(1) { background: #d0453f; }
+.nz-tabelle { width: 100%; border-collapse: collapse; font-size: .85rem; margin: 6px 0; } .nz-tabelle td { padding: 4px 2px; border-bottom: 1px solid var(--linie); } .nz-tabelle td:first-child { color: var(--grau); }
+.kopf2 .na-netz + h2 { white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: clamp(.95rem, 4.2vw, 1.25rem); }
+.kopf2:has(.na-netz) { gap: 6px; }

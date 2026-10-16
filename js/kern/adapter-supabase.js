@@ -7,6 +7,7 @@
 // Keine Service-Role im Browser (AGENTS.md Regel 15): nur der persönliche Sitzungs-Token (x-bk-token).
 import { TABELLEN_NAMEN } from "./schema.js";
 import { idbOeffnen, idbLesen, idbSchreiben, idbLeeren } from "./speicher-idb.js";
+import { netzMessung } from "./netz.js";
 
 const ABGLEICH_MS = 30000;
 const TOKEN_KEY = (art) => (art === "verwaltung" ? "bk_token_verwaltung" : "bk_token");
@@ -24,7 +25,10 @@ export function erzeugeSupabaseAdapter({ url = "", quelle = "app" } = {}) {
   const tokenLesen = () => { try { return localStorage.getItem(TOKEN_KEY(quelle)); } catch { return null; } };
 
   async function api(aktion, nutzlast = {}) {
-    const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { "x-bk-token": token } : {}) }, body: JSON.stringify({ aktion, quelle, ...nutzlast }) });
+    const t0 = performance.now(); let r; // 📡 nur Dauer und Erfolg fürs Verbindungs-Symbol
+    try { r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { "x-bk-token": token } : {}) }, body: JSON.stringify({ aktion, quelle, ...nutzlast }) }); }
+    catch (e) { netzMessung(0, false, "keine Antwort"); throw e; }
+    netzMessung(performance.now() - t0, r.status < 500, r.status >= 500 ? "Server-Fehler " + r.status : "");
     const j = await r.json().catch(() => ({ ok: false, fehler: "ANTWORT_UNLESBAR" }));
     if (r.status === 401 && aktion !== "anmelden") {
       try { localStorage.removeItem(TOKEN_KEY(quelle)); } catch {}

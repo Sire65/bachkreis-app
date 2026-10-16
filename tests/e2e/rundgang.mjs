@@ -70,6 +70,11 @@ await p.click('[data-a="instAnsicht"][data-x="kachel"]'); await p.fill("#instSuc
 if ((await p.$$eval(".ik", (l) => l.filter((k) => !/Cello/i.test(k.textContent)).length)) > 0) fehler.push("Instrumente: Suche filtert nicht");
 await p.click('[data-a="instReset"]').catch(() => {}); await p.evaluate(() => { try { sessionStorage.removeItem("bk_inst_filter"); } catch {} });
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start"));
+// 📡 Verbindungs-Symbol in Nachrichten: antippen, messen
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("nachrichten")); await p.waitForSelector("#naNetz svg");
+await p.click("#naNetz"); await p.waitForSelector("#netzBlatt table"); await p.click('[data-a="netzMessen"]');
+await p.waitForFunction(() => /ms ·/.test(document.getElementById("netzBlatt")?.textContent || ""), null, { timeout: 8000 }).catch(() => fehler.push("Netz: Messung ohne Ergebnis"));
+await p.click('[data-a="blattZu"]');
 // 🎼 Orchester mit Gesichtern, 🎺 Instrumentenkunde, 🙂 Mein Gesicht
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("orchester")); await p.waitForSelector(".sitzplan .gesicht");
 for (const x of ["register", "besetzung", "sitzplan"]) { await p.click(`[data-a="orchAnsicht"][data-x="${x}"]`); await p.waitForTimeout(150); }

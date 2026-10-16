@@ -81,3 +81,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 - **🏷️ Leihinstrumente koordinieren:** Leihbedarf gegen freie Instrumente, Sprung zum passenden Instrument.
 - **🙂 Gesichter:** gezeichnet (SVG), keine Fotos; ohne eigene Wahl aus der Personen-ID abgeleitet. Selbst gestaltbar unter „Mein Gesicht“ (`personen.avatar`, vom Server auf Zahlen 0–19 bereinigt).
 - **🎺 Instrumentenkunde:** 16 Instrumente nach Familien; eine Figur mit dem eigenen Gesicht hält und spielt das Instrument (Animation), Klang per WebAudio (Melodie, Tonleiter, Tonumfang), Steckbrief, „Darauf kommt es an“, Pflege, Einstieg, „Schon gewusst?“ und wer im Bachkreis es spielt.
+
+## 📡 Verbindungs-Symbol (0.12.0)
+- Oben links in 💬 Nachrichten: Router im WLAN, Satellit im Mobilfunk, 🌐 wenn die Netzart unbekannt ist. Die Netzart verrät nur Android; sonst gilt die selbst gewählte.
+- Wellen = Qualität aus den echten Antwortzeiten (Ø der letzten 5 Anfragen, höchstens 3 Minuten alt), sonst Schätzung des Handys; ohne Messung grau (nie „gut“), ✕ bei offline/Serverfehler.
+- Antippen: Blatt mit Netzart, Qualität, Messwerten, „📏 Jetzt messen“ (3× version.json ohne Zwischenspeicher).
+- Gemessen werden nur Dauer und Erfolg – keine Inhalte. Schalter: ⚙️ › 💬 Nachrichten (Symbol), ⚙️ › ✨ Effekte (Blinken; aus auch bei „Animierte Knöpfe“ aus und „Bewegung reduzieren“).

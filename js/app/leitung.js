@@ -18,7 +18,7 @@ VIEWS.cockpit = {
     const schueler = liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten").length;
     const vergangen = liste("termine", (t) => new Date(t.beginn) < stand && new Date(t.beginn) > new Date(stand - 60 * 86400000));
     let anw = 0, erf = 0;
-    for (const t of vergangen) for (const a of liste("antworten", (a) => a.termin_id === t.id && a.anwesend)) { erf++; if (a.anwesend === "ja") anw++; }
+    for (const t of vergangen) for (const a of liste("antworten", (a) => a.termin_id === t.id && a.anwesend)) { erf++; if (a.anwesend === "ja" || a.anwesend === "spaet") anw++; }
     const kz = [
       [schueler, "aktive Schüler"],
       [liste("ausleihen", (a) => a.status === "aktiv").length, "Instrumente verliehen"],

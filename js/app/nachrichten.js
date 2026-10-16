@@ -11,7 +11,7 @@ import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, istLeitung, istVerwa
 import { meineUnterhaltungen, gelesenVonMir, lokalGelesen } from "./start.js";
 import { esc, AKTIONEN, toast, uhr, frage, blatt, blattZu, $ } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, konfig, abonnieren, neueId, istEchtbetrieb, jetztAbgleichen, serverAktion } from "../kern/daten.js";
-import { CHAT, nsId, nachrichtFrei, nachrichtAbgelaufen, chatPartnerErlaubt, pwAppPerson } from "../kern/schema.js";
+import { CHAT, nsId, nachrichtFrei, nachrichtAbgelaufen, chatPartnerErlaubt, pwAppPerson, chatMitgliederMitKopie } from "../kern/schema.js";
 import { empfaengerVon, naechsteSendung, nachrichtEreignis, nachrichtKurz, kinderVon, elternVon, instrumenteVon } from "../kern/logik.js";
 import { hochladen, bildVerkleinern, dateiUrl, dateiOeffnen, groesseText, artVonMime } from "../kern/dateien.js";
 import { zuhoeren, spracheMoeglich, aufnahme, aufnahmeMoeglich, dauerText, SPRACHE_FEHLER } from "./sprache.js";
@@ -129,7 +129,7 @@ VIEWS.chatNeu = {
       <div class="hinweis" id="neuGewaehlt">${NEU.wahl.length ? "An: " + NEU.wahl.map((id) => esc(name(id))).join(", ") : "Noch niemand ausgewählt"}</div>
       <div id="neuTitelZeile" class="feld"${NEU.wahl.length > 1 ? "" : " hidden"}><label for="neuTitel">Name der Runde (Betreff)</label><input id="neuTitel" maxlength="80" placeholder="z. B. Fahrgemeinschaft Probe" value="${esc(NEU.titel)}"></div>
       <button class="knopf haupt breit" data-a="chatNeuWeiter">💬 Weiter zum Chat</button>
-      <p class="hinweis">${S.ich?.typ === "eltern" ? "Privat schreiben Eltern der Leitung, den Lehrkräften und den eigenen Kindern." : S.ich?.typ === "schueler" ? "Privat schreibst du der Leitung, den Lehrkräften, deinen Eltern" + (konfig().chat_schueler_untereinander !== false ? " und anderen Schülerinnen und Schülern." : ".") : "Eine Person = Einzelchat. Mehrere = Runde mit Betreff."}</p></div>`;
+      <p class="hinweis">${S.ich?.typ === "eltern" ? "Privat schreiben Eltern der Leitung, den Lehrkräften und den eigenen Kindern." : S.ich?.typ === "schueler" ? "Privat schreibst du der Leitung, den Lehrkräften, deinen Eltern" + (konfig().chat_schueler_untereinander !== false ? " und anderen Schülerinnen und Schülern." : ".") : "Eine Person = Einzelchat. Mehrere = Runde mit Betreff." + (konfig().chat_eltern_kopie !== false ? " 👪 Schreibst du einem Kind, lesen seine Eltern mit." : "")}</p></div>`;
   },
   nach(w) {
     w.querySelector("#neuSuche")?.addEventListener("input", (e) => { NEU.suche = e.target.value; const q = NEU.suche.toLowerCase(); w.querySelectorAll("#neuListe label[data-name]").forEach((l) => { l.hidden = !!q && !l.dataset.name.includes(q); }); });
@@ -142,15 +142,30 @@ AKTIONEN.chatNeuWahl = (id, el) => {
   const g = document.getElementById("neuGewaehlt"); if (g) g.textContent = NEU.wahl.length ? "An: " + NEU.wahl.map((x) => name(x)).join(", ") : "Noch niemand ausgewählt";
   document.getElementById("neuTitelZeile")?.toggleAttribute("hidden", NEU.wahl.length < 2);
 };
+// 🛡️ Kinderschutz: schreibt ein Erwachsener einem minderjährigen fremden Kind, sind die Eltern automatisch dabei (wie auf dem Server)
+function mitKopie(andere) {
+  const verwandt = new Set([...kinderVon(db, ich()), ...elternVon(db, ich())]);
+  return chatMitgliederMitKopie(S.ich, andere, { person: (id) => hole("personen", id), elternVon: (id) => elternVon(db, id), verwandt: (id) => verwandt.has(id), kopie: konfig().chat_eltern_kopie });
+}
+const gleicheMitglieder = (u, m) => (u.mitglieder || []).length === m.length && m.every((x) => u.mitglieder.includes(x));
 export async function einzelchatMit(pid) {
+  const { mitglieder, kopie } = mitKopie([pid]);
+  if (kopie.length) { // Runde „Kind · mit Eltern“
+    const da = liste("unterhaltungen", (u) => u.art === "runde" && gleicheMitglieder(u, mitglieder))[0];
+    if (da) return da;
+    toast("👪 Die Eltern lesen mit – so ist es bei Nachrichten an Kinder im Bachkreis geregelt.", 4000);
+    return speichere("unterhaltungen", { id: neueId(), titel: `${vorn(pid)} · mit Eltern`, art: "runde", mitglieder });
+  }
   const da = liste("unterhaltungen", (u) => u.art === "einzel" && (u.mitglieder || []).length === 2 && u.mitglieder.includes(pid) && u.mitglieder.includes(ich()))[0];
   if (da) return da;
   return speichere("unterhaltungen", { id: neueId(), titel: "Einzelgespräch", art: "einzel", mitglieder: [ich(), pid] });
 }
 AKTIONEN.chatNeuWeiter = async () => {
   if (!NEU.wahl.length) return toast("Bitte mindestens eine Person auswählen.");
+  const { mitglieder, kopie } = NEU.wahl.length > 1 ? mitKopie(NEU.wahl) : { kopie: [] };
+  if (kopie.length) toast(`👪 ${kopie.length} ${kopie.length === 1 ? "Elternteil liest" : "Eltern lesen"} mit (Kinderschutz)`, 4000);
   const u = NEU.wahl.length === 1 ? await einzelchatMit(NEU.wahl[0])
-    : await speichere("unterhaltungen", { id: neueId(), titel: (NEU.titel || "").trim() || "Runde", art: "runde", mitglieder: [ich(), ...NEU.wahl] });
+    : await speichere("unterhaltungen", { id: neueId(), titel: (NEU.titel || "").trim() || "Runde", art: "runde", mitglieder });
   zeige("unterhaltung", { id: u.id }, { ersetzen: true });
 };
 AKTIONEN.chatMit = async (pid) => { const u = await einzelchatMit(pid); zeige("unterhaltung", { id: u.id }); };
@@ -740,7 +755,8 @@ AKTIONEN.anhangMenue = () => {
     <button class="knopf" data-a="notenWahl">🎼 Noten aus dem Notenarchiv</button>
     ${datWahl("noten", "application/pdf,image/*", "🎼", "Noten vom Gerät (PDF oder Foto)", true)}
     <button class="knopf" data-a="umfrageNeu">📊 Umfrage</button></div>
-    <p class="hinweis">Je Datei höchstens 8 MB. Fotos werden vorher verkleinert. Die Empfänger sehen Anhänge nur, solange sie die Nachricht sehen dürfen.</p>`);
+    <p class="hinweis">Je Datei höchstens 8 MB. Fotos werden vorher verkleinert. Die Empfänger sehen Anhänge nur, solange sie die Nachricht sehen dürfen.</p>
+    ${istVerwalter() ? '<p class="hinweis">📷 Fotos mit Kindern nur, wenn sie die Einwilligung „Fotos intern“ haben – <button class="link" data-a="kachel" data-x="fotoliste">Foto-Liste ansehen</button>.</p>' : ""}`);
 };
 async function anhangDazu(datei, art) {
   if (C.anlagen.length >= CHAT.anlagenMax) return toast(`Höchstens ${CHAT.anlagenMax} Anhänge je Nachricht.`);

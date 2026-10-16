@@ -62,6 +62,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F52 | Effekte wie KC: Sende-Effekte, Fee, Reißwolf, Anpinnen, Tipp des Tages, Was ist neu, Vorlesen, Feiertage | ✅ | e2e rundgang |
 | BK-F53 | Privatsphäre-Freigaben (Geburtstag, Handy, E-Mail, Adresse), andere Geräte abmelden | ✅ | server.test |
 | BK-F54 | 📦 Inventar & Ausstattung (Notenständer, Taktstock, Stühle, Technik …): Inventar-Nr., Anschaffung, Preis, Abschreibung, Status inkl. defekt/vermisst/gestohlen/verkauft, Inventur, QR-Etiketten, Anlagenverzeichnis | ✅ | inventar.test, e2e rundgang |
+| BK-F55 | 🛡️ Kinderschutz Chat (Eltern in Kopie), Need-to-know je Rolle, Freigabegrenze Server, interne Vermerke | ✅ | schutz.test |
+| BK-F56 | 🩺 Gesundheit & Notfall (Eltern pflegen, Begleiter während der Fahrt, Löschfrist) | ✅ | schutz.test, e2e rundgang |
+| BK-F57 | 📷 Einwilligungen je Zweck, Foto-Liste | ✅ | schutz.test, e2e rundgang |
+| BK-F58 | 📋 Anwesenheit (da/verspätet/entschuldigt/unentschuldigt), Fehlzeiten App + PC | ✅ | schutz.test, e2e rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

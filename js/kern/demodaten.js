@@ -221,7 +221,7 @@ export function erzeugeDemodaten(heute = new Date()) {
       const x = r();
       const antwort = x < 0.78 ? "ja" : x < 0.88 ? "vielleicht" : "nein";
       d.antworten.push({ id: `an-${d.antworten.length + 1}`, termin_id: t.id, person_id: pid2, antwort, notiz: antwort === "nein" ? wahl(["krank", "Klassenfahrt", "Familienfeier", "Wettbewerb Jugend musiziert", ""]) : antwort === "vielleicht" ? wahl(["komme evtl. später", "Arzttermin vorher", ""]) : "",
-        anwesend: tage < 0 ? (antwort === "nein" ? "nein" : r() < 0.93 ? "ja" : "nein") : "" });
+        anwesend: tage < 0 ? (antwort === "nein" ? (r() < 0.85 ? "entschuldigt" : "nein") : ((y) => (y < 0.88 ? "ja" : y < 0.95 ? "spaet" : "nein"))(r())) : "" });
     }
   }
 
@@ -369,10 +369,13 @@ export function erzeugeDemodaten(heute = new Date()) {
 
   // --- Genehmigungen ---
   d.genehmigung_vorlagen = [
-    { id: "gv-1", titel: "Teilnahme & Datenschutz", text: "Ich bin einverstanden, dass mein Kind am Bachkreis teilnimmt und die für die Organisation nötigen Daten (Name, Kontakt, Instrument, Gruppe, Termine) in der Bachkreis-App verarbeitet werden. Die Datenschutzhinweise habe ich gelesen.", fassung: 1, gueltig_monate: null },
-    { id: "gv-2", titel: "Foto & Video", text: "Fotos und Videos von Proben und Konzerten, auf denen mein Kind zu sehen ist, dürfen auf der Schulwebsite, in der Presse und auf den Kanälen des Bachkreises veröffentlicht werden. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
-    { id: "gv-3", titel: "Probenfreizeit", text: "Mein Kind darf an der Probenfreizeit teilnehmen. Die Begleitpersonen dürfen im Notfall die nötigen Entscheidungen treffen. Gesundheitsangaben habe ich in der App hinterlegt.", fassung: 1, gueltig_monate: null },
-    { id: "gv-4", titel: "Instrumenten-Leihvertrag", text: "Das Leihinstrument wird pfleglich behandelt und bei Beschädigung sofort gemeldet. Rückgabe zum vereinbarten Datum.", fassung: 1, gueltig_monate: 12 },
+    { id: "gv-1", titel: "Teilnahme & Datenschutz", text: "Ich bin einverstanden, dass mein Kind am Bachkreis teilnimmt und die für die Organisation nötigen Daten (Name, Kontakt, Instrument, Gruppe, Termine) in der Bachkreis-App verarbeitet werden. Die Datenschutzhinweise habe ich gelesen.", fassung: 1, gueltig_monate: null, zweck: "teilnahme" },
+    { id: "gv-2", titel: "Foto & Video – Schul-Website", zweck: "foto_website", text: "Fotos und Videos von Proben und Konzerten, auf denen mein Kind zu sehen ist, dürfen auf der Schulwebsite veröffentlicht werden. Widerruf jederzeit möglich.", fassung: 2, gueltig_monate: 12 },
+    { id: "gv-5", titel: "Fotos intern (App, nur Mitglieder)", zweck: "foto_intern", text: "Fotos von Proben und Konzerten mit meinem Kind dürfen in der Bachkreis-App gezeigt werden (nur für angemeldete Mitglieder). Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: null },
+    { id: "gv-6", titel: "Fotos Presse", zweck: "foto_presse", text: "Fotos von Konzerten, auf denen mein Kind zu sehen ist, dürfen an die Lokalpresse gegeben werden (ohne Nachnamen). Widerruf für künftige Fotos jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
+    { id: "gv-7", titel: "Fotos Social Media", zweck: "foto_social", text: "Fotos von Konzerten mit meinem Kind dürfen auf den Social-Media-Kanälen des Bachkreises gezeigt werden. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
+    { id: "gv-3", titel: "Probenfreizeit", text: "Mein Kind darf an der Probenfreizeit teilnehmen. Die Begleitpersonen dürfen im Notfall die nötigen Entscheidungen treffen. Gesundheitsangaben habe ich in der App hinterlegt.", fassung: 1, gueltig_monate: null, zweck: "reise" },
+    { id: "gv-4", titel: "Instrumenten-Leihvertrag", text: "Das Leihinstrument wird pfleglich behandelt und bei Beschädigung sofort gemeldet. Rückgabe zum vereinbarten Datum.", fassung: 1, gueltig_monate: 12, zweck: "leihvertrag" },
   ];
   d.genehmigungen = [];
   const kinderA = mitglieder("g-a");
@@ -382,8 +385,23 @@ export function erzeugeDemodaten(heute = new Date()) {
   }
   for (const kid of [...kinderA, ...mitglieder("g-b"), ...mitglieder("g-c")]) {
     d.genehmigungen.push({ id: `ge-${d.genehmigungen.length + 1}`, vorlage_id: "gv-2", kind_id: kid, frist: isoTag(tag(jetzt, 10)), status: r() < 0.8 ? "erteilt" : "ausstehend" });
+    // 📷 je Zweck: intern fast alle, Presse/Social etwas weniger – einige lehnen ab
+    for (const [v, ja] of [["gv-5", 0.94], ["gv-6", 0.7], ["gv-7", 0.55]]) { const x = r(); d.genehmigungen.push({ id: `ge-${d.genehmigungen.length + 1}`, vorlage_id: v, kind_id: kid, frist: isoTag(tag(jetzt, 10)), status: x < ja ? "erteilt" : x < ja + 0.15 ? "abgelehnt" : "ausstehend" }); }
   }
   for (const g of d.genehmigungen) if (g.status !== "ausstehend") { g.beantwortet_am = iso(tag(jetzt, -Math.floor(1 + r() * 20), 19)); g.beantwortet_von = d.eltern_kind.find((e) => e.kind_id === g.kind_id)?.eltern_id || null; }
+  for (const g of d.genehmigungen) if (g.status !== "ausstehend") g.vorlage_version = d.genehmigung_vorlagen.find((v) => v.id === g.vorlage_id)?.fassung || 1;
+  // 🩺 Gesundheit & Notfall (0.20.0): Angaben für einen Teil der Kinder, eins davon abgelaufen; Begleitpersonen der Probenfreizeit
+  d.gesundheit = [];
+  const ALLERG = ["Erdnüsse (Notfallset im Rucksack)", "Heuschnupfen", "Wespenstich", "", "", "", "Laktose", ""];
+  [...kinderA, ...mitglieder("g-b")].filter(() => r() < 0.55).forEach((kid, i) => {
+    const bestaetigt = tag(jetzt, -Math.floor(10 + r() * 300));
+    d.gesundheit.push({ id: `gs-${i + 1}`, person_id: kid, allergien: wahl(ALLERG), ernaehrung: wahl(["", "", "vegetarisch", "kein Schweinefleisch", "glutenfrei"]), medikamente: i % 7 === 0 ? "Asthmaspray (Salbutamol) bei Bedarf, 1–2 Hübe" : "",
+      erkrankungen: i % 7 === 0 ? "Asthma (belastungsabhängig)" : "", notfall_name: i % 5 === 0 ? "Oma (Beispiel)" : "", notfall_tel: i % 5 === 0 ? "02307 000000" : "", krankenkasse: wahl(["AOK (Beispiel)", "TK (Beispiel)", "Barmer (Beispiel)"]),
+      hausarzt: "", tetanus: isoTag(tag(jetzt, -Math.floor(300 + r() * 2500))), schwimmer: wahl(["ja", "ja", "ja", "unsicher"]), erste_hilfe_ok: true, medikamente_geben_ok: i % 7 === 0,
+      geprueft_am: isoTag(bestaetigt), geprueft_von: d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || null, loeschen_am: isoTag(tag(bestaetigt, i === 3 ? -30 - (jetzt - bestaetigt) / 86400000 : 395)) });
+  });
+  const freizeit = d.projekte.find((x) => x.id === "pr-freizeit");
+  if (freizeit) freizeit.begleiter = ["p-leitung", ...d.personen.filter((x) => x.typ === "lehrkraft").slice(0, 1).map((x) => x.id)];
   // Demo-Eltern: eine offene Genehmigung sicherstellen
   if (demoKindB) d.genehmigungen.push({ id: `ge-${d.genehmigungen.length + 1}`, vorlage_id: "gv-4", kind_id: demoKindB.id, frist: isoTag(tag(jetzt, 7)), status: "ausstehend" });
 

@@ -4,7 +4,7 @@ import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istL
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
 import { feiertageNRW, termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, googleKalenderLink, tagIso, registerVon, instrumenteVon, teilnahmeVon, eigeneVorkommen } from "../kern/logik.js";
-import { TERMIN_PLANER, TEILNAHME } from "../kern/schema.js";
+import { TERMIN_PLANER, TEILNAHME, ANWESENHEIT } from "../kern/schema.js";
 import { senden, whatsapp } from "../kern/versand.js";
 
 // 0.16.0 KINDERLEICHT (Wunsch Hansi: „das machen teilweise Kinder – einfach, logisch“): große Knöpfe „Ich komme / Ich kann nicht /
@@ -241,9 +241,25 @@ function teilnehmerHtml(t) {
   const ids = eingeladene(db, t);
   const gruppen = { ja: [], vielleicht: [], nein: [], offen: [] };
   for (const p of ids) { const a = antwortVon(db, t.id, p); gruppen[a ? a.antwort : "offen"].push({ p, a }); }
-  const vergangen = new Date(t.beginn) < new Date();
-  return `<div class="karte"><h3>Teilnehmer ${vergangen ? "· Anwesenheit" : ""}</h3>${Object.entries(gruppen).map(([k, l]) => l.length ? `<h4>${k === "offen" ? "❔ ohne Antwort" : ANTW[k].join(" ")} (${l.length})</h4><ul class="liste">${l.sort((a, b) => name(a.p).localeCompare(name(b.p))).map(({ p, a }) => `<li><div class="fl"><span class="klick" data-a="oeffne" data-x="person|${p}">${esc(name(p))}</span> <span class="hinweis">${esc(hole("register", registerVon(db, p, a))?.kurz || "")}${a?.notiz ? " · " + esc(a.notiz) : ""}</span></div>${vergangen ? `<select data-c="anwesend" data-x="${t.id}|${p}"><option value="">–</option><option value="ja" ${a?.anwesend === "ja" ? "selected" : ""}>da</option><option value="nein" ${a?.anwesend === "nein" ? "selected" : ""}>fehlte</option></select>` : ""}</li>`).join("")}</ul>` : "").join("")}</div>`;
+  const vergangen = new Date(t.beginn) < new Date(), darfAnw = darfPlanen();
+  return `<div class="karte"><h3>Teilnehmer ${vergangen ? "· Anwesenheit" : ""}</h3>${Object.entries(gruppen).map(([k, l]) => l.length ? `<h4>${k === "offen" ? "❔ ohne Antwort" : ANTW[k].join(" ")} (${l.length})</h4><ul class="liste">${l.sort((a, b) => name(a.p).localeCompare(name(b.p))).map(({ p, a }) => `<li><div class="fl"><span class="klick" data-a="oeffne" data-x="person|${p}">${esc(name(p))}</span> <span class="hinweis">${esc(hole("register", registerVon(db, p, a))?.kurz || "")}${a?.notiz ? " · " + esc(a.notiz) : ""}</span></div>${vergangen && darfAnw ? anwKnoepfe(t, p, a) : vergangen && a?.anwesend ? `<span class="badge">${ANWESENHEIT[a.anwesend]?.join(" ") || ""}</span>` : ""}</li>`).join("")}</ul>` : "").join("")}
+    ${vergangen && darfAnw ? `<div class="knopfreihe"><button class="knopf klein" data-a="anwAlleDa" data-x="${t.id}">✅ Alle Zusagen „da“</button><button class="knopf klein" data-a="kachel" data-x="anwesenheit">📋 Fehlzeiten</button></div>` : ""}</div>`;
 }
+// 📋 Anwesenheit nach Beginn: ✅ da · ⏰ verspätet · 🟡 entschuldigt · ❌ unentschuldigt (wer abgesagt hat: 🟡 vorgeschlagen)
+function anwKnoepfe(t, p, a) {
+  const ist = a?.anwesend || "", vorschlag = !ist && a?.antwort === "nein" ? "entschuldigt" : "";
+  return `<span class="anw-knoepfe" role="group" aria-label="Anwesenheit">${Object.entries(ANWESENHEIT).map(([k, [sym, txt]]) => `<button type="button" class="${ist === k ? "an" : vorschlag === k ? "vorschlag" : ""}" data-a="anwSetzen" data-x="${t.id}|${p}|${k}" title="${txt}" aria-label="${txt}" aria-pressed="${ist === k}">${sym}</button>`).join("")}</span>`;
+}
+AKTIONEN.anwSetzen = async (x) => {
+  const [tid, pid, wert] = x.split("|"), alt = antwortVon(db, tid, pid);
+  await speichere("antworten", { ...(alt || { termin_id: tid, person_id: pid, antwort: ["ja", "spaet"].includes(wert) ? "ja" : "nein", notiz: "ohne Rückmeldung" }), anwesend: alt?.anwesend === wert ? "" : wert });
+  zeichne();
+};
+AKTIONEN.anwAlleDa = async (tid) => {
+  const t = hole("termine", tid), l = eingeladene(db, t).map((p) => antwortVon(db, tid, p)).filter((a) => a?.antwort === "ja" && !a.anwesend);
+  for (const a of l) await speichere("antworten", { ...a, anwesend: "ja" });
+  toast(`✅ ${l.length} als „da“ eingetragen – Fehlende einzeln ändern`); zeichne();
+};
 AKTIONEN.anwesend = async (wert, el) => {
   const [tid, pid] = el.dataset.x.split("|");
   const alt = antwortVon(db, tid, pid);

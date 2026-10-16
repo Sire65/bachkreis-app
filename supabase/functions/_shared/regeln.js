@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt } from "./schema.js";
+import { PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -39,6 +39,13 @@ export function kontext(person, alle) {
   // Pinnwand: alle Zettel (auch abgenommene – für den Abgleich) und die Personen, die man als Empfänger wählen darf
   ctx.pw = new Map((alle.pinnwand || []).map((z) => [z.id, z]));
   ctx.personen = alle.personen || [];
+  ctx.elternKind = (alle.eltern_kind || []).filter((e) => !e.geloescht_am);
+  ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
+  // 🩺 Begleitpersonen sehen Gesundheitsangaben der Kinder eines Projekts nur rund um die Fahrt (3 Tage vorher bis 2 Tage danach)
+  const heute = new Date(), tag = 86400000;
+  const aktiv = (alle.projekte || []).filter((pr) => !pr.geloescht_am && (pr.begleiter || []).includes(ich) && pr.von && heute >= new Date(new Date(pr.von).getTime() - 3 * tag) && heute <= new Date(new Date(pr.bis || pr.von).getTime() + 3 * tag));
+  const prGruppen = new Set(aktiv.flatMap((pr) => (alle.termine || []).filter((t) => t.projekt_id === pr.id && !t.geloescht_am).flatMap((t) => t.gruppen || [])));
+  ctx.begleitKinder = new Set((alle.gruppe_zuordnung || []).filter((z) => !z.geloescht_am && prGruppen.has(z.gruppe_id)).map((z) => z.person_id));
   const alleP = hatRolle(ctx, TABELLEN.personen.lesen);
   ctx.personenIds = new Set(ctx.personen.filter((p) => pwAppPerson(p) && (alleP || zeileSichtbar("personen", p, ctx))).map((p) => p.id));
   return ctx;
@@ -68,6 +75,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "gruppe_zuordnung": case "person_instrument": return ctx.person?.typ === "schueler" || ctx.meine.has(z.person_id);
     case "inventar": return ctx.inventar.has(z.id);
     case "eigene_termine": return ctx.meine.has(z.person_id);
+    case "gesundheit": return ctx.meine.has(z.person_id) || (ctx.begleitKinder?.has(z.person_id) && !(z.loeschen_am && z.loeschen_am < new Date().toISOString().slice(0, 10)));
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
     case "ausleihen": return ctx.meine.has(z.person_id);
@@ -105,8 +113,18 @@ function kuerzen(tab, z, ctx, alleLesen) {
     if (fg.adresse) { out.strasse = z.strasse; out.plz = z.plz; out.ort = z.ort; }
     if (fg.geburtstag && z.geburtsdatum) out.gb_md = String(z.geburtsdatum).slice(5, 10); // nur Tag und Monat, kein Jahr
   }
+  // Need-to-know: Vorstand, Instrumentenwart, Notenwart sehen fremde Personen nur mit den Feldern ihrer Rolle
+  if (tab === "personen" && alleLesen && !hatRolle(ctx, PERSONEN_VOLL) && !ctx.meine.has(z.id) && !ctx.eltern.has(z.id)) {
+    const art = z.typ === "schueler" || z.typ === "ehemalig" ? "schueler" : z.typ === "eltern" ? "eltern" : "sonst";
+    const felder = new Set([...NUR_NAME, ...ctx.rollen.flatMap((r) => PERSONEN_SICHT[r]?.[art] || [])]);
+    out = Object.fromEntries(Object.entries(z).filter(([k]) => felder.has(k)));
+    const fg = z.freigaben || {};
+    if (fg.mobil) out.mobil = z.mobil;
+    if (fg.email) out.email = z.email;
+  }
   if (tab === "zugaenge") out = { ...out, code: null, code_hash: undefined };
   if (tab === "versand" && out.quittung_hash !== undefined) { out = { ...out }; delete out.quittung_hash; } // Einmal-Token der Push-Quittung
+  if (!alleLesen) { const vermerke = (TABELLEN[tab]?.felder || []).filter((f) => f.vermerk).map((f) => f.k); if (vermerke.length) { out = { ...out }; for (const k of vermerke) delete out[k]; } }
   const geschuetzt = (TABELLEN[tab]?.felder || []).filter((f) => f.geschuetzt).map((f) => f.k);
   if (geschuetzt.length && !hatRolle(ctx, GESCHUETZT_ROLLEN) && !(tab === "personen" && ctx.meine.has(z.id))) {
     out = { ...out }; for (const k of geschuetzt) delete out[k];
@@ -158,6 +176,23 @@ export function chatPartnerOk(ctx, id) {
   return chatPartnerErlaubt(ctx.person, p, { verwandt: ctx.kinder.has(id) || ctx.eltern.has(id), schuelerUntereinander: ctx.konfig?.chat_schueler_untereinander !== false });
 }
 
+// Eigene Unterhaltung anfangen (Einzelchat oder Runde) – nur mit erlaubten Partnern (Kinderschutz-Regel). Schreibt ein
+// Erwachsener einem minderjährigen fremden Kind, kommen dessen Eltern automatisch dazu (aus dem Einzelchat wird eine Runde).
+function privatChatPruefen(neu, ctx) {
+  const andere = [...new Set((Array.isArray(neu.mitglieder) ? neu.mitglieder : []).map(String))].filter((x) => x !== ctx.ich);
+  if (!andere.length) return { ok: false, grund: "MITGLIEDER_FEHLEN" };
+  if (andere.length > 60) return { ok: false, grund: "ZU_VIELE" };
+  if (!andere.every((id) => chatPartnerOk(ctx, id))) return { ok: false, grund: "PARTNER_NICHT_ERLAUBT" };
+  const person = (id) => ctx.personen.find((p) => p.id === id);
+  const { mitglieder, kopie } = chatMitgliederMitKopie(ctx.person, andere, { person, elternVon: (id) => ctx.elternKind.filter((e) => e.kind_id === id).map((e) => e.eltern_id),
+    verwandt: (id) => ctx.kinder.has(id) || ctx.eltern.has(id), kopie: ctx.konfig?.chat_eltern_kopie });
+  if (neu.art === "einzel" && andere.length !== 1) return { ok: false, grund: "EINZEL_NUR_ZWEI" };
+  const art = kopie.length || neu.art === "runde" || mitglieder.length > 2 ? "runde" : "einzel";
+  const kind = andere.map(person).find((p) => p?.typ === "schueler");
+  const titel = art === "einzel" ? "Einzelgespräch" : String(neu.titel || "").trim().slice(0, 80) || (kind ? `${kind.vorname} · mit Eltern` : "Runde");
+  return { ok: true, zeile: { ...nur(neu, ["id"]), titel, art, verteiler: null, mitglieder: [...new Set(mitglieder)] } };
+}
+
 // ---------- Schreiben ----------
 // Rückgabe: { ok:true, zeile } (bereinigte, zu speichernde Zeile) oder { ok:false, grund }.
 // alt = bestehende Zeile in der DB (oder null), neu = vom Gerät gesendete Zeile.
@@ -166,7 +201,14 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
   if (!TABELLEN[tab]) return { ok: false, grund: "UNBEKANNTE_TABELLE" };
   if (SERVER_ONLY.has(tab)) return { ok: false, grund: "NUR_SERVER" };
   if (alt?.geloescht_am && !neu.geloescht_am) return { ok: false, grund: "GELOESCHT" };
+  if (tab === "unterhaltungen" && !alt && PRIVAT_CHAT.has(neu.art)) return privatChatPruefen(neu, ctx); // gilt auch für Verwalter (Kinderschutz)
   if (darfAlleSchreiben(tab, ctx)) {
+    // 💶 Freigaben (Reparatur, Einkauf): Förderverein-Vorstand immer, Leitung bis zur Freigabegrenze – sonst nicht (auch nicht Instrumentenwart)
+    if ((tab === "reparaturen" || tab === "einkaeufe") && neu.status === "freigegeben" && alt?.status !== "freigegeben") {
+      const betrag = Number((tab === "reparaturen" ? neu.kosten ?? alt?.kosten : neu.betrag ?? alt?.betrag) || 0), grenze = Number(ctx.konfig?.freigabe_grenze_eur || 0);
+      if (!hatRolle(ctx, ["vorstand"]) && !(hatRolle(ctx, ["admin", "leitung"]) && betrag <= grenze)) return { ok: false, grund: "FREIGABE_UEBER_GRENZE" };
+      if (tab === "reparaturen") neu = { ...neu, freigegeben_von: ctx.ich };
+    }
     // Geschützte Felder nur mit passender Rolle ändern (sonst alten Wert behalten)
     const z = { ...(alt || {}), ...neu };
     for (const f of TABELLEN[tab].felder.filter((f) => f.geschuetzt)) if (!hatRolle(ctx, GESCHUETZT_ROLLEN)) z[f.k] = alt ? alt[f.k] : null;
@@ -286,23 +328,24 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         express_antwort: n.express && ["geoeffnet", "spaeter", "nein"].includes(neu.express_antwort) ? neu.express_antwort : alt?.express_antwort ?? null,
         express_bestaetigt_am: n.express ? zeit("express_bestaetigt_am") : null } };
     }
-    case "unterhaltungen": {
-      // Eigene Unterhaltung anfangen (Einzelchat oder Runde) – nur mit erlaubten Partnern (Kinderschutz-Regel)
+    case "unterhaltungen":
       if (alt) return { ok: false, grund: "NUR_NEU" };
-      if (!PRIVAT_CHAT.has(neu.art)) return { ok: false, grund: "ART_UNGUELTIG" };
-      const andere = [...new Set((Array.isArray(neu.mitglieder) ? neu.mitglieder : []).map(String))].filter((x) => x !== ctx.ich);
-      if (!andere.length) return { ok: false, grund: "MITGLIEDER_FEHLEN" };
-      if (neu.art === "einzel" && andere.length !== 1) return { ok: false, grund: "EINZEL_NUR_ZWEI" };
-      if (andere.length > 60) return { ok: false, grund: "ZU_VIELE" };
-      if (!andere.every((id) => chatPartnerOk(ctx, id))) return { ok: false, grund: "PARTNER_NICHT_ERLAUBT" };
-      const titel = neu.art === "einzel" ? "Einzelgespräch" : String(neu.titel || "").trim().slice(0, 80) || "Runde";
-      return { ok: true, zeile: { ...nur(neu, ["id"]), titel, art: neu.art, verteiler: null, mitglieder: [ctx.ich, ...andere] } };
-    }
+      return { ok: false, grund: "ART_UNGUELTIG" };
     case "genehmigungen":
       if (!alt || !ctx.kinder.has(alt.kind_id)) return { ok: false, grund: "NICHT_MEIN_KIND" };
       if (!["erteilt", "abgelehnt", "widerrufen"].includes(neu.status)) return { ok: false, grund: "STATUS_UNGUELTIG" };
       if (neu.status === "widerrufen" && alt.status !== "erteilt") return { ok: false, grund: "NUR_ERTEILTE_WIDERRUFBAR" };
-      return { ok: true, zeile: { ...alt, status: neu.status, beantwortet_von: ctx.ich, beantwortet_am: jetzt, vorlage_version: neu.vorlage_version ?? alt.vorlage_version } };
+      // Textfassung kommt vom Server (welche Fassung die Eltern bestätigt haben), nicht vom Gerät
+      return { ok: true, zeile: { ...alt, status: neu.status, beantwortet_von: ctx.ich, beantwortet_am: jetzt, vorlage_version: ctx.gvMap?.get(alt.vorlage_id)?.fassung ?? alt.vorlage_version ?? 1 } };
+    case "gesundheit": {
+      // 🩺 Eltern pflegen die Angaben ihrer Kinder; volljährige Schüler ihre eigenen. Jede Bestätigung hält 13 Monate.
+      if (!ctx.meine.has(neu.person_id) || (alt && alt.person_id !== neu.person_id)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+      if (neu.person_id === ctx.ich && istMinderjaehrig(ctx.person)) return { ok: false, grund: "NUR_ELTERN" };
+      const felder = TABELLEN.gesundheit.felder.map((f) => f.k).filter((k) => !["geprueft_am", "geprueft_von", "loeschen_am"].includes(k));
+      const z = Object.fromEntries(felder.map((k) => [k, typeof neu[k] === "string" ? neu[k].slice(0, 1000) : neu[k] ?? null]));
+      const bis = new Date(jetzt); bis.setDate(bis.getDate() + 395);
+      return { ok: true, zeile: { ...(alt || {}), ...z, id: alt?.id || neu.id, geprueft_am: jetzt.slice(0, 10), geprueft_von: ctx.ich, loeschen_am: bis.toISOString().slice(0, 10) } };
+    }
     case "aufgaben":
       if (alt) return { ok: false, grund: "NUR_NEU" };
       if (!["aenderung", "wechselwunsch"].includes(neu.art) || neu.von_id !== ctx.ich) return { ok: false, grund: "ART_ODER_ABSENDER" };

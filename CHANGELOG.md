@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.20.0 DEV – 16.10.2026
+- 🛡️ `chatPartnerErlaubt`: Kind ↔ Erwachsener nur Leitung/Lehrkraft (oder verwandt); `chatMitgliederMitKopie`/`istMinderjaehrig`: Eltern minderjähriger Kinder automatisch in neuen privaten Unterhaltungen (Einzel → Runde „… · mit Eltern“), Server prüft auch für Verwalter; konfig `chat_eltern_kopie`
+- 💶 Server: Status „freigegeben“ bei Reparatur/Einkauf nur Vorstand oder Leitung bis `freigabe_grenze_eur` (FREIGABE_UEBER_GRENZE)
+- 🔒 `PERSONEN_SICHT` je Rolle (Vorstand, Instrumentenwart, Notenwart); `antworten` lesen nur Terminplanung; Felder mit `vermerk: true` (gruppe_zuordnung.grund, person_instrument.niveau, projekte.checkliste) nur für Rollen mit Leserecht; Genehmigung: Textfassung vom Server
+- 🩺 Tabelle `gesundheit` (Eltern-Selbstpflege, Bestätigung + `loeschen_am`), `projekte.begleiter` (Sicht nur 3 Tage vor bis 3 Tage nach der Fahrt), Anzeige in SOS und Personenkarte
+- 📷 `genehmigung_vorlagen.zweck`, `einwilligung()`/`fotoErlaubnis()`, Ansicht „Foto-Liste“, Hinweis bei Foto-Anhängen
+- 📋 `antworten.anwesend` + spaet/entschuldigt, Abhak-Knöpfe im Termin, „Alle Zusagen da“, `fehlzeiten()`, Ansicht „Anwesenheit“ (App) und „Anwesenheit & Fehlzeiten“ (PC, CSV)
+- Migration 20261027000000_bk_schutz.sql; Tests tests/schutz.test.mjs; Rundgang erweitert
+
 ## 0.19.0 DEV – 16.10.2026
 - 📦 Tabelle `ausstattung` (Kategorien mit Richtwert-Nutzungsdauer, Sammelposten, Eigentümer, Finanzierung, Einkauf-Verweis) und gemeinsame Inventar-Felder auch für `inventar` (Seriennummer, Eigentümer, Händler, Beleg, Garantie, AfA-Art/-Jahre, verantwortlich, Inventur, Abgang); Status-Katalog INVENTAR_STATUS
 - logik.js: `abschreibung()` (linear pro rata temporis, GWG sofort, Abgang), `inventarBestand()`, `naechsteInventarNr()`

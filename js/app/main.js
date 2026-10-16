@@ -15,6 +15,7 @@ import "./instrumente.js";
 import "./leitung.js";
 import "./notenarchiv.js";
 import "./notenblatt.js";
+import "./schutz.js";
 import { uebenStart } from "./ueben.js";
 import { termineStart } from "./termine.js";
 import { onlineStart } from "./online.js";

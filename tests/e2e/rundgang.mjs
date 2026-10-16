@@ -181,6 +181,20 @@ for (const rolle of ["leitung", "lehrkraft", "vorstand", "schueler", "eltern"]) 
     }
   }
 }
+// 🛡️ Schutz (0.20.0): Eltern füllen 🩺 Gesundheit aus · Leitung: 📷 Foto-Liste, 📋 Anwesenheit im Termin abhaken, Fehlzeiten
+await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("gesundheit")); await p.waitForSelector("#gsForm");
+await p.fill('#gsForm [name="allergien"]', "Erdnüsse (Notfallset im Rucksack)"); await p.click('[data-a="gsSpeichern"]'); await p.waitForTimeout(200);
+if (!/bestätigt am/.test(await p.textContent("#gsForm"))) fehler.push("Gesundheit: Bestätigung fehlt");
+await p.screenshot({ path: `${BILDER}eltern-gesundheit.png`, fullPage: true });
+await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("fotoliste")); await p.waitForSelector(".foto-tab");
+await p.screenshot({ path: `${BILDER}fotoliste.png`, fullPage: true });
+await p.evaluate(async () => { const { liste } = await import("/js/kern/daten.js"); const t = liste("termine", (x) => new Date(x.beginn) < new Date() && (x.gruppen || []).includes("g-a")).sort((a, b) => b.beginn.localeCompare(a.beginn))[0]; (await import("/js/app/zustand.js")).zeige("termin", { id: t.id }); });
+await p.waitForSelector(".anw-knoepfe"); await p.click('.anw-knoepfe button[data-x$="|spaet"]'); await p.waitForTimeout(150);
+if (!(await p.$(".anw-knoepfe button.an"))) fehler.push("Anwesenheit: Knopf nicht gesetzt");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("anwesenheit")); await p.waitForSelector(".kennzahlen");
+await p.screenshot({ path: `${BILDER}anwesenheit.png`, fullPage: true });
 // PC-Verwaltung: alle Tabellen und Sonderansichten
 await p.setViewportSize({ width: 1280, height: 860 });
 await p.goto(BASIS + "/verwaltung.html");

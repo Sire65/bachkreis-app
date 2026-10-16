@@ -22,6 +22,21 @@ const LL = ["admin", "leitung", "lehrkraft"];
 const ALLE_VERWALTER = VERWALTER;
 const PLANER = [...VERWALTER, "terminplaner"]; // dürfen alle Termine und Rückmeldungen sehen
 export const TERMIN_PLANER = ["admin", "leitung", "lehrkraft", "terminplaner"]; // dürfen Termine anlegen und ändern
+// 🔒 Need-to-know (0.20.0): Wer die Personentabelle lesen darf, aber nicht Leitung/Lehrkraft ist, bekommt fremde Personen nur mit
+// diesen Feldern (zusätzlich zu Name, Art, Status). Kinder: nie Geburtsdatum, Adresse oder Gesundheit. Freigaben der Person gelten zusätzlich.
+export const PERSONEN_VOLL = ["admin", "leitung", "lehrkraft"];
+export const PERSONEN_SICHT = {
+  vorstand: { schueler: ["jahrgang"], eltern: ["email", "mobil", "telefon", "strasse", "plz", "ort", "kontakt_ok"], sonst: ["email", "mobil", "telefon", "strasse", "plz", "ort", "firma", "kontakt_ok"] },
+  instrumentenwart: { schueler: ["jahrgang"], eltern: ["email", "mobil", "telefon"], sonst: ["email", "mobil", "telefon", "firma"] },
+  notenwart: { schueler: ["jahrgang"], eltern: [], sonst: ["email", "firma"] },
+};
+// 📋 Anwesenheit (0.20.0): „ja“/„nein“ wie bisher, dazu verspätet und entschuldigt. Zählt als da: ja, spaet.
+export const ANWESENHEIT = { ja: ["✅", "da"], spaet: ["⏰", "verspätet"], entschuldigt: ["🟡", "entschuldigt"], nein: ["❌", "fehlte unentschuldigt"] };
+export const ANWESENHEIT_NAMEN = { "": "nicht erfasst", ...Object.fromEntries(Object.entries(ANWESENHEIT).map(([k, [, t]]) => [k, t])) };
+// 📷 Einwilligungen je Zweck (0.20.0): Genehmigungs-Vorlagen tragen einen Zweck; Foto-Zwecke ergeben die Foto-Liste
+export const GENEHMIGUNG_ZWECKE = { teilnahme: "Teilnahme & Datenschutz", foto_intern: "📷 Fotos intern (App, nur Mitglieder)", foto_website: "📷 Fotos Schul-Website",
+  foto_presse: "📷 Fotos Presse", foto_social: "📷 Fotos Social Media", reise: "Fahrt / Freizeit", leihvertrag: "Leihvertrag Instrument", gesundheit: "Gesundheit / Erste Hilfe", sonstiges: "Sonstiges" };
+export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
 export const TEILNAHME = { pflicht: ["❗", "Teilnahme erforderlich"], erwuenscht: ["🙂", "Teilnahme erwünscht"], info: ["ℹ️", "Nur zur Info"] };
 
 export const PERSONEN_TYPEN = {
@@ -98,12 +113,32 @@ export const nachrichtFrei = (n, jetzt = new Date().toISOString()) => !n.geplant
 // Mit wem darf jemand eine eigene Unterhaltung (Einzelchat/Runde) anfangen? Kinderschutz: Eltern schreiben privat nur Leitung,
 // Lehrkräften, Verwaltern und den eigenen Kindern; Schüler nur Schülern (abschaltbar), Leitung, Lehrkräften und den eigenen Eltern.
 // verwandt = Eltern-Kind-Beziehung zwischen beiden. Verwalter dürfen mit allen App-Nutzern schreiben.
+// 🛡️ Kinderschutz (0.20.0): Erwachsene schreiben Kindern privat nur, wenn sie Leitung oder Lehrkraft sind (nicht Notenwart,
+// Instrumentenwart, Vorstand …) – und bei Minderjährigen sind die Eltern automatisch dabei (elternInKopie, konfig.chat_eltern_kopie).
+const fuehrt = (x) => ["leitung", "lehrkraft"].includes(x.typ) || (x.rollen || []).some((r) => ["admin", "leitung", "lehrkraft"].includes(r));
 export function chatPartnerErlaubt(ich, p, { verwandt = false, schuelerUntereinander = true } = {}) {
   if (!ich || !p || p.id === ich.id || !pwAppPerson(p)) return false;
-  const verw = (x) => ["leitung", "lehrkraft"].includes(x.typ) || (x.rollen || []).some((r) => VERWALTER.includes(r));
-  if (verw(ich) || verw(p) || verwandt) return true;
-  if (ich.typ === "schueler" && p.typ === "schueler") return schuelerUntereinander !== false;
-  return false;
+  if (verwandt) return true;
+  const kind = (x) => x.typ === "schueler";
+  if (kind(ich) && kind(p)) return schuelerUntereinander !== false;
+  if (kind(ich) || kind(p)) return fuehrt(kind(ich) ? p : ich); // Kind ↔ Erwachsener: nur Leitung und Lehrkräfte
+  const verw = (x) => fuehrt(x) || (x.rollen || []).some((r) => VERWALTER.includes(r));
+  return verw(ich) || verw(p);
+}
+// Unter 18 (ohne Geburtsdatum: als minderjährig behandelt)
+export function istMinderjaehrig(p, heute = new Date()) {
+  if (!p || p.typ !== "schueler") return false;
+  if (!p.geburtsdatum) return true;
+  const g = new Date(p.geburtsdatum + "T12:00:00");
+  return heute < new Date(g.getFullYear() + 18, g.getMonth(), g.getDate());
+}
+// Kommen bei einer privaten Unterhaltung von ich mit p die Eltern von p dazu? (Erwachsener ↔ minderjähriges, fremdes Kind)
+export const elternInKopie = (ich, p, { verwandt = false, kopie = true } = {}) => kopie !== false && !verwandt && !!ich && ich.typ !== "schueler" && istMinderjaehrig(p);
+// Mitglieder einer neuen privaten Unterhaltung inkl. Eltern in Kopie. elternVon(id) → Eltern-IDs, verwandt(id) → bool
+export function chatMitgliederMitKopie(ich, andere, { person, elternVon, verwandt = () => false, kopie = true }) {
+  const dazu = [];
+  for (const id of andere) if (elternInKopie(ich, person(id), { verwandt: verwandt(id), kopie })) for (const e of elternVon(id)) if (e !== ich.id && !andere.includes(e) && !dazu.includes(e)) dazu.push(e);
+  return { mitglieder: [ich.id, ...andere, ...dazu], kopie: dazu };
 }
 
 // ---------- Pinnwand (gemeinsam für App und Server) ----------
@@ -124,7 +159,8 @@ export const pwEmpfaenger = (z, personen) => (z.fuer === "ich" ? [] : z.fuer ===
 export const pwGelesenId = (zettelId, personId) => `${zettelId}:${personId}`;
 
 // Feldtypen: text, lang, email, tel, datum, zeit (Datum+Uhrzeit), zahl, geld, ja, wahl, ref, refs, farbe, liste (Textliste), json
-// „intern“ = Spalten, die die App selbst pflegt (nicht im Formular der Verwaltung).
+// „intern“ = Spalten, die die App selbst pflegt (nicht im Formular der Verwaltung). vermerk: true = interne Bemerkung, nur für Rollen,
+// die die ganze Tabelle lesen dürfen (der Server schickt sie Schülern und Eltern nicht mit).
 export const TABELLEN = {
   personen: {
     titel: "Personen", sym: "👥", gruppe: "Stammdaten",
@@ -187,7 +223,7 @@ export const TABELLEN = {
       { k: "von", t: "gültig von", typ: "datum", pflicht: true },
       { k: "bis", t: "gültig bis", typ: "datum" },
       { k: "projekt_id", t: "nur für Projekt", typ: "ref", ref: "projekte" },
-      { k: "grund", t: "Grund", typ: "text" },
+      { k: "grund", t: "Grund (intern)", typ: "text", vermerk: true },
     ],
     liste: ["person_id", "gruppe_id", "art", "von", "bis", "grund"],
   },
@@ -222,7 +258,7 @@ export const TABELLEN = {
       { k: "register_id", t: "Register (Stimme)", typ: "ref", ref: "register" },
       { k: "haupt", t: "Hauptinstrument", typ: "ja" },
       { k: "eigenes", t: "eigenes Instrument", typ: "ja" },
-      { k: "niveau", t: "Niveau / Bemerkung", typ: "text" },
+      { k: "niveau", t: "Niveau / Bemerkung (intern)", typ: "text", vermerk: true },
     ],
     liste: ["person_id", "typ_id", "register_id", "haupt", "eigenes"],
   },
@@ -317,7 +353,8 @@ export const TABELLEN = {
       { k: "bis", t: "bis", typ: "datum" },
       { k: "ort", t: "Ort", typ: "text" },
       { k: "beschreibung", t: "Beschreibung", typ: "lang" },
-      { k: "checkliste", t: "Checkliste (eine Zeile je Punkt, [x] = erledigt)", typ: "lang" },
+      { k: "checkliste", t: "Checkliste (eine Zeile je Punkt, [x] = erledigt)", typ: "lang", vermerk: true },
+      { k: "begleiter", t: "Begleitpersonen (sehen während der Fahrt die Gesundheitsangaben)", typ: "refs", ref: "personen", filter: (p) => ["leitung", "lehrkraft", "eltern", "foerderverein"].includes(p.typ) },
     ],
     liste: ["titel", "art", "von", "bis", "ort"],
     anzeige: (z) => z.titel,
@@ -355,14 +392,14 @@ export const TABELLEN = {
     anzeige: (z) => z.titel,
   },
   antworten: {
-    titel: "Zu-/Absagen", sym: "✅", gruppe: "Termine", lesen: PLANER, schreiben: TERMIN_PLANER,
+    titel: "Zu-/Absagen", sym: "✅", gruppe: "Termine", lesen: TERMIN_PLANER, schreiben: TERMIN_PLANER, // Absagegründe (krank …) nur für die Planung
     felder: [
       { k: "termin_id", t: "Termin", typ: "ref", ref: "termine", pflicht: true },
       { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
       { k: "antwort", t: "Antwort", typ: "wahl", werte: { ja: "Zusage", vielleicht: "weiß noch nicht", nein: "Absage" }, pflicht: true },
       { k: "notiz", t: "Notiz", typ: "text" },
       { k: "von_person_id", t: "beantwortet von", typ: "ref", ref: "personen" },
-      { k: "anwesend", t: "tatsächlich anwesend", typ: "wahl", werte: { "": "nicht erfasst", ja: "anwesend", nein: "fehlte" } },
+      { k: "anwesend", t: "tatsächlich anwesend", typ: "wahl", werte: ANWESENHEIT_NAMEN },
     ],
     liste: ["termin_id", "person_id", "antwort", "notiz", "anwesend"],
     intern: [{ k: "register_id", typ: "ref", ref: "register" }, { k: "nachfragen_am", typ: "datum" }],
@@ -495,9 +532,35 @@ export const TABELLEN = {
       { k: "text", t: "Text für die Eltern", typ: "lang", pflicht: true },
       { k: "fassung", t: "Textfassung", typ: "zahl" },
       { k: "gueltig_monate", t: "gültig … Monate (leer = unbegrenzt)", typ: "zahl" },
+      { k: "zweck", t: "Zweck", typ: "wahl", werte: GENEHMIGUNG_ZWECKE },
     ],
-    liste: ["titel", "fassung", "gueltig_monate"],
+    liste: ["titel", "zweck", "fassung", "gueltig_monate"],
     anzeige: (z) => z.titel,
+  },
+  // 🩺 Gesundheit & Notfall (0.20.0): strukturiert statt Freitext. Lesen: Leitung, Lehrkräfte, die Eltern (bzw. volljährige Schüler selbst)
+  // und Begleitpersonen eines Projekts nur während der Fahrt (Server-Regel). Eltern pflegen selbst; Bestätigung hält 13 Monate (loeschen_am).
+  gesundheit: {
+    titel: "Gesundheit & Notfall", sym: "🩺", gruppe: "Genehmigungen", lesen: LL, schreiben: L,
+    felder: [
+      { k: "person_id", t: "Kind / Person", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler", pflicht: true },
+      { k: "allergien", t: "Allergien", typ: "lang" },
+      { k: "ernaehrung", t: "Ernährung / Unverträglichkeiten", typ: "text" },
+      { k: "medikamente", t: "Medikamente (Name, Dosis, wann)", typ: "lang" },
+      { k: "erkrankungen", t: "Erkrankungen / Hinweise (z. B. Asthma, Diabetes, Epilepsie)", typ: "lang" },
+      { k: "notfall_name", t: "Notfallkontakt (wenn nicht die Eltern)", typ: "text" },
+      { k: "notfall_tel", t: "Telefon Notfallkontakt", typ: "tel" },
+      { k: "krankenkasse", t: "Krankenkasse", typ: "text" },
+      { k: "hausarzt", t: "Hausarzt / Kinderarzt", typ: "text" },
+      { k: "tetanus", t: "letzte Tetanus-Impfung", typ: "datum" },
+      { k: "schwimmer", t: "Schwimmer", typ: "wahl", werte: { ja: "ja", nein: "nein", unsicher: "unsicher" } },
+      { k: "erste_hilfe_ok", t: "Begleiter dürfen kleine Verletzungen versorgen und Zecken entfernen", typ: "ja" },
+      { k: "medikamente_geben_ok", t: "Begleiter dürfen die genannten Medikamente geben", typ: "ja" },
+      { k: "geprueft_am", t: "zuletzt bestätigt am", typ: "datum" },
+      { k: "geprueft_von", t: "bestätigt von", typ: "ref", ref: "personen" },
+      { k: "loeschen_am", t: "löschen am (ohne neue Bestätigung)", typ: "datum" },
+    ],
+    liste: ["person_id", "allergien", "medikamente", "geprueft_am", "loeschen_am"],
+    anzeige: (z) => z.person_id,
   },
   genehmigungen: {
     titel: "Genehmigungen", sym: "✍️", gruppe: "Genehmigungen", lesen: ALLE_VERWALTER, schreiben: LL,

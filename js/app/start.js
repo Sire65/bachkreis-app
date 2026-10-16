@@ -9,6 +9,7 @@ import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { kopfEinsetzen, kopfVerbinden, regEffekt } from "./kopf.js";
 import { dunkelUmschalten } from "./darstellung.js";
 import { pwOffenZahl } from "./pinnwand.js";
+import { gesundheitFuer, gesundheitVon } from "./schutz.js";
 import { wochenStand } from "./ueben.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
@@ -56,6 +57,8 @@ export const KACHELN = {
     { id: "noten", sym: "📚", t: "Notenarchiv", u: "Orchester › Stücke › Noten je Instrument", v: "noten", nur: () => istVerwalter() },
     { id: "instrumente", sym: "🎻", t: "Instrumente", u: "Inventar · Verleih · Reparatur", v: "instrumente", nur: () => istVerwalter(), zahl: () => liste("reparaturen", (r) => r.status === "gemeldet" || r.status === "angebot").length },
     { id: "genehmigungen", sym: "✍️", t: "Genehmigungen", u: "Einverständnis der Eltern", v: "genehmigungen", nur: () => istLehrkraft() },
+    { id: "anwesenheit", sym: "📋", t: "Anwesenheit", u: "Fehlzeiten je Kind · Orchester", v: "anwesenheit", nur: () => hatRolle("admin", "leitung", "lehrkraft", "terminplaner") },
+    { id: "fotoliste", sym: "📷", t: "Foto-Liste", u: "Wer darf aufs Foto – App, Website, Presse, Social", v: "fotoliste", nur: () => istLehrkraft() },
     { id: "rundschreiben", sym: "📣", t: "Rundschreiben", u: "An Eltern, Schüler, Spender …", v: "rundschreiben", nur: () => istVerwalter() },
     { id: "foerderverein", sym: "💛", t: "Förderverein", u: "Einkauf · Spenden · Freigaben", v: "foerderverein", nur: () => istVorstand() || istLeitung() },
   ],
@@ -63,6 +66,7 @@ export const KACHELN = {
     { id: "meinetermine", sym: "🗓️", t: () => (istEltern() ? "Termine meiner Kinder" : "Meine Termine"), u: "Zusagen auf einen Blick", v: "termine", p: { filter: "meine" }, zahl: () => offeneAntworten() },
     { id: "kinder", sym: "👪", t: "Meine Kinder", u: "Gruppe · Instrument · Termine", v: "kinder", nur: () => istEltern() },
     { id: "meinegenehmigungen", sym: "✍️", t: "Genehmigungen", u: "Zustimmen · Ablehnen · Widerrufen", v: "meinegenehmigungen", nur: () => istEltern(), zahl: () => offeneGenehmigungen() },
+    { id: "gesundheit", sym: "🩺", t: "Gesundheit & Notfall", u: "Allergien · Medikamente · Notfallkontakt", v: "gesundheit", nur: () => gesundheitFuer().length > 0, zahl: () => gesundheitFuer().filter((k) => !gesundheitVon(k)).length },
     { id: "ueben", sym: "🎻", t: "Üben", u: () => uebenUntertitel(), v: "ueben", nur: () => istSchueler() || istEltern() },
     { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin") },
     { id: "meinenoten", sym: "🎼", t: "Meine Noten", u: "Stimmen für mein Instrument", v: "meinenoten", nur: () => istSchueler() || istEltern() },

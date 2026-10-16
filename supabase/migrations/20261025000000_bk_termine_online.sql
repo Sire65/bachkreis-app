@@ -57,7 +57,7 @@ create table if not exists bk_antworten (
   antwort text not null check (antwort is null or antwort in ('ja', 'vielleicht', 'nein')),
   notiz text,
   von_person_id text,
-  anwesend text check (anwesend is null or anwesend in ('', 'ja', 'nein')),
+  anwesend text check (anwesend is null or anwesend in ('', 'ja', 'spaet', 'entschuldigt', 'nein')),
   register_id text,
   nachfragen_am date,
   version integer not null default 1,
@@ -80,7 +80,7 @@ alter table bk_antworten add column if not exists notiz text;
 alter table bk_antworten add column if not exists von_person_id text;
 alter table bk_antworten add column if not exists anwesend text;
 alter table bk_antworten drop constraint if exists bk_antworten_anwesend_check;
-alter table bk_antworten add constraint bk_antworten_anwesend_check check (anwesend is null or anwesend in ('', 'ja', 'nein'));
+alter table bk_antworten add constraint bk_antworten_anwesend_check check (anwesend is null or anwesend in ('', 'ja', 'spaet', 'entschuldigt', 'nein'));
 alter table bk_antworten add column if not exists register_id text;
 alter table bk_antworten add column if not exists nachfragen_am date;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_antworten_termin_id_fk') then alter table bk_antworten add constraint bk_antworten_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;

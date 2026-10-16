@@ -1,9 +1,10 @@
 // Orchester: Gruppen A–D (Registry), Mitglieder je Register, Personen-Detail, Gruppenwechsel generell (mit Historie)
 // und temporär (Zeitraum/Projekt), Wechselwunsch der Schüler, Konzerte & Projekte mit Checkliste.
+import { gesundheitKurz } from "./schutz.js";
 import { S, VIEWS, db, zeige, zeichne, zurueck, kopf, name, istLehrkraft, istLeitung, istEltern, istVerwalter } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
-import { gruppenMitglieder, stammgruppe, wirksameGruppen, temporaereZuordnungen, generellerWechselPlan, instrumenteVon, registerVon, elternVon, kinderVon, tagIso, ausleihenVon, antwortVon } from "../kern/logik.js";
+import { gruppenMitglieder, stammgruppe, wirksameGruppen, temporaereZuordnungen, generellerWechselPlan, instrumenteVon, registerVon, elternVon, kinderVon, tagIso, ausleihenVon, antwortVon, fotoErlaubnis } from "../kern/logik.js";
 import { gesicht, gesichtSvg, merkmale, HAUT, HAARFARBE, FRISUREN, AUGEN, MUND, FARBEN } from "./gesichter.js";
 import { onlineIds, onlineSichtbar } from "./online.js";
 import { lehreZu } from "./instrumentenkunde.js";
@@ -130,7 +131,9 @@ VIEWS.person = {
       const eltern = elternVon(db, id).map((e) => hole("personen", e)).filter(Boolean);
       html += `<div class="karte"><h3>Kontakt</h3><div>${esc(p.strasse || "")} ${esc(p.plz || "")} ${esc(p.ort || "")}</div>${p.mobil ? `<div>📱 <a href="tel:${esc(p.mobil.replace(/\s/g, ""))}">${esc(p.mobil)}</a></div>` : ""}${p.email ? `<div>✉️ ${esc(p.email)}</div>` : ""}
         ${eltern.length ? `<h4>Eltern</h4><ul class="liste">${eltern.map((e) => `<li><div class="fl">${esc(name(e))}</div><a class="knopf klein" href="tel:${esc((e.mobil || "").replace(/\s/g, ""))}">📞</a></li>`).join("")}</ul>` : ""}
-        ${p.notfall_info ? `<div class="badge b-rot">⚕️ ${esc(p.notfall_info)}</div>` : ""}${p.foto_ok === false ? '<div class="badge b-gelb">📷 keine Foto-Erlaubnis</div>' : ""}</div>`;
+        ${p.notfall_info ? `<div class="badge b-rot">⚕️ ${esc(p.notfall_info)}</div>` : ""}
+        ${p.typ === "schueler" ? `<div class="foto-zeile">📷 ${Object.entries(fotoErlaubnis(db, id)).map(([z, st]) => `<span class="badge ${st === "ja" ? "b-gruen" : st === "nein" ? "b-rot" : "b-grau"}">${{ foto_intern: "App", foto_website: "Website", foto_presse: "Presse", foto_social: "Social" }[z]} ${st === "ja" ? "✅" : st === "nein" ? "⛔" : "❔"}</span>`).join("")}</div>` : ""}
+        ${p.typ === "schueler" && liste("gesundheit", (g) => g.person_id === id).length ? `<details class="gs-details"><summary>🩺 Gesundheit & Notfall</summary>${gesundheitKurz(id)}</details>` : ""}</div>`;
       html += `<div class="karte"><h3>Gruppen-Verlauf</h3><ul class="liste">${hist.map((z) => `<li><div class="fl"><b>${esc(hole("gruppen", z.gruppe_id)?.kuerzel)}</b> ${z.art === "temporaer" ? '<span class="badge b-lila">temporär</span>' : '<span class="badge">Stamm</span>'} <span class="hinweis">${datumKurz(z.von)} – ${z.bis ? datumKurz(z.bis) : "offen"}${z.grund ? " · " + esc(z.grund) : ""}</span></div></li>`).join("")}</ul>
         <div class="knopfreihe"><button class="knopf klein" data-a="wechselForm" data-x="${id}|stamm">🔀 Gruppe generell wechseln</button><button class="knopf klein" data-a="wechselForm" data-x="${id}|temporaer">⏳ Temporär zuordnen</button></div></div>`;
       const ausl = ausleihenVon(db, id);

@@ -6,7 +6,7 @@ import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTA
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND } from "../kern/versand.js";
-import { csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr } from "../kern/logik.js";
+import { csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 
 const db = { liste, hole, konfig };
@@ -59,13 +59,13 @@ function demoLeiste() {
 }
 
 // ---------- Rahmen ----------
-const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["inventarbericht", "📦", "Inventar & Abschreibung"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
+const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["inventarbericht", "📦", "Inventar & Abschreibung"], ["anwesenheit", "📋", "Anwesenheit & Fehlzeiten"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
 function seitenleiste() {
   const gruppen = {};
   for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
   const btn = (an, a, x, sym, t, anz = "") => `<button class="${an ? "an" : ""}" data-a="${a}" data-x="${x}">${sym} ${esc(t)}<span class="anz">${anz}</span></button>`;
   return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;opacity:.7">v${APP_VERSION} ${APP_STUFE}</div></div></div>
-    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "communicator" || darf("kom_einstellungen", "lesen")).filter(([k]) => k !== "inventarbericht" || darf("ausstattung", "lesen")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
+    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "communicator" || darf("kom_einstellungen", "lesen")).filter(([k]) => k !== "inventarbericht" || darf("ausstattung", "lesen")).filter(([k]) => k !== "anwesenheit" || darf("antworten", "lesen")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
     ${Object.entries(gruppen).map(([g, ts]) => `<h4>${esc(g)}</h4>${ts.map((t) => btn(V.ansicht === "tabelle" && V.tab === t, "vwTabelle", t, TABELLEN[t].sym, TABELLEN[t].titel, liste(t).length)).join("")}`).join("")}
     <h4>Sitzung</h4><button data-a="vwApp">📱 App öffnen</button><button data-a="vwAbmelden">🚪 Abmelden</button>`;
 }
@@ -457,6 +457,30 @@ AKTIONEN.invEtiketten = () => {
   $("#qrBereich").scrollIntoView({ behavior: "smooth" });
 };
 
+// ---------- 📋 Anwesenheit & Fehlzeiten (0.20.0) ----------
+const AW = { gr: "", tage: 180 };
+const awZeilen = () => {
+  const personen = AW.gr ? gruppenMitglieder(db, AW.gr) : null;
+  return fehlzeiten(db, { von: new Date(Date.now() - AW.tage * 86400000), personen, gruppe: AW.gr || null }).filter((z) => hole("personen", z.person_id)?.typ === "schueler")
+    .map((z) => ({ ...z, name: name(hole("personen", z.person_id)), gruppe: hole("gruppen", stammgruppe(db, z.person_id))?.kuerzel || "" }));
+};
+ANSICHTEN.anwesenheit = () => {
+  const l = awZeilen(), gruppen = liste("gruppen").sort((a, b) => (a.sort ?? 99) - (b.sort ?? 99));
+  return `<div class="vw-kopf"><h2>📋 Anwesenheit & Fehlzeiten <span class="hinweis">(${l.length})</span></h2>
+      <select data-c="awFeld" data-x="gr"><option value="">alle Gruppen</option>${gruppen.map((g) => `<option value="${g.id}" ${AW.gr === g.id ? "selected" : ""}>${esc(g.kuerzel)} – ${esc(g.name)}</option>`).join("")}</select>
+      <select data-c="awFeld" data-x="tage">${[[30, "30 Tage"], [90, "3 Monate"], [180, "Halbjahr"], [365, "Schuljahr / 1 Jahr"]].map(([k, t]) => `<option value="${k}" ${AW.tage === k ? "selected" : ""}>${t}</option>`).join("")}</select>
+      <button class="knopf" data-a="awCsv">📤 CSV</button></div>
+    <div class="vw-tabelle-wrap"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Name</th><th>Gruppe</th><th class="r">✅ da</th><th class="r">⏰ verspätet</th><th class="r">🟡 entschuldigt</th><th class="r">❌ unentschuldigt</th><th class="r">erfasst</th><th class="r">Quote</th></tr></thead>
+      <tbody>${l.map((z) => `<tr class="${z.nein >= 2 || (z.quote ?? 100) < 70 ? "inv-problem" : ""}"><td>${esc(z.name)}</td><td>${esc(z.gruppe)}</td><td class="r">${z.ja}</td><td class="r">${z.spaet}</td><td class="r">${z.entschuldigt}</td><td class="r">${z.nein}</td><td class="r">${z.erfasst}</td><td class="r"><b>${z.quote == null ? "UNBEKANNT" : z.quote + " %"}</b></td></tr>`).join("") || '<tr><td colspan="8" class="hinweis">Keine Anwesenheit erfasst.</td></tr>'}</tbody></table></div>
+    <p class="hinweis">Quote = (da + verspätet) ÷ erfasste Termine. Rot: 2× unentschuldigt oder unter 70 %. Erfasst wird in der App im Termin unter „Teilnehmer“.</p>`;
+};
+AKTIONEN.awFeld = (_, el) => { AW[el.dataset.x] = el.dataset.x === "tage" ? Number(el.value) : el.value; zeichne(); };
+AKTIONEN.awCsv = () => {
+  const l = awZeilen().map((z) => ({ name: z.name, gruppe: z.gruppe, da: z.ja, verspaetet: z.spaet, entschuldigt: z.entschuldigt, unentschuldigt: z.nein, erfasst: z.erfasst, quote: z.quote ?? "" }));
+  if (!l.length) return toast("Nichts zu exportieren");
+  herunterladen(`anwesenheit-${tagIso(new Date())}.csv`, "\ufeff" + csvAus(l, Object.keys(l[0])), "text/csv");
+};
+
 // ---------- Import / Export ----------
 ANSICHTEN.import = () => {
   const schreibbar = TABELLEN_NAMEN.filter((t) => darf(t, "schreiben") && !TABELLEN[t].nurLesen);
@@ -583,6 +607,7 @@ ANSICHTEN.konfig = () => {
   return `<div class="vw-kopf"><h2>⚙️ Einstellungen</h2></div><div class="karte" id="konfForm">
     ${f("name", "Name")}${f("untertitel", "Untertitel")}${f("webseite", "Internetseite (Logo oben links öffnet sie)", "url")}${f("schule_telefon", "Telefon Schule (SOS)")}${f("freigabe_grenze_eur", "Freigabegrenze Leitung (€) – darüber entscheidet der Förderverein", "number")}${f("nachfass_tage", "Nachfassen … Tage vor Antwortfrist", "number")}${f("express_max_tag", "🏎️ Express-Sendungen je Person und Tag (leer = 5, Leitung unbegrenzt)", "number")}${f("bearbeiten_minuten", "✏️ Nachrichten bearbeiten bis … Minuten nach dem Senden (leer = 15)", "number")}
     <div class="feld"><label>💬 Schüler dürfen sich gegenseitig privat schreiben</label><select data-konfig="chat_schueler_untereinander" ${darfK ? "" : "disabled"}><option value="ja" ${k.chat_schueler_untereinander !== false ? "selected" : ""}>Ja</option><option value="nein" ${k.chat_schueler_untereinander === false ? "selected" : ""}>Nein – nur mit Leitung, Lehrkräften und den eigenen Eltern</option></select></div>${f("pinnwand_erinnern_tage", "📌 Pinnwand: an eigene Zettel erinnern nach … Tagen (leer = 3)", "number")}${f("pinnwand_pause_tage", "📌 Pinnwand: nach „Hängen lassen“ wieder fragen nach … Tagen (leer = 7)", "number")}
+    <div class="feld"><label>🛡️ Schreibt ein Erwachsener einem minderjährigen Kind privat, lesen die Eltern mit</label><select data-konfig="chat_eltern_kopie" ${darfK ? "" : "disabled"}><option value="ja" ${k.chat_eltern_kopie !== false ? "selected" : ""}>Ja – Eltern automatisch in Kopie (empfohlen)</option><option value="nein" ${k.chat_eltern_kopie === false ? "selected" : ""}>Nein – nur Leitung/Lehrkräfte, ohne Eltern</option></select><div class="hinweis">Privat an Kinder schreiben dürfen ohnehin nur Leitung und Lehrkräfte (nicht Notenwart, Instrumentenwart oder Vorstand) – außer den eigenen Kindern.</div></div>
     <div class="feld"><label>Notrufnummern (eine je Zeile: Symbol;Bezeichnung;Nummer)</label><textarea data-konfig="notrufe" ${darfK ? "" : "disabled"}>${esc((k.notrufe || []).map((x) => x.join(";")).join("\n"))}</textarea></div>
     ${darfK ? `<button class="knopf haupt" data-a="konfSpeichern">💾 Speichern</button>` : '<p class="hinweis">Nur die Leitung kann die Einstellungen ändern.</p>'}
     <p class="hinweis">Register, Terminarten, Gruppen und Genehmigungsvorlagen sind eigene Tabellen (links in der Seitenleiste) – nichts ist fest eingebaut.</p></div>`;
@@ -592,7 +617,7 @@ AKTIONEN.konfSpeichern = async () => {
     let v = el.value;
     if (el.dataset.konfig === "notrufe") v = v.split("\n").map((z) => z.split(";").map((x) => x.trim())).filter((z) => z.length === 3);
     else if (el.type === "number") v = Number(v);
-    else if (el.dataset.konfig === "chat_schueler_untereinander") v = v !== "nein";
+    else if (el.dataset.konfig === "chat_schueler_untereinander" || el.dataset.konfig === "chat_eltern_kopie") v = v !== "nein";
     await konfigSetzen(el.dataset.konfig, v);
   }
   toast("💾 Einstellungen gespeichert");

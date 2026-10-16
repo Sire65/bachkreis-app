@@ -1,15 +1,27 @@
 {
-  "version": "0.19.0",
+  "version": "0.20.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "📦 PC-Programm: weiteres Inventar – Notenständer, Taktstock, Dirigentenpult, Stühle, Technik, Koffer, Notenmappen … mit Inventar-Nr., Anschaffung, Preis, Händler, Beleg, Garantie, Standort und Anzahl",
-    "📉 Abschreibung automatisch (linear monatsgenau, bis 800 € sofort) mit Restbuchwert; Status verfügbar, im Einsatz, verliehen, in Reparatur, defekt, vermisst, gestohlen, ausgemustert, verkauft, verschrottet",
-    "📦 Neue Übersicht „Inventar & Abschreibung“: Kennzahlen, Problemfälle, ✅ Inventur, 🏷️ QR-Etiketten zum Aufkleben, 📤 Anlagenverzeichnis für die Kassenprüfung",
-    "🔒 Ausgetretene können sich nicht mehr anmelden · Stimmen „nur Gruppe“ sieht nur diese Gruppe · Instrument bleibt nach Reparatur „verliehen“, wenn es ausgeliehen ist",
-    "🧭 Gesamt-Check des Konzepts mit Vorschlägen (docs/KONZEPT-CHECK.md)"
+    "🛡️ Kinderschutz im Chat: Kindern privat schreiben dürfen nur Leitung und Lehrkräfte – und die Eltern lesen automatisch mit (im Zahnrad abschaltbar)",
+    "🩺 Gesundheit & Notfall: Eltern tragen Allergien, Medikamente, Notfallkontakt, Krankenkasse usw. selbst ein – sichtbar nur für Leitung, Lehrkräfte und Begleitpersonen während einer Fahrt; nach 13 Monaten ohne Bestätigung gelöscht",
+    "📷 Foto-Einwilligung je Zweck (App, Website, Presse, Social Media) und eine Foto-Liste je Orchester für Konzerte",
+    "📋 Anwesenheit mit ✅ da · ⏰ verspätet · 🟡 entschuldigt · ❌ unentschuldigt, Fehlzeiten-Übersicht in App und PC-Programm",
+    "🔒 Datenschutz: Vorstand, Instrumenten- und Notenwart sehen von Kindern nur das Nötige; interne Bemerkungen gehen nicht mehr an Schüler/Eltern; Reparatur-Freigaben über der Grenze prüft jetzt auch der Server"
   ],
   "verlauf": [
+    {
+      "version": "0.19.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📦 PC-Programm: weiteres Inventar – Notenständer, Taktstock, Dirigentenpult, Stühle, Technik, Koffer, Notenmappen … mit Inventar-Nr., Anschaffung, Preis, Händler, Beleg, Garantie, Standort und Anzahl",
+        "📉 Abschreibung automatisch (linear monatsgenau, bis 800 € sofort) mit Restbuchwert; Status verfügbar, im Einsatz, verliehen, in Reparatur, defekt, vermisst, gestohlen, ausgemustert, verkauft, verschrottet",
+        "📦 Neue Übersicht „Inventar & Abschreibung“: Kennzahlen, Problemfälle, ✅ Inventur, 🏷️ QR-Etiketten zum Aufkleben, 📤 Anlagenverzeichnis für die Kassenprüfung",
+        "🔒 Ausgetretene können sich nicht mehr anmelden · Stimmen „nur Gruppe“ sieht nur diese Gruppe · Instrument bleibt nach Reparatur „verliehen“, wenn es ausgeliehen ist",
+        "🧭 Gesamt-Check des Konzepts mit Vorschlägen (docs/KONZEPT-CHECK.md)"
+      ]
+    },
     {
       "version": "0.18.0",
       "datum": "2026-10-16",

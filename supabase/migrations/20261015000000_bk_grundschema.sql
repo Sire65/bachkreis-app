@@ -314,6 +314,7 @@ create table if not exists bk_projekte (
   ort text,
   beschreibung text,
   checkliste text,
+  begleiter text[],
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -380,7 +381,7 @@ create table if not exists bk_antworten (
   antwort text not null check (antwort is null or antwort in ('ja', 'vielleicht', 'nein')),
   notiz text,
   von_person_id text,
-  anwesend text check (anwesend is null or anwesend in ('', 'ja', 'nein')),
+  anwesend text check (anwesend is null or anwesend in ('', 'ja', 'spaet', 'entschuldigt', 'nein')),
   register_id text,
   nachfragen_am date,
   version integer not null default 1,
@@ -581,6 +582,7 @@ create table if not exists bk_genehmigung_vorlagen (
   text text not null,
   fassung integer,
   gueltig_monate integer,
+  zweck text check (zweck is null or zweck in ('teilnahme', 'foto_intern', 'foto_website', 'foto_presse', 'foto_social', 'reise', 'leihvertrag', 'gesundheit', 'sonstiges')),
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -591,6 +593,36 @@ create index if not exists bk_genehmigung_vorlagen_geaendert on bk_genehmigung_v
 alter table bk_genehmigung_vorlagen enable row level security;
 drop trigger if exists bk_genehmigung_vorlagen_stempel on bk_genehmigung_vorlagen;
 create trigger bk_genehmigung_vorlagen_stempel before update on bk_genehmigung_vorlagen for each row execute function bk_abgleich_stempel();
+
+-- Gesundheit & Notfall
+create table if not exists bk_gesundheit (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  allergien text,
+  ernaehrung text,
+  medikamente text,
+  erkrankungen text,
+  notfall_name text,
+  notfall_tel text,
+  krankenkasse text,
+  hausarzt text,
+  tetanus date,
+  schwimmer text check (schwimmer is null or schwimmer in ('ja', 'nein', 'unsicher')),
+  erste_hilfe_ok boolean,
+  medikamente_geben_ok boolean,
+  geprueft_am date,
+  geprueft_von text,
+  loeschen_am date,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_gesundheit_geaendert on bk_gesundheit (geaendert_am);
+alter table bk_gesundheit enable row level security;
+drop trigger if exists bk_gesundheit_stempel on bk_gesundheit;
+create trigger bk_gesundheit_stempel before update on bk_gesundheit for each row execute function bk_abgleich_stempel();
 
 -- Genehmigungen
 create table if not exists bk_genehmigungen (
@@ -1034,6 +1066,8 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebun
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_werk_id_fk') then alter table bk_uebungen add constraint bk_uebungen_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_gelesen_zettel_id_fk') then alter table bk_pinnwand_gelesen add constraint bk_pinnwand_gelesen_zettel_id_fk foreign key (zettel_id) references bk_pinnwand(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_gelesen_person_id_fk') then alter table bk_pinnwand_gelesen add constraint bk_pinnwand_gelesen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_gesundheit_person_id_fk') then alter table bk_gesundheit add constraint bk_gesundheit_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_gesundheit_geprueft_von_fk') then alter table bk_gesundheit add constraint bk_gesundheit_geprueft_von_fk foreign key (geprueft_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_genehmigungen_vorlage_id_fk') then alter table bk_genehmigungen add constraint bk_genehmigungen_vorlage_id_fk foreign key (vorlage_id) references bk_genehmigung_vorlagen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_genehmigungen_kind_id_fk') then alter table bk_genehmigungen add constraint bk_genehmigungen_kind_id_fk foreign key (kind_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_genehmigungen_projekt_id_fk') then alter table bk_genehmigungen add constraint bk_genehmigungen_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;

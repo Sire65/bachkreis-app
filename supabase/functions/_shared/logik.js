@@ -1,7 +1,7 @@
 // AUTOMATISCH KOPIERT aus js/kern/logik.js (tools/server-kopie.mjs) – nicht von Hand ändern.
 // Fachlogik ohne Oberfläche – rein, testbar (tests/logik.test.mjs). Bekommt einen Datenzugriff „db“ mit
 // liste(tab, filter), hole(tab, id), konfig(). Dieselben Regeln gelten später serverseitig.
-import { AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG } from "./schema.js";
+import { AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG, FOTO_ZWECKE } from "./schema.js";
 
 export const tagIso = (d) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
 const imZeitraum = (z, tag) => (!z.von || z.von <= tag) && (!z.bis || z.bis >= tag);
@@ -395,4 +395,34 @@ export function inventarBestand(db, { stichtag = new Date(), jahr } = {}) {
 export function naechsteInventarNr(db, praefix = "A-") {
   const n = [...db.liste("inventar"), ...db.liste("ausstattung")].map((z) => String(z.inventar_nr || "")).filter((x) => x.startsWith(praefix)).map((x) => parseInt(x.slice(praefix.length), 10) || 0);
   return praefix + String(Math.max(0, ...n) + 1).padStart(3, "0");
+}
+
+// ---------- 📷 Einwilligungen je Zweck (0.20.0) ----------
+// Stand einer Einwilligung (Vorlagen mit diesem Zweck): "ja" = erteilt und nicht abgelaufen, "nein" = abgelehnt/widerrufen, "offen" = nichts da.
+// "offen" heißt im Zweifel NEIN (nicht fotografieren/veröffentlichen). Gibt es noch keine Vorlage für den Zweck, gilt das alte Feld foto_ok.
+export function einwilligung(db, kindId, zweck, heute = new Date()) {
+  const vorlagen = db.liste("genehmigung_vorlagen", (v) => v.zweck === zweck);
+  if (!vorlagen.length) { const p = db.hole("personen", kindId); return FOTO_ZWECKE.includes(zweck) && p?.foto_ok != null ? (p.foto_ok ? "ja" : "nein") : "offen"; }
+  const ids = new Set(vorlagen.map((v) => v.id));
+  const g = db.liste("genehmigungen", (x) => x.kind_id === kindId && ids.has(x.vorlage_id) && x.status !== "ausstehend").sort((a, b) => String(b.beantwortet_am || "").localeCompare(String(a.beantwortet_am || "")))[0];
+  if (!g) return "offen";
+  if (g.status !== "erteilt") return "nein";
+  const monate = Number(vorlagen.find((v) => v.id === g.vorlage_id)?.gueltig_monate) || 0;
+  if (monate && g.beantwortet_am) { const bis = new Date(g.beantwortet_am); bis.setMonth(bis.getMonth() + monate); if (bis < heute) return "offen"; }
+  return "ja";
+}
+export const fotoErlaubnis = (db, kindId, heute = new Date()) => Object.fromEntries(FOTO_ZWECKE.map((z) => [z, einwilligung(db, kindId, z, heute)]));
+
+// ---------- 📋 Anwesenheit & Fehlzeiten (0.20.0) ----------
+// Zählt je Person über vergangene Termine im Zeitraum: da, verspätet, entschuldigt, unentschuldigt; Quote = (da + verspätet) / erfasst.
+export function fehlzeiten(db, { von, bis = new Date(), personen = null, gruppe = null } = {}) {
+  const termine = db.liste("termine", (t) => new Date(t.beginn) < bis && (!von || new Date(t.beginn) >= von) && t.status !== "abgesagt" && (!gruppe || t.fuer_alle || (t.gruppen || []).includes(gruppe)));
+  const tIds = new Set(termine.map((t) => t.id)), m = new Map();
+  for (const a of db.liste("antworten", (a) => tIds.has(a.termin_id) && a.anwesend)) {
+    if (personen && !personen.includes(a.person_id)) continue;
+    const z = m.get(a.person_id) || { person_id: a.person_id, ja: 0, spaet: 0, entschuldigt: 0, nein: 0, erfasst: 0 };
+    if (z[a.anwesend] != null) z[a.anwesend]++;
+    z.erfasst++; m.set(a.person_id, z);
+  }
+  return [...m.values()].map((z) => ({ ...z, quote: z.erfasst ? Math.round(((z.ja + z.spaet) / z.erfasst) * 100) : null })).sort((a, b) => (a.quote ?? 101) - (b.quote ?? 101) || b.nein - a.nein);
 }

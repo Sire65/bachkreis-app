@@ -1,5 +1,6 @@
 // Kommunikation: Rundschreiben mit Rückmeldung an automatische Zielgruppen und SOS. Vorbild: KC Club Communicator, SOS-Kachel.
 // Nachrichten/Chats stehen in nachrichten.js, die Pinnwand in pinnwand.js.
+import { gesundheitKurz } from "./schutz.js";
 import { S, VIEWS, db, zeige, kopf, name, istLehrkraft, istEltern } from "./zustand.js";
 import { esc, AKTIONEN, toast, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
@@ -73,12 +74,12 @@ VIEWS.sos = {
       <li><div class="fl"><b>Schule (Sekretariat)</b></div><a class="knopf klein" href="${tel(k.schule_telefon || "")}">📞</a></li>
       ${istEltern() ? "" : elternKontakteFuerMich()}</ul></div>`;
     html += `<div class="karte"><h3>📍 Standort senden</h3><p class="hinweis">Schickt deinen aktuellen Standort per WhatsApp – z. B. an die Leitung oder deine Eltern.</p><button class="knopf haupt breit" data-a="sosStandort">📍 Standort per WhatsApp</button></div>`;
-    if (istLehrkraft()) {
+    if (istLehrkraft() || liste("projekte", (pr) => (pr.begleiter || []).includes(S.ich.id)).length) { // 🩺 Leitung, Lehrkräfte, Begleitpersonen
       const q = (p.q || "").toLowerCase();
       const treffer = q.length >= 2 ? liste("personen", (x) => x.typ === "schueler" && `${x.vorname} ${x.nachname}`.toLowerCase().includes(q)).slice(0, 8) : [];
       html += `<div class="karte"><h3>🧾 Notfallkontakte eines Kindes</h3><p class="hinweis">Nur für Leitung und Begleitpersonen. Gesundheitsangaben sind besonders geschützt.</p>
         <div class="feld"><input id="sosSuche" placeholder="Name des Kindes …" value="${esc(p.q || "")}" data-c="sosSuche"></div>
-        ${treffer.map((kid) => `<div class="karte"><b>${esc(name(kid))}</b>${kid.notfall_info ? `<div class="badge b-rot">⚕️ ${esc(kid.notfall_info)}</div>` : ""}<ul class="liste">${elternVon(db, kid.id).map((e) => hole("personen", e)).map((e) => `<li><div class="fl">${esc(name(e))}</div><a class="knopf klein" href="${tel(e.mobil)}">📞 ${esc(e.mobil)}</a></li>`).join("") || "<li>keine Elternkontakte hinterlegt</li>"}</ul></div>`).join("")}</div>`;
+        ${treffer.map((kid) => `<div class="karte"><b>${esc(name(kid))}</b>${kid.notfall_info ? `<div class="badge b-rot">⚕️ ${esc(kid.notfall_info)}</div>` : ""}${gesundheitKurz(kid.id)}<ul class="liste">${elternVon(db, kid.id).map((e) => hole("personen", e)).map((e) => `<li><div class="fl">${esc(name(e))}</div><a class="knopf klein" href="${tel(e.mobil)}">📞 ${esc(e.mobil)}</a></li>`).join("") || "<li>keine Elternkontakte hinterlegt</li>"}</ul></div>`).join("")}</div>`;
     }
     return html;
   },

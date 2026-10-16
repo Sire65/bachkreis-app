@@ -5,7 +5,7 @@ import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte, frage
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
-import { INSTRUMENT_GRUPPEN, INVENTAR_ABGANG } from "../kern/schema.js";
+import { INSTRUMENT_GRUPPEN, INVENTAR_ABGANG, LEIH_ZUBEHOER } from "../kern/schema.js";
 
 const STATUS = { verfuegbar: ["b-gruen", "verfügbar"], im_einsatz: ["b-blau", "im Einsatz"], verliehen: ["b-blau", "verliehen"], reparatur: ["b-gelb", "in Reparatur"], defekt: ["b-rot", "defekt"], vermisst: ["b-rot", "vermisst"],
   gestohlen: ["b-rot", "gestohlen"], ausgemustert: ["b-grau", "ausgemustert"], verkauft: ["b-grau", "verkauft"], verschrottet: ["b-grau", "verschrottet"] };
@@ -169,7 +169,7 @@ VIEWS.instrument = {
       <div><span class="badge ${STATUS[i.status][0]}">${STATUS[i.status][1]}</span> <span class="badge">Zustand: ${esc(i.zustand || "?")}</span></div>
       <div class="hinweis">Standort: ${esc(i.standort || "–")} · Wert ${geld(i.wert)} · Wartung fällig ${datumKurz(i.wartung_faellig)}${i.finanziert_von ? " · finanziert von " + esc(i.finanziert_von) : ""}</div></div>`;
     if (istVerwalter()) {
-      html += `<div class="karte"><h3>Verleih</h3>${a ? `<p>Ausgeliehen an <b class="klick" data-a="oeffne" data-x="person|${a.person_id}">${esc(name(a.person_id))}</b> seit ${datumKurz(a.von)}, Rückgabe bis <b>${datumKurz(a.bis)}</b></p><div class="knopfreihe"><button class="knopf" data-a="rueckgabe" data-x="${a.id}">↩️ Rückgabe erfassen</button><button class="knopf" data-a="rueckgabeErinnern" data-x="${a.id}">⏰ Erinnern</button></div>`
+      html += `<div class="karte"><h3>Verleih</h3>${a ? `<p>Ausgeliehen an <b class="klick" data-a="oeffne" data-x="person|${a.person_id}">${esc(name(a.person_id))}</b> seit ${datumKurz(a.von)}, Rückgabe bis <b>${datumKurz(a.bis)}</b></p>${leihDetails(a)}<div class="knopfreihe"><button class="knopf" data-a="rueckgabe" data-x="${a.id}">↩️ Rückgabe erfassen</button><button class="knopf" data-a="rueckgabeErinnern" data-x="${a.id}">⏰ Erinnern</button></div>`
         : i.status === "verfuegbar" ? `<button class="knopf haupt" data-a="ausgabeForm" data-x="${id}">🤝 Ausleihen an …</button>` : '<p class="hinweis">Zurzeit nicht verleihbar.</p>'}
         ${hist.length ? `<h4>Verlauf</h4><ul class="liste">${hist.map((x) => `<li><div class="fl">${esc(name(x.person_id))} <span class="hinweis">${datumKurz(x.von)} – ${x.status === "zurueck" ? datumKurz(x.bis) : "heute"}</span></div></li>`).join("")}</ul>` : ""}</div>`;
     }
@@ -177,37 +177,54 @@ VIEWS.instrument = {
     return html;
   },
 };
+// 🤝 Vertrag, Zubehör, Kaution, Gebühr einer Ausleihe – mit Knöpfen zum Abhaken
+function leihDetails(a) {
+  const v = a.vertrag_id ? hole("genehmigungen", a.vertrag_id) : null, heute = tagIso(new Date());
+  const geb = a.gebuehr ? (a.gebuehr_bezahlt_bis && a.gebuehr_bezahlt_bis >= heute ? `<span class="badge b-gruen">Gebühr bezahlt bis ${datumKurz(a.gebuehr_bezahlt_bis)}</span>` : `<span class="badge b-gelb">Gebühr ${geld(a.gebuehr)} offen</span> <button class="knopf klein" data-a="gebuehrBezahlt" data-x="${a.id}">💶 bezahlt</button>`) : "";
+  const kau = a.kaution ? (a.kaution_status === "bezahlt" ? `<span class="badge b-gruen">Kaution ${geld(a.kaution)} bezahlt</span>` : a.kaution_status === "offen" ? `<span class="badge b-gelb">Kaution ${geld(a.kaution)} offen</span> <button class="knopf klein" data-a="kautionBezahlt" data-x="${a.id}">💶 bezahlt</button>` : `<span class="badge">Kaution: ${esc(a.kaution_status || "")}</span>`) : "";
+  return `<div class="leih-details">${(a.zubehoer || []).length ? `<div class="hinweis">Zubehör: ${a.zubehoer.map((z) => esc(LEIH_ZUBEHOER[z] || z)).join(", ")}</div>` : ""}
+    <div>${v ? `<span class="badge ${v.status === "erteilt" ? "b-gruen" : v.status === "ausstehend" ? "b-gelb" : "b-rot"}">📝 Leihvertrag ${esc(v.status)}</span>` : ""}${kau}${geb}${a.versicherung ? `<span class="badge">🛡️ ${esc({ verein: "Förderverein", privat: "privat", keine: "nicht versichert" }[a.versicherung])}</span>` : ""}</div></div>`;
+}
 AKTIONEN.ausgabeForm = (id) => {
   const i = hole("inventar", id);
   const kandidaten = liste("person_instrument", (x) => x.typ_id === i.typ_id && !x.eigenes).map((x) => x.person_id).filter((p) => !ausleihenVon(db, p).length);
-  const andere = liste("personen", (p) => p.typ === "schueler" && !kandidaten.includes(p.id)).sort((a, b) => name(a).localeCompare(name(b)));
-  blatt("Instrument ausleihen", `<div id="ausForm"><div class="feld"><label>An</label><select name="person">${kandidaten.length ? `<optgroup label="Spielt ${esc(typName(i.typ_id))}, ohne eigenes">${kandidaten.map((p) => `<option value="${p}">${esc(name(p))}</option>`).join("")}</optgroup>` : ""}<optgroup label="Alle Schüler">${andere.map((p) => `<option value="${p.id}">${esc(name(p))}</option>`).join("")}</optgroup></select></div>
+  const gruppe = (typ, t) => { const l = liste("personen", (p) => p.typ === typ && p.status !== "ausgetreten" && !kandidaten.includes(p.id)).sort((a, b) => name(a).localeCompare(name(b))); return l.length ? `<optgroup label="${t}">${l.map((p) => `<option value="${p.id}">${esc(name(p))}</option>`).join("")}</optgroup>` : ""; };
+  const k = konfig();
+  blatt("Instrument ausleihen", `<div id="ausForm"><div class="feld"><label>An</label><select name="person">${kandidaten.length ? `<optgroup label="Spielt ${esc(typName(i.typ_id))}, ohne eigenes">${kandidaten.map((p) => `<option value="${p}">${esc(name(p))}</option>`).join("")}</optgroup>` : ""}${gruppe("schueler", "Alle Schüler")}${gruppe("ehemalig", "Ehemalige")}${gruppe("lehrkraft", "Lehrkräfte")}</select></div>
     <div class="feld"><label>Rückgabe bis</label><input type="date" name="bis" value="${tagIso(new Date(Date.now() + 365 * 86400000))}"></div>
-    <div class="feld"><label>Zustand bei Ausgabe</label><input name="zustand" value="gut, mit Kasten"></div>
+    <div class="feld"><label>Zustand bei Ausgabe</label><input name="zustand" value="gut"></div>
+    <div class="feld"><label>Zubehör</label><div class="t-wahl">${Object.entries(LEIH_ZUBEHOER).map(([z, t]) => `<label class="t-chip"><input type="checkbox" name="zubehoer" value="${z}" ${z === "koffer" ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")}</div></div>
+    <div class="gs-zwei"><div class="feld"><label>Kaution (€)</label><input type="number" name="kaution" min="0" step="1" value="${esc(k.leih_kaution ?? "")}"></div><div class="feld"><label>Leihgebühr je Jahr (€)</label><input type="number" name="gebuehr" min="0" step="1" value="${esc(k.leih_gebuehr ?? "")}"></div></div>
+    <div class="feld"><label>Versicherung</label><select name="versicherung"><option value="verein">über den Förderverein</option><option value="privat">privat (Hausrat)</option><option value="keine">keine</option></select></div>
     <label class="schalter"><span>Leihvertrag zur Zustimmung an die Eltern senden</span><input type="checkbox" name="vertrag" checked></label>
     <button class="knopf haupt breit" data-a="ausgabeSpeichern" data-x="${id}">🤝 Ausgeben</button></div>`);
 };
 AKTIONEN.ausgabeSpeichern = async (id) => {
-  const f = formWerte(document.getElementById("ausForm"));
-  await speichere("ausleihen", { inventar_id: id, person_id: f.person, von: tagIso(new Date()), bis: f.bis, status: "aktiv", zustand_ausgabe: f.zustand });
+  const f = formWerte(document.getElementById("ausForm")), kaution = Number(f.kaution) || 0;
+  const a = await speichere("ausleihen", { inventar_id: id, person_id: f.person, von: tagIso(new Date()), bis: f.bis, status: "aktiv", zustand_ausgabe: f.zustand, zubehoer: [].concat(f.zubehoer || []),
+    kaution: kaution || null, kaution_status: kaution ? "offen" : null, gebuehr: Number(f.gebuehr) || null, versicherung: f.versicherung || null });
   await speichere("inventar", { ...hole("inventar", id), status: "verliehen" });
-  if (f.vertrag) {
-    const v = liste("genehmigung_vorlagen", (x) => /leih/i.test(x.titel))[0];
-    if (v) await speichere("genehmigungen", { vorlage_id: v.id, kind_id: f.person, status: "ausstehend", frist: tagIso(new Date(Date.now() + 14 * 86400000)) });
-    await senden({ an: elternVon(db, f.person), betreff: "Leihvertrag bitte bestätigen", text: `${vorname(f.person)} hat ein Leihinstrument erhalten. Bitte den Leihvertrag in der App bestätigen.`, ereignis: "genehmigung" });
+  const kind = hole("personen", f.person)?.typ === "schueler";
+  if (f.vertrag && kind) { // 🤝 Leihvertrag fest an diese Ausleihe gebunden (Vorlage mit Zweck „Leihvertrag“)
+    const v = liste("genehmigung_vorlagen", (x) => x.zweck === "leihvertrag")[0] || liste("genehmigung_vorlagen", (x) => /leih/i.test(x.titel))[0];
+    if (v) { const g = await speichere("genehmigungen", { vorlage_id: v.id, kind_id: f.person, ausleihe_id: a.id, status: "ausstehend", frist: tagIso(new Date(Date.now() + 14 * 86400000)) }); await speichere("ausleihen", { ...a, vertrag_id: g.id }); }
+    await senden({ an: elternVon(db, f.person), betreff: "Leihvertrag bitte bestätigen", text: `${vorname(f.person)} hat ein Leihinstrument erhalten${kaution ? ` (Kaution ${geld(kaution)})` : ""}. Bitte den Leihvertrag in der App bestätigen.`, ereignis: "genehmigung" });
   }
-  blattZu(); toast("🤝 Ausgeliehen" + (f.vertrag ? " – Leihvertrag an Eltern gesendet" : ""));
+  blattZu(); toast("🤝 Ausgeliehen" + (f.vertrag && kind ? " – Leihvertrag an Eltern gesendet" : ""));
   zeige("instrument", { id }, { ersetzen: true });
 };
 AKTIONEN.rueckgabe = async (aid) => {
   const zustand = prompt("Zustand bei Rückgabe:", "gut");
   if (zustand == null) return;
   const a = hole("ausleihen", aid);
-  await speichere("ausleihen", { ...a, status: "zurueck", bis: tagIso(new Date()), zustand_rueckgabe: zustand });
+  const kaution = a.kaution_status === "bezahlt" ? (confirm(`Kaution ${geld(a.kaution)} zurückzahlen? (Abbrechen = einbehalten wegen Schaden)`) ? "zurueck" : "einbehalten") : a.kaution_status;
+  await speichere("ausleihen", { ...a, status: "zurueck", bis: tagIso(new Date()), zustand_rueckgabe: zustand, kaution_status: kaution || null });
   await speichere("inventar", { ...hole("inventar", a.inventar_id), status: "verfuegbar" });
-  toast("↩️ Rückgabe erfasst");
+  toast("↩️ Rückgabe erfasst" + (kaution === "zurueck" ? " – Kaution zurückzahlen" : ""));
   zeige("instrument", { id: a.inventar_id }, { ersetzen: true });
 };
+AKTIONEN.kautionBezahlt = async (aid) => { const a = hole("ausleihen", aid); await speichere("ausleihen", { ...a, kaution_status: "bezahlt" }); toast("💶 Kaution als bezahlt vermerkt"); zeichne(); };
+AKTIONEN.gebuehrBezahlt = async (aid) => { const a = hole("ausleihen", aid), bis = new Date(a.gebuehr_bezahlt_bis && a.gebuehr_bezahlt_bis > tagIso(new Date()) ? a.gebuehr_bezahlt_bis : Date.now()); bis.setFullYear(bis.getFullYear() + 1); await speichere("ausleihen", { ...a, gebuehr_bezahlt_bis: tagIso(bis) }); toast(`💶 Leihgebühr bezahlt bis ${datumKurz(tagIso(bis))}`); zeichne(); };
 AKTIONEN.rueckgabeErinnern = async (aid) => {
   const a = hole("ausleihen", aid);
   await senden({ an: [a.person_id, ...elternVon(db, a.person_id)], betreff: "Leihinstrument: Rückgabe", text: `Bitte das Leihinstrument (${hole("inventar", a.inventar_id)?.bezeichnung}) bis ${datumKurz(a.bis)} zurückgeben.`, ereignis: "instrument" });

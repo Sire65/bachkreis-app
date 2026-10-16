@@ -1,15 +1,29 @@
 {
-  "version": "0.20.0",
+  "version": "0.21.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🛡️ Kinderschutz im Chat: Kindern privat schreiben dürfen nur Leitung und Lehrkräfte – und die Eltern lesen automatisch mit (im Zahnrad abschaltbar)",
-    "🩺 Gesundheit & Notfall: Eltern tragen Allergien, Medikamente, Notfallkontakt, Krankenkasse usw. selbst ein – sichtbar nur für Leitung, Lehrkräfte und Begleitpersonen während einer Fahrt; nach 13 Monaten ohne Bestätigung gelöscht",
-    "📷 Foto-Einwilligung je Zweck (App, Website, Presse, Social Media) und eine Foto-Liste je Orchester für Konzerte",
-    "📋 Anwesenheit mit ✅ da · ⏰ verspätet · 🟡 entschuldigt · ❌ unentschuldigt, Fehlzeiten-Übersicht in App und PC-Programm",
-    "🔒 Datenschutz: Vorstand, Instrumenten- und Notenwart sehen von Kindern nur das Nötige; interne Bemerkungen gehen nicht mehr an Schüler/Eltern; Reparatur-Freigaben über der Grenze prüft jetzt auch der Server"
+    "🎼 Registerproben: beim Termin einfach die Register anhaken · Registerführer sehen unter „Mein Register“, wer kommt, und können erinnern",
+    "🤝 Leihvertrag direkt an der Ausleihe: Zubehör, Kaution, Leihgebühr, Versicherung – „bezahlt“ mit einem Tipp; Ausleihe auch an Lehrkräfte und Ehemalige",
+    "👪 Eltern ändern Telefon, E-Mail und Adresse ihrer Kinder selbst · ab 18 entscheiden die Kinder, ob die Eltern weiter Zugriff haben",
+    "🎭 Konzertprogramm mit Reihenfolge, Pause, Ansagen, Zugabe, Uhrzeiten und Gesamtdauer · Treffpunkt, Kleiderordnung und Transportliste zum Abhaken",
+    "🧳 Anmeldung zu Fahrten und Freizeiten in der App – mit Plätzen, Warteliste, Anmeldeschluss und „bezahlt“",
+    "🎓 Schuljahreswechsel nach Regeln (C → B → A → Ehemalige) mit Hinweisen auf Leihinstrumente und offene Genehmigungen",
+    "🔐 Datenauskunft über alle gespeicherten Daten · 🧹 Löschfristen: Ausgetretene nach der Frist anonymisieren · Ehemalige auch in Pinnwand und Chat"
   ],
   "verlauf": [
+    {
+      "version": "0.20.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🛡️ Kinderschutz im Chat: Kindern privat schreiben dürfen nur Leitung und Lehrkräfte – und die Eltern lesen automatisch mit (im Zahnrad abschaltbar)",
+        "🩺 Gesundheit & Notfall: Eltern tragen Allergien, Medikamente, Notfallkontakt, Krankenkasse usw. selbst ein – sichtbar nur für Leitung, Lehrkräfte und Begleitpersonen während einer Fahrt; nach 13 Monaten ohne Bestätigung gelöscht",
+        "📷 Foto-Einwilligung je Zweck (App, Website, Presse, Social Media) und eine Foto-Liste je Orchester für Konzerte",
+        "📋 Anwesenheit mit ✅ da · ⏰ verspätet · 🟡 entschuldigt · ❌ unentschuldigt, Fehlzeiten-Übersicht in App und PC-Programm",
+        "🔒 Datenschutz: Vorstand, Instrumenten- und Notenwart sehen von Kindern nur das Nötige; interne Bemerkungen gehen nicht mehr an Schüler/Eltern; Reparatur-Freigaben über der Grenze prüft jetzt auch der Server"
+      ]
+    },
     {
       "version": "0.19.0",
       "datum": "2026-10-16",

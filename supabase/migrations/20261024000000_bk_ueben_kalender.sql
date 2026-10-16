@@ -40,6 +40,7 @@ create table if not exists bk_personen (
   nachname text not null,
   typ text not null check (typ is null or typ in ('schueler', 'eltern', 'leitung', 'lehrkraft', 'foerderverein', 'unterstuetzer', 'spender', 'partner', 'dienstleister', 'ehemalig')),
   status text check (status is null or status in ('aktiv', 'pausiert', 'gast', 'ausgetreten')),
+  ausgetreten_am date,
   jahrgang integer,
   schule text,
   firma text,
@@ -60,6 +61,7 @@ create table if not exists bk_personen (
   avatar jsonb,
   uebe_plan jsonb,
   kalender_alarm integer,
+  anonymisiert boolean,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -79,6 +81,7 @@ alter table bk_personen add constraint bk_personen_typ_check check (typ is null 
 alter table bk_personen add column if not exists status text;
 alter table bk_personen drop constraint if exists bk_personen_status_check;
 alter table bk_personen add constraint bk_personen_status_check check (status is null or status in ('aktiv', 'pausiert', 'gast', 'ausgetreten'));
+alter table bk_personen add column if not exists ausgetreten_am date;
 alter table bk_personen add column if not exists jahrgang integer;
 alter table bk_personen add column if not exists schule text;
 alter table bk_personen add column if not exists firma text;
@@ -99,6 +102,7 @@ alter table bk_personen add column if not exists freigaben jsonb;
 alter table bk_personen add column if not exists avatar jsonb;
 alter table bk_personen add column if not exists uebe_plan jsonb;
 alter table bk_personen add column if not exists kalender_alarm integer;
+alter table bk_personen add column if not exists anonymisiert boolean;
 
 -- 📆 Kalender-Abo: nur die Zählnummer je Person (neuer Link = +1, alter ungültig) – der Link selbst wird nie gespeichert
 create table if not exists bk_kalender_abos (person_id text primary key references bk_personen(id) on delete cascade, epoche integer not null default 0, zuletzt timestamptz);

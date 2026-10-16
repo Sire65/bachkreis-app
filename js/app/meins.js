@@ -5,7 +5,7 @@ import { KACHELN, kachelnFuer, REGISTER_ALLE, adminZustaende } from "./start.js"
 import { esc, AKTIONEN, datumKurz, uhr, vorZeit, toast, blatt, formWerte, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
-import { kinderVon, elternVon, wirksameGruppen, instrumenteVon, tagIso } from "../kern/logik.js";
+import { kinderVon, elternVon, wirksameGruppen, instrumenteVon, tagIso, personenDaten } from "../kern/logik.js";
 import { EREIGNISSE, KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { JZ_WAHL, jzWahl, jzWahlSetzen, JZ_DEKO_WAHL, jzDekoWahl, jzDekoSetzen, jahreszeitVorschau, jahreszeitKopf } from "./jahreszeiten.js";
@@ -24,13 +24,14 @@ VIEWS.meinedaten = {
     return kopf("🔐 Meine Daten") + `<div class="karte"><h3>${esc(name(p))}</h3><ul class="liste">${felder.map((f) => `<li><div class="fl"><div class="zeile-unter">${esc(f.t)}</div><div>${esc(Array.isArray(p[f.k]) ? p[f.k].join(", ") : typeof p[f.k] === "boolean" ? (p[f.k] ? "ja" : "nein") : p[f.k])}</div></div></li>`).join("")}</ul></div>
       ${istEltern() ? `<div class="karte"><h3>Meine Kinder</h3>${kinderVon(db, p.id).map((k) => esc(name(k))).join(", ")}</div>` : `<div class="karte"><h3>Gruppe & Instrumente</h3>${wirksameGruppen(db, p.id).map((g) => esc(hole("gruppen", g)?.name)).join(", ") || "–"}<br>${instrumenteVon(db, p.id).map((i) => esc(hole("instrument_typen", i.typ_id)?.name)).join(", ")}</div>`}
       <div class="knopfreihe"><button class="knopf" data-a="meineDatenExport">💾 Als Datei sichern</button><button class="knopf" data-a="drucken">🖨️ Drucken</button><button class="knopf" data-a="kachel" data-x="aenderung">✏️ Änderung melden</button></div>
+      <div class="karte"><h3>📂 Alles, was über ${istEltern() ? "mich und meine Kinder" : "mich"} gespeichert ist</h3><ul class="liste">${Object.entries(personenDaten(db, [p.id, ...(istEltern() ? kinderVon(db, p.id) : [])])).map(([t, z]) => `<li><div class="fl">${TABELLEN[t].sym} ${esc(TABELLEN[t].titel)}</div><span class="badge">${z.length}</span></li>`).join("")}</ul>
+        <p class="hinweis">„💾 Als Datei sichern“ enthält alle diese Einträge vollständig. Nach einem Austritt werden die Daten nach der Löschfrist anonymisiert.</p></div>
       <p class="hinweis">Auskunft nach DSGVO Art. 15. Änderungen übernimmt die Leitung nach Prüfung.</p>`;
   },
 };
 AKTIONEN.meineDatenExport = () => {
-  const id = S.ich.id;
-  const daten = { person: S.ich, antworten: liste("antworten", (a) => a.person_id === id), gruppen: liste("gruppe_zuordnung", (z) => z.person_id === id), instrumente: liste("person_instrument", (x) => x.person_id === id), ausleihen: liste("ausleihen", (a) => a.person_id === id), genehmigungen: liste("genehmigungen", (g) => g.kind_id === id || g.beantwortet_von === id) };
-  herunterladen(`meine-daten-${tagIso(new Date())}.json`, JSON.stringify(daten, null, 2), "application/json");
+  const ids = [S.ich.id, ...(istEltern() ? kinderVon(db, S.ich.id) : [])];
+  herunterladen(`meine-daten-${tagIso(new Date())}.json`, JSON.stringify({ stand: new Date().toISOString(), personen: ids, daten: personenDaten(db, ids) }, null, 2), "application/json");
 };
 
 VIEWS.aenderung = {

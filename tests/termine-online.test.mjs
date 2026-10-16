@@ -17,7 +17,7 @@ const heute = () => new Date().toISOString().slice(0, 10);
 test("🌍 Termine für alle: Schüler, Eltern und Ehemalige sehen sie", async () => {
   const alle = d.termine.filter((t) => t.fuer_alle).map((t) => t.id);
   assert.ok(alle.length >= 2);
-  const ehem = d.gruppe_zuordnung.filter((z) => z.gruppe_id === "g-d").map((z) => z.person_id).find((p) => d.zugaenge.some((z) => z.person_id === p && z.aktiv));
+  const ehem = d.gruppe_zuordnung.filter((z) => z.gruppe_id === "g-d").map((z) => z.person_id).find((p) => d.zugaenge.some((z) => z.person_id === p && z.aktiv) && d.personen.find((x) => x.id === p)?.status !== "ausgetreten");
   assert.ok(ehem, "Ehemalige mit Zugang");
   for (const pid of [dp.schueler, dp.eltern, ehem]) {
     const D = (await rufe({ aktion: "laden" }, await login(pid))).json.daten;

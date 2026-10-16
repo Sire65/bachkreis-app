@@ -7,11 +7,11 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig } from "./schema.js";
+import { PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
-const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke"]);
+const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
 const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen"]);
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
@@ -23,24 +23,33 @@ const MODERATION = ["admin", "leitung"]; // dürfen sichtbare fremde Zettel abne
 export function kontext(person, alle) {
   const rollen = person?.rollen || [];
   const ich = person?.id;
-  const kinder = (alle.eltern_kind || []).filter((e) => e.eltern_id === ich && !e.geloescht_am).map((e) => e.kind_id);
+  // 👪 Elternrechte nur für minderjährige Kinder – bei Volljährigen nur, wenn das Kind es erlaubt (elternZugriff)
+  const pMap = new Map((alle.personen || []).map((p) => [p.id, p]));
+  const ek = (alle.eltern_kind || []).filter((e) => !e.geloescht_am && elternZugriff(e, pMap.get(e.kind_id)));
+  const kinder = ek.filter((e) => e.eltern_id === ich).map((e) => e.kind_id);
   const meine = new Set([ich, ...kinder]);
-  const eltern = new Set((alle.eltern_kind || []).filter((e) => meine.has(e.kind_id) && !e.geloescht_am).map((e) => e.eltern_id));
+  const eltern = new Set(ek.filter((e) => meine.has(e.kind_id)).map((e) => e.eltern_id));
   const gruppen = new Set((alle.gruppe_zuordnung || []).filter((z) => meine.has(z.person_id) && !z.geloescht_am).map((z) => z.gruppe_id));
   const register = new Set((alle.person_instrument || []).filter((x) => meine.has(x.person_id) && !x.geloescht_am).map((x) => x.register_id).filter(Boolean));
   const inventar = new Set((alle.ausleihen || []).filter((a) => meine.has(a.person_id) && !a.geloescht_am).map((a) => a.inventar_id));
   const istVerwalter = rollen.some((r) => ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"].includes(r));
+  // 🎼 Registerführer: sieht die Zu-/Absagen der Mitglieder seines Registers (nicht die Gründe anderer Register)
+  const eigeneRegister = new Set((alle.person_instrument || []).filter((x) => x.person_id === ich && !x.geloescht_am).map((x) => x.register_id).filter(Boolean));
+  const registerLeute = rollen.includes("registerfuehrer") ? new Set((alle.person_instrument || []).filter((x) => !x.geloescht_am && eigeneRegister.has(x.register_id)).map((x) => x.person_id)) : new Set();
   // 🌍 Termine „für alle“ sieht jeder, der (bzw. dessen Kind) in einem Orchester ist – und wer Termine plant
   const termine = new Set((alle.termine || []).filter((t) => (t.gruppen || []).some((g) => gruppen.has(g)) || (t.fuer_alle && (gruppen.size > 0 || istVerwalter || rollen.includes("terminplaner")))).map((t) => t.id));
-  const ctx = { person, ich, rollen, kinder: new Set(kinder), meine, eltern, gruppen, register, inventar, termine, istVerwalter, tMap: new Map((alle.termine || []).map((t) => [t.id, t])), terminarten: alle.terminarten || [] };
+  const ctx = { person, ich, rollen, kinder: new Set(kinder), meine, eltern, gruppen, register, inventar, termine, istVerwalter, registerLeute, tMap: new Map((alle.termine || []).map((t) => [t.id, t])), terminarten: alle.terminarten || [] };
   const unterhaltungen = new Set((alle.unterhaltungen || []).filter((u) => unterhaltungSichtbar(u, ctx, alle)).map((u) => u.id));
   ctx.unterhaltungen = unterhaltungen;
   ctx.uMap = new Map((alle.unterhaltungen || []).map((u) => [u.id, u]));
   // Pinnwand: alle Zettel (auch abgenommene – für den Abgleich) und die Personen, die man als Empfänger wählen darf
   ctx.pw = new Map((alle.pinnwand || []).map((z) => [z.id, z]));
   ctx.personen = alle.personen || [];
-  ctx.elternKind = (alle.eltern_kind || []).filter((e) => !e.geloescht_am);
+  ctx.elternKind = ek;
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
+  ctx.prMap = new Map((alle.projekte || []).map((p) => [p.id, p]));
+  ctx.reiseBelegt = new Map();
+  for (const a of alle.reise_anmeldungen || []) if (!a.geloescht_am && a.status === "angemeldet") ctx.reiseBelegt.set(a.projekt_id, (ctx.reiseBelegt.get(a.projekt_id) || 0) + 1);
   // 🩺 Begleitpersonen sehen Gesundheitsangaben der Kinder eines Projekts nur rund um die Fahrt (3 Tage vorher bis 2 Tage danach)
   const heute = new Date(), tag = 86400000;
   const aktiv = (alle.projekte || []).filter((pr) => !pr.geloescht_am && (pr.begleiter || []).includes(ich) && pr.von && heute >= new Date(new Date(pr.von).getTime() - 3 * tag) && heute <= new Date(new Date(pr.bis || pr.von).getTime() + 3 * tag));
@@ -75,13 +84,14 @@ function zeileSichtbar(tab, z, ctx) {
     case "gruppe_zuordnung": case "person_instrument": return ctx.person?.typ === "schueler" || ctx.meine.has(z.person_id);
     case "inventar": return ctx.inventar.has(z.id);
     case "eigene_termine": return ctx.meine.has(z.person_id);
+    case "reise_anmeldungen": return ctx.meine.has(z.person_id);
     case "gesundheit": return ctx.meine.has(z.person_id) || (ctx.begleitKinder?.has(z.person_id) && !(z.loeschen_am && z.loeschen_am < new Date().toISOString().slice(0, 10)));
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
     case "ausleihen": return ctx.meine.has(z.person_id);
     case "reparaturen": return z.gemeldet_von === ctx.ich || ctx.inventar.has(z.inventar_id);
     case "termine": return ctx.termine.has(z.id);
-    case "antworten": return ctx.meine.has(z.person_id);
+    case "antworten": return ctx.meine.has(z.person_id) || (ctx.registerLeute.has(z.person_id) && ctx.termine.has(z.termin_id));
     case "unterhaltungen": return ctx.unterhaltungen.has(z.id);
     case "nachrichten": return ctx.unterhaltungen.has(z.unterhaltung_id) && (z.von === ctx.ich || nachrichtFrei(z));
     case "nachricht_status": return z.person_id === ctx.ich || z.autor_id === ctx.ich;
@@ -122,6 +132,7 @@ function kuerzen(tab, z, ctx, alleLesen) {
     if (fg.mobil) out.mobil = z.mobil;
     if (fg.email) out.email = z.email;
   }
+  if (tab === "antworten" && !alleLesen && !ctx.meine.has(z.person_id)) { out = { ...out }; delete out.notiz; } // Registerführer: Antwort ja, Grund nein
   if (tab === "zugaenge") out = { ...out, code: null, code_hash: undefined };
   if (tab === "versand" && out.quittung_hash !== undefined) { out = { ...out }; delete out.quittung_hash; } // Einmal-Token der Push-Quittung
   if (!alleLesen) { const vermerke = (TABELLEN[tab]?.felder || []).filter((f) => f.vermerk).map((f) => f.k); if (vermerke.length) { out = { ...out }; for (const k of vermerke) delete out[k]; } }
@@ -337,6 +348,17 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (neu.status === "widerrufen" && alt.status !== "erteilt") return { ok: false, grund: "NUR_ERTEILTE_WIDERRUFBAR" };
       // Textfassung kommt vom Server (welche Fassung die Eltern bestätigt haben), nicht vom Gerät
       return { ok: true, zeile: { ...alt, status: neu.status, beantwortet_von: ctx.ich, beantwortet_am: jetzt, vorlage_version: ctx.gvMap?.get(alt.vorlage_id)?.fassung ?? alt.vorlage_version ?? 1 } };
+    case "reise_anmeldungen": {
+      // 🧳 Eltern melden ihr Kind an bzw. ab (Schüler/Ehemalige sich selbst): bis zum Anmeldeschluss, Warteliste wenn voll; Betrag/bezahlt/Zimmer setzt die Kasse
+      const pr = ctx.prMap?.get(neu.projekt_id);
+      if (!ctx.meine.has(neu.person_id) || (alt && (alt.person_id !== neu.person_id || alt.projekt_id !== neu.projekt_id))) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+      if (!pr?.anmeldung) return { ok: false, grund: "KEINE_ANMELDUNG" };
+      const heute = jetzt.slice(0, 10);
+      if (neu.status !== "abgemeldet" && pr.anmeldeschluss && heute > pr.anmeldeschluss) return { ok: false, grund: "ANMELDESCHLUSS" };
+      const status = neu.status === "abgemeldet" ? "abgemeldet" : alt?.status === "angemeldet" ? "angemeldet" : (pr.plaetze && (ctx.reiseBelegt.get(pr.id) || 0) >= pr.plaetze ? "warteliste" : "angemeldet");
+      return { ok: true, zeile: { ...(alt || {}), id: alt?.id || neu.id, projekt_id: pr.id, person_id: neu.person_id, status, notiz: String(neu.notiz || "").slice(0, 300),
+        angemeldet_von: alt?.angemeldet_von || ctx.ich, angemeldet_am: alt?.angemeldet_am || jetzt, betrag: alt?.betrag ?? pr.kosten ?? null, bezahlt: alt?.bezahlt === true } };
+    }
     case "gesundheit": {
       // 🩺 Eltern pflegen die Angaben ihrer Kinder; volljährige Schüler ihre eigenen. Jede Bestätigung hält 13 Monate.
       if (!ctx.meine.has(neu.person_id) || (alt && alt.person_id !== neu.person_id)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
@@ -403,6 +425,8 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "person_id", "datum", "minuten", "werk_id", "geloescht_am"]), inhalt, gefuehl: g, notiz: String(neu.notiz || "").slice(0, 500), geteilt: neu.geteilt === true } };
     }
     case "personen":
+      // 👪 Eltern ändern Kontaktdaten ihrer (minderjährigen) Kinder direkt – nur diese Felder
+      if (alt && ctx.kinder.has(alt.id)) return { ok: true, zeile: { ...alt, ...Object.fromEntries(KIND_KONTAKT.filter((k) => k in neu).map((k) => [k, neu[k] == null ? null : String(neu[k]).slice(0, 200)])) } };
       if (!alt || alt.id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_EINSTELLUNGEN" };
       { const fg = neu.freigaben && typeof neu.freigaben === "object" ? Object.fromEntries(["geburtstag", "mobil", "email", "adresse"].map((k) => [k, neu.freigaben[k] === true])) : alt.freigaben;
         // 🙂 eigenes Gesicht: nur kleine Zahlen je Merkmal (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Hintergrund) – nie Bilder oder Text

@@ -1,5 +1,17 @@
 # Änderungen
 
+## 0.21.0 DEV – 16.10.2026
+- 🎼 Terminformular: Register-Auswahl (termine.register); Registerführer: Server-Sicht auf Antworten des eigenen Registers ohne `notiz`, Ansicht „Mein Register“ mit Erinnern
+- 🤝 ausleihen: zubehoer, kaution(+status), gebuehr(+bezahlt bis), versicherung, vertrag_id; genehmigungen.ausleihe_id; Vorlage per Zweck „leihvertrag“; Kaution bei Rückgabe; konfig leih_kaution/leih_gebuehr
+- 👪 `elternZugriff` (ab 18 nur mit eltern_kind.zugriff_ab_18, Ehemalige ebenso) in Server-Kontext und kinderVon/elternVon; Eltern ändern `KIND_KONTAKT`-Felder ihrer Kinder
+- 🎭 Tabelle `programm` (allgemein sichtbar), projekte: treffpunkt, kleiderordnung, transport_inventar/-ausstattung (intern), anmeldung, anmeldeschluss, kosten, plaetze; js/app/konzert.js
+- 🧳 Tabelle `reise_anmeldungen` (Selbstanmeldung, Warteliste, Anmeldeschluss, Betrag/bezahlt nur Kasse)
+- 🎓 gruppen.wechsel_nach/wechsel_ab_jg/ehemalige, `schuljahrVorschlaege()`, konfig abschluss_jahrgang (statt fester Kürzel)
+- 🔐 `personenDaten()` (Auskunft über alle Tabellen), `loeschKandidaten()`, personen.ausgetreten_am, PC-Ansicht „Datenschutz & Löschfristen“ (Anonymisieren mit Sicherung), konfig loeschfrist_monate
+- 🎓 Ehemalige in pwAppPerson, untereinander privat schreiben
+- 🐞 Server-Kontext lädt jetzt auch projekte, genehmigung_vorlagen, reise_anmeldungen (Begleiter-Zugriff und Textfassung aus 0.20.0 wirkten im Echtbetrieb sonst nicht)
+- Migration 20261028000000_bk_verein.sql; Tests tests/verein.test.mjs; Syntax-Prüfung aller Browser-Dateien im Vertragstest
+
 ## 0.20.0 DEV – 16.10.2026
 - 🛡️ `chatPartnerErlaubt`: Kind ↔ Erwachsener nur Leitung/Lehrkraft (oder verwandt); `chatMitgliederMitKopie`/`istMinderjaehrig`: Eltern minderjähriger Kinder automatisch in neuen privaten Unterhaltungen (Einzel → Runde „… · mit Eltern“), Server prüft auch für Verwalter; konfig `chat_eltern_kopie`
 - 💶 Server: Status „freigegeben“ bei Reparatur/Einkauf nur Vorstand oder Leitung bis `freigabe_grenze_eur` (FREIGABE_UEBER_GRENZE)

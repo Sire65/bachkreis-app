@@ -195,7 +195,7 @@ VIEWS.termin = {
     let html = kopf(`${a.sym} ${esc(t.titel)}`, knoepfe);
     html += `<div class="karte"><div class="zeile-titel">${datum(t.beginn)}</div><div>${uhr(t.beginn)}${t.ende ? " – " + (tagIso(t.ende) !== tagIso(t.beginn) ? datum(t.ende) + ", " : "") + uhr(t.ende) : ""} Uhr</div>
       <div>📍 ${esc(t.ort || "–")}</div>${projekt ? `<div class="klick" data-a="oeffne" data-x="projekt|${projekt.id}">🎭 ${esc(projekt.titel)} ›</div>` : ""}
-      <div class="t-marken">${teilnahmeBadge(t)}${t.fuer_alle ? '<span class="badge b-alle">🌍 für alle</span>' : ""}</div>
+      <div class="t-marken">${teilnahmeBadge(t)}${t.fuer_alle ? '<span class="badge b-alle">🌍 für alle</span>' : ""}${t.register?.length ? `<span class="badge b-lila">🎼 Registerprobe: ${t.register.map((r) => esc(hole("register", r)?.kurz || "")).join(", ")}</span>` : ""}</div>
       ${t.frist ? `<div class="hinweis">Antwort bis ${datumKurz(t.frist)}</div>` : ""}
       ${t.beschreibung ? `<p>${esc(t.beschreibung).replace(/\n/g, "<br>")}</p>` : ""}
       ${t.status === "abgesagt" ? '<p class="badge b-rot">Dieser Termin ist abgesagt.</p>' : ""}
@@ -316,6 +316,8 @@ function terminForm(t = {}) {
     <div class="feld"><label>Ort</label><input name="ort" value="${esc(t.ort || "")}" list="orte"><datalist id="orte">${[...new Set(liste("termine").map((x) => x.ort).filter(Boolean))].map((o) => `<option value="${esc(o)}">`).join("")}</datalist></div>
     <div class="feld"><label>Für wen?</label><div class="t-wahl"><label class="t-chip alle"><input type="checkbox" name="fuer_alle" ${t.fuer_alle ? "checked" : ""}><span>🌍 Für alle</span></label>${gruppen.map((g) => `<label class="t-chip"><input type="checkbox" name="gruppen" data-mehr="1" value="${g.id}" ${(t.gruppen || []).includes(g.id) ? "checked" : ""}><span>${esc(g.kuerzel)} · ${esc(g.name)}</span></label>`).join("")}</div>
       <p class="hinweis">„Für alle“ = der ganze Bachkreis (z. B. Weihnachtsfeier) – dann braucht es keine Gruppe.</p></div>
+    <div class="feld"><label>🎼 Nur für einzelne Register? (Registerprobe)</label><div class="t-wahl">${regs.map((r) => `<label class="t-chip"><input type="checkbox" name="register" value="${r.id}" ${(t.register || []).includes(r.id) ? "checked" : ""}><span>${esc(r.kurz || r.name)}</span></label>`).join("")}</div>
+      <p class="hinweis">Nichts angehakt = alle Register der gewählten Orchester. Angehakt = nur diese Register sind eingeladen.</p></div>
     <div class="feld"><label>Teilnahme</label><div class="t-wahl">${Object.entries(TEILNAHME).map(([k, [sym, n]]) => `<label class="t-chip tn-${k}"><input type="radio" name="teilnahme" value="${k}" ${(t.teilnahme || (t.id ? teilnahmeVon(db, t) : hole("terminarten", arten[0]?.id)?.pflicht ? "pflicht" : "erwuenscht")) === k ? "checked" : ""}><span>${sym} ${n}</span></label>`).join("")}</div>
       <p class="hinweis">❗ erforderlich: Absage nur mit Grund · 🙂 erwünscht: Zusage/Absage/Weiß noch nicht · ℹ️ Info: ohne Antwort.</p></div>
     <div class="feld"><label>Projekt</label><select name="projekt_id"><option value="">–</option>${projekte.map((p) => `<option value="${p.id}" ${p.id === t.projekt_id ? "selected" : ""}>${esc(p.titel)}</option>`).join("")}</select></div>
@@ -335,7 +337,7 @@ AKTIONEN.terminSpeichern = async (id) => {
   for (const [k, v] of Object.entries(f)) if (k.startsWith("soll_") && Number(v) > 0) soll[k.slice(5)] = Number(v);
   if (!f.fuer_alle && !(f.gruppen || []).length) { toast("Bitte „Für alle“ oder mindestens ein Orchester wählen"); return; }
   if (f.ende && vonLokal(f.ende) < vonLokal(f.beginn)) { toast("Das Ende liegt vor dem Beginn"); return; }
-  const basis = { titel: f.titel, art_id: f.art_id, beginn: vonLokal(f.beginn), ende: vonLokal(f.ende), ort: f.ort, fuer_alle: !!f.fuer_alle, teilnahme: f.teilnahme || "erwuenscht", gruppen: f.fuer_alle ? [] : f.gruppen || [], projekt_id: f.projekt_id || null, frist: f.frist || null, beschreibung: f.beschreibung, soll: Object.keys(soll).length ? soll : null };
+  const basis = { titel: f.titel, art_id: f.art_id, beginn: vonLokal(f.beginn), ende: vonLokal(f.ende), ort: f.ort, fuer_alle: !!f.fuer_alle, teilnahme: f.teilnahme || "erwuenscht", gruppen: f.fuer_alle ? [] : f.gruppen || [], projekt_id: f.projekt_id || null, frist: f.frist || null, beschreibung: f.beschreibung, soll: Object.keys(soll).length ? soll : null, register: [].concat(f.register || []).filter(Boolean) };
   let gespeichert;
   if (id) gespeichert = [await speichere("termine", { ...hole("termine", id), ...basis })];
   else {
@@ -416,3 +418,32 @@ AKTIONEN.eigenLoeschen = async (id) => {
 
 // 📆 Kalender übertragen (Apple, Google, Outlook) steht in kalender.js
 export { terminKarte };
+
+// ---------- 🎼 Mein Register (Registerführer, 0.21.0) ----------
+// Wer aus meinem Register kommt zu den nächsten Terminen? Erinnern mit einem Tipp. Gründe von Absagen sieht nur die Leitung.
+VIEWS.meinregister = {
+  render() {
+    const meineRegs = [...new Set(instrumenteVon(db, S.ich.id).map((i) => i.register_id || hole("instrument_typen", i.typ_id)?.register_id).filter(Boolean))];
+    if (!meineRegs.length) return kopf("🎼 Mein Register") + '<div class="leer">Dir ist noch kein Register zugeordnet.</div>';
+    const jetzt = new Date(), bald = new Date(Date.now() + 42 * 86400000);
+    const termine = termineFuer(db, S.ich.id).filter((t) => new Date(t.beginn) > jetzt && new Date(t.beginn) < bald && t.status !== "abgesagt" && teilnahmeVon(db, t) !== "info").slice(0, 8);
+    return kopf("🎼 Mein Register") + meineRegs.map((rid) => {
+      const r = hole("register", rid);
+      return `<h3>${esc(r?.name || "")}</h3>` + (termine.map((t) => {
+        const leute = eingeladene(db, t).filter((p) => p !== S.ich.id && registerVon(db, p, antwortVon(db, t.id, p)) === rid);
+        const st = leute.map((p) => ({ p, a: antwortVon(db, t.id, p)?.antwort || "offen" }));
+        const offen = st.filter((x) => x.a === "offen" || x.a === "vielleicht");
+        return `<div class="karte"><div class="zeile-titel klick" data-a="oeffne" data-x="termin|${t.id}">${esc(t.titel)} ›</div><div class="hinweis">${datum(t.beginn)} · ${uhr(t.beginn)} Uhr</div>
+          <div class="zaehler"><span class="badge b-gruen">✅ ${st.filter((x) => x.a === "ja").length}</span><span class="badge b-gelb">🤔 ${st.filter((x) => x.a === "vielleicht").length}</span><span class="badge b-rot">❌ ${st.filter((x) => x.a === "nein").length}</span><span class="badge">❔ ${st.filter((x) => x.a === "offen").length}</span></div>
+          <div class="hinweis">${st.map((x) => `${{ ja: "✅", vielleicht: "🤔", nein: "❌", offen: "❔" }[x.a]} ${esc(vorname(x.p))}`).join(" · ") || "niemand eingeladen"}</div>
+          ${offen.length ? `<button class="knopf klein" data-a="registerErinnern" data-x="${t.id}|${rid}">⏰ ${offen.length} erinnern</button>` : ""}</div>`;
+      }).join("") || '<div class="leer">Keine Termine in den nächsten 6 Wochen.</div>');
+    }).join("") + '<p class="hinweis">Als Registerführer/in siehst du, wer kommt – Gründe von Absagen sieht nur die Leitung.</p>';
+  },
+};
+AKTIONEN.registerErinnern = async (x) => {
+  const [tid, rid] = x.split("|"), t = hole("termine", tid);
+  const an = eingeladene(db, t).filter((p) => p !== S.ich.id && registerVon(db, p, antwortVon(db, tid, p)) === rid && ["vielleicht", undefined].includes(antwortVon(db, tid, p)?.antwort));
+  const s = await senden({ an, betreff: `Kommst du? ${t.titel}`, text: `Dein Register ${hole("register", rid)?.name || ""} braucht dich bei „${t.titel}“ am ${datum(t.beginn)}. Bitte antworte kurz in der App.`, ereignis: "nachfassen" });
+  toast(`⏰ ${an.length} erinnert (${s.push} Push, simuliert)`);
+};

@@ -57,9 +57,9 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.instrument_typen = TYPEN.map(([id, name, register_id, wartung_monate]) => ({ id, name, register_id, wartung_monate }));
   d.gruppen = [
     { id: "g-a", kuerzel: "A", name: "A-Orchester", beschreibung: "Jahrgänge 9–12", farbe: "#1f5f99", sort: 1, aktiv: true, soll: SOLL_A },
-    { id: "g-b", kuerzel: "B", name: "B-Orchester", beschreibung: "Jahrgänge 5–9", farbe: "#c98a00", sort: 2, aktiv: true, soll: SOLL_B },
-    { id: "g-c", kuerzel: "C", name: "Orchesterklasse / AGs", beschreibung: "Erprobungsstufe mit Musikschule (Beispiel)", farbe: "#2e7d4f", sort: 3, aktiv: true },
-    { id: "g-d", kuerzel: "D", name: "Ehemalige", beschreibung: "Ehemaligenorchester (Beispiel)", farbe: "#7b3fa0", sort: 4, aktiv: true },
+    { id: "g-b", kuerzel: "B", name: "B-Orchester", beschreibung: "Jahrgänge 5–9", farbe: "#c98a00", sort: 2, aktiv: true, soll: SOLL_B, wechsel_nach: "g-a", wechsel_ab_jg: 9 },
+    { id: "g-c", kuerzel: "C", name: "Orchesterklasse / AGs", beschreibung: "Erprobungsstufe mit Musikschule (Beispiel)", farbe: "#2e7d4f", sort: 3, aktiv: true, wechsel_nach: "g-b", wechsel_ab_jg: 7 },
+    { id: "g-d", kuerzel: "D", name: "Ehemalige", beschreibung: "Ehemaligenorchester (Beispiel)", farbe: "#7b3fa0", sort: 4, aktiv: true, ehemalige: true },
   ];
   d.terminarten = [
     { id: "ta-probe", name: "Probe", sym: "🎻", farbe: "#1f5f99", pflicht: true, sort: 1 },
@@ -402,6 +402,33 @@ export function erzeugeDemodaten(heute = new Date()) {
   });
   const freizeit = d.projekte.find((x) => x.id === "pr-freizeit");
   if (freizeit) freizeit.begleiter = ["p-leitung", ...d.personen.filter((x) => x.typ === "lehrkraft").slice(0, 1).map((x) => x.id)];
+  // 🧹 Löschfristen (0.21.0): zwei Ehemalige sind ausgetreten – einer vor über zwei Jahren (zum Anonymisieren), einer erst kürzlich
+  const ehemAlle = d.personen.filter((p) => p.typ === "ehemalig");
+  if (ehemAlle[0]) Object.assign(ehemAlle[0], { status: "ausgetreten", ausgetreten_am: isoTag(tag(jetzt, -800)) });
+  if (ehemAlle[1]) Object.assign(ehemAlle[1], { status: "ausgetreten", ausgetreten_am: isoTag(tag(jetzt, -60)) });
+  // 🎭 Konzert & Reise (0.21.0): Programmfolge Herbstkonzert, Treffpunkt/Kleidung/Transport, Anmeldung zur Probenfreizeit
+  const herbst = d.projekte.find((x) => x.id === "pr-herbst");
+  Object.assign(herbst, { treffpunkt: "17:15 Uhr Bühneneingang PZ, Einspielen 17:30", kleiderordnung: "schwarz-weiß (schwarze Hose/Rock, weißes Hemd/Bluse)",
+    transport_inventar: d.inventar.filter((i) => ["t-pk", "t-kb"].includes(i.typ_id)).map((i) => i.id), transport_ausstattung: d.ausstattung.filter((a) => ["notenstaender", "dirigent", "technik"].includes(a.kategorie) && a.status === "verfuegbar").map((a) => a.id) });
+  d.programm = [["werk", "w-11", null, "g-a"], ["werk", "w-1", null, "g-a"], ["ansage", null, "Begrüßung durch den Förderverein", null], ["werk", "w-5", null, "g-b"], ["werk", "w-2", null, "g-b"],
+    ["pause", null, "Pause mit Kuchenbuffet", null, 20], ["werk", "w-3", null, "g-a"], ["werk", "w-4", null, "g-a"], ["zugabe", "w-9", null, "g-a"]]
+    .map(([art, werk_id, titel, gruppe_id, dauer], i) => ({ id: `pg-${i + 1}`, projekt_id: "pr-herbst", nr: i + 1, art, werk_id, titel: titel || "", gruppe_id, dauer_min: dauer || null, solisten: werk_id === "w-1" ? "Solovioline: Konzertmeisterin" : "", notiz: art === "pause" ? "Umbau B → A, Pauken stimmen" : "" }));
+  Object.assign(freizeit, { treffpunkt: "Freitag 15:00 Uhr Busparkplatz Schule", kleiderordnung: "bequem, Hausschuhe, Notenständer-Lampe", anmeldung: true, anmeldeschluss: isoTag(tag(freizeitTag, -10)), kosten: 85, plaetze: 40 });
+  d.reise_anmeldungen = [];
+  for (const kid of kinderA.filter(() => r() < 0.6)) d.reise_anmeldungen.push({ id: `ra-${d.reise_anmeldungen.length + 1}`, projekt_id: "pr-freizeit", person_id: kid, status: "angemeldet",
+    angemeldet_von: d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || null, angemeldet_am: iso(tag(jetzt, -Math.floor(1 + r() * 20), 20)), betrag: 85, bezahlt: r() < 0.6, zimmer: "" });
+  for (const a of d.reise_anmeldungen) if (a.bezahlt) a.bezahlt_am = isoTag(tag(jetzt, -2));
+  // 🤝 Leihverträge: Zubehör, Kaution, Gebühr; Vertrag mit der Ausleihe verknüpft
+  const vertrag = d.genehmigung_vorlagen.find((v) => v.zweck === "leihvertrag");
+  d.ausleihen.forEach((a, i) => {
+    Object.assign(a, { zubehoer: ["koffer", ...(["t-vl", "t-va", "t-vc", "t-kb"].includes(d.inventar.find((x) => x.id === a.inventar_id)?.typ_id) ? ["bogen", "kolophonium"] : ["pflege"])], kaution: 50, kaution_status: i % 4 === 0 ? "offen" : "bezahlt", gebuehr: 30,
+      gebuehr_bezahlt_bis: i % 3 === 0 ? null : isoTag(tag(jetzt, 200)), versicherung: "verein" });
+    if (vertrag && d.personen.find((p) => p.id === a.person_id)?.typ === "schueler") {
+      const g = { id: `ge-${d.genehmigungen.length + 1}`, vorlage_id: vertrag.id, kind_id: a.person_id, ausleihe_id: a.id, frist: a.von, status: i % 5 === 0 ? "ausstehend" : "erteilt" };
+      if (g.status === "erteilt") Object.assign(g, { beantwortet_am: iso(tag(new Date(a.von), 2, 19)), beantwortet_von: d.eltern_kind.find((e) => e.kind_id === a.person_id)?.eltern_id || null, vorlage_version: vertrag.fassung });
+      d.genehmigungen.push(g); a.vertrag_id = g.id;
+    }
+  });
   // Demo-Eltern: eine offene Genehmigung sicherstellen
   if (demoKindB) d.genehmigungen.push({ id: `ge-${d.genehmigungen.length + 1}`, vorlage_id: "gv-4", kind_id: demoKindB.id, frist: isoTag(tag(jetzt, 7)), status: "ausstehend" });
 
@@ -501,6 +528,7 @@ export function erzeugeDemodaten(heute = new Date()) {
     notrufe: [["🚑", "Notruf / Rettungsdienst", "112"], ["🚓", "Polizei", "110"], ["🩺", "Ärztlicher Bereitschaftsdienst", "116117"], ["☠️", "Giftnotruf NRW (Bonn)", "0228 19240"]],
     schule_telefon: "02307 964440",
     freigabe_grenze_eur: 250,
+    leih_kaution: 50, leih_gebuehr: 30, abschluss_jahrgang: 12,
     nachfass_tage: 3,
     pinnwand_erinnern_tage: 3,
     express_max_tag: 5,

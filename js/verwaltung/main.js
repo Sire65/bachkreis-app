@@ -6,7 +6,7 @@ import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTA
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND } from "../kern/versand.js";
-import { csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
+import { loeschKandidaten, ANONYM_LEEREN, ANONYM_LOESCHEN, schuljahrVorschlaege, csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 
 const db = { liste, hole, konfig };
@@ -59,13 +59,13 @@ function demoLeiste() {
 }
 
 // ---------- Rahmen ----------
-const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["inventarbericht", "📦", "Inventar & Abschreibung"], ["anwesenheit", "📋", "Anwesenheit & Fehlzeiten"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
+const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["inventarbericht", "📦", "Inventar & Abschreibung"], ["anwesenheit", "📋", "Anwesenheit & Fehlzeiten"], ["datenschutz", "🧹", "Datenschutz & Löschfristen"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
 function seitenleiste() {
   const gruppen = {};
   for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
   const btn = (an, a, x, sym, t, anz = "") => `<button class="${an ? "an" : ""}" data-a="${a}" data-x="${x}">${sym} ${esc(t)}<span class="anz">${anz}</span></button>`;
   return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;opacity:.7">v${APP_VERSION} ${APP_STUFE}</div></div></div>
-    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "communicator" || darf("kom_einstellungen", "lesen")).filter(([k]) => k !== "inventarbericht" || darf("ausstattung", "lesen")).filter(([k]) => k !== "anwesenheit" || darf("antworten", "lesen")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
+    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "communicator" || darf("kom_einstellungen", "lesen")).filter(([k]) => k !== "inventarbericht" || darf("ausstattung", "lesen")).filter(([k]) => k !== "anwesenheit" || darf("antworten", "lesen")).filter(([k]) => k !== "datenschutz" || darf("zugaenge", "schreiben")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
     ${Object.entries(gruppen).map(([g, ts]) => `<h4>${esc(g)}</h4>${ts.map((t) => btn(V.ansicht === "tabelle" && V.tab === t, "vwTabelle", t, TABELLEN[t].sym, TABELLEN[t].titel, liste(t).length)).join("")}`).join("")}
     <h4>Sitzung</h4><button data-a="vwApp">📱 App öffnen</button><button data-a="vwAbmelden">🚪 Abmelden</button>`;
 }
@@ -279,20 +279,13 @@ NACH.gruppenboard = () => {
 
 // ---------- Schuljahreswechsel-Assistent ----------
 ANSICHTEN.schuljahr = () => {
-  const gruppen = liste("gruppen").sort((a, b) => a.sort - b.sort);
-  const gA = gruppen.find((g) => g.kuerzel === "A"), gB = gruppen.find((g) => g.kuerzel === "B"), gD = gruppen.find((g) => g.kuerzel === "D");
-  const schueler = liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten");
-  const vorschlaege = schueler.map((p) => {
-    const jg = Number(p.jahrgang || 0) + 1, g = stammgruppe(db, p.id);
-    let ziel = null, grund = "";
-    if (jg > 12 && gD) { ziel = gD.id; grund = "Abschluss → Ehemalige"; }
-    else if (g === gB?.id && jg >= 9 && gA) { ziel = gA.id; grund = `Jg ${jg} → A-Orchester`; }
-    return { p, jg, g, ziel, grund };
-  });
+  const vorschlaege = schuljahrVorschlaege(db, { abschluss: Number(konfig().abschluss_jahrgang) || 12 });
   const wechsel = vorschlaege.filter((v) => v.ziel && v.ziel !== v.g);
-  return `<div class="vw-kopf"><h2>🎓 Schuljahreswechsel</h2></div><div class="karte"><p>Erhöht die Jahrgangsstufe aller Schüler um 1 und schlägt Gruppenwechsel vor (B → A ab Jahrgang 9, nach Jahrgang 12 → Ehemalige). Die Leitung bestätigt jeden Wechsel – nichts passiert automatisch.</p>
+  const regeln = liste("gruppen", (g) => g.wechsel_nach || g.ehemalige).sort((a, b) => a.sort - b.sort);
+  return `<div class="vw-kopf"><h2>🎓 Schuljahreswechsel</h2></div><div class="karte"><p>Erhöht die Jahrgangsstufe aller Schüler um 1 und schlägt Gruppenwechsel nach den Regeln der Gruppen vor. Die Leitung bestätigt jeden Wechsel – nichts passiert automatisch.</p>
+    <p class="hinweis">Regeln (Tabelle „Gruppen“): ${regeln.map((g) => g.ehemalige ? `${esc(g.kuerzel)} = Ehemalige (nach Jahrgang ${Number(konfig().abschluss_jahrgang) || 12})` : `${esc(g.kuerzel)} → ${esc(hole("gruppen", g.wechsel_nach)?.kuerzel || "?")} ab Jg ${g.wechsel_ab_jg || "?"}`).join(" · ") || "noch keine – bei den Gruppen „weiter in Gruppe … ab Jahrgangsstufe …“ eintragen"}</p>
     <div class="feld"><label>Stichtag</label><input type="date" id="sjStichtag" value="${new Date().getFullYear()}-08-01"></div>
-    <table class="vw-tabelle"><tr><th>übernehmen</th><th>Name</th><th>Jg neu</th><th>bisher</th><th>Vorschlag</th></tr>${wechsel.map((v) => `<tr><td><input type="checkbox" class="sjWahl" value="${v.p.id}|${v.ziel}" checked></td><td>${esc(name(v.p))}</td><td>${v.jg}</td><td>${esc(hole("gruppen", v.g)?.kuerzel || "–")}</td><td>${esc(v.grund)}</td></tr>`).join("") || "<tr><td colspan=5>Keine Wechsel vorgeschlagen.</td></tr>"}</table>
+    <table class="vw-tabelle"><tr><th>übernehmen</th><th>Name</th><th>Jg neu</th><th>bisher</th><th>Vorschlag</th></tr>${wechsel.map((v) => `<tr><td><input type="checkbox" class="sjWahl" value="${v.p.id}|${v.ziel}" checked></td><td>${esc(name(v.p))}</td><td>${v.jg}</td><td>${esc(hole("gruppen", v.g)?.kuerzel || "–")}</td><td>${esc(v.grund)}${v.hinweise.length ? `<br><small class="hinweis">⚠️ ${v.hinweise.map(esc).join(" · ")}</small>` : ""}</td></tr>`).join("") || "<tr><td colspan=5>Keine Wechsel vorgeschlagen.</td></tr>"}</table>
     <div class="knopfreihe"><button class="knopf haupt" data-a="sjAusfuehren">✔️ Jahrgänge +1 und ausgewählte Wechsel übernehmen</button></div>
     <p class="hinweis">Kritische Aktion: Vor dem Ausführen wird automatisch ein Export als Sicherung angeboten (Recovery-Punkt).</p></div>`;
 };
@@ -308,7 +301,7 @@ AKTIONEN.sjAusfuehren = async () => {
     const plan = generellerWechselPlan(db, pid, gid, stichtag);
     for (const z of plan.beenden) await speichere("gruppe_zuordnung", z, { still: true });
     await speichere("gruppe_zuordnung", { ...plan.neu, grund: "Schuljahreswechsel" }, { still: true });
-    if (hole("gruppen", gid)?.kuerzel === "D") await speichere("personen", { ...hole("personen", pid), typ: "ehemalig", rollen: [] }, { still: true });
+    if (hole("gruppen", gid)?.ehemalige) await speichere("personen", { ...hole("personen", pid), typ: "ehemalig", rollen: [] }, { still: true });
     n++;
   }
   toast(`🎓 Jahrgänge erhöht, ${n} Wechsel übernommen`); zeichne();
@@ -481,6 +474,36 @@ AKTIONEN.awCsv = () => {
   herunterladen(`anwesenheit-${tagIso(new Date())}.csv`, "\ufeff" + csvAus(l, Object.keys(l[0])), "text/csv");
 };
 
+// ---------- 🧹 Datenschutz & Löschfristen (0.21.0) ----------
+// Nach Austritt + Löschfrist: anonymisieren (Name „Ehemals …“, Kontakt/Gesundheit/Übe-Tagebuch weg, Statistik bleibt). Vorher Sicherung.
+ANSICHTEN.datenschutz = () => {
+  const monate = Number(konfig().loeschfrist_monate) || 24, k = loeschKandidaten(db, { monate });
+  const ohneDatum = liste("personen", (p) => p.status === "ausgetreten" && !p.ausgetreten_am && !p.anonymisiert);
+  return `<div class="vw-kopf"><h2>🧹 Datenschutz & Löschfristen</h2></div>
+    <div class="karte"><h3>Ausgetreten, Löschfrist (${monate} Monate) abgelaufen: ${k.personen.length}</h3>
+      ${k.personen.length ? `<ul class="liste">${k.personen.map((p) => `<li><div class="fl">${esc(name(p))} <span class="hinweis">ausgetreten ${datumKurz(p.ausgetreten_am)}</span></div><button class="knopf klein" data-a="dsAnonym" data-x="${p.id}">🧹 anonymisieren</button></li>`).join("")}</ul><button class="knopf haupt" data-a="dsAnonymAlle">🧹 Alle ${k.personen.length} anonymisieren</button>` : '<p class="hinweis">Niemand – alles in Ordnung.</p>'}
+      ${ohneDatum.length ? `<p class="hinweis">⚠️ ${ohneDatum.length} Ausgetretene ohne Austrittsdatum (die Frist läuft erst mit Datum): ${ohneDatum.slice(0, 8).map((p) => esc(name(p))).join(", ")}${ohneDatum.length > 8 ? " …" : ""}</p>` : ""}</div>
+    <div class="karte"><h3>🩺 Abgelaufene Gesundheitsangaben: ${k.gesundheit.length}</h3><p class="hinweis">Nicht innerhalb von 13 Monaten bestätigt.</p>${k.gesundheit.length ? `<button class="knopf" data-a="dsGesundheit">🗑️ ${k.gesundheit.length} löschen</button>` : ""}</div>
+    <p class="hinweis">Anonymisieren entfernt: Kontakt, Adresse, Geburtsdatum, Notizen, Gesicht, Gesundheit, Übe-Tagebuch, eigene Termine, Eltern-Verknüpfung, Anmeldungen. Erhalten bleiben (ohne Namen) Anwesenheiten und der Ausleih-Verlauf der Instrumente. Vor jedem Lauf wird eine Sicherung heruntergeladen.</p>`;
+};
+async function anonymisieren(pid) {
+  const p = hole("personen", pid); if (!p) return;
+  await speichere("personen", { ...p, ...Object.fromEntries(ANONYM_LEEREN.map((k) => [k, null])), vorname: "Ehemals", nachname: `#${String(pid).slice(-4)}`, rollen: [], anonymisiert: true }, { still: true });
+  for (const t of ANONYM_LOESCHEN) for (const z of liste(t, (x) => [x.person_id, x.kind_id, x.eltern_id, x.von, x.an].includes(pid))) await loesche(t, z.id);
+  for (const z of liste("zugaenge", (x) => x.person_id === pid && x.aktiv)) await speichere("zugaenge", { ...z, aktiv: false }, { still: true });
+}
+AKTIONEN.dsAnonym = async (pid) => { if (!(await frage(`${name(hole("personen", pid))} anonymisieren? Das lässt sich nicht rückgängig machen (Sicherung wird heruntergeladen).`))) return; sicherung(); await anonymisieren(pid); toast("🧹 Anonymisiert"); zeichne(); };
+AKTIONEN.dsAnonymAlle = async () => {
+  const l = loeschKandidaten(db, { monate: Number(konfig().loeschfrist_monate) || 24 }).personen;
+  if (!(await frage(`${l.length} Personen anonymisieren? Vorher wird eine Sicherung heruntergeladen.`))) return;
+  sicherung(); for (const p of l) await anonymisieren(p.id); toast(`🧹 ${l.length} anonymisiert`); zeichne();
+};
+AKTIONEN.dsGesundheit = async () => {
+  const l = loeschKandidaten(db).gesundheit;
+  if (!(await frage(`${l.length} abgelaufene Gesundheitsangaben löschen?`))) return;
+  for (const g of l) await loesche("gesundheit", g.id); toast(`🗑️ ${l.length} gelöscht`); zeichne();
+};
+
 // ---------- Import / Export ----------
 ANSICHTEN.import = () => {
   const schreibbar = TABELLEN_NAMEN.filter((t) => darf(t, "schreiben") && !TABELLEN[t].nurLesen);
@@ -605,7 +628,7 @@ ANSICHTEN.konfig = () => {
   const darfK = (V.ich?.rollen || []).some((r) => ["leitung", "admin"].includes(r));
   const f = (key, t, typ = "text") => `<div class="feld"><label>${t}</label><input type="${typ}" data-konfig="${key}" value="${esc(k[key] ?? "")}" ${darfK ? "" : "disabled"}></div>`;
   return `<div class="vw-kopf"><h2>⚙️ Einstellungen</h2></div><div class="karte" id="konfForm">
-    ${f("name", "Name")}${f("untertitel", "Untertitel")}${f("webseite", "Internetseite (Logo oben links öffnet sie)", "url")}${f("schule_telefon", "Telefon Schule (SOS)")}${f("freigabe_grenze_eur", "Freigabegrenze Leitung (€) – darüber entscheidet der Förderverein", "number")}${f("nachfass_tage", "Nachfassen … Tage vor Antwortfrist", "number")}${f("express_max_tag", "🏎️ Express-Sendungen je Person und Tag (leer = 5, Leitung unbegrenzt)", "number")}${f("bearbeiten_minuten", "✏️ Nachrichten bearbeiten bis … Minuten nach dem Senden (leer = 15)", "number")}
+    ${f("name", "Name")}${f("untertitel", "Untertitel")}${f("webseite", "Internetseite (Logo oben links öffnet sie)", "url")}${f("schule_telefon", "Telefon Schule (SOS)")}${f("freigabe_grenze_eur", "Freigabegrenze Leitung (€) – darüber entscheidet der Förderverein", "number")}${f("leih_kaution", "🤝 Standard-Kaution Leihinstrument (€)", "number")}${f("leih_gebuehr", "🤝 Standard-Leihgebühr je Jahr (€)", "number")}${f("abschluss_jahrgang", "🎓 Abschlussjahrgang (danach → Ehemalige)", "number")}${f("loeschfrist_monate", "🧹 Löschfrist nach Austritt (Monate)", "number")}${f("nachfass_tage", "Nachfassen … Tage vor Antwortfrist", "number")}${f("express_max_tag", "🏎️ Express-Sendungen je Person und Tag (leer = 5, Leitung unbegrenzt)", "number")}${f("bearbeiten_minuten", "✏️ Nachrichten bearbeiten bis … Minuten nach dem Senden (leer = 15)", "number")}
     <div class="feld"><label>💬 Schüler dürfen sich gegenseitig privat schreiben</label><select data-konfig="chat_schueler_untereinander" ${darfK ? "" : "disabled"}><option value="ja" ${k.chat_schueler_untereinander !== false ? "selected" : ""}>Ja</option><option value="nein" ${k.chat_schueler_untereinander === false ? "selected" : ""}>Nein – nur mit Leitung, Lehrkräften und den eigenen Eltern</option></select></div>${f("pinnwand_erinnern_tage", "📌 Pinnwand: an eigene Zettel erinnern nach … Tagen (leer = 3)", "number")}${f("pinnwand_pause_tage", "📌 Pinnwand: nach „Hängen lassen“ wieder fragen nach … Tagen (leer = 7)", "number")}
     <div class="feld"><label>🛡️ Schreibt ein Erwachsener einem minderjährigen Kind privat, lesen die Eltern mit</label><select data-konfig="chat_eltern_kopie" ${darfK ? "" : "disabled"}><option value="ja" ${k.chat_eltern_kopie !== false ? "selected" : ""}>Ja – Eltern automatisch in Kopie (empfohlen)</option><option value="nein" ${k.chat_eltern_kopie === false ? "selected" : ""}>Nein – nur Leitung/Lehrkräfte, ohne Eltern</option></select><div class="hinweis">Privat an Kinder schreiben dürfen ohnehin nur Leitung und Lehrkräfte (nicht Notenwart, Instrumentenwart oder Vorstand) – außer den eigenen Kindern.</div></div>
     <div class="feld"><label>Notrufnummern (eine je Zeile: Symbol;Bezeichnung;Nummer)</label><textarea data-konfig="notrufe" ${darfK ? "" : "disabled"}>${esc((k.notrufe || []).map((x) => x.join(";")).join("\n"))}</textarea></div>

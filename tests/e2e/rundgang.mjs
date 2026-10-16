@@ -195,6 +195,19 @@ await p.waitForSelector(".anw-knoepfe"); await p.click('.anw-knoepfe button[data
 if (!(await p.$(".anw-knoepfe button.an"))) fehler.push("Anwesenheit: Knopf nicht gesetzt");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("anwesenheit")); await p.waitForSelector(".kennzahlen");
 await p.screenshot({ path: `${BILDER}anwesenheit.png`, fullPage: true });
+// 🎭 Konzert & Reise (0.21.0): Programm mit Pause/Gesamtdauer, Transportliste, Anmeldung zur Freizeit (Eltern), Leihvertrag am Instrument
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("projekt", { id: "pr-herbst" })); await p.waitForSelector(".pg-liste");
+if ((await p.$$eval(".pg-liste li", (l) => l.length)) < 5) fehler.push("Programm: zu wenige Punkte");
+await p.click('.pg-knoepfe [data-a="pgSchieben"][data-x$="|1"]'); await p.waitForTimeout(150);
+await p.screenshot({ path: `${BILDER}konzert-programm.png`, fullPage: true });
+const leih = await p.evaluate(async () => { const { liste } = await import("/js/kern/daten.js"); return liste("ausleihen", (a) => a.status === "aktiv")[0]?.inventar_id; });
+await p.evaluate(async (id) => (await import("/js/app/zustand.js")).zeige("instrument", { id }), leih); await p.waitForSelector(".leih-details");
+await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("projekt", { id: "pr-freizeit" })); await p.waitForTimeout(200);
+const anm = await p.$('[data-a="anmelden"]'); if (anm) { await anm.click(); await p.waitForTimeout(200); }
+await p.screenshot({ path: `${BILDER}eltern-freizeit.png`, fullPage: true });
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("kinder")); await p.waitForSelector(".kind-kontakt");
+await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(300);
 // PC-Verwaltung: alle Tabellen und Sonderansichten
 await p.setViewportSize({ width: 1280, height: 860 });
 await p.goto(BASIS + "/verwaltung.html");

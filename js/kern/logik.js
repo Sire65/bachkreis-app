@@ -1,6 +1,6 @@
 // Fachlogik ohne Oberfläche – rein, testbar (tests/logik.test.mjs). Bekommt einen Datenzugriff „db“ mit
 // liste(tab, filter), hole(tab, id), konfig(). Dieselben Regeln gelten später serverseitig.
-import { AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG, FOTO_ZWECKE } from "./schema.js";
+import { AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG, FOTO_ZWECKE, elternZugriff, TABELLEN, TABELLEN_NAMEN } from "./schema.js";
 
 export const tagIso = (d) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
 const imZeitraum = (z, tag) => (!z.von || z.von <= tag) && (!z.bis || z.bis >= tag);
@@ -129,8 +129,8 @@ export function termineFuer(db, personId, { abHeute = true, heute = new Date() }
 }
 
 // ---------- Eltern / Kinder ----------
-export const kinderVon = (db, elternId) => db.liste("eltern_kind", (e) => e.eltern_id === elternId).map((e) => e.kind_id);
-export const elternVon = (db, kindId) => db.liste("eltern_kind", (e) => e.kind_id === kindId).map((e) => e.eltern_id);
+export const kinderVon = (db, elternId) => db.liste("eltern_kind", (e) => e.eltern_id === elternId && elternZugriff(e, db.hole("personen", e.kind_id))).map((e) => e.kind_id);
+export const elternVon = (db, kindId) => { const k = db.hole("personen", kindId); return db.liste("eltern_kind", (e) => e.kind_id === kindId && elternZugriff(e, k)).map((e) => e.eltern_id); };
 
 // ---------- Genehmigungen ----------
 export function genehmigungStatus(g, heute = new Date()) {
@@ -425,3 +425,48 @@ export function fehlzeiten(db, { von, bis = new Date(), personen = null, gruppe 
   }
   return [...m.values()].map((z) => ({ ...z, quote: z.erfasst ? Math.round(((z.ja + z.spaet) / z.erfasst) * 100) : null })).sort((a, b) => (a.quote ?? 101) - (b.quote ?? 101) || b.nein - a.nein);
 }
+
+// ---------- 🎓 Schuljahreswechsel nach Regeln (0.21.0) ----------
+// Je Gruppe: „weiter in Gruppe … ab Jahrgangsstufe …“; nach dem Abschlussjahrgang (konfig.abschluss_jahrgang, Standard 12) in die
+// Gruppe mit „Ehemalige“. Hinweise zeigen, was beim Übergang zu den Ehemaligen noch offen ist (Leihinstrument, Genehmigungen).
+export function schuljahrVorschlaege(db, { abschluss = 12, stichtag = new Date() } = {}) {
+  const ehem = db.liste("gruppen", (g) => g.ehemalige && g.aktiv !== false)[0];
+  return db.liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten").map((p) => {
+    const jg = Number(p.jahrgang || 0) + 1, g = stammgruppe(db, p.id, stichtag), gr = g ? db.hole("gruppen", g) : null;
+    let ziel = null, grund = "";
+    if (jg > abschluss && ehem) { ziel = ehem.id; grund = `Abschluss → ${ehem.name}`; }
+    else if (gr?.wechsel_nach && Number(gr.wechsel_ab_jg) && jg >= Number(gr.wechsel_ab_jg)) { const z = db.hole("gruppen", gr.wechsel_nach); if (z) { ziel = z.id; grund = `Jg ${jg} → ${z.name}`; } }
+    const hinweise = [];
+    if (ziel && ziel === ehem?.id) {
+      const leih = db.liste("ausleihen", (a) => a.person_id === p.id && a.status === "aktiv").length, gen = db.liste("genehmigungen", (x) => x.kind_id === p.id && x.status === "ausstehend").length;
+      if (leih) hinweise.push(`🎻 ${leih} Leihinstrument${leih > 1 ? "e" : ""} noch nicht zurück`);
+      if (gen) hinweise.push(`✍️ ${gen} offene Genehmigung${gen > 1 ? "en" : ""}`);
+      if (db.liste("eltern_kind", (e) => e.kind_id === p.id).length) hinweise.push("👪 Eltern sehen danach nichts mehr (außer das Kind erlaubt es)");
+    }
+    return { p, jg, g, ziel, grund, hinweise };
+  });
+}
+
+// ---------- 🔐 Auskunft (Art. 15) & Löschfristen (0.21.0) ----------
+// Alle Zeilen aller Tabellen, die auf eine der Personen verweisen (ref/refs auf „personen“) – ohne Systemprotokolle und Zugangscodes.
+const AUSKUNFT_OHNE = new Set(["aenderungen", "zugaenge"]);
+export function personenDaten(db, ids) {
+  const set = new Set(ids), out = {};
+  for (const t of TABELLEN_NAMEN) {
+    if (AUSKUNFT_OHNE.has(t) || t.startsWith("kom_")) continue;
+    const f = [...TABELLEN[t].felder, ...(TABELLEN[t].intern || [])].filter((x) => x.ref === "personen");
+    const zeilen = t === "personen" ? db.liste(t, (z) => set.has(z.id)) : f.length ? db.liste(t, (z) => f.some((x) => (x.typ === "refs" ? (z[x.k] || []).some((v) => set.has(v)) : set.has(z[x.k])))) : [];
+    if (zeilen.length) out[t] = zeilen;
+  }
+  return out;
+}
+// Ausgetretene, deren Löschfrist abgelaufen ist (ausgetreten_am + monate), und abgelaufene Gesundheitsangaben
+export function loeschKandidaten(db, { monate = 24, heute = new Date() } = {}) {
+  const grenze = new Date(heute); grenze.setMonth(grenze.getMonth() - monate);
+  const personen = db.liste("personen", (p) => p.status === "ausgetreten" && p.ausgetreten_am && new Date(p.ausgetreten_am) < grenze && !p.anonymisiert);
+  const gesundheit = db.liste("gesundheit", (g) => g.loeschen_am && g.loeschen_am < tagIso(heute));
+  return { personen, gesundheit };
+}
+// Anonymisieren statt löschen: Statistik (Anwesenheit, Ausleih-Verlauf) bleibt, die Person ist nicht mehr erkennbar
+export const ANONYM_LEEREN = ["email", "mobil", "telefon", "strasse", "plz", "ort", "geburtsdatum", "notfall_info", "notiz", "schule", "avatar", "freigaben", "benachrichtigung", "uebe_plan"];
+export const ANONYM_LOESCHEN = ["gesundheit", "uebungen", "eigene_termine", "eltern_kind", "klopfen", "reise_anmeldungen"];

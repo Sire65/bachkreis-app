@@ -62,6 +62,14 @@ create table if not exists bk_projekte (
   beschreibung text,
   checkliste text,
   begleiter text[],
+  treffpunkt text,
+  kleiderordnung text,
+  anmeldung boolean,
+  anmeldeschluss date,
+  kosten numeric(10,2),
+  plaetze integer,
+  transport_inventar text[],
+  transport_ausstattung text[],
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -83,6 +91,14 @@ alter table bk_projekte add column if not exists ort text;
 alter table bk_projekte add column if not exists beschreibung text;
 alter table bk_projekte add column if not exists checkliste text;
 alter table bk_projekte add column if not exists begleiter text[];
+alter table bk_projekte add column if not exists treffpunkt text;
+alter table bk_projekte add column if not exists kleiderordnung text;
+alter table bk_projekte add column if not exists anmeldung boolean;
+alter table bk_projekte add column if not exists anmeldeschluss date;
+alter table bk_projekte add column if not exists kosten numeric(10,2);
+alter table bk_projekte add column if not exists plaetze integer;
+alter table bk_projekte add column if not exists transport_inventar text[];
+alter table bk_projekte add column if not exists transport_ausstattung text[];
 
 -- Genehmigungs-Vorlagen
 create table if not exists bk_genehmigung_vorlagen (

@@ -29,6 +29,9 @@ Die Abläufe Termine → Zusage/Absage → Ampel → Erinnerung, Nachrichten/Pin
 ## In 0.20.0 umgesetzt (alle „Muss“)
 - ✅ Kinderschutz im Chat (nur Leitung/Lehrkräfte, Eltern in Kopie) · ✅ Freigabegrenze auf dem Server · ✅ Need-to-know je Rolle · ✅ interne Vermerke nur intern · ✅ Gesundheit & Notfall strukturiert mit Begleiter-Zugriff und Löschfrist · ✅ Foto-Einwilligung je Zweck + Foto-Liste · ✅ Anwesenheit mit Fehlzeiten
 
+## In 0.21.0 umgesetzt (alle „Sollte“)
+- ✅ Registerproben · ✅ Registerführer · ✅ Leihvertrag mit Kaution/Gebühr/Zubehör, Ausleihe an Lehrkräfte/Ehemalige · ✅ Eltern-Selbstpflege & 18+ · ✅ Konzertprogramm, Kleiderordnung, Treffpunkt, Transportliste · ✅ Reise-Anmeldung · ✅ Schuljahreswechsel nach Regeln · ✅ Auskunft über alle Tabellen, Löschfristen · ✅ Ehemalige in Pinnwand/Chat
+
 ## Noch offen – Vorschlag zur Reihenfolge
 
 ### Muss (Datenschutz, Kinderschutz, Sicherheit)

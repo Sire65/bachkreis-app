@@ -66,6 +66,13 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F56 | 🩺 Gesundheit & Notfall (Eltern pflegen, Begleiter während der Fahrt, Löschfrist) | ✅ | schutz.test, e2e rundgang |
 | BK-F57 | 📷 Einwilligungen je Zweck, Foto-Liste | ✅ | schutz.test, e2e rundgang |
 | BK-F58 | 📋 Anwesenheit (da/verspätet/entschuldigt/unentschuldigt), Fehlzeiten App + PC | ✅ | schutz.test, e2e rundgang |
+| BK-F59 | 🎼 Registerproben, Registerführer („Mein Register“) | ✅ | verein.test |
+| BK-F60 | 🤝 Leihvertrag an der Ausleihe: Zubehör, Kaution, Leihgebühr, Versicherung | ✅ | e2e rundgang |
+| BK-F61 | 👪 Eltern pflegen Kontaktdaten der Kinder, Elternrechte ab 18 nur mit Erlaubnis | ✅ | verein.test |
+| BK-F62 | 🎭 Konzertprogramm, Treffpunkt, Kleiderordnung, Transportliste | ✅ | verein.test, e2e rundgang |
+| BK-F63 | 🧳 Anmeldung zu Fahrten/Freizeiten (Plätze, Warteliste, Schluss, bezahlt) | ✅ | verein.test, e2e rundgang |
+| BK-F64 | 🎓 Schuljahreswechsel nach Regeln der Gruppen | ✅ | verein.test |
+| BK-F65 | 🔐 Auskunft über alle Tabellen, 🧹 Löschfristen/Anonymisieren | ✅ | verein.test |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

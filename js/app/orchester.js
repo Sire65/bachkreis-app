@@ -1,7 +1,9 @@
 // Orchester: Gruppen A–D (Registry), Mitglieder je Register, Personen-Detail, Gruppenwechsel generell (mit Historie)
 // und temporär (Zeitraum/Projekt), Wechselwunsch der Schüler, Konzerte & Projekte mit Checkliste.
+import { programmHtml, programmVon, infoHtml, anmeldungHtml } from "./konzert.js";
+import { KIND_KONTAKT, TABELLEN } from "../kern/schema.js";
 import { gesundheitKurz } from "./schutz.js";
-import { S, VIEWS, db, zeige, zeichne, zurueck, kopf, name, istLehrkraft, istLeitung, istEltern, istVerwalter } from "./zustand.js";
+import { S, VIEWS, db, zeige, zeichne, zurueck, kopf, name, istLehrkraft, istLeitung, istEltern, istVerwalter, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { gruppenMitglieder, stammgruppe, wirksameGruppen, temporaereZuordnungen, generellerWechselPlan, instrumenteVon, registerVon, elternVon, kinderVon, tagIso, ausleihenVon, antwortVon, fotoErlaubnis } from "../kern/logik.js";
@@ -204,7 +206,8 @@ VIEWS.projekt = {
     const werke = liste("werke", (w) => (w.projekte || []).includes(id));
     const cl = (p.checkliste || "").split("\n").filter((l) => l.trim());
     let html = kopf(esc(p.titel)) + `<div class="karte"><div class="hinweis">${datumKurz(p.von)} – ${datumKurz(p.bis)} · ${esc(p.ort || "")}</div><p>${esc(p.beschreibung || "")}</p></div>`;
-    if (werke.length) html += `<div class="karte"><h3>🎼 Programm</h3><ol>${werke.map((w) => `<li><b>${esc(w.komponist)}</b>: ${esc(w.titel)} <span class="hinweis">${esc(w.werkverzeichnis || "")}</span></li>`).join("")}</ol></div>`;
+    html += infoHtml(p) + anmeldungHtml(p);
+    if (werke.length || programmVon(id).length || hatRolle("admin", "leitung", "lehrkraft", "notenwart")) html += programmHtml(p);
     if (istLehrkraft() && cl.length) html += `<div class="karte"><h3>✅ Checkliste</h3><ul class="liste">${cl.map((l, i) => { const ok = l.trim().startsWith("[x]"); return `<li><label style="display:flex;gap:10px;align-items:center;flex:1"><input type="checkbox" ${ok ? "checked" : ""} data-c="clHaken" data-x="${id}|${i}"> <span style="${ok ? "text-decoration:line-through;color:var(--grau)" : ""}">${esc(l.replace(/^\s*\[[x ]\]\s*/, ""))}</span></label></li>`; }).join("")}</ul></div>`;
     html += `<h3>Termine</h3>` + ts.map((t) => terminKarte(t, { mitAntwort: false })).join("");
     return html;
@@ -226,9 +229,16 @@ VIEWS.kinder = {
       const p = hole("personen", k);
       const g = wirksameGruppen(db, k).map((x) => hole("gruppen", x));
       return `<div class="karte"><div class="zeile-titel">${esc(name(p))}</div><div>${g.map((x) => `<span class="badge" style="color:${esc(x.farbe)}">${esc(x.kuerzel)} – ${esc(x.name)}</span>`).join("")}</div>
-        <div class="hinweis">${instrumenteVon(db, k).map((i) => esc(hole("instrument_typen", i.typ_id)?.name)).join(", ")}</div></div>`;
-    }).join("");
+        <div class="hinweis">${instrumenteVon(db, k).map((i) => esc(hole("instrument_typen", i.typ_id)?.name)).join(", ")}</div>
+        <details class="kind-kontakt"><summary>✏️ Kontaktdaten von ${esc(p.vorname)} ändern</summary><div id="kk-${k}">${KIND_KONTAKT.map((f) => `<div class="feld"><label>${esc(TABELLEN.personen.felder.find((x) => x.k === f)?.t || f)}</label><input name="${f}" value="${esc(p[f] || "")}"></div>`).join("")}
+          <button class="knopf haupt" data-a="kindKontakt" data-x="${k}">💾 Speichern</button></div></details></div>`;
+    }).join("") + '<p class="hinweis">Mit 18 Jahren entscheiden die Kinder selbst, ob die Eltern weiter Zugriff haben (die Leitung trägt das ein).</p>';
   },
+};
+AKTIONEN.kindKontakt = async (k) => {
+  const f = formWerte(document.getElementById("kk-" + k));
+  await speichere("personen", { ...hole("personen", k), ...Object.fromEntries(KIND_KONTAKT.map((x) => [x, f[x] ?? ""])) });
+  toast("💾 Gespeichert"); zeichne();
 };
 
 // 🟢 Online-Stand geändert → Orchester-Ansichten neu zeichnen (grüne Punkte an den Gesichtern)

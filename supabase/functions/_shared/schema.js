@@ -37,6 +37,8 @@ export const ANWESENHEIT_NAMEN = { "": "nicht erfasst", ...Object.fromEntries(Ob
 export const GENEHMIGUNG_ZWECKE = { teilnahme: "Teilnahme & Datenschutz", foto_intern: "📷 Fotos intern (App, nur Mitglieder)", foto_website: "📷 Fotos Schul-Website",
   foto_presse: "📷 Fotos Presse", foto_social: "📷 Fotos Social Media", reise: "Fahrt / Freizeit", leihvertrag: "Leihvertrag Instrument", gesundheit: "Gesundheit / Erste Hilfe", sonstiges: "Sonstiges" };
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
+export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
+export const LEIH_ZUBEHOER = { koffer: "Koffer / Tasche", bogen: "Bogen", kolophonium: "Kolophonium", schulterstuetze: "Schulterstütze", mundstueck: "Mundstück", gurt: "Gurt", rohre: "Rohrblätter", pflege: "Pflegeset", staender: "Ständer" };
 export const TEILNAHME = { pflicht: ["❗", "Teilnahme erforderlich"], erwuenscht: ["🙂", "Teilnahme erwünscht"], info: ["ℹ️", "Nur zur Info"] };
 
 export const PERSONEN_TYPEN = {
@@ -123,8 +125,13 @@ export function chatPartnerErlaubt(ich, p, { verwandt = false, schuelerUntereina
   if (kind(ich) && kind(p)) return schuelerUntereinander !== false;
   if (kind(ich) || kind(p)) return fuehrt(kind(ich) ? p : ich); // Kind ↔ Erwachsener: nur Leitung und Lehrkräfte
   const verw = (x) => fuehrt(x) || (x.rollen || []).some((r) => VERWALTER.includes(r));
+  if (ich.typ === "ehemalig" && p.typ === "ehemalig") return true; // 🎓 Ehemalige untereinander (0.21.0)
   return verw(ich) || verw(p);
 }
+// 👪 Elternrechte (0.21.0): bei volljährigen Schülern nur noch, wenn das Kind es erlaubt (eltern_kind.zugriff_ab_18)
+export const elternZugriff = (e, kind) => !!e && (!kind || (kind.typ === "schueler" ? istMinderjaehrig(kind) || e.zugriff_ab_18 === true : kind.typ === "ehemalig" ? e.zugriff_ab_18 === true : true));
+// Kontaktdaten, die Eltern für ihre Kinder selbst ändern dürfen (ohne Umweg über „Änderung melden“)
+export const KIND_KONTAKT = ["mobil", "email", "telefon", "strasse", "plz", "ort", "schule"];
 // Unter 18 (ohne Geburtsdatum: als minderjährig behandelt)
 export function istMinderjaehrig(p, heute = new Date()) {
   if (!p || p.typ !== "schueler") return false;
@@ -153,7 +160,7 @@ export function onlineKreis(p) {
 }
 export const onlineFuer = (konfig) => (Array.isArray(konfig?.online_fuer) ? konfig.online_fuer.filter((k) => k in ONLINE_KREISE) : ["leitung"]);
 export const onlineErlaubt = (p, konfig) => { const k = onlineKreis(p); return !!k && onlineFuer(konfig).includes(k); };
-export const pwAppPerson = (p) => !!p && !p.geloescht_am && p.status !== "ausgetreten" && (["schueler", "eltern", "leitung", "lehrkraft"].includes(p.typ) || (p.rollen || []).some((r) => VERWALTER.includes(r)));
+export const pwAppPerson = (p) => !!p && !p.geloescht_am && p.status !== "ausgetreten" && (["schueler", "eltern", "leitung", "lehrkraft", "ehemalig"].includes(p.typ) || (p.rollen || []).some((r) => VERWALTER.includes(r)));
 export const pwSichtbar = (z, ich) => !!z && (z.von === ich || (z.fuer || "alle") === "alle" || (z.fuer === "personen" && (z.personen || []).includes(ich)));
 export const pwEmpfaenger = (z, personen) => (z.fuer === "ich" ? [] : z.fuer === "personen" ? [...new Set(z.personen || [])].filter((id) => id !== z.von) : personen.filter((p) => pwAppPerson(p) && p.id !== z.von).map((p) => p.id));
 export const pwGelesenId = (zettelId, personId) => `${zettelId}:${personId}`;
@@ -170,6 +177,7 @@ export const TABELLEN = {
       { k: "nachname", t: "Nachname", typ: "text", pflicht: true },
       { k: "typ", t: "Art", typ: "wahl", werte: PERSONEN_TYPEN, pflicht: true },
       { k: "status", t: "Status", typ: "wahl", werte: { aktiv: "aktiv", pausiert: "pausiert", gast: "Gast/Aushilfe", ausgetreten: "ausgetreten" } },
+      { k: "ausgetreten_am", t: "ausgetreten am (Löschfrist beginnt)", typ: "datum" },
       { k: "jahrgang", t: "Jahrgangsstufe", typ: "zahl", nur: (z) => z.typ === "schueler" },
       { k: "schule", t: "Schule", typ: "text", nur: (z) => z.typ === "schueler" },
       { k: "firma", t: "Firma / Einrichtung", typ: "text", nur: (z) => ["partner", "dienstleister", "spender", "unterstuetzer"].includes(z.typ) },
@@ -187,7 +195,7 @@ export const TABELLEN = {
       { k: "notiz", t: "Notiz", typ: "lang" },
     ],
     liste: ["nachname", "vorname", "typ", "jahrgang", "email", "mobil", "ort"],
-    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }, { k: "avatar", typ: "json" }, { k: "uebe_plan", typ: "json" }, { k: "kalender_alarm", typ: "zahl" }], // uebe_plan: Übezeiten & Wochenziel · kalender_alarm: Erinnerung in Minuten vor Terminen (Kalender-Abo) · avatar: selbst gestaltetes Gesicht · freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
+    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }, { k: "avatar", typ: "json" }, { k: "uebe_plan", typ: "json" }, { k: "kalender_alarm", typ: "zahl" }, { k: "anonymisiert", typ: "ja" }], // uebe_plan: Übezeiten & Wochenziel · kalender_alarm: Erinnerung in Minuten vor Terminen (Kalender-Abo) · avatar: selbst gestaltetes Gesicht · freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
     anzeige: (z) => `${z.vorname || ""} ${z.nachname || ""}`.trim(),
   },
   eltern_kind: {
@@ -197,8 +205,9 @@ export const TABELLEN = {
       { k: "kind_id", t: "Kind", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler", pflicht: true },
       { k: "beziehung", t: "Beziehung", typ: "wahl", werte: { mutter: "Mutter", vater: "Vater", sonstige: "Erziehungsberechtigt" } },
       { k: "hauptkontakt", t: "Hauptkontakt", typ: "ja" },
+      { k: "zugriff_ab_18", t: "Kind ist volljährig und erlaubt den Eltern weiter Zugriff", typ: "ja" },
     ],
-    liste: ["eltern_id", "kind_id", "beziehung", "hauptkontakt"],
+    liste: ["eltern_id", "kind_id", "beziehung", "hauptkontakt", "zugriff_ab_18"],
   },
   gruppen: {
     titel: "Gruppen", sym: "🅰️", gruppe: "Orchester", lesen: ALLE_VERWALTER, schreiben: L,
@@ -210,8 +219,12 @@ export const TABELLEN = {
       { k: "sort", t: "Reihenfolge", typ: "zahl" },
       { k: "aktiv", t: "aktiv", typ: "ja" },
       { k: "soll", t: "Soll-Besetzung je Register (z. B. {\"r-v1\": 7})", typ: "json" },
+      // 🎓 Schuljahreswechsel als Regel (0.21.0) statt fester Kürzel
+      { k: "wechsel_nach", t: "Schuljahreswechsel: weiter in Gruppe", typ: "ref", ref: "gruppen" },
+      { k: "wechsel_ab_jg", t: "… ab Jahrgangsstufe", typ: "zahl" },
+      { k: "ehemalige", t: "Gruppe der Ehemaligen (nach dem Abschluss)", typ: "ja" },
     ],
-    liste: ["kuerzel", "name", "beschreibung", "aktiv"],
+    liste: ["kuerzel", "name", "beschreibung", "aktiv", "wechsel_nach", "wechsel_ab_jg"],
     anzeige: (z) => `${z.kuerzel} – ${z.name}`,
   },
   gruppe_zuordnung: {
@@ -308,14 +321,22 @@ export const TABELLEN = {
     titel: "Ausleihen", sym: "🤝", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
     felder: [
       { k: "inventar_id", t: "Instrument", typ: "ref", ref: "inventar", pflicht: true },
-      { k: "person_id", t: "an", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler", pflicht: true },
+      { k: "person_id", t: "an", typ: "ref", ref: "personen", filter: (p) => ["schueler", "ehemalig", "lehrkraft"].includes(p.typ), pflicht: true },
       { k: "von", t: "ab", typ: "datum", pflicht: true },
       { k: "bis", t: "Rückgabe bis", typ: "datum" },
       { k: "status", t: "Status", typ: "wahl", werte: { angefragt: "angefragt", aktiv: "ausgeliehen", zurueck: "zurückgegeben" } },
       { k: "zustand_ausgabe", t: "Zustand bei Ausgabe", typ: "text" },
       { k: "zustand_rueckgabe", t: "Zustand bei Rückgabe", typ: "text" },
+      // 🤝 Leihvertrag (0.21.0): Zubehör, Kaution, Leihgebühr, Versicherung, Verweis auf die Zustimmung der Eltern
+      { k: "zubehoer", t: "Zubehör", typ: "liste", werte: LEIH_ZUBEHOER },
+      { k: "kaution", t: "Kaution (€)", typ: "geld" },
+      { k: "kaution_status", t: "Kaution", typ: "wahl", werte: { offen: "offen", bezahlt: "bezahlt", zurueck: "zurückgezahlt", einbehalten: "einbehalten (Schaden)" } },
+      { k: "gebuehr", t: "Leihgebühr je Jahr (€)", typ: "geld" },
+      { k: "gebuehr_bezahlt_bis", t: "Leihgebühr bezahlt bis", typ: "datum" },
+      { k: "versicherung", t: "Versicherung", typ: "wahl", werte: { verein: "über den Förderverein", privat: "privat (Hausrat)", keine: "keine" } },
+      { k: "vertrag_id", t: "Leihvertrag (Zustimmung)", typ: "ref", ref: "genehmigungen" },
     ],
-    liste: ["inventar_id", "person_id", "von", "bis", "status"],
+    liste: ["inventar_id", "person_id", "von", "bis", "status", "kaution_status"],
   },
   reparaturen: {
     titel: "Reparaturen & Wartung", sym: "🔧", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
@@ -355,9 +376,51 @@ export const TABELLEN = {
       { k: "beschreibung", t: "Beschreibung", typ: "lang" },
       { k: "checkliste", t: "Checkliste (eine Zeile je Punkt, [x] = erledigt)", typ: "lang", vermerk: true },
       { k: "begleiter", t: "Begleitpersonen (sehen während der Fahrt die Gesundheitsangaben)", typ: "refs", ref: "personen", filter: (p) => ["leitung", "lehrkraft", "eltern", "foerderverein"].includes(p.typ) },
+      // 🎭 Konzert & Reise (0.21.0)
+      { k: "treffpunkt", t: "Treffpunkt (z. B. 17:30 Bühneneingang)", typ: "text" },
+      { k: "kleiderordnung", t: "Kleiderordnung", typ: "text" },
+      { k: "anmeldung", t: "Anmeldung in der App (Reise / Freizeit)", typ: "ja" },
+      { k: "anmeldeschluss", t: "Anmeldeschluss", typ: "datum" },
+      { k: "kosten", t: "Kosten je Teilnehmer (€)", typ: "geld" },
+      { k: "plaetze", t: "Plätze (leer = unbegrenzt)", typ: "zahl" },
+      { k: "transport_inventar", t: "Transport: Instrumente", typ: "refs", ref: "inventar", vermerk: true },
+      { k: "transport_ausstattung", t: "Transport: Ausstattung (Notenständer, Technik …)", typ: "refs", ref: "ausstattung", vermerk: true },
     ],
     liste: ["titel", "art", "von", "bis", "ort"],
     anzeige: (z) => z.titel,
+  },
+  // 🎼 Konzertprogramm (0.21.0): Reihenfolge mit Werken, Pause, Ansagen, Zugabe; Gesamtdauer aus den Werken
+  programm: {
+    titel: "Konzertprogramm", sym: "🎼", gruppe: "Termine", lesen: ALLE_VERWALTER, schreiben: [...LL, "notenwart"],
+    felder: [
+      { k: "projekt_id", t: "Konzert / Projekt", typ: "ref", ref: "projekte", pflicht: true },
+      { k: "nr", t: "Reihenfolge", typ: "zahl", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: PROGRAMM_ARTEN, pflicht: true },
+      { k: "werk_id", t: "Werk", typ: "ref", ref: "werke" },
+      { k: "titel", t: "Titel (wenn kein Werk)", typ: "text" },
+      { k: "gruppe_id", t: "es spielt", typ: "ref", ref: "gruppen" },
+      { k: "solisten", t: "Solisten", typ: "text" },
+      { k: "dauer_min", t: "Dauer (Min., leer = vom Werk)", typ: "zahl" },
+      { k: "notiz", t: "Notiz (Umbau, Stimmen …)", typ: "text" },
+    ],
+    liste: ["projekt_id", "nr", "art", "werk_id", "titel", "gruppe_id", "dauer_min"],
+  },
+  // 🧳 Reise-/Freizeit-Anmeldung (0.21.0): Eltern melden ihr Kind an, Kasse vermerkt „bezahlt“
+  reise_anmeldungen: {
+    titel: "Anmeldungen (Reisen & Freizeiten)", sym: "🧳", gruppe: "Termine", lesen: [...LL, "vorstand"], schreiben: [...LL, "vorstand"],
+    felder: [
+      { k: "projekt_id", t: "Reise / Freizeit", typ: "ref", ref: "projekte", pflicht: true },
+      { k: "person_id", t: "Teilnehmer", typ: "ref", ref: "personen", pflicht: true },
+      { k: "status", t: "Status", typ: "wahl", werte: { angemeldet: "angemeldet", warteliste: "Warteliste", abgemeldet: "abgemeldet" } },
+      { k: "angemeldet_von", t: "angemeldet von", typ: "ref", ref: "personen" },
+      { k: "angemeldet_am", t: "angemeldet am", typ: "zeit" },
+      { k: "betrag", t: "Betrag (€)", typ: "geld" },
+      { k: "bezahlt", t: "bezahlt", typ: "ja" },
+      { k: "bezahlt_am", t: "bezahlt am", typ: "datum" },
+      { k: "zimmer", t: "Zimmer / Gruppe", typ: "text" },
+      { k: "notiz", t: "Notiz (Abholung, Wünsche)", typ: "text" },
+    ],
+    liste: ["projekt_id", "person_id", "status", "betrag", "bezahlt", "zimmer"],
   },
   terminarten: {
     titel: "Terminarten", sym: "🏷️", gruppe: "Termine", lesen: ALLE_VERWALTER, schreiben: L,
@@ -573,6 +636,7 @@ export const TABELLEN = {
       { k: "beantwortet_von", t: "beantwortet von", typ: "ref", ref: "personen" },
       { k: "beantwortet_am", t: "beantwortet am", typ: "zeit" },
       { k: "papier", t: "auf Papier eingegangen", typ: "ja" },
+      { k: "ausleihe_id", t: "zur Ausleihe", typ: "ref", ref: "ausleihen" },
     ],
     liste: ["vorlage_id", "kind_id", "projekt_id", "frist", "status"],
     intern: [{ k: "vorlage_version", typ: "zahl" }],

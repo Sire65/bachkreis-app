@@ -86,3 +86,11 @@ test("Server-Code ohne Geheimnisse und ohne Service-Role im Browser-Adapter", ()
     assert.ok(!/eyJhbGciOi[\w-]{20,}|service_role|sk_live/i.test(t), d);
   }
 });
+
+test("Jede Browser-Datei ist gültiges JavaScript (node --check) – ein Syntaxfehler legt sonst die ganze App lahm", async () => {
+  const { execFileSync } = await import("node:child_process");
+  for (const d of jsDateien) {
+    try { execFileSync(process.execPath, ["--check", d], { stdio: "pipe" }); }
+    catch (e) { assert.fail(`${d}: ${String(e.stderr || e.message).split("\n").slice(0, 4).join(" ")}`); }
+  }
+});

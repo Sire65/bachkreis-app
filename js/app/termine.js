@@ -201,6 +201,8 @@ VIEWS.termin = {
       <div class="t-marken">${teilnahmeBadge(t)}${t.fuer_alle ? '<span class="badge b-alle">🌍 für alle</span>' : ""}${t.register?.length ? `<span class="badge b-lila">🎼 Registerprobe: ${t.register.map((r) => esc(hole("register", r)?.kurz || "")).join(", ")}</span>` : ""}</div>
       ${t.frist ? `<div class="hinweis">Antwort bis ${datumKurz(t.frist)}</div>` : ""}
       ${t.beschreibung ? `<p>${esc(t.beschreibung).replace(/\n/g, "<br>")}</p>` : ""}
+      ${t.probenplan ? `<details class="t-probenplan" open><summary>🎼 Probenplan</summary><p>${esc(t.probenplan).replace(/\n/g, "<br>")}</p></details>` : ""}
+      ${t.protokoll && darfPlanen() ? `<details class="t-probenplan"><summary>📝 Probenprotokoll (intern)</summary><p>${esc(t.protokoll).replace(/\n/g, "<br>")}</p></details>` : ""}
       ${t.status === "abgesagt" ? '<p class="badge b-rot">Dieser Termin ist abgesagt.</p>' : ""}
       <div class="knopfreihe"><button class="knopf klein" data-a="terminIcs" data-x="${t.id}">📆 In meinen Kalender</button><button class="knopf klein" data-a="terminWa" data-x="${t.id}">🟢 Per WhatsApp teilen</button></div></div>`;
     const meine = fuerWen().filter((p) => eingeladen(db, t, p));

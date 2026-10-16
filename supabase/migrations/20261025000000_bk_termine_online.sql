@@ -15,8 +15,10 @@ create table if not exists bk_termine (
   frist date,
   status text check (status is null or status in ('geplant', 'abgesagt')),
   beschreibung text,
-  soll jsonb,
   register text[],
+  soll jsonb,
+  probenplan text,
+  protokoll text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -44,8 +46,10 @@ alter table bk_termine add column if not exists status text;
 alter table bk_termine drop constraint if exists bk_termine_status_check;
 alter table bk_termine add constraint bk_termine_status_check check (status is null or status in ('geplant', 'abgesagt'));
 alter table bk_termine add column if not exists beschreibung text;
-alter table bk_termine add column if not exists soll jsonb;
 alter table bk_termine add column if not exists register text[];
+alter table bk_termine add column if not exists soll jsonb;
+alter table bk_termine add column if not exists probenplan text;
+alter table bk_termine add column if not exists protokoll text;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_termine_art_id_fk') then alter table bk_termine add constraint bk_termine_art_id_fk foreign key (art_id) references bk_terminarten(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_termine_projekt_id_fk') then alter table bk_termine add constraint bk_termine_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 

@@ -1,13 +1,25 @@
 {
-  "version": "0.23.0",
+  "version": "0.24.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🚗 Mitfahrbörse: zu jedem Termin Plätze anbieten, eine Mitfahrt suchen oder für das eigene Kind buchen – „Ich nehme mit“ nimmt ein Gesuch an, alle Beteiligten bekommen Bescheid",
-    "🚗 Übersicht „Mitfahrbörse“ mit allen Terminen der nächsten 6 Wochen (freie Plätze 🚗 / wer sucht 🙋) und kleine Anzeige in der Terminliste",
-    "🎺 Instrumentenkunde: der Kopf der Figur verrutscht beim Spielen nicht mehr nach links (auch beim Kontrabass)"
+    "🖥️ PC-Programm aufgeräumt: Übersicht nach Bereichen in 3 Spalten mit gleich großen Knöpfen, „Was ist zu tun?“, Tabellen in voller Breite, Bearbeiten in einem großen Fenster mit 3 Spalten",
+    "🧰 Neue PC-Werkzeuge: Terminplanung (auch Serien & Registerproben), Genehmigungen anfordern/erinnern, Rundschreiben, Projekte & Konzerte, Kasse & Beiträge, Notfall- & Foto-Listen, Mitfahrbörse, Teilnahmebescheinigungen, Ferien",
+    "⚙️ Am PC passiert jetzt dasselbe wie in der App: Ausleihe/Rückgabe und Reparatur setzen den Instrumenten-Status, Einkauf wird Inventar, neue/abgesagte Termine benachrichtigen die Eingeladenen",
+    "🌱 Interessenten & Probespiel, 🙋 Helfer- & Dienstplan, 🎼 Probenplan beim Termin, Ausleihe auch von Ausstattung, Datenauskunft je Person am PC",
+    "🐞 Termine am PC richtig nach Datum sortiert, Namen statt Kennungen in allen Listen, Soll-Besetzung als Zahlenfelder statt Code, Absturz beim Öffnen einer Nachricht behoben"
   ],
   "verlauf": [
+    {
+      "version": "0.23.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🚗 Mitfahrbörse: zu jedem Termin Plätze anbieten, eine Mitfahrt suchen oder für das eigene Kind buchen – „Ich nehme mit“ nimmt ein Gesuch an, alle Beteiligten bekommen Bescheid",
+        "🚗 Übersicht „Mitfahrbörse“ mit allen Terminen der nächsten 6 Wochen (freie Plätze 🚗 / wer sucht 🙋) und kleine Anzeige in der Terminliste",
+        "🎺 Instrumentenkunde: der Kopf der Figur verrutscht beim Spielen nicht mehr nach links (auch beim Kontrabass)"
+      ]
+    },
     {
       "version": "0.22.0",
       "datum": "2026-10-16",

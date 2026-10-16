@@ -487,3 +487,14 @@ export function loeschKandidaten(db, { monate = 24, heute = new Date() } = {}) {
 // Anonymisieren statt löschen: Statistik (Anwesenheit, Ausleih-Verlauf) bleibt, die Person ist nicht mehr erkennbar
 export const ANONYM_LEEREN = ["email", "mobil", "telefon", "strasse", "plz", "ort", "geburtsdatum", "notfall_info", "notiz", "schule", "avatar", "freigaben", "benachrichtigung", "uebe_plan"];
 export const ANONYM_LOESCHEN = ["gesundheit", "uebungen", "eigene_termine", "eltern_kind", "klopfen", "reise_anmeldungen"];
+
+// ---------- 🛒 Einkauf → Inventar (0.24.0, gemeinsam für App und PC) ----------
+// Instrument (Typ am Titel erkannt) oder Ausstattung (Notenständer, Technik …); Nummer über beide Tabellen eindeutig
+export function einkaufInventar(db, e, heute = new Date()) {
+  const typ = db.liste("instrument_typen").find((t) => new RegExp(String(t.name).split(/[ /]/)[0], "i").test(e.titel || ""));
+  const instrument = !!typ && !/ständer|staender|pult|stuhl|koffer|kabel|lautsprecher|beamer|mappe/i.test(e.titel || "");
+  const eig = e.finanzierung === "schule" ? "schule" : "foerderverein", tag = tagIso(heute);
+  if (instrument) return { tab: "inventar", zeile: { inventar_nr: naechsteInventarNr(db, "BK-"), typ_id: typ.id, bezeichnung: e.titel, status: "verfuegbar", zustand: "sehr_gut", wert: e.betrag ?? null, anschaffung: tag, finanziert_von: e.finanzierung || "", standort: "Instrumentenraum", eigentuemer: eig } };
+  return { tab: "ausstattung", zeile: { inventar_nr: naechsteInventarNr(db, "A-"), kategorie: /ständer|staender|pult/i.test(e.titel || "") ? "notenstaender" : /lautsprecher|beamer|mikro/i.test(e.titel || "") ? "technik" : "sonstiges",
+    bezeichnung: e.titel, anzahl: Number((String(e.titel || "").match(/^(\d+)/) || [])[1]) || 1, status: "verfuegbar", zustand: "neu", wert: e.betrag ?? null, anschaffung: tag, finanzierung: e.finanzierung || null, einkauf_id: e.id, eigentuemer: eig, standort: "Instrumentenraum" } };
+}

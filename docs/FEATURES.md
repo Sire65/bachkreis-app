@@ -78,6 +78,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F68 | 📜 Mietmaterial, Papier-Exemplare, GEMA-Liste | ✅ | extras.test |
 | BK-F69 | 🚪 Räume, 🔑 Schlüssel, 💛 FV-Mitglieder, 🛡️ Führungszeugnis-Vermerk | ✅ | extras.test |
 | BK-F70 | 🔧 Reparatur für Ausstattung, 📧 Werkstatt-Auftrag, 🛒 Einkauf → Inventar/Ausstattung, Sachspende ↔ Inventar | ✅ | e2e rundgang |
+| BK-F71 | 🖥️ PC-Programm: Bereiche in 3 Spalten, Bearbeiten-Fenster, Werkzeuge für Termine, Genehmigungen, Rundschreiben, Projekte, Kasse, Notfall-/Foto-Listen, Mitfahrbörse, Bescheinigungen, Ferien | ✅ | e2e rundgang |
+| BK-F72 | 🌱 Interessenten & Probespiel, 🙋 Helfer- & Dienstplan, 🎼 Probenplan | ✅ | e2e rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

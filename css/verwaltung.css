@@ -55,3 +55,75 @@ table.vw-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .inv-etikett b { display: block; font-size: 1.1rem; letter-spacing: .04em; }
 .inv-etikett small { display: block; font-size: .72rem; line-height: 1.25; }
 @media print { .inv-tabelle, .kennzahlen, .inv-achtung, .vw-haupt > .hinweis { display: none; } .inv-etikett { border-color: #999; } }
+
+/* 🧱 Aufgeräumtes Layout (0.24.0): Raster mit 3 Spalten, gleich breite Knöpfe, Formular als großes Fenster */
+.vw-seite { font-size: .9rem; }
+.vw-seite button { padding: 6px 10px; font-size: .88rem; }
+.vw-seite button .sym { flex: 0 0 22px; text-align: center; }
+.vw-seite button .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vw-kopf h2 { white-space: nowrap; }
+.vw-kopf .hinweis { flex: 1 1 100%; margin: -4px 0 0; }
+.vw-raster3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.vw-kz4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.vw-kz4 .kennzahl, .kennzahlen .kennzahl { min-height: 74px; display: flex; flex-direction: column; justify-content: center; }
+.vw-bereich { background: var(--karte); border-radius: 14px; box-shadow: var(--schatten); padding: 14px 16px; min-width: 0; }
+.vw-bereich h3 { margin: 0 0 10px; font-size: 1.02rem; }
+.vw-bereich .feld:first-of-type { margin-top: 0; }
+.vw-breit2 { grid-column: span 2; }
+.vw-unten { margin-top: 14px; }
+.vw-knoepfe { display: grid; gap: 6px; }
+.vw-knoepfe .knopf { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: flex-start; text-align: left; padding: 8px 12px; font-size: .9rem; margin: 0; }
+.vw-knoepfe .knopf span { flex: 0 0 22px; text-align: center; }
+.vw-knoepfe .knopf i { margin-left: auto; font-style: normal; color: var(--grau); font-weight: 700; font-size: .8rem; }
+.vw-knoepfe .knopf.werkzeug { background: color-mix(in srgb, var(--marke) 22%, var(--karte2)); }
+/* Bearbeiten-Fenster */
+.vw-modal-hg { position: fixed; inset: 0; background: rgba(15, 12, 4, .45); z-index: 50; display: grid; place-items: center; padding: 24px; }
+.vw-modal { width: min(1100px, 100%); max-height: calc(100vh - 48px); display: flex; }
+.vw-modal .vw-form { position: static; max-height: none; width: 100%; display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.vw-form-kopf { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--linie); }
+.vw-form-kopf h3 { margin: 0; flex: 1; }
+.vw-form-inhalt { padding: 6px 18px 14px; overflow: auto; }
+.vw-form-fuss { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--linie); background: var(--karte2); }
+.vw-form-fuss .fl { flex: 1; }
+.vw-form-fuss .knopf { margin: 0; }
+.vw-felder { gap: 4px 16px; }
+.vw-felder .feld { margin: 6px 0; }
+.vw-felder .feld label { min-height: 2.3em; display: flex; align-items: flex-end; }
+.vw-ja { gap: 8px 16px; margin: 8px 0; }
+.vw-schalter { display: flex; gap: 10px; align-items: center; background: var(--karte2); border-radius: 12px; padding: 10px 12px; font-weight: 700; font-size: .88rem; cursor: pointer; min-height: 48px; }
+.vw-schalter input { width: 20px; height: 20px; flex: none; }
+.vw-schalter.geschuetzt { border-left: 4px solid var(--rot); }
+.vw-form .feld .wahlen { max-height: 220px; overflow: auto; padding: 2px; }
+.vw-tabelle-wrap { max-height: calc(100vh - 140px); }
+.vw-tabelle td { max-width: 360px; }
+@media (max-width: 1250px) { .vw-raster3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .vw-breit2 { grid-column: span 2; } }
+@media (max-width: 820px) { .vw-raster3, .vw-kz4 { grid-template-columns: 1fr; } .vw-breit2 { grid-column: auto; } .vw-modal-hg { padding: 0; } .vw-modal { max-height: 100vh; } }
+@media print { .vw-modal-hg { position: static; background: none; } }
+.vw-abstand { margin-top: 14px; }
+.vw-aktionen { white-space: nowrap; text-align: right; } .vw-aktionen .knopf { margin: 0 0 0 4px; }
+.vw-feld-knopf { display: flex; align-items: flex-end; } .vw-feld-knopf .knopf { margin: 0; }
+.vw-form .feld .wahlen, .vw-bereich .wahlen { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 6px; }
+.vw-form .feld .wahlen label, .vw-bereich .wahlen label { justify-content: flex-start; text-align: left; line-height: 1.2; min-height: 38px; }
+.vw-soll { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
+.vw-soll label { display: flex; align-items: center; gap: 6px; background: var(--karte2); border-radius: 10px; padding: 4px 8px; font-weight: 700; font-size: .85rem; }
+.vw-soll label span { flex: 1; } .vw-soll input { width: 64px !important; padding: 5px 6px !important; }
+.vw-kurzliste li { padding: 6px 0; gap: 8px; } .vw-kurzliste small { color: var(--grau); }
+.vw-pg { list-style: none; margin: 0 0 6px; padding: 0; } .vw-pg li { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--linie); }
+.vw-pg li small { display: block; color: var(--grau); } .vw-pg .knopf { margin: 0; padding: 3px 8px; }
+.vw-bereich h4 { margin: 12px 0 4px; font-size: .9rem; }
+.vw-bereich .vw-knoepfe { margin-top: 10px; }
+.vw-umbruch td { white-space: normal; vertical-align: top; max-width: 320px; }
+.vw-todo { margin-bottom: 14px; } .vw-todo .vw-raster3 { gap: 8px; }
+.vw-todo-punkt { display: flex; gap: 8px; align-items: flex-start; background: var(--karte2); border-radius: 10px; padding: 8px 10px; font-size: .88rem; border-left: 4px solid var(--linie); }
+.vw-todo-punkt.d3, .vw-todo-punkt.d2 { border-left-color: var(--rot); } .vw-todo-punkt.d1 { border-left-color: var(--gelb); }
+.vw-bescheinigungen { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.vw-bescheinigung { background: #fff; color: #111; border: 1px solid #ccc; border-radius: 8px; padding: 22px 26px; break-inside: avoid; page-break-inside: avoid; }
+.vw-bescheinigung header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1a1500; padding-bottom: 6px; }
+.vw-bescheinigung h3 { text-align: center; letter-spacing: .08em; margin: 18px 0 12px; }
+.vw-bescheinigung footer { display: flex; justify-content: space-between; margin-top: 28px; font-size: .88rem; }
+.vw-bescheinigung .unterschrift { border-top: 1px solid #333; padding-top: 4px; min-width: 200px; text-align: center; }
+@media print { .vw-bescheinigungen { grid-template-columns: 1fr; } .vw-bescheinigung { page-break-after: always; border: none; } }
+.vw-haupt .wahlen input[type=checkbox], .vw-modal .wahlen input[type=checkbox] { width: 18px; height: 18px; flex: none; margin: 0; }
+.vw-haupt .wahlen label, .vw-modal .wahlen label { display: flex; align-items: center; gap: 8px; }
+.vw-rm { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vw-haupt input[type=color], .vw-modal input[type=color] { height: 44px; padding: 4px 6px; }

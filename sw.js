@@ -1,7 +1,7 @@
 // Service Worker der Bachkreis-App – atomares Update (AGENTS.md Regel 16):
 // Eine Version = ein Cache mit ALLEN Dateien. Die neue Version wird erst aktiv, wenn die App „jetzt-aktivieren“ sendet
 // (Knopf „Jetzt aktualisieren“). Bis dahin liefert der alte Worker ausschließlich Dateien der alten Version – kein Mischstand.
-const VERSION = "0.23.0";
+const VERSION = "0.24.0";
 const CACHE = "bk-" + VERSION;
 const DATEIEN = [
   "./", "index.html", "verwaltung.html", "manifest.webmanifest",
@@ -13,7 +13,7 @@ const DATEIEN = [
   "js/app/main.js", "js/app/zustand.js", "js/app/start.js", "js/app/termine.js", "js/app/kommunikation.js",
   "js/app/orchester.js", "js/app/instrumente.js", "js/app/leitung.js", "js/app/meins.js", "js/app/buehne.js", "js/app/kopf.js", "js/app/wetter.js", "js/app/jahreszeiten.js", "js/app/fuss.js", "js/app/darstellung.js", "js/app/effekte.js", "js/app/einstellungen.js", "js/app/pinnwand.js", "js/app/nachrichten.js", "js/app/sprache.js", "js/app/sprachsteuerung.js", "js/app/gesichter.js", "js/app/netzsymbol.js", "js/app/notenarchiv.js", "js/app/notenblatt.js", "js/app/schutz.js", "js/app/konzert.js", "js/app/extras.js", "js/kern/notensatz.js", "js/app/ueben.js", "js/app/kalender.js", "js/app/online.js", "js/kern/netz.js", "js/app/instrumentenkunde.js",
   "schriften/bangers.woff2", "schriften/creepster.woff2", "schriften/dancing-script.woff2", "schriften/lobster.woff2", "schriften/mountains-of-christmas.woff2", "schriften/pacifico.woff2", "schriften/rye.woff2", "schriften/unifrakturmaguntia.woff2",
-  "js/verwaltung/main.js",
+  "js/verwaltung/main.js", "js/verwaltung/werkzeuge.js",
 ];
 
 self.addEventListener("install", (e) => {

@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.24.0 DEV – 16.10.2026
+- 🖥️ PC-Layout: `.vw-raster3`/`.vw-kz4`/`.vw-bereich`, Seitenleiste mit „Werkzeuge“, Übersicht nach Bereichen (alle Tabellen + Werkzeuge) mit Cockpit „Was ist zu tun?“; Formular als Fenster (`.vw-modal`, Esc schließt) mit 3 Spalten, Schaltern in einer Reihe, langen Feldern über volle Breite; Mehrfachauswahl als Chips (≤ 40); Einstellungen in Abschnitten
+- 🧰 js/verwaltung/werkzeuge.js: Terminplanung, Genehmigungen, Rundschreiben, Projekte & Konzerte, Kasse & Beiträge, Notfall- & Foto-Listen, Mitfahrbörse, Teilnahmebescheinigungen, Ferien
+- ⚙️ Folgeschritte nach dem Speichern am PC (Ausleihe, Reparatur, Einkauf → `einkaufInventar()` gemeinsam mit der App, Termin neu/abgesagt → Benachrichtigung); Datenauskunft je Person
+- Schema: termine.register/soll als Formularfelder (Soll-Editor), termine.probenplan/protokoll (intern), ausleihen.ausstattung_id, Tabellen `interessenten`, `dienste`, nachrichten.kanaele mit Werten
+- 🐞 Sortierung nach Datum/Zahl statt Anzeige, auf-/absteigend; Namen statt IDs (`nameVon`), Absturz bei „liste“ ohne Werte
+- Migration 20261031000000_bk_pc.sql; Rundgang prüft PC-Werkzeuge und Formular-Überschriften
+
 ## 0.23.0 DEV – 16.10.2026
 - 🚗 mitfahrten: art (angebot/gesuch), zusage_von, notiz; Server: Gesuch nur für eigene Kinder, „Ich nehme mit“ nur als man selbst (SCHON_ZUGESAGT), eigene Zusage zurücknehmen; Benachrichtigungen bei Angebot, Gesuch, Zusage, Buchung, Rückzug
 - Ansicht „Mitfahrbörse“ (Kachel für Eltern und Lehrkräfte, Zahl = Kinder ohne Mitfahrt in 14 Tagen), Mini-Anzeige 🚗/🙋 in der Terminliste

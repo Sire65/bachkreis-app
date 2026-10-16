@@ -220,7 +220,7 @@ export const TABELLEN = {
       { k: "farbe", t: "Farbe", typ: "farbe" },
       { k: "sort", t: "Reihenfolge", typ: "zahl" },
       { k: "aktiv", t: "aktiv", typ: "ja" },
-      { k: "soll", t: "Soll-Besetzung je Register (z. B. {\"r-v1\": 7})", typ: "json" },
+      { k: "soll", t: "Soll-Besetzung je Register", typ: "json", editor: "soll" },
       // 🎓 Schuljahreswechsel als Regel (0.21.0) statt fester Kürzel
       { k: "wechsel_nach", t: "Schuljahreswechsel: weiter in Gruppe", typ: "ref", ref: "gruppen" },
       { k: "wechsel_ab_jg", t: "… ab Jahrgangsstufe", typ: "zahl" },
@@ -319,6 +319,39 @@ export const TABELLEN = {
     liste: ["inventar_nr", "kategorie", "bezeichnung", "anzahl", "status", "standort", "anschaffung", "wert"],
     anzeige: (z) => `${z.inventar_nr} ${z.bezeichnung || ""}`.trim(),
   },
+  // 🌱 Interessenten & Probespiel (0.24.0): wer möchte mitspielen? Vom Erstkontakt bis zur Aufnahme
+  interessenten: {
+    titel: "Interessenten & Probespiel", sym: "🌱", gruppe: "Stammdaten", lesen: LL, schreiben: LL,
+    felder: [
+      { k: "name", t: "Name (Kind)", typ: "text", pflicht: true },
+      { k: "kontakt", t: "Kontakt (Eltern, Telefon/E-Mail)", typ: "text" },
+      { k: "instrument_id", t: "Instrument", typ: "ref", ref: "instrument_typen" },
+      { k: "jahrgang", t: "Jahrgangsstufe", typ: "zahl" },
+      { k: "erfahrung", t: "spielt seit / Unterricht bei", typ: "text" },
+      { k: "status", t: "Status", typ: "wahl", werte: { anfrage: "Anfrage", probespiel: "Probespiel vereinbart", schnupper: "schnuppert mit", aufgenommen: "aufgenommen", warteliste: "Warteliste", abgesagt: "abgesagt" } },
+      { k: "probespiel_am", t: "Probespiel / Schnuppern am", typ: "zeit" },
+      { k: "gruppe_id", t: "passende Gruppe", typ: "ref", ref: "gruppen" },
+      { k: "leihinstrument", t: "braucht Leihinstrument", typ: "ja" },
+      { k: "notiz", t: "Notiz", typ: "lang" },
+    ],
+    liste: ["name", "instrument_id", "jahrgang", "status", "probespiel_am", "gruppe_id"],
+    anzeige: (z) => z.name,
+  },
+  // 🙋 Helfer- & Dienstplan (0.24.0): Aufbau, Kuchen, Kasse, Fahrdienst … je Konzert oder Termin
+  dienste: {
+    titel: "Helfer- & Dienstplan", sym: "🙋", gruppe: "Termine", lesen: [...ALLE_VERWALTER, "terminplaner"], schreiben: TERMIN_PLANER,
+    felder: [
+      { k: "aufgabe", t: "Aufgabe", typ: "text", pflicht: true },
+      { k: "projekt_id", t: "für Konzert / Projekt", typ: "ref", ref: "projekte" },
+      { k: "termin_id", t: "oder Termin", typ: "ref", ref: "termine" },
+      { k: "zeit", t: "wann", typ: "text" },
+      { k: "anzahl", t: "Helfer gebraucht", typ: "zahl" },
+      { k: "helfer", t: "eingeteilt", typ: "refs", ref: "personen", filter: (p) => ["eltern", "foerderverein", "lehrkraft", "leitung", "ehemalig"].includes(p.typ) },
+      { k: "notiz", t: "Notiz", typ: "text" },
+    ],
+    liste: ["aufgabe", "projekt_id", "termin_id", "zeit", "anzahl"],
+    anzeige: (z) => z.aufgabe,
+  },
   // 🚪 Räume & Schlüssel (0.22.0)
   raeume: {
     titel: "Räume", sym: "🚪", gruppe: "Orchester", lesen: ALLE_VERWALTER, schreiben: L,
@@ -396,8 +429,9 @@ export const TABELLEN = {
   ausleihen: {
     titel: "Ausleihen", sym: "🤝", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
     felder: [
-      { k: "inventar_id", t: "Instrument", typ: "ref", ref: "inventar", pflicht: true },
-      { k: "person_id", t: "an", typ: "ref", ref: "personen", filter: (p) => ["schueler", "ehemalig", "lehrkraft"].includes(p.typ), pflicht: true },
+      { k: "inventar_id", t: "Instrument", typ: "ref", ref: "inventar" },
+      { k: "ausstattung_id", t: "oder Ausstattung (Beamer, Notenständer …)", typ: "ref", ref: "ausstattung" },
+      { k: "person_id", t: "an", typ: "ref", ref: "personen", filter: (p) => ["schueler", "ehemalig", "lehrkraft", "leitung", "eltern", "foerderverein"].includes(p.typ), pflicht: true },
       { k: "von", t: "ab", typ: "datum", pflicht: true },
       { k: "bis", t: "Rückgabe bis", typ: "datum" },
       { k: "status", t: "Status", typ: "wahl", werte: { angefragt: "angefragt", aktiv: "ausgeliehen", zurueck: "zurückgegeben" } },
@@ -526,9 +560,13 @@ export const TABELLEN = {
       { k: "frist", t: "Antwort bis", typ: "datum" },
       { k: "status", t: "Status", typ: "wahl", werte: { geplant: "geplant", abgesagt: "abgesagt" } },
       { k: "beschreibung", t: "Hinweise (Treffpunkt, Kleidung …)", typ: "lang" },
+      { k: "register", t: "Nur für Register (Registerprobe; leer = alle)", typ: "refs", ref: "register" },
+      { k: "soll", t: "Soll-Besetzung je Register (für die Ampel)", typ: "json", editor: "soll" },
+      // 🎼 Probenplan (0.24.0): was geprobt wird – und danach kurz, wie es lief
+      { k: "probenplan", t: "Probenplan (Stücke, Takte, Reihenfolge)", typ: "lang" },
+      { k: "protokoll", t: "Probenprotokoll (nach der Probe, intern)", typ: "lang", vermerk: true },
     ],
     liste: ["beginn", "titel", "art_id", "ort", "gruppen", "status"],
-    intern: [{ k: "soll", typ: "json" }, { k: "register", typ: "refs", ref: "register" }],
     anzeige: (z) => z.titel,
   },
   antworten: {
@@ -597,7 +635,7 @@ export const TABELLEN = {
       { k: "wichtig", t: "❗ wichtig", typ: "ja" },
       { k: "express", t: "🏎️ Express", typ: "ja" },
       { k: "antwort_auf", t: "Antwort auf", typ: "text" },
-      { k: "kanaele", t: "Benachrichtigen über", typ: "liste" },
+      { k: "kanaele", t: "Benachrichtigen über", typ: "liste", werte: KOM_KANAELE },
       { k: "geplant_um", t: "⏰ senden um", typ: "zeit" },
       { k: "wiederholung", t: "Wiederholung", typ: "wahl", werte: { einmal: "einmal", taeglich: "jeden Tag", werktags: "werktags", woechentlich: "jede Woche", monatlich: "jeden Monat" } },
       { k: "anlagen", t: "📎 Anhänge", typ: "json" },

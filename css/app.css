@@ -259,3 +259,4 @@ body.mit-fuss .jz-vorschau-aus { bottom: calc(84px + env(safe-area-inset-bottom)
 .mf-gesuch.ok { border-left-color: var(--gruen); }
 .mf-zahlen { display: inline-flex; gap: 2px; }
 .mf-mini { white-space: nowrap; font-weight: 700; }
+.t-probenplan summary { cursor: pointer; font-weight: 800; margin-top: 6px; } .t-probenplan p { margin: 4px 0 0; font-size: .92rem; }

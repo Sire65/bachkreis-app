@@ -559,6 +559,14 @@ export function erzeugeDemodaten(heute = new Date()) {
   const sucher = elternA.find((e) => e !== elternA[0] && e !== elternA[1] && e !== demoEltern?.id);
   if (fahrt && sucher) d.mitfahrten.push({ id: "mf-3", termin_id: fahrt.id, art: "gesuch", fahrer_id: sucher, richtung: "hin", plaetze: 1, abfahrt: "Rünthe, Marktplatz", mitfahrer: d.eltern_kind.filter((e) => e.eltern_id === sucher && mitglieder("g-a").includes(e.kind_id)).slice(0, 1).map((e) => e.kind_id), zusage_von: null, notiz: "mit Cello" });
   for (const m of d.mitfahrten) { m.art ||= "angebot"; m.notiz ??= ""; m.zusage_von ??= null; }
+  // 🌱 Interessenten & 🙋 Helfer (0.24.0), 🎼 Probenplan für die nächsten Proben
+  d.interessenten = [
+    { id: "in-1", name: "Mia Beispiel", kontakt: "Mutter: 0151 0000099", instrument_id: "t-vl", jahrgang: 5, erfahrung: "2 Jahre Musikschule", status: "probespiel", probespiel_am: iso(tag(jetzt, 4, 16, 0)), gruppe_id: "g-c", leihinstrument: true, notiz: "" },
+    { id: "in-2", name: "Ben Muster", kontakt: "ben.eltern@beispiel.invalid", instrument_id: "t-tr", jahrgang: 7, erfahrung: "Bläserklasse", status: "schnupper", probespiel_am: iso(tag(jetzt, 1, 16, 30)), gruppe_id: "g-b", leihinstrument: false, notiz: "kommt mit Freund Paul" },
+    { id: "in-3", name: "Lara Probe", kontakt: "", instrument_id: "t-vc", jahrgang: 6, erfahrung: "Anfängerin", status: "anfrage", probespiel_am: null, gruppe_id: null, leihinstrument: true, notiz: "Anfrage über die Schulwebsite" }];
+  d.dienste = [["Saal aufbauen (Stühle, Notenständer)", "15:00", 6], ["Kuchenbuffet", "Pause", 4], ["Kasse / Programmhefte", "ab 16:30", 2], ["Abbau", "nach dem Konzert", 6]]
+    .map(([aufgabe, zeit, anzahl], i) => ({ id: `di-${i + 1}`, aufgabe, projekt_id: "pr-herbst", termin_id: null, zeit, anzahl, helfer: d.eltern_kind.slice(i * 5, i * 5 + Math.min(anzahl - 1, 3)).map((e) => e.eltern_id), notiz: "" }));
+  for (const t of d.termine.filter((x) => new Date(x.beginn) > jetzt && /Probe/.test(x.titel)).slice(0, 4)) t.probenplan = "17:00 Einspielen\n17:10 Bach, Brandenburgisches Konzert: T. 1–40 Tutti\n17:45 Air: Bindungen Streicher\n18:15 Fanfare (Blech)";
   // 🛡️ Führungszeugnis-Vermerk (nur Datum): Lehrkräfte ja, eine Begleitperson fehlt noch
   for (const p of d.personen.filter((x) => x.typ === "lehrkraft" || x.id === "p-leitung")) p.fz_vorgelegt_am = isoTag(tag(jetzt, -Math.floor(100 + r() * 1500)));
 

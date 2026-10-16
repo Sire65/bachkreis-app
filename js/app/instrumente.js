@@ -3,7 +3,7 @@
 import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istLeitung, istVorstand, istVerwalter, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
-import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon, naechsteInventarNr } from "../kern/logik.js";
+import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon, einkaufInventar } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 import { INSTRUMENT_GRUPPEN, INVENTAR_ABGANG, LEIH_ZUBEHOER } from "../kern/schema.js";
 
@@ -318,14 +318,9 @@ AKTIONEN.ekWeiter = async (x) => {
   const e = hole("einkaeufe", id);
   await speichere("einkaeufe", { ...e, status: st });
   if (st === "inventarisiert") {
-    // 📦 Instrument (Typ erkannt am Titel) oder Ausstattung (Notenständer, Technik …) – Nummer über beide Tabellen eindeutig
-    const typ = liste("instrument_typen").find((t) => new RegExp(t.name.split(/[ /]/)[0], "i").test(e.titel));
-    const instrument = !!typ && !/ständer|staender|pult|stuhl|koffer|kabel|lautsprecher|beamer|mappe/i.test(e.titel);
-    const nr = naechsteInventarNr(db, instrument ? "BK-" : "A-");
-    if (instrument) await speichere("inventar", { inventar_nr: nr, typ_id: typ.id, bezeichnung: e.titel, status: "verfuegbar", zustand: "sehr_gut", wert: e.betrag, anschaffung: tagIso(new Date()), finanziert_von: e.finanzierung, standort: "Instrumentenraum", eigentuemer: e.finanzierung === "schule" ? "schule" : "foerderverein" });
-    else await speichere("ausstattung", { inventar_nr: nr, kategorie: /ständer|staender|pult/i.test(e.titel) ? "notenstaender" : /lautsprecher|beamer|mikro/i.test(e.titel) ? "technik" : "sonstiges", bezeichnung: e.titel, anzahl: Number((e.titel.match(/^(\d+)/) || [])[1]) || 1,
-      status: "verfuegbar", zustand: "neu", wert: e.betrag, anschaffung: tagIso(new Date()), finanzierung: e.finanzierung, einkauf_id: e.id, eigentuemer: e.finanzierung === "schule" ? "schule" : "foerderverein", standort: "Instrumentenraum" });
-    toast(`🏷️ Als ${nr} ${instrument ? "(Instrument)" : "(Ausstattung)"} inventarisiert – Angaben in der PC-Verwaltung prüfen`);
+    const neu = einkaufInventar(db, e);
+    await speichere(neu.tab, neu.zeile);
+    toast(`🏷️ Als ${neu.zeile.inventar_nr} ${neu.tab === "inventar" ? "(Instrument)" : "(Ausstattung)"} inventarisiert – Angaben in der PC-Verwaltung prüfen`);
   }
   zeige("einkauf", { id }, { ersetzen: true });
 };

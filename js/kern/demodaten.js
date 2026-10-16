@@ -279,17 +279,20 @@ export function erzeugeDemodaten(heute = new Date()) {
 
   // --- Noten ---
   d.werke = [
-    { id: "w-1", komponist: "Johann Sebastian Bach", titel: "Brandenburgisches Konzert Nr. 3 G-Dur", werkverzeichnis: "BWV 1048", ausgabe: "gemeinfreie Ausgabe (Beispiel)", rechte: "gemeinfrei", projekte: ["pr-herbst"] },
-    { id: "w-2", komponist: "Johann Sebastian Bach", titel: "Orchestersuite Nr. 3 – Air", werkverzeichnis: "BWV 1068", ausgabe: "Bearbeitung für Schulorchester (Beispiel)", rechte: "intern", projekte: ["pr-herbst"] },
-    { id: "w-3", komponist: "Antonín Dvořák", titel: "Sinfonie Nr. 9 „Aus der Neuen Welt“ – 4. Satz (Auszug)", werkverzeichnis: "op. 95", ausgabe: "Bearbeitung (Beispiel)", rechte: "intern", projekte: ["pr-herbst"] },
-    { id: "w-4", komponist: "Verschiedene", titel: "Filmmusik-Medley", werkverzeichnis: "", ausgabe: "Verlagsausgabe (lizenziert, Beispiel)", rechte: "lizenziert", projekte: ["pr-herbst", "pr-fruehling"] },
-    { id: "w-5", komponist: "Georg Friedrich Händel", titel: "Wassermusik – Hornpipe", werkverzeichnis: "HWV 349", ausgabe: "gemeinfreie Ausgabe (Beispiel)", rechte: "gemeinfrei", projekte: ["pr-fruehling"] },
+    { id: "w-1", komponist: "Johann Sebastian Bach", titel: "Brandenburgisches Konzert Nr. 3 G-Dur", werkverzeichnis: "BWV 1048", ausgabe: "gemeinfreie Ausgabe (Beispiel)", rechte: "gemeinfrei", projekte: ["pr-herbst"], gruppen: ["g-a"], schwierigkeit: "schwer", dauer_min: 11 },
+    { id: "w-2", komponist: "Johann Sebastian Bach", titel: "Orchestersuite Nr. 3 – Air", werkverzeichnis: "BWV 1068", ausgabe: "Bearbeitung für Schulorchester (Beispiel)", rechte: "intern", projekte: ["pr-herbst"], gruppen: ["g-a", "g-b"], schwierigkeit: "mittel", dauer_min: 5 },
+    { id: "w-3", komponist: "Antonín Dvořák", titel: "Sinfonie Nr. 9 „Aus der Neuen Welt“ – 4. Satz (Auszug)", werkverzeichnis: "op. 95", ausgabe: "Bearbeitung (Beispiel)", rechte: "intern", projekte: ["pr-herbst"], gruppen: ["g-a"], schwierigkeit: "schwer", dauer_min: 7 },
+    { id: "w-4", komponist: "Verschiedene", titel: "Filmmusik-Medley", werkverzeichnis: "", ausgabe: "Verlagsausgabe (lizenziert, Beispiel)", rechte: "lizenziert", projekte: ["pr-herbst", "pr-fruehling"], gruppen: ["g-a", "g-b", "g-c"], schwierigkeit: "mittel", dauer_min: 8 },
+    { id: "w-5", komponist: "Georg Friedrich Händel", titel: "Wassermusik – Hornpipe", werkverzeichnis: "HWV 349", ausgabe: "gemeinfreie Ausgabe (Beispiel)", rechte: "gemeinfrei", projekte: ["pr-fruehling"], gruppen: ["g-b", "g-c"], schwierigkeit: "leicht", dauer_min: 3 },
+    { id: "w-6", komponist: "Johann Pachelbel", titel: "Kanon in D", werkverzeichnis: "P. 37", ausgabe: "Bearbeitung für Orchesterklasse (Beispiel)", rechte: "gemeinfrei", projekte: ["pr-fruehling"], gruppen: ["g-c"], schwierigkeit: "leicht", dauer_min: 5 },
+    { id: "w-7", komponist: "Wolfgang Amadeus Mozart", titel: "Eine kleine Nachtmusik – 1. Satz", werkverzeichnis: "KV 525", ausgabe: "gemeinfreie Ausgabe (Beispiel)", rechte: "gemeinfrei", projekte: [], gruppen: ["g-d"], schwierigkeit: "mittel", dauer_min: 6 },
   ];
   d.stimmen = [];
   for (const w of d.werke) {
     d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: "Partitur", register_id: null, gruppe_id: null, datei: "" });
     for (const reg of d.register) {
       if (w.id === "w-1" && !["streicher", "tasten"].includes(reg.familie)) continue;
+      if (["w-6", "w-7"].includes(w.id) && reg.familie !== "streicher" && !(w.id === "w-6" && reg.familie === "holz")) continue;
       d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: reg.name, register_id: reg.id, gruppe_id: w.id === "w-3" && reg.id === "r-v1" ? null : null, datei: "" });
     }
   }

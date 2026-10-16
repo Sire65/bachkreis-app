@@ -411,8 +411,11 @@ export const TABELLEN = {
       { k: "ausgabe", t: "Verlag / Ausgabe", typ: "text" },
       { k: "rechte", t: "Rechte", typ: "wahl", werte: { gemeinfrei: "gemeinfrei", lizenziert: "lizenziert", intern: "nur intern" } },
       { k: "projekte", t: "in Projekten", typ: "refs", ref: "projekte" },
+      { k: "gruppen", t: "für Orchester / Klasse", typ: "refs", ref: "gruppen" },
+      { k: "schwierigkeit", t: "Schwierigkeit", typ: "wahl", werte: { leicht: "leicht", mittel: "mittel", schwer: "schwer" } },
+      { k: "dauer_min", t: "Dauer (Minuten)", typ: "zahl" },
     ],
-    liste: ["komponist", "titel", "werkverzeichnis", "rechte"],
+    liste: ["komponist", "titel", "werkverzeichnis", "gruppen", "rechte"],
     anzeige: (z) => `${z.komponist}: ${z.titel}`,
   },
   stimmen: {

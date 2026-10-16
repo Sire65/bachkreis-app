@@ -75,6 +75,16 @@ await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("nachric
 await p.click("#naNetz"); await p.waitForSelector("#netzBlatt table"); await p.click('[data-a="netzMessen"]');
 await p.waitForFunction(() => /ms ·/.test(document.getElementById("netzBlatt")?.textContent || ""), null, { timeout: 8000 }).catch(() => fehler.push("Netz: Messung ohne Ergebnis"));
 await p.click('[data-a="blattZu"]');
+// 📚 Notenarchiv: Orchester › Stücke (Filter, Liste/Kachel) › Noten nach Instrument
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("noten")); await p.waitForSelector(".na-klasse");
+await p.click('.na-klasse[data-x="g-a"]'); await p.waitForSelector(".na-stueck");
+await p.click('[data-a="notenPanel"]'); await p.selectOption('select[data-x="register"]', "r-v1"); await p.waitForSelector(".na-schnell");
+await p.click('[data-a="notenAnsicht"][data-x="liste"]'); await p.waitForSelector(".na-zeile-unten");
+await p.click('[data-a="notenReset"]'); await p.click('[data-a="notenAnsicht"][data-x="kachel"]'); await p.click('[data-a="notenPanel"]');
+await p.click(".na-stueck-knopf"); await p.waitForSelector(".na-stimme");
+if (!(await p.$('[data-a="notenFamilie"][data-x="streicher"]'))) fehler.push("Notenarchiv: Streicher-Filter fehlt");
+await p.click('[data-a="notenFamilie"][data-x="streicher"]'); if ((await p.$$eval("details.ig", (l) => l.length)) !== 1) fehler.push("Notenarchiv: Instrument-Filter greift nicht");
+await p.click('[data-a="notenFamilie"][data-x=""]');
 // 🎼 Orchester mit Gesichtern, 🎺 Instrumentenkunde, 🙂 Mein Gesicht
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("orchester")); await p.waitForSelector(".sitzplan .gesicht");
 for (const x of ["register", "besetzung", "sitzplan"]) { await p.click(`[data-a="orchAnsicht"][data-x="${x}"]`); await p.waitForTimeout(150); }

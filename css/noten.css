@@ -1,0 +1,35 @@
+/* 📚 Notenarchiv (0.13.0): Orchester › Stücke › Noten nach Instrument – Kacheln oder Liste */
+.na-pfad { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; font-size: .82rem; margin: -6px 0 6px; color: var(--grau); }
+.na-pfad button { border: none; background: none; padding: 2px 4px; font: inherit; font-weight: 800; color: var(--haupt); cursor: pointer; border-radius: 6px; }
+.na-pfad b { color: var(--text); } .na-pfad span { opacity: .6; }
+:root.dunkel .na-pfad button { color: var(--gold); }
+.na-gitter { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 8px; }
+.na-klasse { display: grid; gap: 3px; text-align: left; border: 1px solid var(--linie); border-top: 6px solid var(--f); background: var(--karte); color: var(--text); border-radius: 14px; padding: 10px; font: inherit; cursor: pointer; box-shadow: var(--schatten); }
+.na-klasse b { font-size: 1rem; } .na-klasse small { color: var(--grau); font-size: .76rem; line-height: 1.25; }
+.na-kz { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--f); color: #fff; font-weight: 900; font-size: 1rem; }
+.na-kz.klein { width: 30px; height: 30px; flex: none; }
+.na-zahlen { font-size: .78rem; font-weight: 700; margin-top: 2px; }
+.na-pdf { display: block; height: 6px; border-radius: 3px; background: var(--karte2); overflow: hidden; margin-top: 4px; min-width: 50px; }
+.na-pdf i { display: block; height: 100%; background: #d9a21b; } .na-pdf.voll i { background: #2e9d5b; }
+.na-pdfz { font-size: .72rem; color: var(--grau); font-weight: 700; }
+.na-zeile { display: flex; align-items: center; gap: 10px; } .na-zeile .na-pdf { width: 60px; flex: none; } .na-zeile .na-pdfz { flex: none; }
+.na-stueck { display: grid; gap: 6px; align-content: start; }
+.na-stueck-knopf { display: grid; gap: 2px; text-align: left; border: 1px solid var(--linie); border-left: 5px solid var(--haupt); background: var(--karte); color: var(--text); border-radius: 12px; padding: 9px 10px; font: inherit; cursor: pointer; box-shadow: var(--schatten); height: 100%; }
+.na-stueck-knopf b { font-size: .95rem; line-height: 1.2; } .na-stueck-knopf small { color: var(--grau); font-size: .75rem; }
+.na-komp { font-weight: 800; text-transform: uppercase; letter-spacing: .02em; font-size: .68rem !important; }
+.na-marken { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 3px; }
+.na-marke { font-size: .7rem; font-weight: 700; background: var(--karte2); border-radius: 999px; padding: 1px 7px; }
+.na-schnell { justify-self: start; }
+.na-anzahl { margin: 0 0 6px; font-size: .8rem; }
+.na-werk .na-pdf { max-width: 220px; }
+.na-stimmen { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 8px; }
+.na-stimme { display: grid; gap: 3px; border: 1px solid var(--linie); border-left: 5px solid #d9a21b; background: var(--karte); border-radius: 12px; padding: 8px 9px; position: relative; }
+.na-stimme.hat { border-left-color: #2e9d5b; } .na-stimme b { font-size: .9rem; } .na-stimme small { color: var(--grau); font-size: .74rem; }
+.na-stimme .na-spieler { position: absolute; top: 6px; right: 8px; }
+.na-spieler { font-size: .72rem; font-weight: 800; color: var(--grau); flex: none; }
+.na-stimme-knoepfe { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 2px; } .na-zeile .na-stimme-knoepfe { flex: none; margin: 0; }
+.na-hoch { cursor: pointer; }
+.na-titel { margin: 0 0 2px; font-size: 1.1rem; line-height: 1.25; }
+.inst-panel select { width: 100%; min-width: 0; } .inst-panel label { min-width: 0; }
+li.na-zeile:has(.na-zeile-unten) { flex-wrap: wrap; } .na-zeile-unten { display: flex; align-items: center; gap: 8px; width: 100%; }
+.na-zeile-unten .na-pdfwrap { display: flex; align-items: center; gap: 6px; margin-left: auto; } .na-zeile-unten .na-pdf { width: 70px; margin: 0; }

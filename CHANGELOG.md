@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.13.0 DEV – 16.10.2026
+- 📚 Notenarchiv neu (js/app/notenarchiv.js): Orchester/Klasse › Stücke › Noten nach Instrument, Kacheln/Liste, Suche, Chips, Filter (Instrument, Projekt, Schwierigkeit, Rechte), Sortierung, PDF-Stand, Spieler je Register
+- werke: gruppen („für Orchester / Klasse“), schwierigkeit, dauer_min – Nachtrags-Migration 20261023000000_bk_notenarchiv.sql
+
 ## 0.12.1 DEV – 16.10.2026
 - 🐦 Kuckuck wie KC 2.428.0: gesperrter Ton → „🔊 Antippen“ (bis 20 s), stumm gerufen → eine Minute „nochmal mit Ton“; schlafenden Ton wecken, nie Rufe übereinander
 

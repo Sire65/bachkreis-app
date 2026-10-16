@@ -87,3 +87,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 - Wellen = Qualität aus den echten Antwortzeiten (Ø der letzten 5 Anfragen, höchstens 3 Minuten alt), sonst Schätzung des Handys; ohne Messung grau (nie „gut“), ✕ bei offline/Serverfehler.
 - Antippen: Blatt mit Netzart, Qualität, Messwerten, „📏 Jetzt messen“ (3× version.json ohne Zwischenspeicher).
 - Gemessen werden nur Dauer und Erfolg – keine Inhalte. Schalter: ⚙️ › 💬 Nachrichten (Symbol), ⚙️ › ✨ Effekte (Blinken; aus auch bei „Animierte Knöpfe“ aus und „Bewegung reduzieren“).
+
+## 📚 Notenarchiv (0.13.0)
+- **Drei Ebenen:** 🎻 Orchester / Klasse (A, B, Orchesterklasse, Ehemalige, „Alle Stücke“, ggf. „Ohne Orchester“) › 🎼 Stücke › 📄 Noten nach Instrument. Oben ein Pfad zum Zurückspringen.
+- **Ansicht:** 🔲 Kacheln oder ☰ Liste auf allen Ebenen (je Gerät gemerkt). Ein Balken zeigt, wie viele Stimmen schon ein PDF haben.
+- **Stücke:** Suche (Titel, Komponist, Werkverzeichnis, Ausgabe, Stimme), Chips „📄 PDF fehlt“ / „📕 vollständig“, ⚙️ Filter Instrument · Projekt · Schwierigkeit · Rechte, Sortieren. Mit Instrument-Filter steht die passende Stimme direkt auf der Karte.
+- **Noten eines Stücks:** nach Instrumentengruppen (Partitur, Streicher, Holz, Blech, Schlagwerk, Tasten & Harfe, Solo/Sonderstimmen) mit Chips zum Filtern, 👥 Spieler je Instrument im gewählten Orchester, PDF öffnen und 📤 hochladen (Leitung, Lehrkräfte, Notenwart).
+- **Zuordnung:** werke.gruppen („für Orchester / Klasse“, PC-Verwaltung); ohne Angabe zählen die Gruppen der Stimmen. Stimmen mit „nur Gruppe“ erscheinen nur in diesem Orchester.

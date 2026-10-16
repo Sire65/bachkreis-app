@@ -13,6 +13,7 @@ import "./sprachsteuerung.js";
 import "./orchester.js";
 import "./instrumente.js";
 import "./leitung.js";
+import "./notenarchiv.js";
 import "./meins.js";
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";

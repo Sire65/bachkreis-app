@@ -296,6 +296,15 @@ export function erzeugeDemodaten(heute = new Date()) {
       d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: reg.name, register_id: reg.id, gruppe_id: w.id === "w-3" && reg.id === "r-v1" ? null : null, datei: "" });
     }
   }
+  // 🎻 Übe-Tagebuch: der Demo-Schüler übt fast täglich, Übezeiten Mo/Mi/Fr/So 17:30 (Wochenziel 150 Min.)
+  d.uebungen = [];
+  if (demoSchueler) {
+    demoSchueler.uebe_plan = { an: true, tage: [1, 3, 5, 7], zeit: "17:30", dauer: 30, ziel: 150, alarm: 10 };
+    const plan = [[0, 25, ["tonleitern", "stueck"], 4], [1, 30, ["stueck"], 3], [2, 15, ["etueden"], 2], [4, 40, ["stueck", "vomblatt"], 5], [5, 20, ["tonleitern", "rhythmus"], 4],
+      [6, 35, ["stueck"], 4], [8, 30, ["etueden", "stueck"], 3], [9, 20, ["tonleitern"], 3], [11, 45, ["stueck"], 5], [12, 25, ["gehoer", "rhythmus"], 4]];
+    plan.forEach(([vor, minuten, inhalt, gefuehl], i) => d.uebungen.push({ id: `ue-${i + 1}`, person_id: demoSchueler.id, datum: isoTag(tag(jetzt, -vor - 1)), minuten,
+      werk_id: ["w-2", "w-3", "w-1"][i % 3], inhalt, gefuehl, notiz: i === 0 ? "Takt 17–24 langsam mit Metronom" : "", geteilt: true }));
+  }
   // Sonderzuteilung: Solostimme
   if (demoSchueler) d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: "w-2", bezeichnung: "Violoncello Solo", register_id: null, person_id: demoSchueler.id, datei: "" });
 

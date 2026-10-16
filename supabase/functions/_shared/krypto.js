@@ -14,3 +14,9 @@ export function gleich(a, b) {
   for (let i = 0; i < Math.max(x.length, y.length); i++) d |= (x[i] || 0) ^ (y[i] || 0);
   return d === 0;
 }
+// HMAC-SHA-256 als base64url (📆 Kalender-Abo: Link aus Person + Zählnummer, ohne gespeichertes Geheimnis je Person)
+export async function hmac(geheimnis, text) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(String(geheimnis)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const b = new Uint8Array(await crypto.subtle.sign("HMAC", k, new TextEncoder().encode(String(text))));
+  return btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}

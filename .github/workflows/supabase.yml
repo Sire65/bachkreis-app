@@ -55,6 +55,11 @@ jobs:
             rm -f /tmp/vapid.json
             echo "::notice::Push-Schlüssel (VAPID) erzeugt."
           fi
+          if ! echo "$VORHANDEN" | grep -q "BK_KALENDER_GEHEIMNIS"; then
+            KAL=$(openssl rand -hex 32); echo "::add-mask::$KAL"
+            supabase secrets set --project-ref "$PROJECT_REF" BK_KALENDER_GEHEIMNIS="$KAL" >/dev/null
+            echo "::notice::Schlüssel für das Kalender-Abo erzeugt (einmalig – sonst würden alle Abo-Links ungültig)."
+          fi
           KOM_TOKEN=$(openssl rand -hex 32)
           echo "::add-mask::$KOM_TOKEN"
           echo "KOM_TOKEN=$KOM_TOKEN" >> "$GITHUB_ENV"

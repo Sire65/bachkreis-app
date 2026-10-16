@@ -13,7 +13,8 @@ export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "ko
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status"]);
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen"]);
+export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
 const WIEDERHOLUNG = ["einmal", "taeglich", "werktags", "woechentlich", "monatlich"];
@@ -65,6 +66,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "eltern_kind": return ctx.meine.has(z.kind_id) || ctx.meine.has(z.eltern_id);
     case "gruppe_zuordnung": case "person_instrument": return ctx.person?.typ === "schueler" || ctx.meine.has(z.person_id);
     case "inventar": return ctx.inventar.has(z.id);
+    case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
     case "ausleihen": return ctx.meine.has(z.person_id);
     case "reparaturen": return z.gemeldet_von === ctx.ich || ctx.inventar.has(z.inventar_id);
     case "termine": return ctx.termine.has(z.id);
@@ -317,13 +319,37 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       const erledigt = z.fuer !== "ich" && neu.erledigt_am ? alt?.erledigt_am || jetzt : null;
       return { ok: true, zeile: { ...(alt || {}), id, zettel_id: z.id, person_id: ctx.ich, gesehen_am: alt?.gesehen_am || jetzt, erledigt_am: erledigt }, zusammenfuehren: true };
     }
+    case "uebungen": {
+      // 🎻 Übe-Tagebuch: eigene Einträge bzw. die der Kinder; nur Zahlen, Datum, Stück, feste Inhalte, kurze Notiz
+      if (!ctx.meine.has(neu.person_id) || (alt && alt.person_id !== neu.person_id)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+      const min = Number(neu.minuten), tag = String(neu.datum || "");
+      if (!neu.geloescht_am) {
+        if (!Number.isInteger(min) || min < 1 || min > 600) return { ok: false, grund: "MINUTEN_UNGUELTIG" };
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(tag) || new Date(tag) > new Date(Date.now() + 2 * 86400000)) return { ok: false, grund: "DATUM_UNGUELTIG" };
+      }
+      const g = neu.gefuehl == null ? null : Number(neu.gefuehl);
+      if (g !== null && !(Number.isInteger(g) && g >= 1 && g <= 5)) return { ok: false, grund: "GEFUEHL_UNGUELTIG" };
+      const inhalt = Array.isArray(neu.inhalt) ? [...new Set(neu.inhalt.filter((x) => UEBE_INHALT.includes(x)))] : [];
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "person_id", "datum", "minuten", "werk_id", "geloescht_am"]), inhalt, gefuehl: g, notiz: String(neu.notiz || "").slice(0, 500), geteilt: neu.geteilt === true } };
+    }
     case "personen":
       if (!alt || alt.id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_EINSTELLUNGEN" };
       { const fg = neu.freigaben && typeof neu.freigaben === "object" ? Object.fromEntries(["geburtstag", "mobil", "email", "adresse"].map((k) => [k, neu.freigaben[k] === true])) : alt.freigaben;
         // 🙂 eigenes Gesicht: nur kleine Zahlen je Merkmal (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Hintergrund) – nie Bilder oder Text
         const av = neu.avatar === null ? null : neu.avatar && typeof neu.avatar === "object" ? Object.fromEntries(["haut", "frisur", "haar", "augen", "mund", "brille", "farbe"].filter((k) => Number.isInteger(neu.avatar[k]) && neu.avatar[k] >= 0 && neu.avatar[k] < 20).map((k) => [k, neu.avatar[k]])) : alt.avatar;
-        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg, avatar: av ?? null } }; }
+        const plan = "uebe_plan" in neu ? uebePlanPruefen(neu.uebe_plan) : alt.uebe_plan;
+        const alarm = "kalender_alarm" in neu ? ([0, 15, 30, 60, 120, 1440].includes(Number(neu.kalender_alarm)) ? Number(neu.kalender_alarm) : null) : alt.kalender_alarm;
+        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg, avatar: av ?? null, uebe_plan: plan ?? null, kalender_alarm: alarm ?? null } }; }
     default:
       return { ok: false, grund: "KEIN_SCHREIBRECHT" };
   }
+}
+
+// 🎻 Übezeiten: Wochentage 1–7 (Mo–So), Uhrzeit HH:MM, Dauer und Wochenziel in Minuten, Erinnerung vorher (Minuten)
+export function uebePlanPruefen(p) {
+  if (!p || typeof p !== "object") return null;
+  const tage = Array.isArray(p.tage) ? [...new Set(p.tage.map(Number).filter((t) => Number.isInteger(t) && t >= 1 && t <= 7))].sort() : [];
+  const zeit = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(p.zeit || "")) ? p.zeit : "17:00";
+  const zahl = (v, min, max, std) => (Number.isInteger(Number(v)) && Number(v) >= min && Number(v) <= max ? Number(v) : std);
+  return { an: p.an === true, tage, zeit, dauer: zahl(p.dauer, 5, 240, 30), ziel: zahl(p.ziel, 0, 3000, 120), alarm: zahl(p.alarm, 0, 120, 10) };
 }

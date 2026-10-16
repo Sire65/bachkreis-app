@@ -1,7 +1,7 @@
 // Edge Function bk-api – einziger Zugang der Bachkreis-App zur Datenbank (Service-Rolle bleibt auf dem Server).
 // Die Logik steckt in ../_shared/api.js (auch in den Node-Tests gegen PGlite geprüft). Versand: BK Communicator.
 import postgres from "npm:postgres@3.4.4";
-import { verarbeiten } from "../_shared/api.js";
+import { verarbeiten, kalenderFeed } from "../_shared/api.js";
 import { KANAELE, umgebung } from "../_shared/kom/kanaele-deno.js";
 import { ablage } from "../_shared/ablage-deno.js";
 
@@ -20,6 +20,12 @@ function cors(origin: string | null) {
 Deno.serve(async (req) => {
   const h = cors(req.headers.get("origin"));
   if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
+  // 📆 Kalender-Abo: GET ?kalender=<Link-Schlüssel> → .ics (Apple, Google und Outlook holen das selbst ab)
+  const kal = req.method === "GET" ? new URL(req.url).searchParams.get("kalender") : null;
+  if (kal) {
+    const r = await kalenderFeed(db, kal, Deno.env.get("BK_KALENDER_GEHEIMNIS") ?? "");
+    return new Response(r.text, { status: r.status, headers: { "Content-Type": r.status === 200 ? "text/calendar; charset=utf-8" : "text/plain; charset=utf-8", "Cache-Control": "no-store", "Content-Disposition": 'inline; filename="bachkreis.ics"' } });
+  }
   if (req.method !== "POST") return new Response(JSON.stringify({ ok: false, fehler: "NUR_POST" }), { status: 405, headers: { ...h, "Content-Type": "application/json" } });
   let body: unknown = {};
   try { body = await req.json(); } catch { body = {}; }
@@ -28,6 +34,7 @@ Deno.serve(async (req) => {
     ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim(),
     geraet: req.headers.get("user-agent") ?? "",
   };
-  const r = await verarbeiten(db, body as Record<string, unknown>, meta, { adapter: KANAELE, umgebung: umgebung(), hintergrund, ablage: ablage() });
+  const r = await verarbeiten(db, body as Record<string, unknown>, meta, { adapter: KANAELE, umgebung: umgebung(), hintergrund, ablage: ablage(),
+    kalenderGeheimnis: Deno.env.get("BK_KALENDER_GEHEIMNIS") ?? "", basisUrl: `https://${new URL(req.url).host}/functions/v1/bk-api` });
   return new Response(JSON.stringify(r.json), { status: r.status, headers: { ...h, "Content-Type": "application/json", "Cache-Control": "no-store" } });
 });

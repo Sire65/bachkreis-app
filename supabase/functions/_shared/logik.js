@@ -231,16 +231,43 @@ export function cockpit(db, ichId, heute = new Date()) {
 }
 
 // ---------- Kalender (.ics) ----------
+// Für Apple-, Google- und Outlook-Kalender: Termine (mit Erinnerung „alarm“ Minuten vorher) und – wenn gewünscht –
+// die eigenen 🎻 Übezeiten als wöchentlich wiederkehrende Termine mit eigener Erinnerung (RRULE + VALARM).
 const icsZeit = (d) => new Date(d).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
-const icsText = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/[,;]/g, (c) => "\\" + c);
-export function ics(termine, name = "Bachkreis") {
-  const z = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Bachkreis-App//DE", `X-WR-CALNAME:${icsText(name)}`];
+const icsText = (s) => String(s || "").replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/[,;]/g, (c) => "\\" + c);
+// Zeilen über 75 Zeichen falten (RFC 5545) – sonst schneiden manche Kalender lange Beschreibungen ab
+const falten = (z) => { const out = []; let r = z; while (r.length > 73) { out.push(r.slice(0, 73)); r = " " + r.slice(73); } out.push(r); return out.join("\r\n"); };
+const BYDAY = ["", "MO", "TU", "WE", "TH", "FR", "SA", "SU"];
+const alarmZeilen = (min, text) => (min > 0 ? ["BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsText(text)}`, `TRIGGER:-PT${min}M`, "END:VALARM"] : []);
+// Nächstes Datum (YYYYMMDD, Ortszeit) ab heute, das auf einen der Wochentage (1=Mo … 7=So) fällt
+function uebeStart(tage, heute = new Date()) {
+  for (let i = 0; i < 7; i++) { const d = new Date(heute); d.setDate(d.getDate() + i); const wt = d.getDay() || 7; if (tage.includes(wt)) return d; }
+  return heute;
+}
+export function uebeRrule(plan) { return `FREQ=WEEKLY;BYDAY=${(plan.tage || []).map((t) => BYDAY[t]).join(",")}`; }
+export function ics(termine, name = "Bachkreis", { alarm = 0, uebe = null, titelVor = null, heute = new Date() } = {}) {
+  const z = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Bachkreis-App//DE", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", `X-WR-CALNAME:${icsText(name)}`, "X-WR-TIMEZONE:Europe/Berlin", "REFRESH-INTERVAL;VALUE=DURATION:PT2H", "X-PUBLISHED-TTL:PT2H"];
   for (const t of termine) {
+    const vor = titelVor?.(t);
     z.push("BEGIN:VEVENT", `UID:${t.id}@bachkreis-app`, `DTSTAMP:${icsZeit(new Date())}`, `DTSTART:${icsZeit(t.beginn)}`, `DTEND:${icsZeit(t.ende || t.beginn)}`,
-      `SUMMARY:${icsText(t.titel)}`, `LOCATION:${icsText(t.ort)}`, `DESCRIPTION:${icsText(t.beschreibung)}`, t.status === "abgesagt" ? "STATUS:CANCELLED" : "STATUS:CONFIRMED", "END:VEVENT");
+      `SUMMARY:${icsText((vor ? vor + ": " : "") + (t.status === "abgesagt" ? "ABGESAGT – " : "") + t.titel)}`, `LOCATION:${icsText(t.ort)}`, `DESCRIPTION:${icsText(t.beschreibung)}`,
+      t.status === "abgesagt" ? "STATUS:CANCELLED" : "STATUS:CONFIRMED", ...(t.status === "abgesagt" ? [] : alarmZeilen(alarm, t.titel)), "END:VEVENT");
+  }
+  if (uebe?.an && uebe.tage?.length) {
+    const d = uebeStart(uebe.tage, heute), [h, m] = String(uebe.zeit || "17:00").split(":").map(Number), zw = (n) => String(n).padStart(2, "0");
+    const ende = new Date(d); ende.setHours(h, m + (uebe.dauer || 30), 0, 0);
+    const tag = `${d.getFullYear()}${zw(d.getMonth() + 1)}${zw(d.getDate())}`;
+    z.push("BEGIN:VEVENT", `UID:ueben-${uebe.id || "ich"}@bachkreis-app`, `DTSTAMP:${icsZeit(new Date())}`, `DTSTART;TZID=Europe/Berlin:${tag}T${zw(h)}${zw(m)}00`,
+      `DTEND;TZID=Europe/Berlin:${tag}T${zw(ende.getHours())}${zw(ende.getMinutes())}00`, `RRULE:${uebeRrule(uebe)}`, `SUMMARY:${icsText("🎻 Üben" + (uebe.wer ? " – " + uebe.wer : ""))}`,
+      `DESCRIPTION:${icsText(`Übezeit aus der Bachkreis-App (${uebe.dauer || 30} Min.). Danach in der App unter „🎻 Üben“ eintragen.`)}`, ...alarmZeilen(uebe.alarm ?? 10, "Zeit zum Üben 🎻"), "END:VEVENT");
   }
   z.push("END:VCALENDAR");
-  return z.join("\r\n");
+  return z.map(falten).join("\r\n");
+}
+// „Zu Google Kalender hinzufügen“ für EINEN Termin (ohne Konto-Verbindung: Google öffnet die Vorlage, man tippt „Speichern“)
+export function googleKalenderLink(t) {
+  const q = new URLSearchParams({ action: "TEMPLATE", text: t.titel, dates: `${icsZeit(t.beginn)}/${icsZeit(t.ende || t.beginn)}`, location: t.ort || "", details: t.beschreibung || "", ctz: "Europe/Berlin" });
+  return "https://calendar.google.com/calendar/render?" + q.toString();
 }
 
 // ---------- WhatsApp-Übergabe (keine API, Mensch drückt „Senden“) ----------

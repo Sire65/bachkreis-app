@@ -8,7 +8,8 @@ import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nac
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
-import { sha256, zufallsToken } from "./krypto.js";
+import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
+import { termineFuer, ics } from "./logik.js";
 import * as kom from "./kom/kern.js";
 
 const SITZUNG_TAGE = 180;
@@ -239,6 +240,45 @@ async function pushAbo(db, s, body) {
   return { status: 200, json: { ok: true } };
 }
 
+// ---------- 📆 Kalender-Abo (Apple, Google, Outlook) ----------
+// Link = <person>.<HMAC(Geheimnis, person:zählnummer)> – nichts Geheimes in der Datenbank; „neuer Link“ erhöht die Zählnummer,
+// dann gilt der alte nicht mehr. Der Kalender holt alle paar Stunden: nur Termine dieser Person (Eltern: ihrer Kinder) und die Übezeiten.
+async function kalenderEpoche(db, pid) {
+  return (await db.q(`select epoche from bk_kalender_abos where person_id = $1`, [pid]))[0]?.epoche ?? 0;
+}
+async function kalenderToken(pid, epoche, geheimnis) { return `${pid}.${await hmac(geheimnis, `kalender:${pid}:${epoche}`)}`; }
+async function kalenderLink(db, s, body, dienste) {
+  const g = dienste.kalenderGeheimnis, basis = String(dienste.basisUrl || "");
+  if (!g || !/^https:\/\//.test(basis)) return fehler(503, "KALENDER_NICHT_EINGERICHTET");
+  let ep = await kalenderEpoche(db, s.person.id);
+  if (body.neu) {
+    ep = (await db.q(`insert into bk_kalender_abos (person_id, epoche) values ($1, 1) on conflict (person_id) do update set epoche = bk_kalender_abos.epoche + 1 returning epoche`, [s.person.id]))[0].epoche;
+  }
+  const url = `${basis}?kalender=${encodeURIComponent(await kalenderToken(s.person.id, ep, g))}`;
+  return { status: 200, json: { ok: true, url, webcal: url.replace(/^https:/, "webcal:") } };
+}
+export async function kalenderFeed(db, token, geheimnis) {
+  const leer = { status: 404, text: "Kalender nicht gefunden" };
+  if (!geheimnis) return { status: 503, text: "Kalender nicht eingerichtet" };
+  const m = /^([A-Za-z0-9_-]{1,64})\.([A-Za-z0-9_-]{20,})$/.exec(String(token || ""));
+  if (!m) return leer;
+  const pid = m[1];
+  if (!gleich(await kalenderToken(pid, await kalenderEpoche(db, pid), geheimnis), token)) return leer;
+  const p = (await db.q(`select to_jsonb(p) as p from bk_personen p where id = $1 and geloescht_am is null`, [pid]))[0]?.p;
+  if (!p || p.status === "ausgetreten") return leer;
+  const alle = {};
+  for (const t of ["termine", "gruppe_zuordnung", "person_instrument", "instrument_typen", "eltern_kind", "personen"]) alle[t] = (await alleZeilen(db, t)).filter((z) => !z.geloescht_am);
+  const mini = { liste: (t, f = () => true) => (alle[t] || []).filter(f), hole: (t, id) => (alle[t] || []).find((z) => z.id === id) || null };
+  const kinder = alle.eltern_kind.filter((e) => e.eltern_id === pid).map((e) => e.kind_id);
+  const wer = [...new Set([pid, ...kinder])], seit = new Date(Date.now() - 60 * 86400000);
+  const jeTermin = new Map();
+  for (const w of wer) for (const t of termineFuer(mini, w, { abHeute: true, heute: seit })) (jeTermin.get(t.id) || jeTermin.set(t.id, { t, wer: new Set() }).get(t.id)).wer.add(w);
+  const vorname = (id) => mini.hole("personen", id)?.vorname || "";
+  const titelVor = kinder.length ? (t) => [...jeTermin.get(t.id).wer].filter((w) => w !== pid).map(vorname).join(" & ") : null;
+  await db.q(`insert into bk_kalender_abos (person_id, epoche, zuletzt) values ($1, 0, now()) on conflict (person_id) do update set zuletzt = now()`, [pid]);
+  return { status: 200, text: ics([...jeTermin.values()].map((x) => x.t), "Bachkreis", { alarm: Number(p.kalender_alarm) || 0, uebe: p.uebe_plan ? { ...p.uebe_plan, id: pid } : null, titelVor }) };
+}
+
 // dienste (nur Edge Function/Tests): { adapter, umgebung: { appUrl, quittungUrl, vapidPublic }, hintergrund(promise) }
 export async function verarbeiten(db, body, meta = {}, dienste = {}) {
   dienste = { umgebung: {}, hintergrund: (p) => p, ...dienste };
@@ -275,6 +315,7 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
       await db.q(`insert into bk_konfig (schluessel, wert, geaendert_am) values ($1, $2::jsonb, now()) on conflict (schluessel) do update set wert = excluded.wert, geaendert_am = now()`, [k, JSON.stringify(body.wert ?? null)]);
       return { status: 200, json: { ok: true } };
     }
+    if (aktion === "kalender_link") return await kalenderLink(db, s, body, dienste);
     if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
       const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);
       return { status: 200, json: { ok: true, anzahl: r.length } };

@@ -58,6 +58,7 @@ in der Konsole.
    - Tabellen und Communicator-Startwerte anlegen;
    - `bk-api` und `bk-kom` veröffentlichen;
    - Push-Schlüssel (VAPID) erzeugen;
+   - den Schlüssel fürs Kalender-Abo (`BK_KALENDER_GEHEIMNIS`) einmalig erzeugen – nie ändern, sonst werden alle abonnierten Kalender-Links ungültig;
    - die minütliche Wartung (pg_cron) einrichten.
 5a. **E-Mail einrichten (kostenlos):**
    - Ein Brevo-Konto anlegen und dort die Absender-Adresse bestätigen.

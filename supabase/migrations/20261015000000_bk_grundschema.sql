@@ -35,6 +35,8 @@ create table if not exists bk_personen (
   benachrichtigung jsonb,
   freigaben jsonb,
   avatar jsonb,
+  uebe_plan jsonb,
+  kalender_alarm integer,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -437,6 +439,28 @@ create index if not exists bk_pinnwand_geaendert on bk_pinnwand (geaendert_am);
 alter table bk_pinnwand enable row level security;
 drop trigger if exists bk_pinnwand_stempel on bk_pinnwand;
 create trigger bk_pinnwand_stempel before update on bk_pinnwand for each row execute function bk_abgleich_stempel();
+
+-- Übe-Tagebuch
+create table if not exists bk_uebungen (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  datum date not null,
+  minuten integer not null,
+  werk_id text,
+  inhalt jsonb,
+  gefuehl integer,
+  notiz text,
+  geteilt boolean,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_uebungen_geaendert on bk_uebungen (geaendert_am);
+alter table bk_uebungen enable row level security;
+drop trigger if exists bk_uebungen_stempel on bk_uebungen;
+create trigger bk_uebungen_stempel before update on bk_uebungen for each row execute function bk_abgleich_stempel();
 
 -- Pinnwand: gesehen & erledigt
 create table if not exists bk_pinnwand_gelesen (
@@ -906,6 +930,8 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachr
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_person_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_autor_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_autor_id_fk foreign key (autor_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_von_fk') then alter table bk_pinnwand add constraint bk_pinnwand_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_person_id_fk') then alter table bk_uebungen add constraint bk_uebungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_werk_id_fk') then alter table bk_uebungen add constraint bk_uebungen_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_gelesen_zettel_id_fk') then alter table bk_pinnwand_gelesen add constraint bk_pinnwand_gelesen_zettel_id_fk foreign key (zettel_id) references bk_pinnwand(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_gelesen_person_id_fk') then alter table bk_pinnwand_gelesen add constraint bk_pinnwand_gelesen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_genehmigungen_vorlage_id_fk') then alter table bk_genehmigungen add constraint bk_genehmigungen_vorlage_id_fk foreign key (vorlage_id) references bk_genehmigung_vorlagen(id) on delete restrict; end if; end $$;
@@ -937,6 +963,9 @@ alter table bk_push_abos enable row level security;
 -- Ablage für Dateien (Anhänge, Sprachnachrichten, Noten)
 create table if not exists bk_dateien (id text primary key, von text references bk_personen(id), name text not null, mime text not null, groesse integer not null, art text, inhalt bytea, ablage text not null default 'datenbank', erstellt_am timestamptz not null default now(), geloescht_am timestamptz);
 alter table bk_dateien enable row level security;
+-- 📆 Kalender-Abo: nur die Zählnummer je Person (neuer Link = +1, alter ungültig) – der Link selbst wird nie gespeichert
+create table if not exists bk_kalender_abos (person_id text primary key references bk_personen(id) on delete cascade, epoche integer not null default 0, zuletzt timestamptz);
+alter table bk_kalender_abos enable row level security;
 -- Zugangscodes nur als Hash speichern (Spalte code bleibt für die Vorführversion, im Echtbetrieb leer)
 alter table bk_zugaenge add column if not exists code_hash text;
 create unique index if not exists bk_zugaenge_code_hash on bk_zugaenge (code_hash) where code_hash is not null;

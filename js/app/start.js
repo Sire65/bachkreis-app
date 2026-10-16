@@ -9,6 +9,7 @@ import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { kopfEinsetzen, kopfVerbinden, regEffekt } from "./kopf.js";
 import { dunkelUmschalten } from "./darstellung.js";
 import { pwOffenZahl } from "./pinnwand.js";
+import { wochenStand } from "./ueben.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
 const registerSichtbar = () => REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung());
@@ -62,6 +63,8 @@ export const KACHELN = {
     { id: "meinetermine", sym: "🗓️", t: () => (istEltern() ? "Termine meiner Kinder" : "Meine Termine"), u: "Zusagen auf einen Blick", v: "termine", p: { filter: "meine" }, zahl: () => offeneAntworten() },
     { id: "kinder", sym: "👪", t: "Meine Kinder", u: "Gruppe · Instrument · Termine", v: "kinder", nur: () => istEltern() },
     { id: "meinegenehmigungen", sym: "✍️", t: "Genehmigungen", u: "Zustimmen · Ablehnen · Widerrufen", v: "meinegenehmigungen", nur: () => istEltern(), zahl: () => offeneGenehmigungen() },
+    { id: "ueben", sym: "🎻", t: "Üben", u: () => uebenUntertitel(), v: "ueben", nur: () => istSchueler() || istEltern() },
+    { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin") },
     { id: "meinenoten", sym: "🎼", t: "Meine Noten", u: "Stimmen für mein Instrument", v: "meinenoten", nur: () => istSchueler() || istEltern() },
     { id: "meininstrument", sym: "🎻", t: () => (istEltern() ? "Leihinstrumente" : "Mein Leihinstrument"), u: "Rückgabe · Schaden melden", v: "meininstrument", nur: () => istSchueler() || istEltern() },
     { id: "abwesenheit", sym: "🏖️", t: "Abwesenheit", u: "Zeitraum auf einmal absagen", v: "abwesenheit", nur: () => istSchueler() || istEltern() },
@@ -75,7 +78,7 @@ export const KACHELN = {
   technik: [
     { id: "update", sym: "🔄", t: "Update prüfen", u: () => `Installiert: v${APP_VERSION} ${APP_STUFE}`, aktion: "updatePruefen" },
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
-    { id: "kalender", sym: "📆", t: "Kalender-Export", u: "Termine ins Handy übernehmen", v: "kalender" },
+    { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
     { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt", v: "hilfe" },
     { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter() },
     { id: "ueber", sym: "ℹ️", t: "Über die App", u: "Version · Datenquelle · Lizenzen", v: "ueber" },
@@ -110,7 +113,7 @@ export function adminZustaende() {
 const AD_KACHELN = [["daten", "🗄️", "Datenquelle"], ["abgleich", "🔁", "Abgleich"], ["versand", "📡", "Communicator"], ["push", "🔔", "Push"], ["zugaenge", "🔑", "Zugänge"], ["fehler", "🩺", "Fehler"], ["speicher", "💾", "Speicher"], ["version", "📱", "Versionen"], ["backup", "🛟", "Backup / Export"]];
 KACHELN.admin = AD_KACHELN.map(([id, sym, t]) => ({ id: "ad-" + id, sym, t, v: "admin", p: { blatt: id }, u: () => adminZustaende()[id][1], klasse: () => `ad l-${adminZustaende()[id][0]}`, nur: () => istLeitung() }));
 
-const EINFACH = ["termine", "nachrichten", "sos", "meinetermine", "meinegenehmigungen", "meinenoten", "pinnwand", "cockpit"];
+const EINFACH = ["termine", "nachrichten", "sos", "meinetermine", "meinegenehmigungen", "meinenoten", "ueben", "pinnwand", "cockpit"];
 const wert = (x) => (typeof x === "function" ? x() : x);
 export function kachelnFuer(reg) {
   const e = einst();
@@ -213,3 +216,10 @@ AKTIONEN.ledBlatt = () => {
     <p class="hinweis">Grün = gemessen und in Ordnung · Gelb = aufpassen · Rot = Problem · <b>Grau = unbekannt</b> (nie „in Ordnung“). In der Vorführversion gibt es keinen Server – deshalb grau.</p>`);
 };
 AKTIONEN.oeffne = (x) => { const [view, id] = String(x).split("|"); zeige(view, id ? { id } : {}); };
+
+// 🎻 Untertitel der Üben-Kachel: Minuten diese Woche (eigene bzw. Kinder)
+function uebenUntertitel() {
+  const ids = istEltern() ? kinderVon(db, S.ich.id) : [S.ich.id];
+  const min = ids.reduce((a, pid) => a + wochenStand(liste("uebungen", (u) => u.person_id === pid && !u.geloescht_am)).summe, 0);
+  return min ? `Diese Woche ${min} Min. geübt` : "Tagebuch · Stoppuhr · Übezeiten";
+}

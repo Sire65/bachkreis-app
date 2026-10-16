@@ -9,7 +9,7 @@ import { chatPartner, chatMitText, ungeleseneVorlesen } from "./nachrichten.js";
 
 const ZIELE = [
   [/nachricht|chat/, "nachrichten"], [/termin|kalender|probe/, "termine"], [/pinnwand|zettel/, "pinnwand"], [/noten|stimme/, () => (istVerwalter() ? "noten" : "meinenoten")],
-  [/einstellung|zahnrad|mehr/, "einstellungen"], [/start|anfang|home/, "start"], [/sos|notfall|notruf/, "sos"], [/orchester|mitglied/, "orchester"], [/instrument/, "instrumente"],
+  [/einstellung|zahnrad|mehr/, "einstellungen"], [/start|anfang|home/, "start"], [/sos|notfall|notruf/, "sos"], [/orchester|mitglied/, "orchester"], [/instrument/, "instrumente"], [/üben|ueben|übe/, "ueben"], [/kalender|abo/, "kalender"],
   [/genehmigung/, () => (S.ich?.typ === "eltern" ? "meinegenehmigungen" : "genehmigungen")], [/bühne|buehne/, "buehne"], [/hilfe|tipp/, "hilfe"],
 ];
 export const BEISPIELE = ["Öffne Termine", "Nachricht an Bettina: Ich komme 10 Minuten später", "Express an Judith: Saal 2 ist belegt", "Wichtig an Martin: Bitte Noten mitbringen", "Neuer Zettel: Notenständer wegräumen", "Lies meine Nachrichten", "Hilfe"];

@@ -14,6 +14,8 @@ import "./orchester.js";
 import "./instrumente.js";
 import "./leitung.js";
 import "./notenarchiv.js";
+import { uebenStart } from "./ueben.js";
+import "./kalender.js";
 import "./meins.js";
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
@@ -115,7 +117,7 @@ async function starten() {
   nachrichtenStart();
   const express = expressPruefen(); // 🏎️ Express-Sendungen zuerst (wie KC)
   const pw = pinnwandStart();
-  beimStart(express || pw);
+  beimStart(express || pw || uebenStart()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
   // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird

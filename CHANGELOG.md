@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.14.0 DEV – 16.10.2026
+- 🎻 Üben (js/app/ueben.js): Tagebuch (Tabelle uebungen, privat: Person, Eltern, geteilt → Leitung/Lehrkräfte), Stoppuhr, Woche/Ziel/Serie, Übezeiten (personen.uebe_plan), Hinweis beim Öffnen, Übe-Übersicht
+- 📆 Kalender (js/app/kalender.js): Abo-Link je Person (HMAC aus Person + Zählnummer, Geheimnis BK_KALENDER_GEHEIMNIS, Tabelle bk_kalender_abos), GET bk-api?kalender=… liefert .ics mit Erinnerung (personen.kalender_alarm) und Übezeiten (RRULE); neuer Link macht den alten ungültig
+- .ics: Erinnerungen (VALARM), Zeilenfaltung, Übezeiten als Serie; Google-Kalender-Vorlage je Termin
+- Nachtrags-Migration 20261024000000_bk_ueben_kalender.sql; Supabase-Workflow erzeugt BK_KALENDER_GEHEIMNIS einmalig
+
 ## 0.13.0 DEV – 16.10.2026
 - 📚 Notenarchiv neu (js/app/notenarchiv.js): Orchester/Klasse › Stücke › Noten nach Instrument, Kacheln/Liste, Suche, Chips, Filter (Instrument, Projekt, Schwierigkeit, Rechte), Sortierung, PDF-Stand, Spieler je Register
 - werke: gruppen („für Orchester / Klasse“), schwierigkeit, dauer_min – Nachtrags-Migration 20261023000000_bk_notenarchiv.sql

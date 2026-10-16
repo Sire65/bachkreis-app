@@ -3,7 +3,7 @@
 import { S, VIEWS, db, einst, zeige, zurueck, kopf, name, vorname, istLehrkraft, istLeitung, istEltern } from "./zustand.js";
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
-import { feiertageNRW, termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, tagIso, registerVon, instrumenteVon } from "../kern/logik.js";
+import { feiertageNRW, termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, googleKalenderLink, tagIso, registerVon, instrumenteVon } from "../kern/logik.js";
 import { senden, whatsapp } from "../kern/versand.js";
 
 const ANTW = { ja: ["✅", "Zusage"], vielleicht: ["🤔", "Vielleicht"], nein: ["❌", "Absage"] };
@@ -150,7 +150,14 @@ AKTIONEN.anwesend = async (wert, el) => {
   toast("Anwesenheit gespeichert");
 };
 AKTIONEN.drucken = () => window.print();
-AKTIONEN.terminIcs = (id) => { const t = hole("termine", id); herunterladen(`${t.titel}.ics`, ics([t]), "text/calendar"); };
+// 📆 Ein Termin in den eigenen Kalender: Apple/Outlook per Kalenderdatei, Google per Vorlage (dort „Speichern“)
+AKTIONEN.terminIcs = (id) => {
+  const t = hole("termine", id);
+  blatt("📆 In meinen Kalender", `<p><b>${esc(t.titel)}</b><br><span class="hinweis">${esc(datum(t.beginn))}, ${esc(uhr(t.beginn))} Uhr${t.ort ? " · " + esc(t.ort) : ""}</span></p>
+    <div class="knopfreihe kal-wahl"><button class="knopf" data-a="terminIcsDatei" data-x="${esc(t.id)}">🍎 Apple / Outlook</button><a class="knopf" href="${esc(googleKalenderLink(t))}" target="_blank" rel="noopener">🟢 Google Kalender</a></div>
+    <p class="hinweis">Alle Termine auf einmal – und automatisch aktuell: <button class="link" data-a="kachel" data-x="kalender">📆 Kalender-Abo</button></p>`);
+};
+AKTIONEN.terminIcsDatei = (id) => { const t = hole("termine", id); blattZu(); herunterladen(`${t.titel}.ics`, ics([t], "Bachkreis", { alarm: Number(hole("personen", S.ich.id)?.kalender_alarm) || 0 }), "text/calendar"); };
 AKTIONEN.terminWa = (id) => {
   const t = hole("termine", id);
   whatsapp(`🎻 ${t.titel}\n📅 ${datum(t.beginn)}, ${uhr(t.beginn)} Uhr\n📍 ${t.ort || ""}${t.beschreibung ? "\n" + t.beschreibung : ""}\n\nBitte in der Bachkreis-App zu- oder absagen.`, { betreff: t.titel });
@@ -248,14 +255,5 @@ AKTIONEN.abwesenheitSpeichern = async () => {
   zurueck();
 };
 
-// ---------- Kalender-Export ----------
-VIEWS.kalender = {
-  render() {
-    const ts = fuerWen().flatMap((p) => termineFuer(db, p));
-    return kopf("📆 Kalender-Export") + `<div class="karte"><p>Alle ${ts.length} kommenden Termine als Kalenderdatei (.ics) – lässt sich in Google-, Apple- und Outlook-Kalender importieren.</p>
-      <button class="knopf haupt breit" data-a="alleIcs">📥 Kalenderdatei herunterladen</button>
-      <p class="hinweis">Im Echtbetrieb gibt es zusätzlich ein Kalender-Abo (webcal-Link), das sich automatisch aktualisiert – wie in der Club-App.</p></div>`;
-  },
-};
-AKTIONEN.alleIcs = () => herunterladen("bachkreis-termine.ics", ics([...new Map(fuerWen().flatMap((p) => termineFuer(db, p)).map((t) => [t.id, t])).values()]), "text/calendar");
+// 📆 Kalender übertragen (Apple, Google, Outlook) steht in kalender.js
 export { terminKarte };

@@ -1,15 +1,27 @@
 {
-  "version": "0.13.0",
+  "version": "0.14.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "📚 Notenarchiv neu in drei Schritten: erst 🎻 Orchester bzw. Klasse, dann 🎼 Stücke, dann 📄 Noten nach Instrument – mit Pfad zum Zurückspringen",
-    "🔲 Kacheln oder ☰ Liste (das Gerät merkt sich die Wahl), 📕 Balken zeigt, wie viele Stimmen schon ein PDF haben",
-    "🔍 Suche und ⚙️ Filter: Instrument (mit der passenden Stimme direkt auf der Karte), Projekt, Schwierigkeit, Rechte, „📄 PDF fehlt“ – Sortieren nach Komponist, Titel, Schwierigkeit oder fehlenden PDFs",
-    "Beim Stück: Noten nach Instrumentengruppen (Partitur, Streicher, Holz, Blech …) mit 👥 Anzahl der Spieler im Orchester – so weiß man, wie viele Ausdrucke man braucht",
-    "PC-Verwaltung: je Werk „für Orchester / Klasse“, Schwierigkeit und Dauer"
+    "🎻 Üben: Übe-Tagebuch mit ⏱ Stoppuhr – Minuten, Stück, was geübt (Tonleitern, Etüden, Vom Blatt …) und wie es lief; Wochenbalken, Wochenziel und 🔥 Tage in Folge",
+    "⏰ Übezeiten (Wochentage, Uhrzeit, Dauer): Erinnerung über den Handy-Kalender – zuverlässig auch bei geschlossener App – und beim Öffnen „Heute ist Übetag – schon geübt?“",
+    "📆 Kalender: Termine als Abo in Apple-, Google- oder Outlook-Kalender – automatisch aktuell, mit Erinnerung vor jedem Termin; oder einmal als Kalenderdatei",
+    "Jeder Termin: „📆 In meinen Kalender“ → 🍎 Apple/Outlook oder 🟢 Google Kalender",
+    "Eltern tragen fürs Kind ein und abonnieren die Termine ihrer Kinder (mit Vornamen); Leitung/Lehrkräfte sehen unter „📊 Übe-Übersicht“ nur, was Schüler teilen"
   ],
   "verlauf": [
+    {
+      "version": "0.13.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📚 Notenarchiv neu in drei Schritten: erst 🎻 Orchester bzw. Klasse, dann 🎼 Stücke, dann 📄 Noten nach Instrument – mit Pfad zum Zurückspringen",
+        "🔲 Kacheln oder ☰ Liste (das Gerät merkt sich die Wahl), 📕 Balken zeigt, wie viele Stimmen schon ein PDF haben",
+        "🔍 Suche und ⚙️ Filter: Instrument (mit der passenden Stimme direkt auf der Karte), Projekt, Schwierigkeit, Rechte, „📄 PDF fehlt“ – Sortieren nach Komponist, Titel, Schwierigkeit oder fehlenden PDFs",
+        "Beim Stück: Noten nach Instrumentengruppen (Partitur, Streicher, Holz, Blech …) mit 👥 Anzahl der Spieler im Orchester – so weiß man, wie viele Ausdrucke man braucht",
+        "PC-Verwaltung: je Werk „für Orchester / Klasse“, Schwierigkeit und Dauer"
+      ]
+    },
     {
       "version": "0.12.1",
       "datum": "2026-10-16",

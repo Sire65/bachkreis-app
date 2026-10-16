@@ -107,7 +107,7 @@ export const TABELLEN = {
       { k: "notiz", t: "Notiz", typ: "lang" },
     ],
     liste: ["nachname", "vorname", "typ", "jahrgang", "email", "mobil", "ort"],
-    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }, { k: "avatar", typ: "json" }], // avatar: selbst gestaltetes Gesicht · freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
+    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }, { k: "avatar", typ: "json" }, { k: "uebe_plan", typ: "json" }, { k: "kalender_alarm", typ: "zahl" }], // uebe_plan: Übezeiten & Wochenziel · kalender_alarm: Erinnerung in Minuten vor Terminen (Kalender-Abo) · avatar: selbst gestaltetes Gesicht · freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
     anzeige: (z) => `${z.vorname || ""} ${z.nachname || ""}`.trim(),
   },
   eltern_kind: {
@@ -365,6 +365,21 @@ export const TABELLEN = {
     ],
     liste: ["text", "von", "fuer", "wichtig", "zeit"],
     intern: [{ k: "anzahl", typ: "zahl" }],
+  },
+  uebungen: {
+    // 🎻 Übe-Tagebuch: privat – sehen nur die Person selbst, ihre Eltern und (wenn „geteilt“) Leitung/Lehrkräfte
+    titel: "Übe-Tagebuch", sym: "🎻", gruppe: "Noten", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "datum", t: "Datum", typ: "datum", pflicht: true },
+      { k: "minuten", t: "Minuten", typ: "zahl", pflicht: true },
+      { k: "werk_id", t: "Stück", typ: "ref", ref: "werke" },
+      { k: "inhalt", t: "Was geübt", typ: "json" },
+      { k: "gefuehl", t: "Wie lief's (1–5)", typ: "zahl" },
+      { k: "notiz", t: "Notiz", typ: "lang" },
+      { k: "geteilt", t: "mit Leitung/Lehrkräften geteilt", typ: "ja" },
+    ],
+    liste: ["person_id", "datum", "minuten", "werk_id", "gefuehl"],
   },
   pinnwand_gelesen: {
     titel: "Pinnwand: gesehen & erledigt", sym: "👁️", gruppe: "Kommunikation", lesen: L, schreiben: [],

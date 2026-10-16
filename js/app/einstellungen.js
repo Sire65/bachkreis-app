@@ -130,7 +130,8 @@ VIEWS.einstellungen = {
       + bereich("nachrichten", "💬 Nachrichten", nachrichtenEinst(e))
       + bereich("ansagen", "🗣️ Ansagen, Töne & Tipps", tipps)
       + bereich("privat", "🔒 Privatsphäre", privat)
-      + bereich("kalender", "📆 Termine im Handy-Kalender", `<p>Alle deine Termine als Kalender-Datei fürs Handy (Google, Apple, Outlook).</p><button class="knopf" data-a="kachel" data-x="kalender">📆 Zum Kalender-Export</button>`)
+      + bereich("kalender", "📆 Termine im Handy-Kalender", `<p>Deine Termine im Apple-, Google- oder Outlook-Kalender – als Abo automatisch aktuell, mit Erinnerung vor jedem Termin.</p><button class="knopf" data-a="kachel" data-x="kalender">📆 Kalender einrichten</button>
+        ${schalter("uebeHinweis", "🎻 Übe-Erinnerung beim Öffnen", "An Übetagen fragt die App nach der Übezeit einmal: „Heute ist Übetag – schon geübt?“", e.uebeHinweis !== false)}`)
       + bereich("darstellung", "🎨 Darstellung", darstellung)
       + bereich("effekte", "✨ Effekte", effekte)
       + bereich("startseite", "🧩 Startseite & Ansicht", startseite)

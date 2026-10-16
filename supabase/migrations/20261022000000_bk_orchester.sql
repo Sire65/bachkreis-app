@@ -25,6 +25,8 @@ create table if not exists bk_personen (
   benachrichtigung jsonb,
   freigaben jsonb,
   avatar jsonb,
+  uebe_plan jsonb,
+  kalender_alarm integer,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -62,6 +64,8 @@ alter table bk_personen add column if not exists notiz text;
 alter table bk_personen add column if not exists benachrichtigung jsonb;
 alter table bk_personen add column if not exists freigaben jsonb;
 alter table bk_personen add column if not exists avatar jsonb;
+alter table bk_personen add column if not exists uebe_plan jsonb;
+alter table bk_personen add column if not exists kalender_alarm integer;
 
 -- Gruppen
 create table if not exists bk_gruppen (

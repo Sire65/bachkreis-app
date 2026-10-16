@@ -85,6 +85,14 @@ await p.click(".na-stueck-knopf"); await p.waitForSelector(".na-stimme");
 if (!(await p.$('[data-a="notenFamilie"][data-x="streicher"]'))) fehler.push("Notenarchiv: Streicher-Filter fehlt");
 await p.click('[data-a="notenFamilie"][data-x="streicher"]'); if ((await p.$$eval("details.ig", (l) => l.length)) !== 1) fehler.push("Notenarchiv: Instrument-Filter greift nicht");
 await p.click('[data-a="notenFamilie"][data-x=""]');
+// 🎻 Üben + 📆 Kalender: Stoppuhr, eintragen, Übezeiten, Kalenderdatei, Google-Link je Termin
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("ueben")); await p.waitForSelector(".ue-woche");
+await p.click('[data-a="uebenUhr"][data-x="start"]'); await p.waitForTimeout(300); await p.click('[data-a="uebenUhr"][data-x="stopp"]');
+await p.click('[data-a="uebenMin"][data-x="15"]'); await p.click('[data-a="uebenInhalt"][data-x="stueck"]'); await p.click('[data-a="uebenSpeichern"]'); await p.waitForTimeout(300);
+if (!(await p.$(".ue-liste li"))) fehler.push("Üben: Eintrag fehlt im Tagebuch");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("kalender")); await p.waitForSelector('[data-a="alleIcs"]');
+await p.evaluate(async () => { const { liste } = await import("/js/kern/daten.js"); const t = liste("termine").find((x) => new Date(x.beginn) > new Date()); (await import("/js/app/zustand.js")).zeige("termin", { id: t.id }); });
+await p.click('[data-a="terminIcs"]'); await p.waitForSelector('.kal-wahl a[href^="https://calendar.google.com/"]'); await p.click('[data-a="blattZu"]');
 // 🎼 Orchester mit Gesichtern, 🎺 Instrumentenkunde, 🙂 Mein Gesicht
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("orchester")); await p.waitForSelector(".sitzplan .gesicht");
 for (const x of ["register", "besetzung", "sitzplan"]) { await p.click(`[data-a="orchAnsicht"][data-x="${x}"]`); await p.waitForTimeout(150); }

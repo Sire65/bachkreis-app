@@ -30,7 +30,7 @@ end $$;`);
   z.push("alter table bk_konfig enable row level security;");
   z.push("create table if not exists bk_push_abos (id text primary key default gen_random_uuid()::text, person_id text not null references bk_personen(id), endpoint text not null unique, schluessel jsonb not null, erstellt_am timestamptz not null default now());");
   z.push("alter table bk_push_abos enable row level security;");
-  z.push(...DATEIEN_SQL);
+  z.push(...DATEIEN_SQL, ...KALENDER_SQL);
   z.push("-- Zugangscodes nur als Hash speichern (Spalte code bleibt für die Vorführversion, im Echtbetrieb leer)");
   z.push("alter table bk_zugaenge add column if not exists code_hash text;");
   z.push("create unique index if not exists bk_zugaenge_code_hash on bk_zugaenge (code_hash) where code_hash is not null;");
@@ -76,9 +76,15 @@ const DATEIEN_SQL = [
   "create table if not exists bk_dateien (id text primary key, von text references bk_personen(id), name text not null, mime text not null, groesse integer not null, art text, inhalt bytea, ablage text not null default 'datenbank', erstellt_am timestamptz not null default now(), geloescht_am timestamptz);",
   "alter table bk_dateien enable row level security;",
 ];
+const KALENDER_SQL = [
+  "-- 📆 Kalender-Abo: nur die Zählnummer je Person (neuer Link = +1, alter ungültig) – der Link selbst wird nie gespeichert",
+  "create table if not exists bk_kalender_abos (person_id text primary key references bk_personen(id) on delete cascade, epoche integer not null default 0, zuletzt timestamptz);",
+  "alter table bk_kalender_abos enable row level security;",
+];
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261024000000_bk_ueben_kalender.sql": { titel: "Übe-Tagebuch, Übezeiten und Kalender-Abo (0.14.0)", tabellen: ["uebungen", "personen"], extra: KALENDER_SQL },
   "20261023000000_bk_notenarchiv.sql": { titel: "Notenarchiv: Orchester/Klasse, Schwierigkeit, Dauer je Werk (0.13.0)", tabellen: ["werke"] },
   "20261022000000_bk_orchester.sql": { titel: "Gesichter (Avatar) und Soll-Besetzung je Gruppe (0.11.0)", tabellen: ["personen", "gruppen"] },
   "20261021000000_bk_instrumente.sql": { titel: "Instrumentengruppen und Symbole (0.10.0)", tabellen: ["instrument_typen"] },

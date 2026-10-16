@@ -9,6 +9,7 @@ import "./termine.js";
 import "./kommunikation.js";
 import { pinnwandStart } from "./pinnwand.js";
 import { nachrichtenStart, expressPruefen } from "./nachrichten.js";
+import "./sprachsteuerung.js";
 import "./orchester.js";
 import "./instrumente.js";
 import "./leitung.js";

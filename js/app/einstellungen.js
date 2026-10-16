@@ -53,6 +53,10 @@ function nachrichtenEinst(e) {
     ${schalter("chatTon", "🔔 Ton bei neuer Nachricht im offenen Chat", "Kurzer Ton und Vibrieren", e.chatTon !== false)}
     ${schalter("vorlesen", "🔊 Neue Nachrichten vorlesen", "Im geöffneten Chat liest das Handy neue Nachrichten vor", e.vorlesen === true)}
     ${schalter("entwuerfe", "✏️ Entwürfe merken", "Angefangene Nachrichten bleiben je Chat stehen – auch nach dem Schließen", e.entwuerfe !== false)}
+    ${schalter("chatEinklappen", "📂 Vergangene Tage einklappen", "Im Chat nur heute und Ungelesenes offen – frühere Tage als Zeile mit Datum rechts (z. B. „Mo, 11.11.26“), antippen zum Aufklappen", e.chatEinklappen !== false)}
+    ${schalter("chatKW", "🗓️ Ältere Wochen als Kalenderwoche", "Alles, was älter als eine Woche ist, als „KW 45/26“ zusammenfassen", e.chatKW !== false)}
+    ${schalter("fotosLaden", "📷 Fotos automatisch laden", "Aus: Fotos erst beim Antippen laden – spart Datenvolumen", e.fotosLaden !== false)}
+    ${schalter("sprachsteuerung", "🎤 Sprachsteuerung", "Mikrofon oben im Kopf und in den Nachrichten: „Öffne Termine“, „Nachricht an Bettina: …“, „Lies meine Nachrichten“", e.sprachsteuerung !== false)}
     ${schalter("enterSendet", "⏎ Enter-Taste sendet", "Für PC und Tablet mit Tastatur – Umschalt+Enter = neue Zeile", e.enterSendet === true)}
     <h4>🔔 Benachrichtigen beim Senden (vorausgewählt)</h4>${chips([["regel", "Wie eingestellt"], ["push", "🔔 Push"], ["pushmail", "🔔 + ✉️ E-Mail"]], zs, "zustellStandardWahl")}
     <p class="hinweis">„Wie eingestellt“ = so, wie jede Person es unter 🔔 Benachrichtigungen gewählt hat. Im Chat lässt es sich mit 🔔 je Nachricht ändern.</p>

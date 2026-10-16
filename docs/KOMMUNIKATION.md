@@ -162,3 +162,33 @@ Der Chat ist aufgebaut wie WhatsApp und arbeitet mit dem BK Communicator zusamme
 - **⚙️ Mehr › 💬 Nachrichten:** Lesebestätigung, Wichtigkeit fragen, Ton, Vorlesen, Entwürfe, Enter sendet, vorausgewählte Benachrichtigung, Chat-Farben.
 - **PC-Verwaltung › Einstellungen:** Express je Tag, Bearbeiten-Frist, Schüler untereinander.
 
+## Anhänge, Sprache, Umfragen, Selbstlöschen (0.9.0)
+
+- **📎 Anhänge:** Foto oder Video, Datei (PDF, Word, Excel …) und 🎼 Noten. Je Datei höchstens 8 MB; Fotos werden vorher verkleinert.
+  - Noten kommen entweder aus dem Notenarchiv (Stimme mit PDF öffnet direkt, ohne PDF als Hinweis aufs Archiv) oder als PDF/Foto vom Gerät.
+  - Im Notenarchiv hängen Leitung, Lehrkräfte und Notenwart mit „📤 PDF“ ein PDF an eine Stimme. Schüler finden es unter „Meine Noten“.
+- **🎙️ Sprachnachricht:** Mikrofon rechts neben dem Schreibfeld (bei leerem Feld, wie WhatsApp), höchstens 3 Minuten.
+- **🗣️ Diktieren:** sprechen statt tippen – der Text landet im Schreibfeld, gesendet wird mit ➤.
+- **🎤 Sprachsteuerung** (Mikrofon oben im Kopf und in den Nachrichten):
+  - „Öffne Termine/Nachrichten/Pinnwand/Noten/Einstellungen“
+  - „Nachricht an Bettina: …“, „Express an Judith: …“, „Wichtig an Martin: …“
+  - „Neuer Zettel: …“, „Lies meine Nachrichten“, „Hilfe“
+  - Gesendet wird nie ungefragt.
+- **📊 Umfrage:** Frage mit 2–10 Antworten, eine oder mehrere wählbar, Balken mit Stimmen, „👥 Wer hat was gewählt?“.
+- **⏳ Selbstlöschen:** nach 1 Std., 24 Std. oder 7 Tagen. Danach ist die Nachricht bei allen leer und der Anhang weg (Wartung `bk-kom`, jede Minute).
+- **📂 Eingeklappte Tage:** Im Chat sind vergangene Tage eingeklappt, rechts steht das Datum („Mo, 11.11.26“).
+  - Ältere Wochen sind als „KW 45/26“ zusammengefasst.
+  - Heute, Ungelesenes und angesprungene Nachrichten sind immer offen. „⤢ Alle aufklappen“ öffnet alles.
+  - Abschaltbar unter ⚙️ › 💬 Nachrichten.
+
+### Ablage der Dateien
+
+- Die Tabelle `bk_dateien` wird nicht abgeglichen. Dateien gibt es nur über `bk-api`:
+  - `datei_hochladen`: Art, Größe und eine Tagesgrenze werden geprüft.
+  - `datei_holen`: nur für den Hochlader, wer die Nachricht sieht, oder wer die Noten-Stimme sieht.
+- Gespeichert wird austauschbar (Adapter):
+  - Standard ist die Datenbank (kostenlos).
+  - Mit dem Secret `BK_ABLAGE=storage` stattdessen Supabase Storage, privater Bucket `bk-dateien` (kostenlos bis 1 GB).
+- Verwaiste Dateien räumt die Wartung nach einem Tag auf.
+- In der Vorführversion liegen Dateien nur auf dem Gerät (IndexedDB).
+

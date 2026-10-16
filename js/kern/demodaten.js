@@ -352,6 +352,15 @@ export function erzeugeDemodaten(heute = new Date()) {
     nachricht("u-e2", "p-lk1", `Hallo ${demoSchueler.vorname}, kannst du am Donnerstag 15 Minuten früher zum Einspielen kommen?`, 90);
     nachricht("u-e2", demoSchueler.id, "Ja, klappt! 👍", 80, { antwort_auf: "n-" + d.nachrichten.length });
   }
+  // ältere Tage/Wochen (im Chat eingeklappt: „Mo, 12.10.26“ bzw. „KW 41/26“), 📊 Umfrage, 🎼 Noten als Anhang
+  const st1 = d.stimmen.find((x) => x.werk_id === "w-2") || d.stimmen[0], w1 = st1 && d.werke.find((w) => w.id === st1.werk_id);
+  nachricht("u-a", "p-leitung", "Willkommen im neuen Schuljahr! Die erste Probe ist am Dienstag um 18 Uhr. 🎻", 60 * 24 * 23);
+  nachricht("u-a", demoSchueler?.id || "p-leitung", "Super, ich freu mich! 😊", 60 * 24 * 23 - 40);
+  nachricht("u-a", "p-leitung", "Die Probenpläne für den Herbst hängen an der Pinnwand.", 60 * 24 * 16);
+  nachricht("u-a", "p-leitung", "Hier sind die Noten für das Herbstkonzert – bitte bis Dienstag üben.", 60 * 24 * 9, st1 ? { anlagen: [{ art: "noten", name: `${w1?.titel || "Noten"} – ${st1.bezeichnung}`, stimme_id: st1.id, werk_id: st1.werk_id }] } : {});
+  nachricht("u-a", "p-leitung", "", 60 * 24 * 2, { umfrage: { frage: "Wer fährt mit dem Bus zum Konzert nach Unna?", optionen: ["Ich fahre mit dem Bus", "Ich werde gebracht", "Weiß ich noch nicht"], mehrfach: false },
+    umfrage_stimmen: Object.fromEntries(d.gruppe_zuordnung.filter((z) => z.gruppe_id === "g-a").slice(0, 14).map((z, i) => [z.person_id, [i % 3 === 2 ? 1 : 0]])) });
+  nachricht("u-a", demoSchueler?.id || "p-leitung", "Brauchen wir für Unna die Mappen mit?", 60 * 24 * 2 - 30);
   const morgen8 = tag(jetzt, 1, 8);
   nachricht("u-b", "p-leitung", "Guten Morgen! Denkt heute an eure Notenmappen. 🎼", 0, { zeit: iso(morgen8), geplant_um: iso(morgen8), wiederholung: "woechentlich" });
   // Pinnwand wie KC: Post-its in 4 Farben (je Verfasser 1 gelb, 2 rosé, 3 hellgrün, 4 hellblau), für alle / bestimmte / nur mich

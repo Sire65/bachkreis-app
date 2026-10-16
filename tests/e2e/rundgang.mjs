@@ -49,7 +49,21 @@ const letzte = (await p.$$("#chatVerlauf .blase.ich")).pop(); await letzte.click
 await p.screenshot({ path: `${BILDER}chat-details.png` }); await p.click('#blattHg [data-a="blattZu"]');
 await p.fill("#chatText", "Rundgang geplant"); await p.click('[data-a="spaeterWahl"]'); await p.click('[data-a="gpZeit"][data-x="1"]'); await p.click('[data-a="gpPlanen"]');
 await p.waitForSelector(".gp-blase"); await p.screenshot({ path: `${BILDER}chat.png` });
-await p.click('[data-a="zurueck"]'); await p.waitForSelector(".chatliste"); await p.click('[data-a="zurueck"]'); await p.waitForSelector(".kachel");
+// 0.9: eingeklappte Tage/KW, Umfrage, Foto als Anhang, Sprachsteuerung (Befehl direkt – Headless hat keine Spracherkennung)
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("unterhaltung", { id: "u-a" })); await p.waitForSelector("#chatVerlauf");
+if (!(await p.$(".tag-zu.kw"))) fehler.push("Chat: keine eingeklappten Wochen (KW)");
+await p.click('[data-a="tageAlle"][data-x="auf"]'); await p.waitForSelector(".umfrage"); await p.click(".uf-opt >> nth=1");
+await p.waitForSelector(".uf-opt.meine").catch(() => fehler.push("Umfrage: Stimme nicht gezählt"));
+await p.click('[data-a="anhangMenue"]');
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+await p.setInputFiles('input[data-x="bild"]', { name: "probe.png", mimeType: "image/png", buffer: PNG });
+await p.waitForSelector(".anhang-chip.fertig"); await p.click('[data-a="chatSenden"]');
+await p.waitForSelector("#chatVerlauf img[src^='blob:']", { timeout: 5000 }).catch(() => fehler.push("Chat: Foto nicht angezeigt"));
+await p.evaluate(async () => (await import("/js/app/sprachsteuerung.js")).befehl("Nachricht an Judith: Hallo aus dem Rundgang"));
+await p.waitForFunction(() => document.getElementById("chatText")?.value === "Hallo aus dem Rundgang", null, { timeout: 4000 }).catch(() => fehler.push("Sprachsteuerung: Nachricht nicht vorbereitet"));
+await p.evaluate(async () => (await import("/js/app/sprachsteuerung.js")).befehl("Öffne Termine")); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start"));
+await p.waitForSelector(".kachel");
 // Kopf wie KC: alle Infofeld-Karten, Wetter-Tag, Jalousie halb/ganz, Jahreszeiten-Vorschauen
 const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);
 for (let i = 0; i < karten; i++) { await p.click(`#infoPunkte .ipunkt[data-x="${i}"]`); await p.waitForTimeout(150); }

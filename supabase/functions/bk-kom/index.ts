@@ -5,7 +5,8 @@
 // Die Logik steckt in ../_shared/kom/kern.js (in den Node-Tests gegen PGlite geprüft).
 import postgres from "npm:postgres@3.4.4";
 import { wartung, quittung } from "../_shared/kom/kern.js";
-import { nachrichtenFreigeben } from "../_shared/nachrichten.js";
+import { nachrichtenFreigeben, nachrichtenAufraeumen } from "../_shared/nachrichten.js";
+import { ablage } from "../_shared/ablage-deno.js";
 import { KANAELE, umgebung } from "../_shared/kom/kanaele-deno.js";
 import { gleich } from "../_shared/krypto.js";
 
@@ -41,7 +42,8 @@ Deno.serve(async (req) => {
     if (!TOKEN || !gleich(req.headers.get("x-bk-planer") ?? "", TOKEN)) return antwort(401, { ok: false, fehler: "PLANER_TOKEN" }, h);
     if (body.aufgabe === "wartung") {
       const geplant = await nachrichtenFreigeben(db).catch((e) => { console.error("geplante Nachrichten", e); return { fehler: true }; }); // ⏰ zuerst freigeben, dann gleich zustellen
-      return antwort(200, { ok: true, geplant, bericht: await wartung(db, KANAELE, umgebung()) }, h);
+      const aufgeraeumt = await nachrichtenAufraeumen(db, ablage()).catch((e) => { console.error("Selbstlöschen", e); return { fehler: true }; }); // ⏳
+      return antwort(200, { ok: true, geplant, aufgeraeumt, bericht: await wartung(db, KANAELE, umgebung()) }, h);
     }
     if (body.aufgabe === "einrichten") {
       const url = umgebung().quittungUrl;

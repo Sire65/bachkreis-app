@@ -1,9 +1,10 @@
 // Leitungs-Cockpit, Vorgänge/Aufgaben, Genehmigungen (Leitung & Eltern), Notenarchiv & „Meine Noten“.
-import { S, VIEWS, db, zeige, zurueck, kopf, name, vorname, istLehrkraft, istLeitung, istVorstand, istEltern, istSchueler } from "./zustand.js";
+import { S, VIEWS, db, zeige, zurueck, zeichne, kopf, name, vorname, hatRolle, istLehrkraft, istLeitung, istVorstand, istEltern, istSchueler } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, uhr, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele } from "../kern/daten.js";
 import { cockpit, genehmigungsUebersicht, genehmigungStatus, kinderVon, elternVon, wirksameGruppen, instrumenteVon, termineFuer, antwortZaehler, tagIso, gruppenMitglieder, verteilerAufloesen, verteilerListe, generellerWechselPlan } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
+import { hochladen, dateiOeffnen } from "../kern/dateien.js";
 
 // ---------- Cockpit ----------
 const BEREICHE = [["heute", "📅 Heute & diese Woche"], ["ich", "🙋 Wartet auf mich"], ["andere", "⏳ Wartet auf andere"], ["bald", "🔜 Fällig bald"]];
@@ -138,15 +139,29 @@ VIEWS.noten = {
       const st = liste("stimmen", (s) => s.werk_id === w.id);
       return kopf("📚 " + esc(w.titel)) + `<div class="karte"><b>${esc(w.komponist)}</b> · ${esc(w.werkverzeichnis || "")}<div class="hinweis">${esc(w.ausgabe || "")}</div><span class="badge ${RECHTE[w.rechte] || ""}">${esc(w.rechte || "")}</span>
         <div>${(w.projekte || []).map((x) => `<span class="badge">🎭 ${esc(hole("projekte", x)?.titel)}</span>`).join("")}</div></div>
-        <div class="karte"><h3>Stimmen (${st.length})</h3><ul class="liste">${st.map((s) => `<li><div class="fl"><b>${esc(s.bezeichnung)}</b> <span class="hinweis">${s.register_id ? "→ " + esc(hole("register", s.register_id)?.name) : s.person_id ? "→ nur " + esc(name(s.person_id)) : "Partitur / alle"}${s.gruppe_id ? " · nur " + esc(hole("gruppen", s.gruppe_id)?.kuerzel) : ""}</span></div><button class="knopf klein" data-a="notenDatei" data-x="${s.id}">📄</button></li>`).join("")}</ul></div>`;
+        <div class="karte"><h3>Stimmen (${st.length})</h3><ul class="liste">${st.map((s) => `<li><div class="fl"><b>${esc(s.bezeichnung)}</b> <span class="hinweis">${s.register_id ? "→ " + esc(hole("register", s.register_id)?.name) : s.person_id ? "→ nur " + esc(name(s.person_id)) : "Partitur / alle"}${s.gruppe_id ? " · nur " + esc(hole("gruppen", s.gruppe_id)?.kuerzel) : ""}</span></div><button class="knopf klein" data-a="notenDatei" data-x="${s.id}" title="${s.datei?.startsWith("datei:") ? "PDF öffnen" : "noch kein PDF"}">${s.datei?.startsWith("datei:") ? "📕" : "📄"}</button>${darfNoten() ? `<label class="knopf klein" title="PDF oder Foto der Stimme hochladen">📤 PDF<input type="file" accept="application/pdf,image/*" data-c="notenHochladen" data-x="${s.id}" hidden></label>` : ""}</li>`).join("")}</ul></div>`;
     }
     const ws = liste("werke").sort((a, b) => a.komponist.localeCompare(b.komponist));
     return kopf("📚 Notenarchiv") + `<div class="karte"><ul class="liste">${ws.map((w) => `<li class="klick" data-a="notenWerk" data-x="${w.id}"><div class="fl"><div class="zeile-titel">${esc(w.titel)}</div><div class="zeile-unter">${esc(w.komponist)} ${esc(w.werkverzeichnis || "")} · ${liste("stimmen", (s) => s.werk_id === w.id).length} Stimmen</div></div><span class="badge ${RECHTE[w.rechte] || ""}">${esc(w.rechte || "")}</span></li>`).join("")}</ul></div>
-      <p class="hinweis">Werke und Stimmen werden in der PC-Verwaltung angelegt. Die PDF-Dateien kommen im Echtbetrieb in einen geschützten Speicher (z. B. Cloudflare R2) – in der Vorführversion sind keine Dateien hinterlegt.</p>`;
+      <p class="hinweis">Werke und Stimmen werden in der PC-Verwaltung angelegt. PDFs hängst du mit „📤 PDF“ an eine Stimme (geschützte Ablage – Schüler sehen nur ihre Stimmen). 📕 = PDF da. Im Chat lassen sie sich mit 📎 › 🎼 direkt verschicken.</p>`;
   },
 };
 AKTIONEN.notenWerk = (id) => zeige("noten", { werk: id });
-AKTIONEN.notenDatei = () => toast("📄 Vorführversion: Hier öffnet sich später das PDF der Stimme.");
+// 🎼 Noten-PDF einer Stimme: öffnen (alle, die die Stimme sehen) und hochladen (Leitung, Lehrkräfte, Notenwart) – gleiche Ablage wie Chat-Anhänge
+AKTIONEN.notenDatei = async (sid) => {
+  const s = hole("stimmen", sid);
+  if (!s?.datei?.startsWith("datei:")) return toast(darfNoten() ? "📄 Für diese Stimme ist noch kein PDF hinterlegt – im Notenarchiv mit „📤 PDF“ anhängen." : "📄 Für diese Stimme ist noch kein PDF hinterlegt.");
+  try { await dateiOeffnen(s.datei.slice(6), `${hole("werke", s.werk_id)?.titel || "Noten"} – ${s.bezeichnung}.pdf`, "application/pdf"); } catch (e) { toast("⚠️ " + e.message); }
+};
+const darfNoten = () => hatRolle("leitung", "admin", "lehrkraft", "notenwart");
+AKTIONEN.notenHochladen = async (_, el) => {
+  const f = el.files?.[0], s = hole("stimmen", el.dataset.x); if (!f || !s) return;
+  try {
+    const d = await hochladen(f, { name: f.name, art: "noten" });
+    await speichere("stimmen", { ...s, datei: "datei:" + d.id });
+    toast("📕 PDF hinterlegt – Schüler finden es unter „Meine Noten“, und es lässt sich im Chat anhängen"); zeichne();
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+};
 
 VIEWS.meinenoten = {
   render() {
@@ -159,7 +174,7 @@ VIEWS.meinenoten = {
       const werke = liste("werke", (w) => (w.projekte || []).some((p) => projekte.has(p)));
       const passend = werke.map((w) => ({ w, st: liste("stimmen", (s) => s.werk_id === w.id && (s.person_id === pid || (!s.person_id && s.register_id && regs.includes(s.register_id) && (!s.gruppe_id || gr.includes(s.gruppe_id))))) })).filter((x) => x.st.length);
       html += `${istEltern() ? `<h3>${esc(vorname(pid))}</h3>` : ""}` + (passend.map(({ w, st }) => `<div class="karte"><div class="zeile-titel">${esc(w.titel)}</div><div class="hinweis">${esc(w.komponist)} · ${(w.projekte || []).filter((p) => projekte.has(p)).map((p) => esc(hole("projekte", p)?.titel)).join(", ")}</div>
-        <div class="knopfreihe">${st.map((s) => `<button class="knopf klein" data-a="notenDatei" data-x="${s.id}">📄 ${esc(s.bezeichnung)}</button>`).join("")}</div></div>`).join("") || '<div class="leer">Für deine Projekte sind noch keine Stimmen hinterlegt.</div>');
+        <div class="knopfreihe">${st.map((s) => `<button class="knopf klein" data-a="notenDatei" data-x="${s.id}">${s.datei?.startsWith("datei:") ? "📕" : "📄"} ${esc(s.bezeichnung)}</button>`).join("")}</div></div>`).join("") || '<div class="leer">Für deine Projekte sind noch keine Stimmen hinterlegt.</div>');
     }
     return html + '<p class="hinweis">Du siehst automatisch die Stimmen für deine Instrumente, deine Gruppe und deine Projekte – auch bei einem temporären Gruppenwechsel.</p>';
   },

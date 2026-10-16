@@ -74,6 +74,18 @@ try {
   await lk.evaluate(async () => (await import("/js/kern/daten.js")).jetztAbgleichen()); await lk.waitForTimeout(800);
   await lk.waitForFunction(() => [...document.querySelectorAll("#chatVerlauf .blase.express")].pop()?.textContent.includes("Empfang bestätigt"), null, { timeout: 10000 });
   assert.ok(await lk.$("#chatVerlauf .blase.express:last-of-type .haken.blau") || await lk.evaluate(() => !![...document.querySelectorAll("#chatVerlauf .blase.express")].pop()?.querySelector(".haken.blau")), "blaue Haken beim Absender");
+  // 📎 Noten-PDF über den Server: Lehrkraft hängt eine Datei an → Schülerin lädt sie (Rechte-Prüfung auf dem Server)
+  await lk.click('[data-a="anhangMenue"]');
+  await lk.setInputFiles('input[data-x="noten"]', { name: "Air-Cello.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.4\n%%EOF") });
+  await lk.waitForSelector(".anhang-chip.fertig", { timeout: 10000 }); await lk.fill("#chatText", "Hier die Noten"); await lk.click('[data-a="chatSenden"]'); await lk.waitForTimeout(2500);
+  await sch.evaluate(async () => (await import("/js/kern/daten.js")).jetztAbgleichen()); await sch.waitForTimeout(800);
+  const pdf = await sch.evaluate(async () => {
+    const d = await import("/js/kern/daten.js"), f = await import("/js/kern/dateien.js");
+    const n = d.liste("nachrichten", (x) => (x.anlagen || []).some((a) => a.name === "Air-Cello.pdf"))[0];
+    await f.dateiUrl(n.anlagen[0].id); // lädt wie beim Antippen
+    const r = await d.serverAktion("datei_holen", { id: n.anlagen[0].id }); return atob(r.daten);
+  });
+  assert.equal(pdf, "%PDF-1.4\n%%EOF", "Schülerin bekommt das PDF");
   assert.deepEqual(fehler.filter((x) => !/401/.test(x)), [], "keine Seitenfehler");
   console.log("Echtbetrieb-Test ✔");
 } finally { await b.close(); srv.kill(); }

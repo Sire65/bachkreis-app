@@ -4,7 +4,8 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, nachrichtFrei } from "./schema.js";
+import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen } from "./schema.js";
+import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
 import { sha256, zufallsToken } from "./krypto.js";
@@ -100,6 +101,16 @@ async function speichern(db, s, body) {
     const ids = [...new Set(zeilen.map((z) => String(z?.nachricht_id || "")))];
     ctx.nMap = new Map((await db.q(`select to_jsonb(n) as z from bk_nachrichten n where id = any($1::text[])`, [ids])).map((r) => [r.z.id, r.z]));
   }
+  // 📎 Anhänge: welche der genannten Dateien hat diese Person hochgeladen bzw. darf sie als Noten weitergeben?
+  if (tab === "nachrichten") {
+    const ids = [...new Set(zeilen.flatMap((z) => (Array.isArray(z?.anlagen) ? z.anlagen : []).map((a) => String(a?.id || "")).filter(Boolean)))];
+    ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime, groesse from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
+    ctx.notenDateien = new Set();
+    if (ids.length) {
+      const st = (await db.q(`select to_jsonb(s) as z from bk_stimmen s where datei = any($1::text[]) and geloescht_am is null`, [ids.map((i) => "datei:" + i)])).map((r) => r.z);
+      for (const z of filtern("stimmen", st, ctx)) ctx.notenDateien.add(String(z.datei).slice(6));
+    }
+  }
   for (const neuRoh of zeilen) {
     if (!neuRoh || typeof neuRoh !== "object") continue;
     const { basis_version, ...neu } = neuRoh;
@@ -174,6 +185,39 @@ async function versenden(db, s, body, dienste) {
   return { status: 200, json: { ...r, vorgemerkt: r.auftraege } };
 }
 
+// ---------- 📎 Dateien: hochladen (nur angemeldet, Art und Größe geprüft) und holen (nur wer sie sehen darf) ----------
+async function dateiHochladen(db, s, body, ablage) {
+  const name = String(body.name || "Datei").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").slice(0, 120), mime = String(body.mime || "").toLowerCase().split(";")[0];
+  const b64 = String(body.daten || "");
+  if (!DATEI.mime.test(mime)) return fehler(400, "DATEIART_NICHT_ERLAUBT");
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(b64) || !b64.length) return fehler(400, "DATEI_UNGUELTIG");
+  const groesse = Math.floor((b64.length * 3) / 4) - (b64.endsWith("==") ? 2 : b64.endsWith("=") ? 1 : 0);
+  if (groesse > DATEI.max) return fehler(413, "DATEI_ZU_GROSS");
+  const heute = (await db.q(`select coalesce(sum(groesse), 0)::bigint as n from bk_dateien where von = $1 and erstellt_am > now() - interval '1 day'`, [s.person.id]))[0].n;
+  if (Number(heute) + groesse > 100 * 1024 * 1024) return fehler(429, "TAGESGRENZE_DATEIEN");
+  const id = crypto.randomUUID(), art = DATEI.arten.includes(body.art) ? body.art : "datei";
+  await db.q(`insert into bk_dateien (id, von, name, mime, groesse, art) values ($1, $2, $3, $4, $5, $6)`, [id, s.person.id, name, mime, groesse, art]);
+  try { await ablage.speichern(db, id, b64, mime); } catch (e) { await db.q(`delete from bk_dateien where id = $1`, [id]); throw e; }
+  return { status: 200, json: { ok: true, id, name, mime, groesse } };
+}
+async function dateiHolen(db, s, body, ablage) {
+  const id = String(body.id || "");
+  const d = (await db.q(`select id, von, name, mime, groesse from bk_dateien where id = $1 and geloescht_am is null`, [id]))[0];
+  if (!d) return fehler(404, "DATEI_FEHLT");
+  let darf = d.von === s.person.id;
+  if (!darf) {
+    const ctx = await kontextLaden(db, s.person);
+    const jetzt = new Date().toISOString();
+    const ns = (await db.q(`select to_jsonb(n) as z from bk_nachrichten n where anlagen @> $1::jsonb and geloescht_am is null and zurueckgezogen_am is null`, [JSON.stringify([{ id }])])).map((r) => r.z);
+    darf = filtern("nachrichten", ns, ctx).some((n) => nachrichtFrei(n) && !nachrichtAbgelaufen(n, jetzt));
+    if (!darf) darf = filtern("stimmen", (await db.q(`select to_jsonb(s) as z from bk_stimmen s where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
+  }
+  if (!darf) return fehler(403, "KEIN_ZUGRIFF");
+  const b = await ablage.lesen(db, id);
+  if (!b) return fehler(410, "DATEI_GELOESCHT");
+  return { status: 200, json: { ok: true, id, name: d.name, mime: d.mime, groesse: d.groesse, daten: b } };
+}
+
 // ℹ️ Details einer eigenen Nachricht: was der Communicator je Empfänger und Weg gemacht hat (nur der Absender sieht das)
 async function nachrichtZustellung(db, s, body) {
   const n = (await db.q(`select von from bk_nachrichten where id = $1`, [String(body.id || "")]))[0];
@@ -207,6 +251,8 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
     if (aktion === "speichern") return await speichern(db, s, body);
     if (aktion === "versenden") return await versenden(db, s, body, dienste);
     if (aktion === "nachricht_zustellung") return await nachrichtZustellung(db, s, body);
+    if (aktion === "datei_hochladen") return await dateiHochladen(db, s, body, dienste.ablage || ABLAGE_DATENBANK);
+    if (aktion === "datei_holen") return await dateiHolen(db, s, body, dienste.ablage || ABLAGE_DATENBANK);
     if (aktion === "push_schluessel") return { status: 200, json: { ok: !!dienste.umgebung.vapidPublic, schluessel: dienste.umgebung.vapidPublic || null } };
     if (aktion === "push_abo") return await pushAbo(db, s, body);
     if (aktion === "push_ab") { await db.q(`update bk_push_abos set aktiv = false, fehler = 'abgemeldet' where endpoint = $1 and person_id = $2`, [String(body.endpoint || ""), s.person.id]); return { status: 200, json: { ok: true } }; }

@@ -30,6 +30,7 @@ end $$;`);
   z.push("alter table bk_konfig enable row level security;");
   z.push("create table if not exists bk_push_abos (id text primary key default gen_random_uuid()::text, person_id text not null references bk_personen(id), endpoint text not null unique, schluessel jsonb not null, erstellt_am timestamptz not null default now());");
   z.push("alter table bk_push_abos enable row level security;");
+  z.push(...DATEIEN_SQL);
   z.push("-- Zugangscodes nur als Hash speichern (Spalte code bleibt für die Vorführversion, im Echtbetrieb leer)");
   z.push("alter table bk_zugaenge add column if not exists code_hash text;");
   z.push("create unique index if not exists bk_zugaenge_code_hash on bk_zugaenge (code_hash) where code_hash is not null;");
@@ -68,9 +69,17 @@ function fkSql(t) {
 }
 const komZeile = (t, r) => `insert into bk_${t} select * from jsonb_populate_record(null::bk_${t}, jsonb_build_object('version', 1, 'erstellt_am', now(), 'geaendert_am', now(), 'geaendert_von', 'Standard') || ${q(JSON.stringify(r))}::jsonb) on conflict (id) do nothing;`;
 
+// 📎 Ablage für Anhänge und Noten (nur über bk-api erreichbar, wird nicht abgeglichen). Inhalt hier in der Datenbank – oder im
+// Supabase-Speicher (Adapter „storage“, dann bleibt die Spalte inhalt leer).
+const DATEIEN_SQL = [
+  "-- Ablage für Dateien (Anhänge, Sprachnachrichten, Noten)",
+  "create table if not exists bk_dateien (id text primary key, von text references bk_personen(id), name text not null, mime text not null, groesse integer not null, art text, inhalt bytea, ablage text not null default 'datenbank', erstellt_am timestamptz not null default now(), geloescht_am timestamptz);",
+  "alter table bk_dateien enable row level security;",
+];
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261020000000_bk_anlagen.sql": { titel: "Anhänge, Sprachnachrichten, Umfragen, Selbstlöschen (0.9.0)", tabellen: ["nachrichten"], extra: DATEIEN_SQL },
   "20261019000000_bk_nachrichten.sql": { titel: "Nachrichten wie in der KC Club App (0.8.0)", tabellen: ["nachrichten", "nachricht_status"],
     pruefungen: [["unterhaltungen", "art"], ["kom_regeln", "ereignis"], ["kom_eskalationen", "ereignis"]], kom: { kom_regeln: ["kr-nachricht_wichtig", "kr-express"] } },
   "20261018000000_bk_pinnwand.sql": { titel: "Pinnwand wie in der KC Club App (0.7.0)", tabellen: ["pinnwand", "pinnwand_gelesen"], pruefungen: [["kom_regeln", "ereignis"], ["kom_eskalationen", "ereignis"]], kom: { kom_regeln: ["kr-pinnwand"] } },
@@ -87,6 +96,7 @@ export function erzeugeNachtragSql(datei) {
     z.push(...fkSql(t), "");
   }
   for (const [t, k] of n.pruefungen || []) z.push(...pruefung(t, TABELLEN[t].felder.find((f) => f.k === k)));
+  if (n.extra) z.push(...n.extra, "");
   for (const [t, ids] of Object.entries(n.kom || {})) for (const id of ids) z.push(komZeile(t, KOM_STANDARD[t].find((r) => r.id === id)));
   return z.join("\n") + "\n";
 }

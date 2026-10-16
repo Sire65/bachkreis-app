@@ -305,3 +305,12 @@ export function naechsteSendung(iso, wdh) {
 }
 // Communicator-Ereignis einer Nachricht
 export const nachrichtEreignis = (n, u) => (n.express ? "express" : n.wichtig ? "nachricht_wichtig" : u?.art === "verteiler" ? "rundschreiben" : "nachricht");
+// Kurzfassung einer Nachricht für Chatliste und Benachrichtigung (Text, sonst 📊 Umfrage / 🎤 Sprachnachricht / 📷 Foto / 🎼 Noten / 📄 Datei)
+export function nachrichtKurz(n) {
+  if (n.text) return n.text;
+  if (n.umfrage) return `📊 ${n.umfrage.frage}`;
+  const a = (n.anlagen || [])[0]; if (!a) return "";
+  const mehr = (n.anlagen || []).length > 1 ? ` (+${n.anlagen.length - 1})` : "";
+  const d = (s) => `${Math.floor((s || 0) / 60)}:${String(Math.round(s || 0) % 60).padStart(2, "0")}`;
+  return (a.art === "sprache" ? `🎤 Sprachnachricht${a.dauer ? " " + d(a.dauer) : ""}` : a.art === "bild" ? "📷 Foto" : a.art === "video" ? "🎬 Video" : a.art === "noten" ? `🎼 Noten: ${a.name}` : `📄 ${a.name}`) + mehr;
+}

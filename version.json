@@ -1,17 +1,31 @@
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "💬 Nachrichten wie in der KC Club App – aufgebaut wie WhatsApp: Chatliste mit Suche, Bild, letzter Nachricht und Zähler; Sprechblasen mit „Heute/Gestern“, „⬇ Neue Nachrichten“ und Uhrzeit",
-    "✓ gesendet · ✓✓ angekommen · blaue ✓✓ gelesen – in Gruppen mit „2/5“; ℹ️ Details zeigen je Empfänger, wann angekommen und gelesen (auf die Sekunde) und was der BK Communicator je Weg gemacht hat",
-    "❗ Wichtig (orange, per Push und E-Mail, auf Wunsch vorher fragen) und 🏎️ Express (kommt sofort durch – auch nachts; beim Empfänger geht ein Fenster auf mit „Empfang bestätigen“; höchstens 5 am Tag)",
-    "⏰ Später senden zu einer Uhrzeit – auch jeden Tag, werktags, jede Woche oder jeden Monat; der Server sendet, auch wenn das Handy aus ist",
-    "🔔 Je Nachricht wählen: Push, E-Mail, WhatsApp; ↩️ Antworten mit Zitat, Reaktionen, ✏️ Bearbeiten (15 Min.), 🗑️ für alle löschen, 📋 Kopieren, 🔊 Vorlesen, Entwürfe je Chat",
-    "＋ Neue Nachricht: Einzelchat oder Runde – mit Kinderschutz (Eltern schreiben privat nur Leitung, Lehrkräften und eigenen Kindern); private Chats sieht auch die Leitung nicht",
-    "⚙️ Mehr › 💬 Nachrichten: Lesebestätigung, Wichtigkeit fragen, Ton, Vorlesen, Entwürfe, Enter sendet, vorausgewählte Benachrichtigung, Chat-Farben"
+    "📂 Im Chat sind vergangene Tage eingeklappt – rechts steht das Datum (z. B. „Mo, 11.11.26“), ältere Wochen als „KW 45/26“; heute und Ungelesenes bleiben offen, „⤢ Alle aufklappen“ öffnet alles",
+    "📎 Anhänge: Fotos, Videos, Dateien (PDF, Word, Excel …) und 🎼 Noten – direkt aus dem Notenarchiv oder als PDF/Foto vom Handy; Fotos werden verkleinert, groß ansehen und speichern",
+    "🎙️ Sprachnachrichten (Mikrofon neben dem Schreibfeld, wie WhatsApp) und 🗣️ Diktieren – sprechen statt tippen",
+    "🎤 Sprachsteuerung oben im Kopf: „Öffne Termine“, „Nachricht an Bettina: …“, „Express an Judith: …“, „Neuer Zettel: …“, „Lies meine Nachrichten“ – gesendet wird nie ungefragt",
+    "📊 Umfragen im Chat (eine oder mehrere Antworten, Balken, wer hat was gewählt) und ⏳ Selbstlöschen nach 1 Std., 24 Std. oder 7 Tagen",
+    "🎼 Notenarchiv: PDF an eine Stimme hängen (📤 PDF) – Schüler öffnen es unter „Meine Noten“",
+    "⚙️ › 💬 Nachrichten: Tage einklappen, Kalenderwochen, Fotos automatisch laden, Sprachsteuerung"
   ],
   "verlauf": [
+    {
+      "version": "0.8.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "💬 Nachrichten wie in der KC Club App – aufgebaut wie WhatsApp: Chatliste mit Suche, Bild, letzter Nachricht und Zähler; Sprechblasen mit „Heute/Gestern“, „⬇ Neue Nachrichten“ und Uhrzeit",
+        "✓ gesendet · ✓✓ angekommen · blaue ✓✓ gelesen – in Gruppen mit „2/5“; ℹ️ Details zeigen je Empfänger, wann angekommen und gelesen (auf die Sekunde) und was der BK Communicator je Weg gemacht hat",
+        "❗ Wichtig (orange, per Push und E-Mail, auf Wunsch vorher fragen) und 🏎️ Express (kommt sofort durch – auch nachts; beim Empfänger geht ein Fenster auf mit „Empfang bestätigen“; höchstens 5 am Tag)",
+        "⏰ Später senden zu einer Uhrzeit – auch jeden Tag, werktags, jede Woche oder jeden Monat; der Server sendet, auch wenn das Handy aus ist",
+        "🔔 Je Nachricht wählen: Push, E-Mail, WhatsApp; ↩️ Antworten mit Zitat, Reaktionen, ✏️ Bearbeiten (15 Min.), 🗑️ für alle löschen, 📋 Kopieren, 🔊 Vorlesen, Entwürfe je Chat",
+        "＋ Neue Nachricht: Einzelchat oder Runde – mit Kinderschutz (Eltern schreiben privat nur Leitung, Lehrkräften und eigenen Kindern); private Chats sieht auch die Leitung nicht",
+        "⚙️ Mehr › 💬 Nachrichten: Lesebestätigung, Wichtigkeit fragen, Ton, Vorlesen, Entwürfe, Enter sendet, vorausgewählte Benachrichtigung, Chat-Farben"
+      ]
+    },
     {
       "version": "0.7.0",
       "datum": "2026-10-15",

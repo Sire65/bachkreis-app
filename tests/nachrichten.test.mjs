@@ -121,3 +121,61 @@ test("Bescheid über den BK Communicator: nur der Absender, je Nachricht einmal,
   assert.ok(z.json.wege.length >= 1 && z.json.wege[0].name, "Absender sieht die Zustellwege");
   assert.equal((await rufe({ aktion: "nachricht_zustellung", id: n.id }, await login("p-lk2"))).status, 403);
 });
+
+// ---------- 0.9.0: 📎 Anhänge, 🎼 Noten, 📊 Umfrage, ⏳ Selbstlöschen ----------
+import { nachrichtenAufraeumen } from "../supabase/functions/_shared/nachrichten.js";
+import { ABLAGE_DATENBANK } from "../supabase/functions/_shared/ablage.js";
+const PDF = Buffer.from("%PDF-1.4\n%%EOF").toString("base64");
+const hoch = async (pid, mehr = {}) => (await rufe({ aktion: "datei_hochladen", name: "noten.pdf", mime: "application/pdf", daten: PDF, ...mehr }, await login(pid))).json;
+
+test("📎 Dateien: nur erlaubte Arten; anhängen nur eigene; holen nur, wer die Nachricht sieht", async () => {
+  assert.equal((await hoch(S, { mime: "text/html" })).fehler, "DATEIART_NICHT_ERLAUBT");
+  assert.equal((await hoch(S, { daten: "<script>" })).fehler, "DATEI_UNGUELTIG");
+  const d = await hoch(S); assert.equal(d.ok, true); assert.ok(d.id);
+  const fremd = await hoch("p-lk2");
+  assert.equal((await speichern(S, "nachrichten", [nachricht(S, "u-e2", { text: "", anlagen: [{ id: fremd.id, art: "datei" }] })])).konflikte[0].grund, "ANLAGE_NICHT_ERLAUBT");
+  const n = (await speichern(S, "nachrichten", [nachricht(S, "u-e2", { text: "", anlagen: [{ id: d.id, art: "noten", name: "falsch.exe", mime: "x/y", groesse: 1 }] })])).gespeichert[0];
+  assert.equal(n.anlagen[0].mime, "application/pdf", "Art und Größe vom Server"); assert.equal(n.text, "");
+  const r = await rufe({ aktion: "datei_holen", id: d.id }, await login("p-lk1"));
+  assert.equal(r.status, 200); assert.equal(Buffer.from(r.json.daten, "base64").toString(), "%PDF-1.4\n%%EOF");
+  assert.equal((await rufe({ aktion: "datei_holen", id: d.id }, await login("p-lk2"))).status, 403, "wer nicht im Chat ist, bekommt die Datei nicht");
+  assert.equal((await rufe({ aktion: "datei_holen", id: fremd.id }, await login("p-lk2"))).status, 200, "eigene Datei");
+});
+
+test("🎼 Noten: PDF an einer Stimme – sehen und weiterschicken darf, wer die Stimme sieht", async () => {
+  const d = await hoch("p-lk1");
+  const st = d && (await laden(S)).stimmen?.[0];
+  assert.ok(st, "Schüler sieht Stimmen");
+  await db.q(`update bk_stimmen set datei = $1 where id = $2`, ["datei:" + d.id, st.id]);
+  assert.equal((await rufe({ aktion: "datei_holen", id: d.id }, await login(S))).status, 200, "über die Stimme");
+  const n = await speichern(S, "nachrichten", [nachricht(S, "u-e2", { text: "Meine Stimme", anlagen: [{ id: d.id, art: "noten", stimme_id: st.id }] })]);
+  assert.equal(n.ok, true, "Noten weiterschicken");
+  const verweis = await speichern(S, "nachrichten", [nachricht(S, "u-e2", { anlagen: [{ art: "noten", name: "Air", stimme_id: st.id, werk_id: st.werk_id }] })]);
+  assert.equal(verweis.ok, true, "Noten auch als Verweis ohne PDF");
+});
+
+test("📊 Umfrage: gültig anlegen, jede Person nur die eigene Stimme, ohne Mehrfach höchstens eine", async () => {
+  assert.equal((await speichern(S, "nachrichten", [nachricht(S, "u-e2", { text: "", umfrage: { frage: "?", optionen: ["nur eine"] } })])).konflikte[0].grund, "UMFRAGE_UNGUELTIG");
+  const n = (await speichern("p-lk1", "nachrichten", [nachricht("p-lk1", "u-e2", { text: "", umfrage: { frage: "Bus oder Auto?", optionen: ["Bus", "Auto", " "], mehrfach: false } })])).gespeichert[0];
+  assert.deepEqual(n.umfrage.optionen, ["Bus", "Auto"]);
+  const v = (await speichern(S, "nachrichten", [{ ...n, umfrage_stimmen: { [S]: [1, 0, 9], "p-lk1": [0] } }])).gespeichert[0];
+  assert.deepEqual(v.umfrage_stimmen, { [S]: [1] });
+  const weg = (await speichern(S, "nachrichten", [{ ...v, umfrage_stimmen: { [S]: [] } }])).gespeichert[0];
+  assert.deepEqual(weg.umfrage_stimmen, {});
+});
+
+test("⏳ Selbstlöschen: Frist geprüft; nach Ablauf bei allen leer, Anhang nicht mehr abrufbar, verwaiste Dateien weg", async () => {
+  const d = await hoch(S);
+  assert.equal((await speichern(S, "nachrichten", [nachricht(S, "u-e2", { loescht_am: new Date(Date.now() + 60000).toISOString() })])).konflikte[0].grund, "SELBSTLOESCHEN_UNGUELTIG");
+  const n = (await speichern(S, "nachrichten", [nachricht(S, "u-e2", { text: "geheim", anlagen: [{ id: d.id, art: "datei" }], loescht_am: new Date(Date.now() + 3600000).toISOString() })])).gespeichert[0];
+  assert.ok(n.loescht_am);
+  await db.q(`update bk_nachrichten set loescht_am = now() - interval '1 second' where id = $1`, [n.id]);
+  const r = await nachrichtenAufraeumen(db, ABLAGE_DATENBANK);
+  assert.ok(r.geleert >= 1);
+  const z = (await laden("p-lk1")).nachrichten.find((x) => x.id === n.id);
+  assert.equal(z.text, ""); assert.deepEqual(z.anlagen, []); assert.ok(z.zurueckgezogen_am);
+  assert.equal((await rufe({ aktion: "datei_holen", id: d.id }, await login("p-lk1"))).status, 403);
+  await db.q(`update bk_dateien set erstellt_am = now() - interval '2 days' where id = $1`, [d.id]);
+  await nachrichtenAufraeumen(db, ABLAGE_DATENBANK);
+  assert.equal((await rufe({ aktion: "datei_holen", id: d.id }, await login(S))).status, 404, "Datei aufgeräumt");
+});

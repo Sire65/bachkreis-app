@@ -359,7 +359,7 @@ create table if not exists bk_nachrichten (
   id text primary key default gen_random_uuid()::text,
   unterhaltung_id text not null,
   von text,
-  text text not null,
+  text text,
   zeit timestamptz,
   rueckmeldung boolean,
   wichtig boolean,
@@ -368,6 +368,9 @@ create table if not exists bk_nachrichten (
   kanaele text[],
   geplant_um timestamptz,
   wiederholung text check (wiederholung is null or wiederholung in ('einmal', 'taeglich', 'werktags', 'woechentlich', 'monatlich')),
+  anlagen jsonb,
+  umfrage jsonb,
+  loescht_am timestamptz,
   gelesen_von text[],
   rueckmeldungen jsonb,
   reaktionen jsonb,
@@ -375,6 +378,7 @@ create table if not exists bk_nachrichten (
   bearbeitet_am timestamptz,
   zurueckgezogen_am timestamptz,
   geplant_frei timestamptz,
+  umfrage_stimmen jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -923,6 +927,9 @@ create table if not exists bk_konfig (schluessel text primary key, wert jsonb, g
 alter table bk_konfig enable row level security;
 create table if not exists bk_push_abos (id text primary key default gen_random_uuid()::text, person_id text not null references bk_personen(id), endpoint text not null unique, schluessel jsonb not null, erstellt_am timestamptz not null default now());
 alter table bk_push_abos enable row level security;
+-- Ablage für Dateien (Anhänge, Sprachnachrichten, Noten)
+create table if not exists bk_dateien (id text primary key, von text references bk_personen(id), name text not null, mime text not null, groesse integer not null, art text, inhalt bytea, ablage text not null default 'datenbank', erstellt_am timestamptz not null default now(), geloescht_am timestamptz);
+alter table bk_dateien enable row level security;
 -- Zugangscodes nur als Hash speichern (Spalte code bleibt für die Vorführversion, im Echtbetrieb leer)
 alter table bk_zugaenge add column if not exists code_hash text;
 create unique index if not exists bk_zugaenge_code_hash on bk_zugaenge (code_hash) where code_hash is not null;

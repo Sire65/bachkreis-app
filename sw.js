@@ -1,7 +1,7 @@
 // Service Worker der Bachkreis-App – atomares Update (AGENTS.md Regel 16):
 // Eine Version = ein Cache mit ALLEN Dateien. Die neue Version wird erst aktiv, wenn die App „jetzt-aktivieren“ sendet
 // (Knopf „Jetzt aktualisieren“). Bis dahin liefert der alte Worker ausschließlich Dateien der alten Version – kein Mischstand.
-const VERSION = "0.8.0";
+const VERSION = "0.9.0";
 const CACHE = "bk-" + VERSION;
 const DATEIEN = [
   "./", "index.html", "verwaltung.html", "manifest.webmanifest",
@@ -9,9 +9,9 @@ const DATEIEN = [
   "icons/logo.png", "icons/favicon.png", "icons/icon-192.png", "icons/icon-512.png",
   "lib/qrcode/qrcode.js",
   "js/kern/version.js", "js/kern/umgebung.js", "js/kern/speicher-idb.js", "js/kern/schema.js", "js/kern/daten.js", "js/kern/adapter-lokal.js", "js/kern/adapter-supabase.js",
-  "js/kern/demodaten.js", "js/kern/kom-standard.js", "js/kern/logik.js", "js/kern/ui.js", "js/kern/versand.js", "js/kern/musik.js", "js/kern/warten.js",
+  "js/kern/demodaten.js", "js/kern/kom-standard.js", "js/kern/logik.js", "js/kern/ui.js", "js/kern/versand.js", "js/kern/musik.js", "js/kern/warten.js", "js/kern/dateien.js",
   "js/app/main.js", "js/app/zustand.js", "js/app/start.js", "js/app/termine.js", "js/app/kommunikation.js",
-  "js/app/orchester.js", "js/app/instrumente.js", "js/app/leitung.js", "js/app/meins.js", "js/app/buehne.js", "js/app/kopf.js", "js/app/wetter.js", "js/app/jahreszeiten.js", "js/app/fuss.js", "js/app/darstellung.js", "js/app/effekte.js", "js/app/einstellungen.js", "js/app/pinnwand.js", "js/app/nachrichten.js",
+  "js/app/orchester.js", "js/app/instrumente.js", "js/app/leitung.js", "js/app/meins.js", "js/app/buehne.js", "js/app/kopf.js", "js/app/wetter.js", "js/app/jahreszeiten.js", "js/app/fuss.js", "js/app/darstellung.js", "js/app/effekte.js", "js/app/einstellungen.js", "js/app/pinnwand.js", "js/app/nachrichten.js", "js/app/sprache.js", "js/app/sprachsteuerung.js",
   "schriften/bangers.woff2", "schriften/creepster.woff2", "schriften/dancing-script.woff2", "schriften/lobster.woff2", "schriften/mountains-of-christmas.woff2", "schriften/pacifico.woff2", "schriften/rye.woff2", "schriften/unifrakturmaguntia.woff2",
   "js/verwaltung/main.js",
 ];

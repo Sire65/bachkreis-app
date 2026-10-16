@@ -3,6 +3,7 @@
 import postgres from "npm:postgres@3.4.4";
 import { verarbeiten } from "../_shared/api.js";
 import { KANAELE, umgebung } from "../_shared/kom/kanaele-deno.js";
+import { ablage } from "../_shared/ablage-deno.js";
 
 const sql = postgres(Deno.env.get("SUPABASE_DB_URL") ?? "", { max: 3, prepare: false, idle_timeout: 20 });
 const db = { q: (text: string, params: unknown[] = []) => sql.unsafe(text, params as never[]) };
@@ -27,6 +28,6 @@ Deno.serve(async (req) => {
     ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim(),
     geraet: req.headers.get("user-agent") ?? "",
   };
-  const r = await verarbeiten(db, body as Record<string, unknown>, meta, { adapter: KANAELE, umgebung: umgebung(), hintergrund });
+  const r = await verarbeiten(db, body as Record<string, unknown>, meta, { adapter: KANAELE, umgebung: umgebung(), hintergrund, ablage: ablage() });
   return new Response(JSON.stringify(r.json), { status: r.status, headers: { ...h, "Content-Type": "application/json", "Cache-Control": "no-store" } });
 });

@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, nsId, nachrichtFrei, chatPartnerErlaubt } from "./schema.js";
+import { TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -121,6 +121,32 @@ function privatZeile(tab, z, ctx) {
   if (tab === "nachrichten") return PRIVAT_CHAT.has(ctx.uMap?.get(z.unterhaltung_id)?.art) || (z.von !== ctx.ich && !nachrichtFrei(z));
   return false;
 }
+// 📎 Anhänge: nur Dateien, die man selbst hochgeladen hat oder als Noten sehen darf; Noten auch als Verweis ohne Datei
+function anlagenPruefen(roh, ctx) {
+  if (roh == null) return { liste: [] };
+  if (!Array.isArray(roh) || roh.length > CHAT.anlagenMax) return { grund: "ANLAGEN_UNGUELTIG" };
+  const liste = [];
+  for (const a of roh) {
+    if (!a || typeof a !== "object" || !DATEI.arten.includes(a.art)) return { grund: "ANLAGEN_UNGUELTIG" };
+    const x = { art: a.art, name: String(a.name || "Datei").slice(0, 120) };
+    if (a.id) {
+      const d = ctx.dateien?.get(String(a.id));
+      if (!d || (d.von !== ctx.ich && !ctx.notenDateien?.has(d.id))) return { grund: "ANLAGE_NICHT_ERLAUBT" };
+      Object.assign(x, { id: d.id, mime: d.mime, groesse: d.groesse });
+    } else if (a.art !== "noten" || !a.stimme_id) return { grund: "ANLAGEN_UNGUELTIG" };
+    if (a.stimme_id) x.stimme_id = String(a.stimme_id).slice(0, 80);
+    if (a.werk_id) x.werk_id = String(a.werk_id).slice(0, 80);
+    if (Number.isFinite(Number(a.dauer)) && a.dauer > 0) x.dauer = Math.min(3600, Math.round(Number(a.dauer)));
+    liste.push(x);
+  }
+  return { liste };
+}
+function umfragePruefen(u) {
+  if (u == null) return null;
+  const frage = String(u.frage || "").trim().slice(0, 200), optionen = (Array.isArray(u.optionen) ? u.optionen : []).map((o) => String(o || "").trim().slice(0, 80)).filter(Boolean);
+  if (!frage || optionen.length < 2 || optionen.length > 10) return { grund: "UMFRAGE_UNGUELTIG" };
+  return { frage, optionen, mehrfach: !!u.mehrfach };
+}
 // Darf ctx.ich mit Person id eine eigene Unterhaltung anfangen? (Kinderschutz-Regel in schema.js)
 export function chatPartnerOk(ctx, id) {
   const p = (ctx.personen || []).find((x) => x.id === id);
@@ -160,13 +186,18 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (!alt) {
         if (neu.von !== ctx.ich) return { ok: false, grund: "ABSENDER_FALSCH" };
         if (u.art === "verteiler" && !ctx.istVerwalter) return { ok: false, grund: "NUR_LEITUNG" };
-        const f = textPruefen(neu.text); if (f) return { ok: false, grund: f };
+        const an = anlagenPruefen(neu.anlagen, ctx); if (an.grund) return { ok: false, grund: an.grund };
+        const um = umfragePruefen(neu.umfrage); if (um?.grund) return { ok: false, grund: um.grund };
+        const f = textPruefen(neu.text); if (f && !(f === "TEXT_FEHLT" && (an.liste.length || um))) return { ok: false, grund: f };
+        let loescht = null;
+        if (neu.loescht_am) { const t = Date.parse(neu.loescht_am); if (!(t > Date.now() + 50 * 60000 && t < Date.now() + 8 * 86400000)) return { ok: false, grund: "SELBSTLOESCHEN_UNGUELTIG" }; loescht = new Date(t).toISOString(); }
         const express = !!neu.express, geplant = neu.geplant_um ? planZeit(neu.geplant_um) : null;
         if (neu.geplant_um && !geplant) return { ok: false, grund: "ZEIT_UNGUELTIG" };
         if (express && geplant) return { ok: false, grund: "EXPRESS_NICHT_GEPLANT" };
         if (express && !hatRolle(ctx, CHAT.expressUnbegrenzt) && (ctx.expressHeute ?? 0) >= (ctx.expressMax ?? CHAT.expressMax)) return { ok: false, grund: "EXPRESS_GRENZE" };
         if (express) ctx.expressHeute = (ctx.expressHeute ?? 0) + 1;
-        return { ok: true, zeile: { ...nur(neu, ["id", "unterhaltung_id"]), text: String(neu.text).trim(), von: ctx.ich, zeit: geplant || jetzt, gelesen_von: [ctx.ich],
+        return { ok: true, zeile: { ...nur(neu, ["id", "unterhaltung_id"]), text: String(neu.text ?? "").trim(), von: ctx.ich, zeit: geplant || jetzt, gelesen_von: [ctx.ich],
+          anlagen: an.liste, umfrage: um, umfrage_stimmen: {}, loescht_am: geplant ? null : loescht,
           rueckmeldung: ctx.istVerwalter && !!neu.rueckmeldung, rueckmeldungen: {}, reaktionen: {}, wichtig: !!neu.wichtig, express,
           antwort_auf: neu.antwort_auf ? String(neu.antwort_auf).slice(0, 80) : null, kanaele: kanaele(neu.kanaele),
           geplant_um: geplant, wiederholung: geplant ? (WIEDERHOLUNG.includes(neu.wiederholung) ? neu.wiederholung : "einmal") : null,
@@ -185,7 +216,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       // Zurückziehen („Diese Nachricht wurde gelöscht“): Absender – oder die Leitung als Moderation
       if (neu.zurueckgezogen_am && !alt.zurueckgezogen_am) {
         if (!eigen && !hatRolle(ctx, MODERATION)) return { ok: false, grund: "NUR_EIGENE" };
-        return { ok: true, zeile: { ...alt, text: "", zurueckgezogen_am: jetzt, reaktionen: {}, rueckmeldungen: {} }, zusammenfuehren: true };
+        return { ok: true, zeile: { ...alt, text: "", zurueckgezogen_am: jetzt, reaktionen: {}, rueckmeldungen: {}, anlagen: [], umfrage: null, umfrage_stimmen: {} }, zusammenfuehren: true };
       }
       let z = { ...alt };
       // Bearbeiten: nur der Absender, nur innerhalb der Frist
@@ -204,7 +235,13 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         const e = neu.reaktionen[ctx.ich];
         if (typeof e === "string" && e && [...e].length <= 4) re[ctx.ich] = e; else delete re[ctx.ich];
       }
-      return { ok: true, zeile: { ...z, gelesen_von: [...gelesen], rueckmeldungen: rm, reaktionen: re }, zusammenfuehren: true };
+      // 📊 Umfrage: nur die eigene Stimme (Liste der Antwort-Nummern; ohne Mehrfachauswahl höchstens eine)
+      const us = { ...(alt.umfrage_stimmen || {}) };
+      if (alt.umfrage && neu.umfrage_stimmen && Object.prototype.hasOwnProperty.call(neu.umfrage_stimmen, ctx.ich) && !alt.zurueckgezogen_am) {
+        const w = [...new Set((Array.isArray(neu.umfrage_stimmen[ctx.ich]) ? neu.umfrage_stimmen[ctx.ich] : []).map(Number))].filter((i) => Number.isInteger(i) && i >= 0 && i < alt.umfrage.optionen.length);
+        if (!w.length) delete us[ctx.ich]; else us[ctx.ich] = alt.umfrage.mehrfach ? w : [w[0]];
+      }
+      return { ok: true, zeile: { ...z, gelesen_von: [...gelesen], rueckmeldungen: rm, reaktionen: re, umfrage_stimmen: us }, zusammenfuehren: true };
     }
     case "nachricht_status": {
       // ✓✓ angekommen / blaue ✓✓ gelesen / 🏎️ Express-Antwort: jede Person nur für sich, Zeiten setzt der Server

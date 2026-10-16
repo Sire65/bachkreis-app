@@ -17,6 +17,7 @@ import { WET, WETTER_NEU_MIN, wetterLaden, infoWetter, wetterSzene, wetterTagDet
 import { jahreszeitKopf, jzEisLaenge, jzVorschauLeiste, jzPruefen, JZ_KONTEXT, istNacht } from "./jahreszeiten.js";
 import { ESELSOHR } from "./buehne.js";
 import { anwendenDesign } from "./darstellung.js";
+import { spracheMoeglich } from "./sprache.js";
 
 const $ = (id) => document.getElementById(id);
 const K = { hero: null, glanzGelaufen: false, infoLetztes: "", adminZustaende: () => ({}), ungelesen: () => 0, meineUnterhaltungen: () => [], offeneGenehmigungen: () => 0 };
@@ -47,6 +48,7 @@ function kopfBauen() {
       <div class="kopflogo"><button class="logo" data-a="webseite" aria-label="Internetseite des Bachkreises öffnen" title="Zur Bachkreis-Internetseite">${BACHKREIS_LOGO}</button><button class="kopf-version" id="kopfVersion" data-a="updatePruefen" title="Update prüfen" aria-label="Version – Update prüfen">v${APP_VERSION}</button></div>
       <div class="kopftext"><div class="marke-klein" id="kopfMarke"></div><div class="gruss"><span id="begruessung">Hallo!</span></div></div>
       <div class="kopfrechts"><div class="knopfreihe">
+        <button class="rund" id="spracheKnopf" data-a="sprachsteuerung" title="Sprachsteuerung – sag, was passieren soll" aria-label="Sprachsteuerung" hidden>🎤</button>
         <button class="rund" id="modusKnopf" data-a="themaUmschalten" title="Tag/Nacht umschalten" aria-label="Tag/Nacht umschalten">🌙</button>
         <button class="rund" id="aktualisierenKnopf" data-a="kopfAktualisieren" title="Aktualisieren" aria-label="Aktualisieren">↻</button>
       </div></div>
@@ -107,6 +109,7 @@ export function kopfEinsetzen(platz) {
 }
 
 export function kopfAuffrischen() {
+  const sk = K.hero?.querySelector("#spracheKnopf"); if (sk) sk.hidden = !(spracheMoeglich() && einst().sprachsteuerung !== false);
   const h = K.hero; if (!h || !S.ich) return;
   const az = K.adminZustaende();
   h.querySelector("#kopfMarke").textContent = (konfig().name || "Bachkreis Bergkamen").toUpperCase();

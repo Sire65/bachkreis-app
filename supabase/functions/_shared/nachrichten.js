@@ -1,7 +1,7 @@
 // BK-NACHRICHTEN auf dem Server: Empfänger einer Unterhaltung bestimmen, Bescheid über den BK Communicator geben und
 // ⏰ geplante Nachrichten zur Sendezeit freigeben (auch Wiederholungen). Läuft in bk-api (Bescheid) und bk-kom (jede Minute).
 import { TABELLEN } from "./schema.js";
-import { empfaengerVon, naechsteSendung, nachrichtEreignis } from "./logik.js";
+import { empfaengerVon, naechsteSendung, nachrichtEreignis, nachrichtKurz } from "./logik.js";
 import * as kom from "./kom/kern.js";
 
 const VERTEILER_TABELLEN = ["personen", "gruppe_zuordnung", "gruppen", "eltern_kind", "person_instrument", "termine", "projekte", "register"];
@@ -27,7 +27,7 @@ export async function nachrichtBescheid(db, n, { ausloeser = "", kanaele = null,
   const von = (await db.q(`select vorname, nachname from bk_personen where id = $1`, [n.von]))[0];
   const wer = von ? `${von.vorname} ${von.nachname}`.trim() : ausloeser || "Bachkreis";
   const kopf = n.express ? `🏎️ EXPRESS von ${wer}` : n.wichtig ? `❗ Wichtig: ${wer}` : wer;
-  return kom.annehmen(db, { ereignis: nachrichtEreignis(n, u), an, betreff: u?.art === "einzel" ? kopf : `${kopf} · ${u?.titel || "Chat"}`, text: kurz(n.text, 500),
+  return kom.annehmen(db, { ereignis: nachrichtEreignis(n, u), an, betreff: u?.art === "einzel" ? kopf : `${kopf} · ${u?.titel || "Chat"}`, text: kurz(nachrichtKurz(n), 500),
     kanaele: kanaele || (n.kanaele?.length ? n.kanaele : null), korrelation, ausloeser: ausloeser || wer, variablen: { absender_person: wer, unterhaltung: n.unterhaltung_id } });
 }
 // ⏰ Fällige geplante Nachrichten freigeben: Sendezeit erreicht → für alle sichtbar (geplant_frei), Bescheid, nächste Wiederholung anlegen
@@ -49,4 +49,17 @@ export async function nachrichtenFreigeben(db, { limit = 100 } = {}) {
     gesendet++;
   }
   return { faellig: faellig.length, gesendet };
+}
+// ⏳ Selbstlöschen (KC-CLUB-SELBSTLOESCHEN): abgelaufene Nachrichten bei allen leeren („Diese Nachricht wurde gelöscht“), ihre Dateien entfernen
+export async function nachrichtenAufraeumen(db, ablage, { limit = 200 } = {}) {
+  const weg = (await db.q(`update bk_nachrichten set text = '', zurueckgezogen_am = now(), reaktionen = '{}'::jsonb, umfrage = null, umfrage_stimmen = '{}'::jsonb,
+      anlagen = '[]'::jsonb, geaendert_von = 'Selbstlöschen'
+    where id in (select id from bk_nachrichten where loescht_am is not null and loescht_am <= now() and zurueckgezogen_am is null and geloescht_am is null limit $1)
+    returning id`, [limit]));
+  // Dateien, auf die keine sichtbare Nachricht und keine Stimme mehr zeigt, nach 1 Tag aufräumen (auch abgebrochene Uploads)
+  const verwaist = await db.q(`select d.id from bk_dateien d where d.geloescht_am is null and d.erstellt_am < now() - interval '1 day'
+    and not exists (select 1 from bk_nachrichten n where n.anlagen @> jsonb_build_array(jsonb_build_object('id', d.id)) and n.geloescht_am is null)
+    and not exists (select 1 from bk_stimmen s where s.datei = 'datei:' || d.id and s.geloescht_am is null) limit 100`);
+  for (const d of verwaist) { await ablage.loeschen(db, d.id); await db.q(`update bk_dateien set geloescht_am = now() where id = $1`, [d.id]); }
+  return { geleert: weg.length, dateien: verwaist.length };
 }

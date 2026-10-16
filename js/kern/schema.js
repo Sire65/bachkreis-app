@@ -47,7 +47,11 @@ export const KOM_EREIGNISSE = {
 };
 
 // ---------- Nachrichten (gemeinsam für App und Server) ----------
-export const CHAT = { bearbeitenMin: 15, expressMax: 5, zeichen: 4000, expressUnbegrenzt: ["admin", "leitung"] };
+export const CHAT = { bearbeitenMin: 15, expressMax: 5, zeichen: 4000, expressUnbegrenzt: ["admin", "leitung"], anlagenMax: 10, selbstloeschenStd: [1, 24, 168] };
+// 📎 Anhänge (Fotos, Sprachnachrichten, Dateien, Noten): höchstens DATEI.max Bytes je Datei, nur diese Arten
+export const DATEI = { max: 8 * 1024 * 1024, arten: ["bild", "sprache", "datei", "noten", "video"],
+  mime: /^(image\/(jpeg|png|gif|webp|heic|heif)|audio\/(webm|ogg|mp4|mpeg|aac|x-m4a|wav)|video\/(mp4|webm|quicktime)|application\/(pdf|msword|vnd\.openxmlformats-officedocument\.[a-z.]+|vnd\.oasis\.opendocument\.[a-z.]+|vnd\.ms-excel|zip)|text\/(plain|csv))$/ };
+export const nachrichtAbgelaufen = (n, jetzt = new Date().toISOString()) => !!n.loescht_am && n.loescht_am <= jetzt;
 export const nsId = (nachrichtId, personId) => `${nachrichtId}:${personId}`;
 // Geplante Nachrichten (⏰) sieht bis zur Sendezeit nur der Absender
 export const nachrichtFrei = (n, jetzt = new Date().toISOString()) => !n.geplant_um || !!n.geplant_frei || n.geplant_um <= jetzt;
@@ -305,7 +309,7 @@ export const TABELLEN = {
     felder: [
       { k: "unterhaltung_id", t: "Unterhaltung", typ: "ref", ref: "unterhaltungen", pflicht: true },
       { k: "von", t: "von", typ: "ref", ref: "personen" },
-      { k: "text", t: "Text", typ: "lang", pflicht: true },
+      { k: "text", t: "Text (leer bei reinen Anhängen/Umfragen)", typ: "lang" },
       { k: "zeit", t: "Zeit", typ: "zeit" },
       { k: "rueckmeldung", t: "Rückmeldung erbeten", typ: "ja" },
       { k: "wichtig", t: "❗ wichtig", typ: "ja" },
@@ -314,10 +318,14 @@ export const TABELLEN = {
       { k: "kanaele", t: "Benachrichtigen über", typ: "liste" },
       { k: "geplant_um", t: "⏰ senden um", typ: "zeit" },
       { k: "wiederholung", t: "Wiederholung", typ: "wahl", werte: { einmal: "einmal", taeglich: "jeden Tag", werktags: "werktags", woechentlich: "jede Woche", monatlich: "jeden Monat" } },
+      { k: "anlagen", t: "📎 Anhänge", typ: "json" },
+      { k: "umfrage", t: "📊 Umfrage", typ: "json" },
+      { k: "loescht_am", t: "⏳ löscht sich am", typ: "zeit" },
     ],
     liste: ["unterhaltung_id", "von", "text", "zeit"],
     intern: [{ k: "gelesen_von", typ: "refs", ref: "personen" }, { k: "rueckmeldungen", typ: "json" }, { k: "reaktionen", typ: "json" }, { k: "anzahl", typ: "zahl" },
-      { k: "bearbeitet_am", typ: "zeit" }, { k: "zurueckgezogen_am", typ: "zeit" }, { k: "geplant_frei", typ: "zeit" }],
+      { k: "bearbeitet_am", typ: "zeit" }, { k: "zurueckgezogen_am", typ: "zeit" }, { k: "geplant_frei", typ: "zeit" },
+      { k: "umfrage_stimmen", typ: "json" }],
   },
   nachricht_status: {
     titel: "Nachrichten: angekommen & gelesen", sym: "✓✓", gruppe: "Kommunikation", lesen: L, schreiben: [],

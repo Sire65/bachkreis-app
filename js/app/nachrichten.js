@@ -11,15 +11,17 @@ import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, istLeitung, istVerwa
 import { meineUnterhaltungen, gelesenVonMir, lokalGelesen } from "./start.js";
 import { esc, AKTIONEN, toast, uhr, frage, blatt, blattZu, $ } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, konfig, abonnieren, neueId, istEchtbetrieb, jetztAbgleichen, serverAktion } from "../kern/daten.js";
-import { CHAT, nsId, nachrichtFrei, chatPartnerErlaubt, pwAppPerson } from "../kern/schema.js";
-import { empfaengerVon, naechsteSendung, nachrichtEreignis, kinderVon, elternVon } from "../kern/logik.js";
+import { CHAT, nsId, nachrichtFrei, nachrichtAbgelaufen, chatPartnerErlaubt, pwAppPerson } from "../kern/schema.js";
+import { empfaengerVon, naechsteSendung, nachrichtEreignis, nachrichtKurz, kinderVon, elternVon, instrumenteVon } from "../kern/logik.js";
+import { hochladen, bildVerkleinern, dateiUrl, dateiOeffnen, groesseText, artVonMime } from "../kern/dateien.js";
+import { zuhoeren, spracheMoeglich, aufnahme, aufnahmeMoeglich, dauerText, SPRACHE_FEHLER } from "./sprache.js";
 import { senden, whatsapp } from "../kern/versand.js";
 import { papierflieger } from "./effekte.js";
 import { cfAnwenden } from "./darstellung.js";
 
 const ich = () => S.ich?.id;
 const jetztIso = () => new Date().toISOString();
-const C = { antwort: null, wichtig: false, express: false, zustell: { push: false, mail: false, whatsapp: false }, zustellOffen: false, emoji: false, trenner: {}, suche: "", wfZuletzt: {} };
+const C = { anlagen: [], ablauf: null, aufnahme: null, diktat: null, offen: {}, antwort: null, wichtig: false, express: false, zustell: { push: false, mail: false, whatsapp: false }, zustellOffen: false, emoji: false, trenner: {}, suche: "", wfZuletzt: {} };
 const PRIVAT = ["einzel", "runde"];
 const expressMax = () => (Number(konfig().express_max_tag) > 0 ? Number(konfig().express_max_tag) : CHAT.expressMax);
 const bearbeitenMin = () => (Number(konfig().bearbeiten_minuten) > 0 ? Number(konfig().bearbeiten_minuten) : CHAT.bearbeitenMin);
@@ -61,7 +63,7 @@ const chatBild = (u, gross = false) => {
   return `<span class="chat-bild${gross ? " gross" : ""} sym">${u?.art === "verteiler" ? "📣" : u?.art === "runde" ? "👫" : "👥"}</span>`;
 };
 const empfaenger = (u) => empfaengerVon(db, u).filter((p) => p !== ich());
-export const chatNachrichten = (uid) => liste("nachrichten", (n) => n.unterhaltung_id === uid && nachrichtFrei(n)).sort((a, b) => String(a.zeit).localeCompare(String(b.zeit)));
+export const chatNachrichten = (uid) => liste("nachrichten", (n) => n.unterhaltung_id === uid && nachrichtFrei(n) && !nachrichtAbgelaufen(n)).sort((a, b) => String(a.zeit).localeCompare(String(b.zeit)));
 const geplanteVonMir = (uid) => liste("nachrichten", (n) => n.unterhaltung_id === uid && n.von === ich() && !nachrichtFrei(n)).sort((a, b) => String(a.geplant_um).localeCompare(String(b.geplant_um)));
 const statusVon = (n) => liste("nachricht_status", (s) => s.nachricht_id === n.id && s.person_id !== n.von);
 const meinStatus = (n) => hole("nachricht_status", nsId(n.id, ich()));
@@ -96,10 +98,10 @@ VIEWS.nachrichten = {
   render() {
     const q = C.suche.toLowerCase();
     const l = chatEintraege().filter(({ u, letzte }) => !q || chatTitel(u).toLowerCase().includes(q) || String(letzte?.text || "").toLowerCase().includes(q));
-    const rechts = `<button class="knopf haupt klein" data-a="chatNeu">＋ Neue Nachricht</button>${istVerwalter() ? `<button class="knopf klein" data-a="kachel" data-x="rundschreiben" title="Rundschreiben">📣</button>` : ""}`;
+    const rechts = `${spracheMoeglich() && einst().sprachsteuerung !== false ? `<button class="knopf klein" data-a="sprachsteuerung" title="Sprachsteuerung" aria-label="Sprachsteuerung">🎤</button>` : ""}<button class="knopf haupt klein" data-a="chatNeu">＋ Neue Nachricht</button>${istVerwalter() ? `<button class="knopf klein" data-a="kachel" data-x="rundschreiben" title="Rundschreiben">📣</button>` : ""}`;
     return kopf("💬 Nachrichten", rechts) + `<input class="chat-suche" type="search" id="chatSuche" placeholder="🔍 Chats und Nachrichten durchsuchen" value="${esc(C.suche)}" aria-label="Chats durchsuchen">
       <div class="karte chatliste"><ul class="liste">${l.map(({ u, letzte, neu, plan, expressNeu }) => {
-        const vorschau = letzte ? (letzte.zurueckgezogen_am ? "🚫 Nachricht gelöscht" : `${letzte.von === ich() ? "" : u.art === "einzel" ? "" : esc(vorn(letzte.von)) + ": "}${letzte.express ? "🏎️ " : letzte.wichtig ? "❗ " : ""}${esc(String(letzte.text).slice(0, 70))}`) : "noch keine Nachricht";
+        const vorschau = letzte ? (letzte.zurueckgezogen_am ? "🚫 Nachricht gelöscht" : `${letzte.von === ich() ? "" : u.art === "einzel" ? "" : esc(vorn(letzte.von)) + ": "}${letzte.express ? "🏎️ " : letzte.wichtig ? "❗ " : ""}${esc(nachrichtKurz(letzte).slice(0, 70))}`) : "noch keine Nachricht";
         return `<li class="klick" data-a="oeffne" data-x="unterhaltung|${esc(u.id)}">${chatBild(u)}
           <div class="fl"><div class="zeile-titel">${esc(chatTitel(u))}</div><div class="zeile-unter">${letzte?.von === ich() ? hakenHtml(letzte) + " " : ""}${vorschau}${plan ? ` · <span title="geplant">⏰ ${plan}</span>` : ""}</div></div>
           <div class="chat-rechts"><div class="hinweis${neu ? " neu" : ""}">${letzte ? zeitListe(letzte.zeit) : ""}</div>${neu ? `<span class="chat-zahl${expressNeu ? " express" : ""}">${neu}</span>` : ""}</div></li>`;
@@ -171,26 +173,123 @@ function blaseHtml(n, u, gruppe) {
     ${weg ? "" : (n.wichtig ? '<div class="wichtig-marke">❗ WICHTIG</div>' : "") + (n.express ? '<div class="express-marke">🏎️ EXPRESS</div>' : "")}
     ${gruppe && !eigen ? `<div class="von">${esc(name(n.von))}</div>` : ""}
     ${bezug && !weg ? `<div class="zitat" data-a="zuNachricht" data-x="${esc(bezug.id)}"><b>${esc(bezug.von === ich() ? "Du" : name(bezug.von))}</b><span>${esc(bezug.zurueckgezogen_am ? "🚫 gelöscht" : String(bezug.text).slice(0, 90))}</span></div>` : ""}
-    <div class="txt${weg ? " weg" : ""}">${weg ? "🚫 Diese Nachricht wurde gelöscht" : textHtml(n.text)}</div>
+    ${weg ? '<div class="txt weg">🚫 Diese Nachricht wurde gelöscht</div>' : (n.text ? `<div class="txt">${textHtml(n.text)}</div>` : "") + anlagenHtml(n) + umfrageHtml(n)}
     ${rueck}${express}
-    <div class="fuss">${n.bearbeitet_am && !weg ? '<span class="bearb">bearbeitet</span> ' : ""}${uhr(n.zeit)}${eigen ? " " + hakenHtml(n) : ""}</div>${reHtml}</div>`;
+    <div class="fuss">${n.loescht_am && !weg ? `<span class="sl-marke" title="Löscht sich selbst – bei allen">⏳ ${esc(restText(n.loescht_am))}</span> ` : ""}${n.bearbeitet_am && !weg ? '<span class="bearb">bearbeitet</span> ' : ""}${uhr(n.zeit)}${eigen ? " " + hakenHtml(n) : ""}</div>${reHtml}</div>`;
 }
 function rueckmeldungHtml(n) {
   const r = n.rueckmeldungen || {}, meine = r[ich()], zahl = (w) => Object.values(r).filter((x) => x === w).length;
   return `<div class="knopfreihe">${[["ja", "👍 Ja / dabei"], ["nein", "👎 Nein"], ["gelesen", "👁️ Gelesen"]].map(([k, t]) => `<button class="knopf klein ${meine === k ? "gruen" : ""}" data-a="rueckmelden" data-x="${esc(n.id)}|${k}">${t}${istLeitung() ? " " + zahl(k) : ""}</button>`).join("")}</div>`;
 }
+// Vergangene Tage eingeklappt (rechts „Mo, 11.11.26“), ältere Wochen als „KW 45/26“ – heute, ungelesene und gesuchte Nachrichten sind offen
+const tagKey = (iso) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+const tagKurz = (iso) => { const d = new Date(iso); return `${WT[d.getDay()].slice(0, 2)}, ${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getFullYear()).slice(2)}`; };
+export function kalenderwoche(iso) {
+  const d = new Date(iso), x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())), wt = x.getUTCDay() || 7;
+  x.setUTCDate(x.getUTCDate() + 4 - wt);
+  const j = new Date(Date.UTC(x.getUTCFullYear(), 0, 1));
+  return { kw: Math.ceil(((x - j) / 86400000 + 1) / 7), jahr: x.getUTCFullYear() };
+}
+const kwText = (iso) => { const k = kalenderwoche(iso); return `KW ${k.kw}/${String(k.jahr).slice(2)}`; };
+const werText = (ns) => { const w = [...new Set(ns.map((n) => vorn(n.von)))]; return w.slice(0, 3).join(", ") + (w.length > 3 ? " …" : ""); };
 function verlaufHtml(u) {
   const ns = chatNachrichten(u.id), gruppe = u.art !== "einzel";
   if (!(u.id in C.trenner)) C.trenner[u.id] = ns.find((n) => n.von !== ich() && !gelesenVonMir(n))?.id || null;
-  let tag = "";
-  const teile = ns.map((n) => {
-    const t = tagTrenner(n.zeit), kopfTag = t !== tag ? `<div class="tag-trenner"><span>${t}</span></div>` : ""; tag = t;
-    return kopfTag + (n.id === C.trenner[u.id] ? '<div class="neu-trenner" id="neuTrenner">⬇ Neue Nachrichten</div>' : "") + blaseHtml(n, u, gruppe);
-  });
-  const plan = geplanteVonMir(u.id).map((g) => `<button type="button" class="gp-blase" data-a="gpMenue" data-x="${esc(g.id)}">${textHtml(g.text)}
+  const ein = einst().chatEinklappen !== false, kwAn = einst().chatKW !== false, offen = (C.offen[u.id] ||= new Set());
+  const tage = [];
+  for (const n of ns) { const k = tagKey(n.zeit); if (tages(tage)?.key !== k) tage.push({ key: k, zeit: n.zeit, ns: [] }); tages(tage).ns.push(n); }
+  const heute = tagKey(new Date());
+  const mussOffen = (t) => t.key === heute || t.ns.some((n) => n.id === C.trenner[u.id] || n.id === C.ziel || (n.von !== ich() && !gelesenVonMir(n)));
+  const tagOffen = (t) => !ein || mussOffen(t) || offen.has("t:" + t.key);
+  const tagHtml = (t) => {
+    if (!tagOffen(t)) return `<button type="button" class="tag-zu" data-a="tagUm" data-x="t:${t.key}"><span class="tz-pfeil">▸</span><span class="tz-info">${t.ns.length} ${t.ns.length === 1 ? "Nachricht" : "Nachrichten"} · ${esc(werText(t.ns))}</span><b class="tz-datum">${tagKurz(t.zeit)}</b></button>`;
+    const kopfT = ein && t.key !== heute && !mussOffen(t) ? `<button type="button" class="tag-trenner auf" data-a="tagUm" data-x="t:${t.key}"><span>▾ ${tagTrenner(t.zeit)}</span></button>` : `<div class="tag-trenner"><span>${tagTrenner(t.zeit)}</span></div>`;
+    return kopfT + t.ns.map((n) => (n.id === C.trenner[u.id] ? '<div class="neu-trenner" id="neuTrenner">⬇ Neue Nachrichten</div>' : "") + blaseHtml(n, u, gruppe)).join("");
+  };
+  let html = "", zu = 0;
+  for (let i = 0; i < tage.length;) {
+    const t = tage[i];
+    if (ein && kwAn && tageAb(t.zeit) >= 7) { // ganze Kalenderwoche zusammenfassen
+      const wk = kwText(t.zeit), woche = [];
+      while (i < tage.length && tageAb(tage[i].zeit) >= 7 && kwText(tage[i].zeit) === wk) woche.push(tage[i++]);
+      const wOffen = offen.has("w:" + wk) || woche.some(mussOffen);
+      if (!wOffen) { zu++; const m = woche.reduce((x, y) => x + y.ns.length, 0); html += `<button type="button" class="tag-zu kw" data-a="tagUm" data-x="w:${wk}"><span class="tz-pfeil">▸</span><span class="tz-info">${m} ${m === 1 ? "Nachricht" : "Nachrichten"} an ${woche.length} ${woche.length === 1 ? "Tag" : "Tagen"} · ${esc(werText(woche.flatMap((x) => x.ns)))}</span><b class="tz-datum">${wk}</b></button>`; continue; }
+      html += `<button type="button" class="kw-kopf" data-a="tagUm" data-x="w:${wk}">▾ ${wk}</button>` + woche.map((x) => { if (!tagOffen(x)) zu++; return tagHtml(x); }).join("");
+      continue;
+    }
+    if (!tagOffen(t)) zu++;
+    html += tagHtml(t); i++;
+  }
+  const leiste = ein && tage.length > 1 ? `<div class="tag-alle">${zu ? `<button type="button" data-a="tageAlle" data-x="auf">⤢ Alle ${tage.length} Tage aufklappen</button>` : `<button type="button" data-a="tageAlle" data-x="zu">⤡ Vergangene Tage einklappen</button>`}</div>` : "";
+  const plan = geplanteVonMir(u.id).map((g) => `<button type="button" class="gp-blase" data-a="gpMenue" data-x="${esc(g.id)}">${textHtml(g.text || nachrichtKurz(g))}
     <small>⏰ wird gesendet ${esc(gpWann(g.geplant_um))}${g.wiederholung && g.wiederholung !== "einmal" ? ` · 🔁 ${esc(gpWdhText(g.wiederholung, g.geplant_um))}` : ""}<br><i>Nur du siehst das – antippen zum Ändern</i></small></button>`).join("");
-  return (teile.join("") || '<div class="leer">Noch keine Nachrichten – schreib die erste.</div>') + (plan ? `<div class="gp-warte">${plan}</div>` : "");
+  return (html ? leiste + html : '<div class="leer">Noch keine Nachrichten – schreib die erste.</div>') + (plan ? `<div class="gp-warte">${plan}</div>` : "");
 }
+const tages = (l) => l[l.length - 1];
+AKTIONEN.tagUm = (k) => { const o = (C.offen[S.params.id] ||= new Set()); if (o.has(k)) o.delete(k); else o.add(k); verlaufNeu(S.params.id, true); };
+AKTIONEN.tageAlle = (w) => {
+  const id = S.params.id, o = (C.offen[id] = new Set());
+  if (w === "auf") for (const n of chatNachrichten(id)) { o.add("t:" + tagKey(n.zeit)); o.add("w:" + kwText(n.zeit)); }
+  verlaufNeu(id, true);
+};
+
+// ---------- 📎 Anhänge, 📊 Umfrage, ⏳ Selbstlöschen in der Blase ----------
+const restText = (iso) => { const m = Math.max(0, Math.round((Date.parse(iso) - Date.now()) / 60000)); return m < 60 ? `noch ${m} Min.` : m < 48 * 60 ? `noch ${Math.round(m / 60)} Std.` : `noch ${Math.round(m / 1440)} Tage`; };
+function anlagenHtml(n) {
+  return (n.anlagen || []).map((a, i) => {
+    if (a.art === "bild" && a.id) return `<button type="button" class="anhang-bild" data-a="bildZeigen" data-x="${esc(a.id)}"><img data-datei="${esc(a.id)}" alt="📷 ${esc(a.name)}"></button>`;
+    if (a.art === "sprache" && a.id) return `<div class="sprache" data-sprache="${esc(a.id)}"><button type="button" class="knopf klein" data-a="spracheSpielen" data-x="${esc(a.id)}">▶️ Sprachnachricht ${a.dauer ? dauerText(a.dauer) : ""}</button></div>`;
+    if (a.art === "noten") return `<button type="button" class="anhang-karte noten" data-a="anhangOeffnen" data-x="${esc(n.id)}|${i}"><span class="ak-sym">🎼</span><span><b>${esc(a.name)}</b><small>${a.id ? `Noten · ${groesseText(a.groesse)} · antippen zum Öffnen` : "im Notenarchiv – antippen"}</small></span></button>`;
+    return `<button type="button" class="anhang-karte" data-a="anhangOeffnen" data-x="${esc(n.id)}|${i}"><span class="ak-sym">${a.art === "video" ? "🎬" : /pdf/.test(a.mime || "") ? "📕" : "📄"}</span><span><b>${esc(a.name)}</b><small>${groesseText(a.groesse)}</small></span></button>`;
+  }).join("");
+}
+function umfrageHtml(n) {
+  const u = n.umfrage; if (!u) return "";
+  const st = Object.values(n.umfrage_stimmen || {}).filter((x) => Array.isArray(x) && x.length), meine = (n.umfrage_stimmen || {})[ich()] || [];
+  const zahl = u.optionen.map((_, i) => st.filter((x) => x.includes(i)).length), max = Math.max(1, ...zahl);
+  return `<div class="umfrage"><div class="uf-frage">📊 ${esc(u.frage)}</div><small class="hinweis">${u.mehrfach ? "Mehrere Antworten möglich" : "Eine Antwort"} · ${st.length} ${st.length === 1 ? "Stimme" : "Stimmen"}</small>
+    ${u.optionen.map((o, i) => `<button type="button" class="uf-opt${meine.includes(i) ? " meine" : ""}" data-a="umfrageStimme" data-x="${esc(n.id)}|${i}"><span class="uf-balken" style="width:${Math.round((zahl[i] / max) * 100)}%"></span><span class="uf-text">${meine.includes(i) ? "✅" : "⚪"} ${esc(o)}</span><b>${zahl[i]}</b></button>`).join("")}
+    ${st.length ? `<button type="button" class="uf-wer" data-a="umfrageWer" data-x="${esc(n.id)}">👥 Wer hat was gewählt?</button>` : ""}</div>`;
+}
+function bilderLaden(wurzel = document) {
+  wurzel.querySelectorAll("img[data-datei]:not([data-geladen])").forEach((img) => {
+    img.dataset.geladen = "1";
+    const eigen = img.closest(".blase")?.classList.contains("ich");
+    if (einst().fotosLaden === false && !eigen) { img.closest(".anhang-bild")?.classList.add("nicht-geladen"); return; }
+    dateiUrl(img.dataset.datei).then((u) => { img.src = u; }).catch((e) => { img.closest(".anhang-bild")?.classList.add("fehler"); img.alt = "⚠️ " + e.message; });
+  });
+}
+AKTIONEN.bildZeigen = async (id) => {
+  let url; try { url = await dateiUrl(id); } catch (e) { return toast("⚠️ " + e.message); }
+  document.getElementById("bildGross")?.remove();
+  const d = document.createElement("div"); d.id = "bildGross"; d.className = "bild-gross"; d.setAttribute("role", "dialog");
+  d.innerHTML = `<img src="${url}" alt="Foto"><div class="bg-knoepfe"><a class="knopf" href="${url}" download="Bachkreis-Foto.jpg">⬇️ Speichern</a><button type="button" class="knopf haupt" data-a="bildZu">✕ Schließen</button></div>`;
+  d.addEventListener("click", (e) => { if (e.target === d) d.remove(); });
+  document.body.appendChild(d);
+};
+AKTIONEN.bildZu = () => document.getElementById("bildGross")?.remove();
+AKTIONEN.spracheSpielen = async (id) => {
+  const box = document.querySelector(`[data-sprache="${CSS.escape(id)}"]`);
+  try { const url = await dateiUrl(id); if (box) box.innerHTML = `<audio controls autoplay src="${url}"></audio>`; } catch (e) { toast("⚠️ " + e.message); }
+};
+AKTIONEN.anhangOeffnen = async (x) => {
+  const [nid, i] = String(x).split("|"), a = hole("nachrichten", nid)?.anlagen?.[Number(i)]; if (!a) return;
+  if (!a.id) { if (a.werk_id && istVerwalter()) return zeige("noten", { werk: a.werk_id }); return zeige("meinenoten"); }
+  try { await dateiOeffnen(a.id, a.name, a.mime); } catch (e) { toast("⚠️ " + e.message); }
+};
+AKTIONEN.umfrageStimme = async (x) => {
+  const [nid, i] = String(x).split("|"), n = hole("nachrichten", nid); if (!n?.umfrage) return;
+  const k = Number(i), cur = (n.umfrage_stimmen || {})[ich()] || [];
+  const neu = n.umfrage.mehrfach ? (cur.includes(k) ? cur.filter((y) => y !== k) : [...cur, k]) : cur[0] === k ? [] : [k];
+  await speichere("nachrichten", { ...n, umfrage_stimmen: { ...(n.umfrage_stimmen || {}), [ich()]: neu } });
+  verlaufNeu(n.unterhaltung_id, true);
+};
+AKTIONEN.umfrageWer = (nid) => {
+  const n = hole("nachrichten", nid); if (!n?.umfrage) return;
+  const st = Object.entries(n.umfrage_stimmen || {}).filter(([, v]) => Array.isArray(v) && v.length);
+  blatt(`📊 ${n.umfrage.frage}`, n.umfrage.optionen.map((o, i) => { const w = st.filter(([, v]) => v.includes(i)).map(([p]) => vorn(p)); return `<div class="ni-zeile"><span><b>${esc(o)}</b> (${w.length})</span><span class="hinweis">${esc(w.join(", ") || "–")}</span></div>`; }).join(""));
+};
+
 const EMOJIS = ["👍", "❤️", "😂", "😊", "🙏", "👏", "🎻", "🎵", "🎼", "🎉", "😮", "😢", "🤗", "💪", "☀️", "🚗"];
 function eingabeHtml(u) {
   const darf = u.art !== "verteiler" || istVerwalter();
@@ -198,22 +297,27 @@ function eingabeHtml(u) {
   const a = C.antwort && hole("nachrichten", C.antwort);
   const z = C.zustell, zAn = z.push || z.mail || z.whatsapp, alle = z.push && z.mail && z.whatsapp;
   const exp = !expressUnbegrenzt() ? ` data-zahl="${expressHeute()}/${expressMax()}"` : "";
-  const hinweis = [C.wichtig ? "❗ Wird als WICHTIG gesendet – bei allen farbig markiert, auch per E-Mail" : "", C.express ? "🏎️ Express: kommt sofort an – auch nachts. Beim Empfänger geht ein Fenster auf." : "", entwurf(u.id) && !document.getElementById("chatText") ? "✏️ Entwurf – noch nicht gesendet" : ""].filter(Boolean);
+  const hinweis = [C.wichtig ? "❗ Wird als WICHTIG gesendet – bei allen farbig markiert, auch per E-Mail" : "", C.express ? "🏎️ Express: kommt sofort an – auch nachts. Beim Empfänger geht ein Fenster auf." : "", C.ablauf ? `⏳ Löscht sich nach ${C.ablauf === 1 ? "1 Std." : C.ablauf === 24 ? "24 Std." : "7 Tagen"} – bei allen` : "", C.diktat ? "🗣️ Ich höre zu … einfach sprechen" : "", entwurf(u.id) && !document.getElementById("chatText") ? "✏️ Entwurf – noch nicht gesendet" : ""].filter(Boolean);
   return `<div class="chat-eingabe" id="chatEingabe">
     ${a ? `<div class="antwort-leiste"><div class="zitat"><b>↩️ ${esc(a.von === ich() ? "Du" : name(a.von))}</b><span>${esc(String(a.text).slice(0, 90))}</span></div><button type="button" class="knopf klein" data-a="naAntwortWeg" aria-label="Antwort aufheben">✕</button></div>` : ""}
     ${C.zustellOffen ? `<div class="zustell"><span>Benachrichtigen:</span><button class="${alle ? "an" : ""}" data-a="zustellWahl" data-x="alle">✅ Alle</button><button class="${z.push ? "an" : ""}" data-a="zustellWahl" data-x="push">🔔 Push</button><button class="${z.mail ? "an" : ""}" data-a="zustellWahl" data-x="mail">✉️ E-Mail</button><button class="${z.whatsapp ? "an" : ""}" data-a="zustellWahl" data-x="whatsapp">🟢 WhatsApp</button><span>${z.push || z.mail ? "" : "· wie eingestellt"}</span></div>` : ""}
     ${C.emoji ? `<div class="chat-emoji">${EMOJIS.map((e) => `<button type="button" data-a="chatEmoji" data-x="${e}" aria-label="Emoji ${e}">${e}</button>`).join("")}</div>` : ""}
     ${hinweis.length ? `<div class="eingabe-hinweis">${hinweis.map(esc).join("<br>")}</div>` : ""}
-    <div class="innen">
+    ${C.anlagen.length ? `<div class="anhang-chips">${C.anlagen.map((a) => `<span class="anhang-chip ${a.status}">${a.art === "bild" ? "📷" : a.art === "sprache" ? "🎤" : a.art === "noten" ? "🎼" : a.art === "video" ? "🎬" : "📄"} ${esc(a.name.length > 28 ? a.name.slice(0, 26) + "…" : a.name)}${a.status === "laedt" ? " ⏳" : a.status === "fehler" ? " ⚠️" : ""}<button type="button" data-a="anhangWeg" data-x="${a.tmp}" aria-label="Anhang entfernen">✕</button></span>`).join("")}</div>` : ""}
+    ${C.aufnahme ? `<div class="aufnahme-leiste"><span class="rec">●</span><b id="aufZeit">${dauerText(C.aufnahme.sekunden())}</b><span class="hinweis">Sprachnachricht wird aufgenommen …</span><button type="button" class="knopf klein" data-a="aufnahmeWeg">✖ Verwerfen</button><button type="button" class="knopf haupt klein" data-a="aufnahmeSenden">➤ Senden</button></div>` : `<div class="innen${aufnahmeMoeglich() ? " mit-mikro" : ""}">
+      <button type="button" class="rund anhang" data-a="anhangMenue" title="Anhang: Foto, Datei, Noten, Umfrage" aria-label="Anhang">📎</button>
       <textarea id="chatText" rows="1" maxlength="${CHAT.zeichen}" placeholder="${C.express ? "🏎️ Express-Sendung schreiben …" : C.wichtig ? "❗ Wichtige Nachricht schreiben …" : "Nachricht schreiben …"}" class="${C.express ? "express" : C.wichtig ? "wichtig" : ""}" aria-label="Nachricht schreiben">${esc(entwurf(u.id))}</textarea>
+      <button type="button" class="rund mikro" data-a="aufnahmeStart" title="Sprachnachricht aufnehmen" aria-label="Sprachnachricht aufnehmen">🎙️</button>
       <button type="button" class="rund senden" data-a="chatSenden" data-x="${esc(u.id)}" aria-label="Senden" title="Senden">➤</button>
       <div class="werkzeuge">
         <button type="button" class="rund${C.emoji ? " an" : ""}" data-a="chatEmojiAuf" title="Emoji" aria-label="Emoji einfügen">😊</button>
+        ${spracheMoeglich() ? `<button type="button" class="rund diktat${C.diktat ? " an" : ""}" data-a="diktieren" title="Diktieren – sprechen statt tippen" aria-label="Diktieren">🗣️</button>` : ""}
         <button type="button" class="rund${zAn ? " an" : ""}" data-a="zustellAuf" title="Wie benachrichtigen? (Push, E-Mail, WhatsApp)" aria-label="Wie benachrichtigen">🔔</button>
         <button type="button" class="rund wichtig-knopf${C.wichtig ? " an" : ""}" data-a="wichtigUm" title="Wichtig – Wichtigkeit hoch" aria-pressed="${C.wichtig}">❗</button>
         <button type="button" class="rund express-knopf${C.express ? " an" : ""}" data-a="expressUm" title="Express-Sendung – kommt sofort an, auch nachts" aria-pressed="${C.express}"${C.express ? exp : ""}>🏎️</button>
         <button type="button" class="rund" data-a="spaeterWahl" data-x="${esc(u.id)}" title="Später senden …" aria-label="Später senden">⏰</button>
-      </div></div></div>`;
+        <button type="button" class="rund ablauf${C.ablauf ? " an" : ""}" data-a="ablaufWahl" title="Nachricht löscht sich selbst …" aria-label="Selbstlöschen">⏳</button>
+      </div></div>`}</div>`;
 }
 VIEWS.unterhaltung = {
   render({ id }) {
@@ -226,13 +330,8 @@ VIEWS.unterhaltung = {
   },
   nach(w, { id }) {
     cfAnwenden();
-    const t = w.querySelector("#chatText");
-    if (t) {
-      const hoehe = () => { t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, innerHeight * 0.36) + "px"; abstand(); };
-      t.addEventListener("input", () => { entwurfSetzen(id, t.value); hoehe(); });
-      t.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && einst().enterSendet === true) { e.preventDefault(); AKTIONEN.chatSenden(id); } });
-      hoehe();
-    }
+    eingabeVerdrahten(id, false);
+    bilderLaden(w);
     abstand();
     const tr = document.getElementById("neuTrenner");
     if (tr && !C.gesprungen?.[id]) { (C.gesprungen ||= {})[id] = true; tr.scrollIntoView({ block: "start" }); } else window.scrollTo(0, document.body.scrollHeight);
@@ -242,16 +341,16 @@ VIEWS.unterhaltung = {
 };
 // Platz für die feste Eingabe unten (KC-CLUB-CHAT-ABSTAND)
 function abstand() { const e = document.getElementById("chatEingabe"), v = document.getElementById("chatVerlauf"); if (e && v) v.style.paddingBottom = e.offsetHeight + 24 + "px"; }
-function verlaufNeu(id) {
+function verlaufNeu(id, stehen = false) {
   const v = document.getElementById("chatVerlauf"), u = hole("unterhaltungen", id); if (!v || !u || S.view !== "unterhaltung" || S.params.id !== id) return;
-  const unten = innerHeight + scrollY >= document.body.scrollHeight - 160;
-  v.innerHTML = verlaufHtml(u); abstand();
-  if (unten) window.scrollTo(0, document.body.scrollHeight);
+  const unten = innerHeight + scrollY >= document.body.scrollHeight - 160, y = scrollY;
+  v.innerHTML = verlaufHtml(u); abstand(); bilderLaden(v);
+  if (stehen) window.scrollTo(0, y); else if (unten) window.scrollTo(0, document.body.scrollHeight);
 }
 function nachrichtenVorlesen(uid) {
   if (einst().vorlesen !== true || !("speechSynthesis" in globalThis)) return;
   for (const n of chatNachrichten(uid).filter((x) => x.von !== ich() && !gelesenVonMir(x) && !x.zurueckgezogen_am).slice(-3)) {
-    const s = new SpeechSynthesisUtterance(`${name(n.von)} schreibt${n.wichtig ? " wichtig" : ""}: ${n.text}`); s.lang = "de-DE"; speechSynthesis.speak(s);
+    const s = new SpeechSynthesisUtterance(`${name(n.von)} schreibt${n.wichtig ? " wichtig" : ""}: ${nachrichtKurz(n)}`); s.lang = "de-DE"; speechSynthesis.speak(s);
   }
 }
 // Gelesen melden (blaue Haken beim Absender) – ohne Lesebestätigung nur auf diesem Gerät merken (wie WhatsApp)
@@ -304,13 +403,18 @@ function eingabeNeu() {
   const alt = document.getElementById("chatEingabe"), u = hole("unterhaltungen", S.params.id); if (!alt || !u) return zeichne();
   const t = document.getElementById("chatText"); if (t) entwurfSetzen(u.id, t.value);
   const d = document.createElement("div"); d.innerHTML = eingabeHtml(u); alt.replaceWith(d.firstElementChild);
-  const neu = document.getElementById("chatText");
-  if (neu) {
-    neu.addEventListener("input", () => { entwurfSetzen(u.id, neu.value); neu.style.height = "auto"; neu.style.height = Math.min(neu.scrollHeight, innerHeight * 0.36) + "px"; abstand(); });
-    neu.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && einst().enterSendet === true) { e.preventDefault(); AKTIONEN.chatSenden(u.id); } });
-    neu.focus(); try { neu.setSelectionRange(neu.value.length, neu.value.length); } catch {}
-  }
+  eingabeVerdrahten(u.id, !C.aufnahme && !C.diktat);
   abstand();
+}
+function eingabeVerdrahten(id, fokus) {
+  const t = document.getElementById("chatText"), e = document.getElementById("chatEingabe");
+  if (!t) return;
+  const stand = () => { e?.classList.toggle("hat-text", !!t.value.trim() || C.anlagen.length > 0); };
+  const hoehe = () => { t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, innerHeight * 0.36) + "px"; abstand(); };
+  t.addEventListener("input", () => { entwurfSetzen(id, t.value); hoehe(); stand(); });
+  t.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && !ev.shiftKey && einst().enterSendet === true) { ev.preventDefault(); AKTIONEN.chatSenden(id); } });
+  hoehe(); stand();
+  if (fokus) { t.focus(); try { t.setSelectionRange(t.value.length, t.value.length); } catch {} }
 }
 
 // ---------- Senden ----------
@@ -325,14 +429,23 @@ function zustellKanaele() { const z = C.zustell, k = []; if (z.push) k.push("pus
 async function nachrichtBauen(uid, text, extra = {}) {
   const u = hole("unterhaltungen", uid);
   return { id: neueId(), unterhaltung_id: uid, von: ich(), text, zeit: jetztIso(), gelesen_von: [ich()], rueckmeldung: false, rueckmeldungen: {}, reaktionen: {},
-    wichtig: !!C.wichtig, express: !!C.express, antwort_auf: C.antwort || null, kanaele: zustellKanaele(), anzahl: empfaenger(u).length, ...extra };
+    wichtig: !!C.wichtig, express: !!C.express, antwort_auf: C.antwort || null, kanaele: zustellKanaele(), anzahl: empfaenger(u).length,
+    anlagen: C.anlagen.filter((a) => a.status === "fertig").map(({ id, name, mime, groesse, art, dauer, stimme_id, werk_id }) => ({ id, name, mime, groesse, art, dauer, stimme_id, werk_id })),
+    loescht_am: C.ablauf ? new Date(Date.now() + C.ablauf * 3600000).toISOString() : null, ...extra };
 }
 function eingabeZuruecksetzen(uid) {
-  entwurfSetzen(uid, ""); C.antwort = null; C.wichtig = false; C.express = false; C.zustell = { push: false, mail: false, whatsapp: false }; C.zustellOffen = false; C.emoji = false;
+  entwurfSetzen(uid, ""); C.anlagen = []; C.ablauf = null; C.antwort = null; C.wichtig = false; C.express = false; C.zustell = { push: false, mail: false, whatsapp: false }; C.zustellOffen = false; C.emoji = false;
 }
 AKTIONEN.chatSenden = async (uid) => {
   const feld = document.getElementById("chatText"), text = String(feld?.value ?? entwurf(uid)).trim();
-  if (!text) return;
+  if (!text && !C.anlagen.length) return;
+  if (C.anlagen.some((a) => a.status === "laedt")) {
+    toast("⏳ Der Anhang lädt noch – die Nachricht geht mit ihm zusammen raus, sobald er fertig ist …");
+    const bis = Date.now() + 180000;
+    while (C.anlagen.some((a) => a.status === "laedt") && Date.now() < bis) await new Promise((r) => setTimeout(r, 300));
+    if (C.anlagen.some((a) => a.status === "laedt")) return toast("⚠️ Der Anhang ist noch nicht fertig – nichts wurde gesendet. Bitte gleich nochmal ➤.");
+  }
+  if (C.anlagen.some((a) => a.status === "fehler")) return toast("⚠️ Ein Anhang ging nicht hoch – bitte mit ✕ entfernen oder neu wählen.");
   if ([...text].length > CHAT.zeichen) return toast(`Höchstens ${CHAT.zeichen} Zeichen.`);
   await wichtigkeitFragen(uid);
   const u = hole("unterhaltungen", uid), n = await nachrichtBauen(uid, text);
@@ -343,15 +456,16 @@ AKTIONEN.chatSenden = async (uid) => {
   C.trenner[uid] = null;
   zeichne(); window.scrollTo(0, document.body.scrollHeight);
   if (whatsappAuch) { const p = chatPartnerVon(u); whatsapp(`${text}\n\n– ${S.ich.vorname} (Bachkreis-App)`, { nummer: p ? hole("personen", p)?.mobil || "" : "", anId: p, betreff: chatTitel(u) }); }
+  setTimeout(() => bilderLaden(), 50);
   const r = await bescheid(n, u);
   if (n.express) toast(`🏎️ Per Express versandt${r ? ` (${r} Wege)` : ""}. Unter der Nachricht siehst du, wann sie angekommen ist und gelesen wurde.${expressUnbegrenzt() ? "" : ` Heute ${expressHeute()}/${expressMax()}.`}`, 5000);
 };
 // Bescheid über den BK Communicator – im Echtbetrieb bestimmt der Server Empfänger und Regel (je Nachricht einmal)
 async function bescheid(n, u) {
   try {
-    if (istEchtbetrieb()) { await jetztAbgleichen(); const r = await senden({ an: [], betreff: chatTitel(u), text: n.text, ereignis: nachrichtEreignis(n, u), nachricht_id: n.id, kanaele: n.kanaele }); return (r.vorgemerkt || 0); }
+    if (istEchtbetrieb()) { await jetztAbgleichen(); const r = await senden({ an: [], betreff: chatTitel(u), text: nachrichtKurz(n), ereignis: nachrichtEreignis(n, u), nachricht_id: n.id, kanaele: n.kanaele }); return (r.vorgemerkt || 0); }
     const an = empfaenger(u);
-    const r = await senden({ an, betreff: `${n.express ? "🏎️ EXPRESS von " : n.wichtig ? "❗ Wichtig: " : ""}${name(n.von)} · ${chatTitel(u)}`, text: n.text, ereignis: nachrichtEreignis(n, u), kanaele: n.kanaele?.length ? n.kanaele : null, nachricht_id: n.id });
+    const r = await senden({ an, betreff: `${n.express ? "🏎️ EXPRESS von " : n.wichtig ? "❗ Wichtig: " : ""}${name(n.von)} · ${chatTitel(u)}`, text: nachrichtKurz(n), ereignis: nachrichtEreignis(n, u), kanaele: n.kanaele?.length ? n.kanaele : null, nachricht_id: n.id });
     demoZustellung(n, an);
     return (r.push || 0) + (r.mail || 0);
   } catch (e) { console.warn("Nachricht-Bescheid", e); return 0; }
@@ -373,7 +487,8 @@ AKTIONEN.naMenue = (id) => {
   blatt(eigen ? "Deine Nachricht" : `Nachricht von ${name(n.von)}`, `<div class="na-vorschau">${esc(String(n.text).slice(0, 160))}</div>
     <div class="na-schnell">${SCHNELL.map((e) => `<button type="button" class="${meine === e ? "an" : ""}" data-a="naReagieren" data-x="${esc(id)}|${e}" aria-label="Mit ${e} reagieren">${e}</button>`).join("")}</div>
     <div class="na-knoepfe"><button class="knopf" data-a="naAntworten" data-x="${esc(id)}">↩️ Antworten</button>
-    <button class="knopf" data-a="naKopieren" data-x="${esc(id)}">📋 Kopieren</button>
+    ${n.text ? `<button class="knopf" data-a="naKopieren" data-x="${esc(id)}">📋 Kopieren</button>` : ""}
+    ${(n.anlagen || []).filter((a) => a.id).map((a, i) => `<button class="knopf" data-a="anhangOeffnen" data-x="${esc(id)}|${(n.anlagen || []).indexOf(a)}">⬇️ ${esc(a.art === "sprache" ? "Sprachnachricht" : a.name)} öffnen / speichern</button>`).join("")}
     ${bearbeitbar ? `<button class="knopf" data-a="naBearbeiten" data-x="${esc(id)}">✏️ Bearbeiten (noch ${Math.max(1, Math.ceil((bearbeitenMin() * 60000 - (Date.now() - Date.parse(n.zeit))) / 60000))} Min.)</button>` : ""}
     <button class="knopf" data-a="naVorlesen" data-x="${esc(id)}">🔊 Vorlesen</button>
     <button class="knopf" data-a="naInfo" data-x="${esc(id)}">ℹ️ Details – wann gesendet, angekommen, gelesen</button>
@@ -404,7 +519,9 @@ AKTIONEN.naLoeschen = async (id) => {
   if (!(await frage(n.von === ich() ? "Nachricht für alle löschen?\n\nBei allen steht dann „Diese Nachricht wurde gelöscht“." : "Nachricht als Leitung für alle löschen?"))) return;
   await speichere("nachrichten", { ...n, text: "", zurueckgezogen_am: jetztIso(), reaktionen: {} }); verlaufNeu(n.unterhaltung_id); toast("🗑️ Gelöscht");
 };
-AKTIONEN.zuNachricht = (id) => { const el = document.getElementById("msg-" + id); if (!el) return; el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.remove("aufblitzen"); void el.offsetWidth; el.classList.add("aufblitzen"); };
+AKTIONEN.zuNachricht = (id) => {
+  let el = document.getElementById("msg-" + id);
+  if (!el) { const n = hole("nachrichten", id); if (!n) return; C.ziel = id; const o = (C.offen[n.unterhaltung_id] ||= new Set()); o.add("t:" + tagKey(n.zeit)); o.add("w:" + kwText(n.zeit)); verlaufNeu(n.unterhaltung_id, true); el = document.getElementById("msg-" + id); if (!el) return; } el.scrollIntoView({ behavior: "smooth", block: "center" }); el.classList.remove("aufblitzen"); void el.offsetWidth; el.classList.add("aufblitzen"); };
 AKTIONEN.rueckmelden = async (x) => {
   const [id, w] = x.split("|"), n = hole("nachrichten", id);
   await speichere("nachrichten", { ...n, rueckmeldungen: { ...(n.rueckmeldungen || {}), [ich()]: w } });
@@ -609,4 +726,120 @@ export function nachrichtenStart() {
   document.addEventListener("visibilitychange", () => { if (!document.hidden) { setTimeout(expressPruefen, 1200); if (S.view === "unterhaltung") gelesenMarkieren(S.params.id); } });
   setInterval(() => { geplanteFreigebenDemo().catch(() => {}); }, 30000);
   geplanteFreigebenDemo().then(angekommenMelden).catch(() => {});
+}
+
+// ---------- 📎 Anhang wählen: Foto/Video · Datei · Noten · Umfrage (wie KC anlageMenue) ----------
+const datWahl = (art, accept, sym, t, mehr = false) => `<label class="knopf">${sym} ${t}<input type="file" accept="${accept}" data-c="anhangGewaehlt" data-x="${art}" ${mehr ? "multiple" : ""} hidden></label>`;
+AKTIONEN.anhangMenue = () => {
+  blatt("📎 Anhängen", `<div class="na-knoepfe">
+    ${datWahl("bild", "image/*,video/*", "📷", "Foto oder Video", true)}
+    ${datWahl("datei", ".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.txt,.csv,.zip,application/pdf", "📄", "Datei (PDF, Word, Excel …)", true)}
+    <button class="knopf" data-a="notenWahl">🎼 Noten aus dem Notenarchiv</button>
+    ${datWahl("noten", "application/pdf,image/*", "🎼", "Noten vom Gerät (PDF oder Foto)", true)}
+    <button class="knopf" data-a="umfrageNeu">📊 Umfrage</button></div>
+    <p class="hinweis">Je Datei höchstens 8 MB. Fotos werden vorher verkleinert. Die Empfänger sehen Anhänge nur, solange sie die Nachricht sehen dürfen.</p>`);
+};
+async function anhangDazu(datei, art) {
+  if (C.anlagen.length >= CHAT.anlagenMax) return toast(`Höchstens ${CHAT.anlagenMax} Anhänge je Nachricht.`);
+  const a = { tmp: neueId(), status: "laedt", name: datei.name || "Datei", art: art === "bild" ? artVonMime(datei.type) : art, mime: datei.type, groesse: datei.size };
+  C.anlagen.push(a); eingabeNeu();
+  try {
+    const f = a.art === "bild" ? await bildVerkleinern(datei) : datei;
+    Object.assign(a, await hochladen(f, { name: f.name || a.name, art: a.art }), { status: "fertig", art: a.art });
+  } catch (e) { a.status = "fehler"; toast("⚠️ " + e.message, 4500); }
+  if (S.view === "unterhaltung") eingabeNeu();
+}
+AKTIONEN.anhangGewaehlt = (_, el) => { const l = [...(el.files || [])], art = el.dataset.x; blattZu(); for (const f of l) anhangDazu(f, art); };
+AKTIONEN.anhangWeg = (tmp) => { C.anlagen = C.anlagen.filter((a) => a.tmp !== tmp); eingabeNeu(); };
+// 🎼 Noten aus dem Archiv: mit PDF als Datei, sonst als Hinweis „im Notenarchiv“
+function meineStimmen() {
+  if (istVerwalter()) return liste("stimmen");
+  const regs = instrumenteVon(db, ich()).map((i) => i.register_id).filter(Boolean);
+  return liste("stimmen", (s) => s.person_id === ich() || (!s.person_id && regs.includes(s.register_id)));
+}
+AKTIONEN.notenWahl = () => {
+  const st = meineStimmen(), werke = [...new Set(st.map((s) => s.werk_id))].map((id) => hole("werke", id)).filter(Boolean).sort((a, b) => a.titel.localeCompare(b.titel, "de"));
+  blatt("🎼 Noten anhängen", werke.map((w) => `<h4>${esc(w.titel)} <small class="hinweis">${esc(w.komponist)}</small></h4><div class="knopfreihe">${st.filter((s) => s.werk_id === w.id).map((s) => `<button class="knopf klein" data-a="notenAnhang" data-x="${esc(s.id)}">${s.datei?.startsWith("datei:") ? "📕" : "🎼"} ${esc(s.bezeichnung)}</button>`).join("")}</div>`).join("")
+    + `<p class="hinweis">📕 = mit PDF (öffnet sich direkt) · 🎼 = Hinweis aufs Notenarchiv. ${istVerwalter() ? "PDFs hängst du im Notenarchiv an die Stimme." : ""}</p>` || '<div class="leer">Keine Noten gefunden.</div>');
+};
+AKTIONEN.notenAnhang = (sid) => {
+  const s = hole("stimmen", sid), w = s && hole("werke", s.werk_id); if (!s) return; blattZu();
+  const id = s.datei?.startsWith("datei:") ? s.datei.slice(6) : undefined;
+  C.anlagen.push({ tmp: neueId(), status: "fertig", art: "noten", name: `${w?.titel || "Noten"} – ${s.bezeichnung}`, id, mime: id ? "application/pdf" : undefined, stimme_id: s.id, werk_id: s.werk_id });
+  eingabeNeu();
+};
+// 📊 Umfrage (KC-CLUB-CHATUMFRAGE)
+AKTIONEN.umfrageNeu = () => {
+  blatt("📊 Umfrage", `<div id="ufForm"><div class="feld"><label>Frage</label><input id="ufFrage" maxlength="200" placeholder="z. B. Wer fährt mit zum Konzert nach Unna?"></div>
+    <div id="ufOptionen">${[1, 2, 3].map((i) => `<div class="feld"><input class="uf-o" maxlength="80" placeholder="Antwort ${i}"></div>`).join("")}</div>
+    <button class="knopf klein" data-a="umfrageOption">＋ Antwort</button>
+    <label class="schalter"><span>Mehrere Antworten erlauben</span><input type="checkbox" id="ufMehr"></label>
+    <button class="knopf haupt breit" data-a="umfrageSenden">📊 Umfrage senden</button></div>`);
+};
+AKTIONEN.umfrageOption = () => { const l = document.getElementById("ufOptionen"); if (l && l.children.length < 10) l.insertAdjacentHTML("beforeend", `<div class="feld"><input class="uf-o" maxlength="80" placeholder="Antwort ${l.children.length + 1}"></div>`); };
+AKTIONEN.umfrageSenden = async () => {
+  const frage = String(document.getElementById("ufFrage")?.value || "").trim(), optionen = [...document.querySelectorAll(".uf-o")].map((x) => x.value.trim()).filter(Boolean);
+  if (!frage || optionen.length < 2) return toast("Bitte eine Frage und mindestens zwei Antworten eintragen.");
+  const uid = S.params.id, u = hole("unterhaltungen", uid); blattZu();
+  const n = await nachrichtBauen(uid, "", { umfrage: { frage, optionen, mehrfach: !!document.getElementById("ufMehr")?.checked }, anlagen: [] });
+  await speichere("nachrichten", n); zeichne(); window.scrollTo(0, document.body.scrollHeight); await bescheid(n, u);
+};
+// ⏳ Selbstlöschen für die nächste Nachricht (KC-CLUB-SELBSTLOESCHEN)
+AKTIONEN.ablaufWahl = () => blatt("⏳ Nachricht löscht sich selbst", `<p class="hinweis">Gilt für die nächste Nachricht – sie verschwindet danach bei allen (auch Anhänge).</p>
+  <div class="na-knoepfe">${[[null, "Aus – bleibt stehen"], [1, "⏳ nach 1 Stunde"], [24, "⏳ nach 24 Stunden"], [168, "⏳ nach 7 Tagen"]].map(([h, t]) => `<button class="knopf${C.ablauf === h ? " haupt" : ""}" data-a="ablaufSetzen" data-x="${h ?? ""}">${t}</button>`).join("")}</div>`);
+AKTIONEN.ablaufSetzen = (h) => { C.ablauf = h ? Number(h) : null; blattZu(); eingabeNeu(); };
+// 🗣️ Diktieren: Sprache → Text ins Schreibfeld (Senden bleibt in deiner Hand)
+AKTIONEN.diktieren = () => {
+  if (C.diktat) { C.diktat(); C.diktat = null; return eingabeNeu(); }
+  const t = document.getElementById("chatText"); if (!t) return;
+  const basis = t.value ? t.value.replace(/\s*$/, " ") : "";
+  C.diktat = zuhoeren({ weiter: true,
+    zwischen: (x) => { const f = document.getElementById("chatText"); if (f) { f.value = basis + x; f.dispatchEvent(new Event("input", { bubbles: true })); } },
+    fertig: () => { C.diktat = null; eingabeNeu(); },
+    fehler: (f) => { C.diktat = null; eingabeNeu(); toast("🗣️ " + (SPRACHE_FEHLER[f] || SPRACHE_FEHLER.FEHLER), 4500); } });
+  eingabeNeu();
+};
+// 🎙️ Sprachnachricht (KC-CLUB-SPRACHE): aufnehmen → senden oder verwerfen
+let aufTakt = null;
+AKTIONEN.aufnahmeStart = async () => {
+  if (!aufnahmeMoeglich()) return toast("🎙️ Dieses Gerät kann hier keine Sprachnachricht aufnehmen.");
+  try { C.aufnahme = await aufnahme({ beiEnde: () => AKTIONEN.aufnahmeSenden() }); }
+  catch { return toast("🎙️ " + SPRACHE_FEHLER.KEIN_MIKROFON, 5000); }
+  try { navigator.vibrate?.(30); } catch {}
+  eingabeNeu();
+  clearInterval(aufTakt); aufTakt = setInterval(() => { const z = document.getElementById("aufZeit"); if (z && C.aufnahme) z.textContent = dauerText(C.aufnahme.sekunden()); }, 500);
+};
+AKTIONEN.aufnahmeWeg = () => { clearInterval(aufTakt); C.aufnahme?.abbrechen(); C.aufnahme = null; eingabeNeu(); toast("🗑️ Verworfen"); };
+AKTIONEN.aufnahmeSenden = async () => {
+  clearInterval(aufTakt); const a = C.aufnahme; if (!a) return; C.aufnahme = null; eingabeNeu();
+  const r = await a.stopp(); if (!r?.blob?.size) return toast("🎙️ Die Aufnahme war leer.");
+  if (r.dauer < 1) return toast("🎙️ Zu kurz – bitte länger sprechen.");
+  const uid = S.params.id, u = hole("unterhaltungen", uid);
+  try {
+    const ext = /mp4/.test(r.blob.type) ? "m4a" : /ogg/.test(r.blob.type) ? "ogg" : "webm";
+    const up = await hochladen(r.blob, { name: `Sprachnachricht.${ext}`, art: "sprache" });
+    const n = await nachrichtBauen(uid, "", { anlagen: [{ ...up, art: "sprache", dauer: r.dauer }] });
+    papierflieger(document.querySelector('[data-a="chatSenden"]'), n.wichtig, n.id, n.express);
+    await speichere("nachrichten", n); eingabeZuruecksetzen(uid); zeichne(); window.scrollTo(0, document.body.scrollHeight);
+    await bescheid(n, u);
+  } catch (e) { toast("⚠️ " + e.message, 4500); }
+};
+
+// ---------- Für die Sprachsteuerung ----------
+export const chatPartner = () => partnerListe();
+export async function chatMitText(pid, text, { express = false, wichtig = false } = {}) {
+  const u = await einzelchatMit(pid);
+  entwurfSetzen(u.id, text || ""); C.express = !!express; C.wichtig = !!wichtig;
+  zeige("unterhaltung", { id: u.id });
+  return u;
+}
+export function ungeleseneVorlesen() {
+  if (!("speechSynthesis" in globalThis)) return 0;
+  const ids = new Set(meineUnterhaltungen().map((u) => u.id));
+  const l = liste("nachrichten", (n) => ids.has(n.unterhaltung_id) && n.von !== ich() && nachrichtFrei(n) && !nachrichtAbgelaufen(n) && !n.zurueckgezogen_am && !gelesenVonMir(n)).sort((a, b) => String(a.zeit).localeCompare(String(b.zeit))).slice(-8);
+  speechSynthesis.cancel();
+  const sag = (t) => { const s = new SpeechSynthesisUtterance(t); s.lang = "de-DE"; speechSynthesis.speak(s); };
+  if (!l.length) sag("Du hast keine neuen Nachrichten.");
+  else { sag(l.length === 1 ? "Eine neue Nachricht." : `${l.length} neue Nachrichten.`); for (const n of l) sag(`${name(n.von)}${n.express ? ", Express" : n.wichtig ? ", wichtig" : ""}: ${nachrichtKurz(n)}`); }
+  return l.length;
 }

@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.11.0 DEV – 16.10.2026
+- 🎼 Orchester: Sitzplan mit Gesichtern, Register, Besetzung Soll/Ist, Zusagen der nächsten Probe, 🏷️ Leihinstrumente koordinieren
+- 🙂 Gezeichnete Gesichter (personen.avatar, nur Zahlen) mit Editor „Mein Gesicht“, auch in Chats
+- 🎺 Instrumentenkunde: 16 Instrumente mit Figur, Klang (WebAudio), Steckbrief, Beachten, Pflege
+- gruppen.soll (Soll-Besetzung), Nachtrags-Migration 20261022000000_bk_orchester.sql
+
 ## 0.10.0 DEV – 16.10.2026
 - 🎻 Instrumente: Kacheln, Liste, Drehregister; Instrumentengruppen; Suche, Status-Chips, Filter, Gruppieren, Sortieren
 - Instrumententypen: Felder „Instrumentengruppe“ und „Symbol“ (PC-Verwaltung), Nachtrags-Migration 20261021000000_bk_instrumente.sql

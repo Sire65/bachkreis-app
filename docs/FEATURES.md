@@ -74,3 +74,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 - **Status-Chips mit Zahlen:** Alle, frei, verliehen, 🔧 Reparatur, ⏰ Wartung fällig, ⚠️ Rückgabe überfällig, ausgemustert.
 - **⚙️ Filter:** Gruppe, Instrument, Standort, Zustand; dazu Gruppieren (Gruppe/Instrument/Standort/Status/keine) und Sortieren (Nr., Instrument, Status, Rückgabe, Wartung). Aktive Filter erscheinen als Chips mit ✕.
 
+
+## 🎼 Orchester, Gesichter und Instrumentenkunde (0.11.0)
+- **Orchester** in drei Ansichten: 🪑 Sitzplan (Bühnenaufstellung, Dirigentin vorn), 👥 Register (Karten mit ⭐ Registerführung, 🏷️ Leihbedarf), 📊 Besetzung (Soll/Ist je Register, Soll je Gruppe in `gruppen.soll`).
+- **📅 Zusagen:** zeigt die Antworten zur nächsten Probe an jedem Gesicht (✓ ✗ ~ ?).
+- **🏷️ Leihinstrumente koordinieren:** Leihbedarf gegen freie Instrumente, Sprung zum passenden Instrument.
+- **🙂 Gesichter:** gezeichnet (SVG), keine Fotos; ohne eigene Wahl aus der Personen-ID abgeleitet. Selbst gestaltbar unter „Mein Gesicht“ (`personen.avatar`, vom Server auf Zahlen 0–19 bereinigt).
+- **🎺 Instrumentenkunde:** 16 Instrumente nach Familien; eine Figur mit dem eigenen Gesicht hält und spielt das Instrument (Animation), Klang per WebAudio (Melodie, Tonleiter, Tonumfang), Steckbrief, „Darauf kommt es an“, Pflege, Einstieg, „Schon gewusst?“ und wer im Bachkreis es spielt.

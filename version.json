@@ -1,13 +1,25 @@
 {
-  "version": "0.10.0",
+  "version": "0.11.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🎻 Instrumente in drei Ansichten: 🔲 Kacheln, ☰ Liste oder 🗂️ Drehregister (Karteikarten zum Wischen) – je Instrument das Wichtigste auf einen Blick",
-    "Instrumentengruppen (Streicher, Holz, Blech, Schlagwerk, Tasten & Harfe) – einklappbar, mit „frei · verliehen“; in der PC-Verwaltung je Instrumententyp einstellbar, auch mit eigenem Symbol",
-    "🔍 Suche (Nr., Instrument, Hersteller, Standort, Ausleiher …), Status-Chips mit Zahlen (frei, verliehen, Reparatur, Wartung, Rückgabe überfällig) und ⚙️ Filter, Gruppieren und Sortieren – platzsparend in einer Leiste"
+    "🎼 Orchester neu: 🪑 Sitzplan wie auf der Bühne (Streicher vorn, Holz, Blech, Schlagwerk hinten) mit Gesichtern, 👥 Register-Karten und 📊 Besetzung mit Soll/Ist je Register",
+    "📅 Zusagen zur nächsten Probe direkt im Sitzplan: ✓ kommt, ✗ fehlt, ~ vielleicht, ? offen – so sieht man sofort, welches Register dünn besetzt ist",
+    "🏷️ Leihinstrumente koordinieren: wer braucht noch ein Instrument, wie viele sind frei – mit einem Tipp zum passenden Instrument",
+    "🙂 Mein Gesicht: eigenes gezeichnetes Gesicht gestalten (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Farbe) – erscheint im Orchester, in Chats und in der Instrumentenkunde",
+    "🎺 Instrumentenkunde: 16 Orchesterinstrumente – deine Figur hält das Instrument, ▶ Melodie/Tonleiter/tief bis hoch zum Anhören, Steckbrief, worauf es ankommt, Pflege, Einstieg und „Schon gewusst?“"
   ],
   "verlauf": [
+    {
+      "version": "0.10.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎻 Instrumente in drei Ansichten: 🔲 Kacheln, ☰ Liste oder 🗂️ Drehregister (Karteikarten zum Wischen) – je Instrument das Wichtigste auf einen Blick",
+        "Instrumentengruppen (Streicher, Holz, Blech, Schlagwerk, Tasten & Harfe) – einklappbar, mit „frei · verliehen“; in der PC-Verwaltung je Instrumententyp einstellbar, auch mit eigenem Symbol",
+        "🔍 Suche (Nr., Instrument, Hersteller, Standort, Ausleiher …), Status-Chips mit Zahlen (frei, verliehen, Reparatur, Wartung, Rückgabe überfällig) und ⚙️ Filter, Gruppieren und Sortieren – platzsparend in einer Leiste"
+      ]
+    },
     {
       "version": "0.9.0",
       "datum": "2026-10-16",

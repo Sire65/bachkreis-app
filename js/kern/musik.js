@@ -71,7 +71,56 @@ const KLANG = {
   floete: { wellen: ["triangle"], verstimmt: 0, filter: 5000, an: 0.05, aus: 0.15, vib: 5, laut: 0.12 },
   oboe: { wellen: ["square"], verstimmt: 0, filter: 1800, an: 0.05, aus: 0.15, vib: 4, laut: 0.07 },
   blech: { wellen: ["sawtooth", "square"], verstimmt: 4, filter: 1600, an: 0.04, aus: 0.18, vib: 0, laut: 0.11 },
+  // Instrumentenkunde: je Instrument eine eigene Klangfarbe (einfach synthetisiert – kostenlos, ohne Aufnahmen)
+  violine: { wellen: ["sawtooth", "sawtooth"], verstimmt: 5, filter: 3400, an: 0.07, aus: 0.25, vib: 7, laut: 0.13 },
+  viola: { wellen: ["sawtooth", "sawtooth"], verstimmt: 5, filter: 2000, an: 0.08, aus: 0.28, vib: 6, laut: 0.14 },
+  cello: { wellen: ["sawtooth", "sawtooth"], verstimmt: 4, filter: 1300, an: 0.09, aus: 0.3, vib: 5, laut: 0.17 },
+  klarinette: { wellen: ["square", "triangle"], verstimmt: 0, filter: 1500, an: 0.05, aus: 0.15, vib: 2, laut: 0.09 },
+  fagott: { wellen: ["sawtooth", "square"], verstimmt: 2, filter: 800, an: 0.06, aus: 0.15, vib: 2, laut: 0.12 },
+  horn: { wellen: ["triangle", "sawtooth"], verstimmt: 3, filter: 900, an: 0.08, aus: 0.25, vib: 0, laut: 0.16 },
+  trompete: { wellen: ["sawtooth", "square"], verstimmt: 3, filter: 2800, an: 0.03, aus: 0.12, vib: 3, laut: 0.1 },
+  posaune: { wellen: ["sawtooth"], verstimmt: 0, filter: 1200, an: 0.06, aus: 0.2, vib: 0, laut: 0.15 },
+  tuba: { wellen: ["sawtooth", "triangle"], verstimmt: 2, filter: 520, an: 0.07, aus: 0.2, vib: 0, laut: 0.22 },
 };
+// Gezupft (Harfe, Kontrabass pizzicato) und Klavier: kurzer Anschlag, langes Ausklingen
+function zupf(ctx, ziel, frequenz, start, staerke = 1, klavier = false) {
+  const g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = klavier ? 3200 : 2400;
+  g.gain.setValueAtTime(0.0001, start); g.gain.exponentialRampToValueAtTime((klavier ? 0.22 : 0.26) * staerke, start + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, start + (klavier ? 1.6 : 1.4));
+  f.connect(g); g.connect(ziel);
+  for (const [w, mal, l] of klavier ? [["triangle", 1, 1], ["sine", 2, 0.4], ["sine", 3, 0.15]] : [["triangle", 1, 1], ["sine", 2, 0.3]]) {
+    const o = ctx.createOscillator(), og = ctx.createGain(); o.type = w; o.frequency.value = frequenz * mal; og.gain.value = l; o.connect(og); og.connect(f); o.start(start); o.stop(start + 1.7);
+  }
+}
+function trommel(ctx, ziel, start, staerke = 1, becken = false) {
+  const n = ctx.sampleRate * (becken ? 1.2 : 0.25), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, becken ? 2 : 4);
+  const q = ctx.createBufferSource(); q.buffer = buf;
+  const f = ctx.createBiquadFilter(); f.type = becken ? "highpass" : "bandpass"; f.frequency.value = becken ? 6000 : 1800;
+  const g = ctx.createGain(); g.gain.value = (becken ? 0.25 : 0.5) * staerke; q.connect(f); f.connect(g); g.connect(ziel); q.start(start);
+}
+// Instrumentenkunde: spielt eine Folge [[Ton|null, Schläge, Stärke?], …] mit der Klangfarbe art. Rückgabe: Dauer in Sekunden.
+// art: violine, viola, cello, bass, floete, oboe, klarinette, fagott, horn, trompete, posaune, tuba, harfe, klavier, pauke, trommel
+export function instrumentSpielen(ctx, art, folge, { schlag = 0.42, lautstaerke = 0.9, onTon = () => {} } = {}) {
+  const raum = hall(ctx), trocken = ctx.createGain(), nass = ctx.createGain(), summe = ctx.createGain();
+  trocken.gain.value = 0.85; nass.gain.value = 0.28; summe.gain.value = lautstaerke;
+  trocken.connect(summe); raum.connect(nass); nass.connect(summe); summe.connect(ctx.destination);
+  const ziel = ctx.createGain(); ziel.connect(trocken); ziel.connect(raum);
+  let t = ctx.currentTime + 0.08;
+  for (const [ton, schlaege, staerke = 1] of folge) {
+    const dauer = schlaege * schlag;
+    if (ton != null) {
+      const fr = art === "trommel" ? 0 : hz(typeof ton === "number" ? ton : midi(ton)), w = t;
+      if (art === "pauke") pauke(ctx, ziel, fr, t, staerke);
+      else if (art === "trommel") trommel(ctx, ziel, t, staerke, ton === "becken");
+      else if (art === "harfe" || art === "klavier") zupf(ctx, ziel, fr, t, staerke, art === "klavier");
+      else ton_(ctx, ziel, KLANG[art] ? art : "streicher", fr, t, dauer * 0.92, staerke);
+      setTimeout(() => onTon(ton), Math.max(0, (w - ctx.currentTime) * 1000));
+    }
+    t += dauer;
+  }
+  return t - ctx.currentTime + 1.2;
+}
+const ton_ = (...a) => ton(...a);
 const VERSATZ = { fl: 12, hr: -12 }; // Oktavlage je Instrument relativ zur Melodie
 const KLANG_VON_SEK = { v1: "streicher", v2: "streicher", fl: "floete", ob: "oboe", kl: "oboe", hr: "blech", tr: "blech", pos: "blech" };
 

@@ -106,7 +106,7 @@ export const TABELLEN = {
       { k: "notiz", t: "Notiz", typ: "lang" },
     ],
     liste: ["nachname", "vorname", "typ", "jahrgang", "email", "mobil", "ort"],
-    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }], // freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
+    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }, { k: "avatar", typ: "json" }], // avatar: selbst gestaltetes Gesicht · freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
     anzeige: (z) => `${z.vorname || ""} ${z.nachname || ""}`.trim(),
   },
   eltern_kind: {
@@ -128,6 +128,7 @@ export const TABELLEN = {
       { k: "farbe", t: "Farbe", typ: "farbe" },
       { k: "sort", t: "Reihenfolge", typ: "zahl" },
       { k: "aktiv", t: "aktiv", typ: "ja" },
+      { k: "soll", t: "Soll-Besetzung je Register (z. B. {\"r-v1\": 7})", typ: "json" },
     ],
     liste: ["kuerzel", "name", "beschreibung", "aktiv"],
     anzeige: (z) => `${z.kuerzel} – ${z.name}`,

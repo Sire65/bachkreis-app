@@ -87,7 +87,7 @@ function zeileSichtbar(tab, z, ctx) {
 }
 
 // Felder kürzen: fremde Personen nur mit Namen; geschützte Felder nur für berechtigte Rollen
-const NUR_NAME = ["id", "vorname", "nachname", "typ", "status", "jahrgang", "rollen", "version", "geaendert_am", "geloescht_am"];
+const NUR_NAME = ["id", "vorname", "nachname", "typ", "status", "jahrgang", "rollen", "avatar", "version", "geaendert_am", "geloescht_am"];
 function kuerzen(tab, z, ctx, alleLesen) {
   let out = z;
   if (tab === "personen" && !alleLesen && !ctx.meine.has(z.id) && !ctx.eltern.has(z.id)) {
@@ -320,7 +320,9 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
     case "personen":
       if (!alt || alt.id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_EINSTELLUNGEN" };
       { const fg = neu.freigaben && typeof neu.freigaben === "object" ? Object.fromEntries(["geburtstag", "mobil", "email", "adresse"].map((k) => [k, neu.freigaben[k] === true])) : alt.freigaben;
-        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg } }; }
+        // 🙂 eigenes Gesicht: nur kleine Zahlen je Merkmal (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Hintergrund) – nie Bilder oder Text
+        const av = neu.avatar === null ? null : neu.avatar && typeof neu.avatar === "object" ? Object.fromEntries(["haut", "frisur", "haar", "augen", "mund", "brille", "farbe"].filter((k) => Number.isInteger(neu.avatar[k]) && neu.avatar[k] >= 0 && neu.avatar[k] < 20).map((k) => [k, neu.avatar[k]])) : alt.avatar;
+        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg, avatar: av ?? null } }; }
     default:
       return { ok: false, grund: "KEIN_SCHREIBRECHT" };
   }

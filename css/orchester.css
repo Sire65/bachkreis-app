@@ -1,0 +1,84 @@
+/* BK-ORCHESTER (0.11.0): Gesichter, Sitzplan, Register, Besetzung · Mein Gesicht · 🎺 Instrumentenkunde */
+.gesicht { display: block; width: 100%; height: 100%; }
+.gesicht-bild { background: none !important; padding: 0; overflow: hidden; }
+/* Gruppen & Leiste */
+.orch-gruppen { display: flex; gap: 6px; margin: 0 0 8px; overflow-x: auto; }
+.orch-gruppen button { flex: 1; min-width: 56px; display: grid; justify-items: center; border: 2px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 14px; padding: 4px 6px; cursor: pointer; font: inherit; }
+.orch-gruppen button b { font-size: 1.15rem; color: var(--gf); } .orch-gruppen button small { font-size: .72rem; color: var(--grau); font-weight: 700; }
+.orch-gruppen button.an { border-color: var(--gf); background: color-mix(in srgb, var(--gf) 14%, var(--karte)); }
+.orch-leiste { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 0 0 6px; }
+.orch-tabs { flex: 1; min-width: 260px; margin: 0; }
+.orch-probe { display: flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 700; background: var(--karte2); border-radius: 12px; padding: 6px 10px; cursor: pointer; }
+.orch-titel { border-left: 5px solid var(--gf); padding: 2px 10px; margin: 6px 0 10px; }
+/* Gesicht-Knopf */
+.og { position: relative; width: 44px; height: 44px; border: none; padding: 0; border-radius: 50%; background: none; cursor: pointer; flex: none; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+.og.klein { width: 32px; height: 32px; }
+.og i { position: absolute; font-style: normal; font-size: .62rem; line-height: 1; }
+.og .rf { top: -3px; right: -3px; } .og .lb { bottom: -3px; left: -4px; }
+.og .az { bottom: -3px; right: -3px; width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 900; font-size: .6rem; box-shadow: 0 0 0 2px var(--karte); }
+.az.ja { background: #2e9e5b; } .az.nein { background: #c62828; } .az.vl { background: #e0a100; } .az.offen { background: #9e9e9e; }
+/* 🎼 Sitzplan: Reihen werden nach vorne breiter (Bühnenbogen) */
+.sitzplan { background: radial-gradient(ellipse at 50% 120%, color-mix(in srgb, var(--gf) 20%, var(--karte2)) 0%, var(--karte2) 70%); border-radius: 22px 22px 120px 120px / 22px 22px 60px 60px; padding: 12px 8px 14px; display: grid; gap: 8px; justify-items: center; }
+.sp-reihe { width: var(--breite); display: flex; gap: 6px; justify-content: center; }
+.sp-register { min-width: 70px; background: var(--karte); border-radius: 14px; padding: 5px 6px 7px; box-shadow: var(--schatten); border-top: 4px solid var(--grau); }
+.sp-register.fam-streicher { border-top-color: #a0522d; } .sp-register.fam-holz { border-top-color: #2e9e5b; } .sp-register.fam-blech { border-top-color: #d4a017; } .sp-register.fam-schlag { border-top-color: #8e8e8e; } .sp-register.fam-tasten { border-top-color: #6c3483; }
+.sp-kopf { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin: 0 0 4px; }
+.sp-name { border: none; background: none; padding: 0; font: inherit; font-size: .74rem; font-weight: 800; cursor: pointer; color: var(--text); text-decoration: underline dotted; }
+.ist-soll { font-size: .7rem; font-weight: 800; border-radius: 999px; padding: 0 6px; background: var(--karte2); } .ist-soll.ok { background: var(--gruenbg); color: var(--gruen); } .ist-soll.fehlt { background: var(--rotbg); color: var(--rot); }
+.sp-gesichter { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.sp-dirigent { display: grid; justify-items: center; gap: 2px; margin-top: 6px; } .sp-dirigent small { font-weight: 800; font-size: .76rem; }
+@media (max-width: 480px) { .sp-reihe { width: 100% !important; flex-wrap: wrap; } .og.klein { width: 28px; height: 28px; } }
+/* 👥 Register */
+.or-kopf { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; } .or-kopf b { font-size: 1.05rem; } .or-kopf .knopf { margin-left: auto; }
+.or-gitter { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px 4px; }
+.or-person { display: grid; justify-items: center; text-align: center; gap: 1px; } .or-person small { font-size: .74rem; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .or-person small.hinweis { font-weight: 400; font-size: .66rem; margin: 0; }
+/* 📊 Besetzung */
+.orch-zahlen .rot { color: var(--rot); } .gruen { color: var(--gruen); } b.rot { color: var(--rot); }
+.bes-zeile { display: grid; grid-template-columns: 52px 1fr 44px 58px; gap: 8px; align-items: center; padding: 4px 0; font-size: .85rem; }
+.bes-name { font-weight: 800; } .bes-zahl { text-align: right; font-weight: 700; }
+.bes-balken { height: 10px; background: var(--karte2); border-radius: 999px; overflow: hidden; } .bes-balken i { display: block; height: 100%; border-radius: 999px; background: #2e9e5b; } .bes-balken i.fehlt { background: #e57373; }
+.bes-diff { font-size: .74rem; font-weight: 800; } .bes-diff.fehlt { color: var(--rot); } .bes-diff.mehr { color: var(--blau, #1f4f8f); }
+.og-klein { width: 34px; height: 34px; flex: none; }
+/* Person & Mein Gesicht */
+.person-kopf { display: grid; justify-items: center; text-align: center; gap: 6px; } .pk-gesicht { width: 96px; height: 96px; }
+.gz-vorschau { width: 150px; height: 150px; margin: 4px auto 10px; }
+.gz-wahl { display: flex; flex-wrap: wrap; gap: 6px; }
+.gz-wahl button { width: 52px; height: 52px; border: 2px solid var(--linie); border-radius: 14px; background: var(--karte); padding: 3px; cursor: pointer; display: grid; place-items: center; }
+.gz-wahl button.an { border-color: var(--haupt); box-shadow: 0 0 0 2px var(--haupt); }
+.gz-farbe { width: 30px; height: 30px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+/* 🎺 Instrumentenkunde */
+.lehre-gruppe { margin: 14px 0 6px; }
+.lehre-gitter { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.lehre-kachel { display: grid; justify-items: center; gap: 2px; border: 1px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 14px; padding: 10px 6px; cursor: pointer; font: inherit; box-shadow: var(--schatten); }
+.lehre-kachel .lk-sym { font-size: 1.8rem; } .lehre-kachel b { font-size: .84rem; text-align: center; } .lehre-kachel small { font-size: .7rem; color: var(--grau); }
+.lehre-kopf { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin: 0 0 8px; }
+.lehre-buehne { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(140px, 1fr); gap: 10px; align-items: center; background: linear-gradient(180deg, var(--karte2), var(--karte)); border-radius: 18px; padding: 10px; }
+@media (max-width: 460px) { .lehre-buehne { grid-template-columns: 1fr; } }
+.lehre-figur { position: relative; max-width: 260px; margin: 0 auto; width: 100%; }
+.lehre-hoeren { display: grid; gap: 8px; } .lehre-hoeren small { font-size: .74rem; }
+.lehre-note { position: absolute; top: 40%; font-size: 1.6rem; color: var(--haupt); animation: noteFlug 1.6s ease-out forwards; pointer-events: none; }
+:root.dunkel .lehre-note { color: var(--gold); }
+@keyframes noteFlug { from { transform: translate(0, 0) scale(.6); opacity: 1; } to { transform: translate(30px, -120px) scale(1.2) rotate(15deg); opacity: 0; } }
+.lehre-kurz { font-size: 1.02rem; margin: 10px 2px; }
+.lehre-steckbrief { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 0 0 10px; }
+.lehre-steckbrief div { background: var(--karte2); border-radius: 12px; padding: 6px 10px; display: grid; } .lehre-steckbrief small { font-size: .68rem; font-weight: 800; color: var(--grau); text-transform: uppercase; } .lehre-steckbrief b { font-size: .88rem; }
+.lehre-abschnitt summary { font-weight: 800; cursor: pointer; } .lehre-abschnitt ul { margin: 6px 0 0; padding-left: 20px; } .lehre-abschnitt li { margin: 3px 0; }
+.lehre-wussten { background: color-mix(in srgb, var(--gold, #d4a017) 16%, var(--karte)); }
+.lehre-gesichter { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.lehre-gesicht { width: 40px; height: 40px; border: none; padding: 0; background: none; border-radius: 50%; cursor: pointer; }
+/* Figur spielt */
+.figur-svg { width: 100%; height: auto; overflow: visible; }
+.spielt .bogen-arm { animation: bogenZug 1s ease-in-out infinite alternate; }
+.spielt .zug { animation: posZug .9s ease-in-out infinite alternate; }
+.spielt .schlaegel.l { animation: schlag .32s ease-in-out infinite alternate; transform-origin: 75px 98px; }
+.spielt .schlaegel.r { animation: schlag .32s ease-in-out infinite alternate-reverse; transform-origin: 125px 98px; }
+.spielt .hand.l { animation: tippen .25s ease-in-out infinite alternate; } .spielt .hand.r { animation: tippen .25s ease-in-out infinite alternate-reverse; }
+.spielt .zupf { animation: tippen .3s ease-in-out infinite alternate; }
+.spielt .kopf { animation: wippen 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 100%; }
+.spielt .instr { animation: wippen 1.2s ease-in-out infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+@keyframes bogenZug { from { transform: translate(-14px, 3px); } to { transform: translate(14px, -3px); } }
+@keyframes posZug { from { transform: translateX(-4px); } to { transform: translateX(22px); } }
+@keyframes schlag { from { transform: rotate(-8deg); } to { transform: rotate(6deg); } }
+@keyframes tippen { from { transform: translateY(0); } to { transform: translateY(4px); } }
+@keyframes wippen { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .spielt * { animation-duration: 3s !important; } }

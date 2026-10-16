@@ -56,8 +56,8 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.register = REGISTER.map(([id, name, kurz, familie], i) => ({ id, name, kurz, familie, sort: i + 1 }));
   d.instrument_typen = TYPEN.map(([id, name, register_id, wartung_monate]) => ({ id, name, register_id, wartung_monate }));
   d.gruppen = [
-    { id: "g-a", kuerzel: "A", name: "A-Orchester", beschreibung: "Jahrgänge 9–12", farbe: "#1f5f99", sort: 1, aktiv: true },
-    { id: "g-b", kuerzel: "B", name: "B-Orchester", beschreibung: "Jahrgänge 5–9", farbe: "#c98a00", sort: 2, aktiv: true },
+    { id: "g-a", kuerzel: "A", name: "A-Orchester", beschreibung: "Jahrgänge 9–12", farbe: "#1f5f99", sort: 1, aktiv: true, soll: SOLL_A },
+    { id: "g-b", kuerzel: "B", name: "B-Orchester", beschreibung: "Jahrgänge 5–9", farbe: "#c98a00", sort: 2, aktiv: true, soll: SOLL_B },
     { id: "g-c", kuerzel: "C", name: "Orchesterklasse / AGs", beschreibung: "Erprobungsstufe mit Musikschule (Beispiel)", farbe: "#2e7d4f", sort: 3, aktiv: true },
     { id: "g-d", kuerzel: "D", name: "Ehemalige", beschreibung: "Ehemaligenorchester (Beispiel)", farbe: "#7b3fa0", sort: 4, aktiv: true },
   ];

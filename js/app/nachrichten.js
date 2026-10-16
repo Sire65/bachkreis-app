@@ -18,6 +18,7 @@ import { zuhoeren, spracheMoeglich, aufnahme, aufnahmeMoeglich, dauerText, SPRAC
 import { senden, whatsapp } from "../kern/versand.js";
 import { papierflieger } from "./effekte.js";
 import { cfAnwenden } from "./darstellung.js";
+import { gesicht } from "./gesichter.js";
 
 const ich = () => S.ich?.id;
 const jetztIso = () => new Date().toISOString();
@@ -53,13 +54,12 @@ const textHtml = (t) => esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" ta
 // Farbe je Absender in Gruppen (wie WhatsApp), aus der ID immer gleich
 const FARBEN = ["#1e88e5", "#43a047", "#e53935", "#8e24aa", "#fb8c00", "#00897b", "#6d4c41", "#d81b60", "#3949ab", "#7cb342"];
 const farbeVon = (id) => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) | 0; return FARBEN[Math.abs(h) % FARBEN.length]; };
-const initialen = (id) => { const p = hole("personen", id); return p ? `${(p.vorname || "?")[0]}${(p.nachname || "")[0] || ""}` : "?"; };
 
 export const chatPartnerVon = (u) => (u?.art === "einzel" ? (u.mitglieder || []).find((m) => m !== ich()) : null);
 export const chatTitel = (u) => (u?.art === "einzel" ? name(chatPartnerVon(u)) || "Einzelgespräch" : u?.titel || "Chat");
 const chatBild = (u, gross = false) => {
   const p = chatPartnerVon(u);
-  if (p) return `<span class="chat-bild${gross ? " gross" : ""}" style="background:${farbeVon(p)}">${esc(initialen(p))}</span>`;
+  if (p) return `<span class="chat-bild gesicht-bild${gross ? " gross" : ""}">${gesicht(p, name(p))}</span>`;
   return `<span class="chat-bild${gross ? " gross" : ""} sym">${u?.art === "verteiler" ? "📣" : u?.art === "runde" ? "👫" : "👥"}</span>`;
 };
 const empfaenger = (u) => empfaengerVon(db, u).filter((p) => p !== ich());
@@ -122,7 +122,7 @@ VIEWS.chatNeu = {
     const q = NEU.suche.toLowerCase(), l = partnerListe();
     return kopf("✉️ Neue Nachricht") + `<div class="karte"><div class="feld"><label for="neuSuche">An wen?</label><input id="neuSuche" type="search" placeholder="🔍 Name suchen" value="${esc(NEU.suche)}" autocomplete="off"></div>
       <div class="wahlliste" id="neuListe">${l.map((p) => `<label data-name="${esc(name(p).toLowerCase())}"${q && !name(p).toLowerCase().includes(q) ? " hidden" : ""}><input type="checkbox" data-c="chatNeuWahl" value="${esc(p.id)}" ${NEU.wahl.includes(p.id) ? "checked" : ""}>
-        <span class="chat-bild klein" style="background:${farbeVon(p.id)}">${esc(initialen(p.id))}</span><span style="flex:1">${esc(name(p))}<small class="hinweis"> ${esc(p.typ === "schueler" ? "Schüler/in" : p.typ === "eltern" ? "Eltern" : p.typ === "lehrkraft" ? "Lehrkraft" : p.typ === "leitung" ? "Leitung" : "")}</small></span></label>`).join("") || '<div class="leer">Niemand gefunden</div>'}</div>
+        <span class="chat-bild klein gesicht-bild">${gesicht(p.id, name(p))}</span><span style="flex:1">${esc(name(p))}<small class="hinweis"> ${esc(p.typ === "schueler" ? "Schüler/in" : p.typ === "eltern" ? "Eltern" : p.typ === "lehrkraft" ? "Lehrkraft" : p.typ === "leitung" ? "Leitung" : "")}</small></span></label>`).join("") || '<div class="leer">Niemand gefunden</div>'}</div>
       <div class="hinweis" id="neuGewaehlt">${NEU.wahl.length ? "An: " + NEU.wahl.map((id) => esc(name(id))).join(", ") : "Noch niemand ausgewählt"}</div>
       <div id="neuTitelZeile" class="feld"${NEU.wahl.length > 1 ? "" : " hidden"}><label for="neuTitel">Name der Runde (Betreff)</label><input id="neuTitel" maxlength="80" placeholder="z. B. Fahrgemeinschaft Probe" value="${esc(NEU.titel)}"></div>
       <button class="knopf haupt breit" data-a="chatNeuWeiter">💬 Weiter zum Chat</button>
@@ -530,7 +530,7 @@ AKTIONEN.rueckmelden = async (x) => {
 AKTIONEN.chatMitglieder = (uid) => {
   const u = hole("unterhaltungen", uid); if (!u) return;
   const l = empfaengerVon(db, u);
-  blatt(`${chatTitel(u)} – ${l.length} ${u.art === "verteiler" ? "Empfänger" : "Mitglieder"}`, `<ul class="liste">${l.map((p) => `<li><span class="chat-bild klein" style="background:${farbeVon(p)}">${esc(initialen(p))}</span><div class="fl">${esc(p === ich() ? "Du" : name(p))}</div>${p !== ich() && chatPartnerErlaubt(S.ich, hole("personen", p), { verwandt: [...kinderVon(db, ich()), ...elternVon(db, ich())].includes(p), schuelerUntereinander: konfig().chat_schueler_untereinander !== false }) && u.art !== "einzel" ? `<button class="knopf klein" data-a="chatMit" data-x="${esc(p)}">💬</button>` : ""}</li>`).join("")}</ul>`);
+  blatt(`${chatTitel(u)} – ${l.length} ${u.art === "verteiler" ? "Empfänger" : "Mitglieder"}`, `<ul class="liste">${l.map((p) => `<li><span class="chat-bild klein gesicht-bild">${gesicht(p, name(p))}</span><div class="fl">${esc(p === ich() ? "Du" : name(p))}</div>${p !== ich() && chatPartnerErlaubt(S.ich, hole("personen", p), { verwandt: [...kinderVon(db, ich()), ...elternVon(db, ich())].includes(p), schuelerUntereinander: konfig().chat_schueler_untereinander !== false }) && u.art !== "einzel" ? `<button class="knopf klein" data-a="chatMit" data-x="${esc(p)}">💬</button>` : ""}</li>`).join("")}</ul>`);
 };
 
 // ℹ️ Details (KC nachrichtInfo): je Empfänger gesendet → angekommen → gelesen; Absender sieht dazu, was der Communicator je Weg gemacht hat

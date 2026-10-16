@@ -119,6 +119,7 @@ VIEWS.einstellungen = {
     return kopf("⚙️ Mehr – Einstellungen") + `<input class="einst-suche" type="search" placeholder="🔍 Einstellung suchen …" data-c="einstSuche" aria-label="Einstellung suchen">`
       + bereich("wichtig", "⚙️ Das Wichtigste", `<h4>📬 Wie möchtest du Neuigkeiten bekommen?</h4><div class="knopfreihe"><button class="knopf haupt" data-a="pushErlauben">🔔 Push auf diesem Gerät erlauben</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>
         ${schalter("ruhe", "🌙 Nicht stören", `Keine Push-Töne von ${e.ruheVon} bis ${e.ruheBis} Uhr (SOS kommt immer durch)`, !!e.ruhe)}
+        <div class="schalter"><span><b>🙂 Mein Gesicht</b><div class="hinweis">Gezeichnetes Gesicht fürs Orchester und die Instrumentenkunde</div></span><button class="knopf klein" data-a="meinGesicht">✏️ Gestalten</button></div>
         <h4>🎨 Lieblingsfarbe</h4><div class="designwahl">${D.DESIGNS.filter((d) => !d.mehr).slice(0, 4).map(designKnopf).join("")}</div><p class="hinweis">Alle Farben unter 🎨 Darstellung.</p>
         ${gross}${sz}${schalter("einfach", "🟢 Einfache Ansicht", "Große Kacheln, nur das Wichtigste", !!e.einfach)}`)
       + bereich("benachrichtigung", "🔔 Benachrichtigungen", `<div class="knopfreihe"><button class="knopf" data-a="pushErlauben">📲 Push auf diesem Handy</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>

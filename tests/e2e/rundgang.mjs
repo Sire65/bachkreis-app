@@ -70,6 +70,16 @@ await p.click('[data-a="instAnsicht"][data-x="kachel"]'); await p.fill("#instSuc
 if ((await p.$$eval(".ik", (l) => l.filter((k) => !/Cello/i.test(k.textContent)).length)) > 0) fehler.push("Instrumente: Suche filtert nicht");
 await p.click('[data-a="instReset"]').catch(() => {}); await p.evaluate(() => { try { sessionStorage.removeItem("bk_inst_filter"); } catch {} });
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start"));
+// 🎼 Orchester mit Gesichtern, 🎺 Instrumentenkunde, 🙂 Mein Gesicht
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("orchester")); await p.waitForSelector(".sitzplan .gesicht");
+for (const x of ["register", "besetzung", "sitzplan"]) { await p.click(`[data-a="orchAnsicht"][data-x="${x}"]`); await p.waitForTimeout(150); }
+if (!(await p.$(".sitzplan"))) fehler.push("Orchester: Sitzplan fehlt");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("instrumentenkunde")); await p.waitForSelector(".lehre-kachel");
+await p.click('.lehre-kachel[data-x="violine"]'); await p.waitForSelector(".lehre-figur svg");
+await p.click('[data-a="lehreSpielen"][data-x="violine|tonleiter"]'); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/kern/ui.js")).AKTIONEN.meinGesicht()); await p.waitForSelector(".gz-vorschau");
+await p.click('[data-a="gzZufall"]'); await p.click('[data-a="gzSpeichern"]'); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start"));
 await p.waitForSelector(".kachel");
 // Kopf wie KC: alle Infofeld-Karten, Wetter-Tag, Jalousie halb/ganz, Jahreszeiten-Vorschauen
 const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);

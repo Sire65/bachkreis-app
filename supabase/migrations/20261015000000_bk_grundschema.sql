@@ -128,6 +128,8 @@ create table if not exists bk_instrument_typen (
   name text not null,
   register_id text,
   wartung_monate integer,
+  gruppe text check (gruppe is null or gruppe in ('streicher', 'holz', 'blech', 'schlag', 'tasten', 'sonstige')),
+  symbol text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),

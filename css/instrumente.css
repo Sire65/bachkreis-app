@@ -1,0 +1,57 @@
+/* BK-INSTRUMENTE (0.10.0): Übersicht als 🔲 Kacheln · ☰ Liste · 🗂️ Drehregister – kompakt, eine Leiste für Suche/Ansicht/Filter */
+.inst-leiste { position: sticky; top: 0; z-index: 12; display: flex; gap: 6px; align-items: center; background: var(--bg); padding: 6px 0; }
+.inst-leiste input { flex: 1; min-width: 0; border: 2px solid var(--linie); border-radius: 12px; padding: 8px 10px; background: var(--karte); color: var(--text); font: inherit; font-size: .95rem; }
+.inst-ansicht { display: flex; background: var(--karte2); border-radius: 12px; padding: 3px; flex: none; }
+.inst-ansicht button { border: none; background: none; border-radius: 9px; width: 34px; height: 32px; font-size: 1rem; cursor: pointer; color: var(--text); }
+.inst-ansicht button.an { background: var(--karte); box-shadow: var(--schatten); }
+.inst-filterknopf { position: relative; flex: none; width: 40px; height: 38px; border: 2px solid var(--linie); border-radius: 12px; background: var(--karte); cursor: pointer; font-size: 1rem; }
+.inst-filterknopf.an { border-color: var(--haupt); }
+.inst-filterknopf i { position: absolute; top: -6px; right: -6px; background: var(--haupt); color: var(--haupt-text); font-style: normal; font-size: .68rem; font-weight: 800; border-radius: 999px; min-width: 17px; padding: 0 4px; }
+.inst-chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none; } .inst-chips::-webkit-scrollbar { display: none; }
+.inst-chips button { flex: none; border: 1px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.inst-chips button b { opacity: .6; margin-left: 2px; } .inst-chips button.an { background: var(--haupt); border-color: var(--haupt); color: var(--haupt-text); } .inst-chips button.an b { opacity: .85; }
+.inst-panel { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 10px; margin: 0 0 8px; align-items: end; }
+.inst-panel label { display: grid; gap: 2px; font-size: .75rem; font-weight: 800; color: var(--grau); }
+.inst-panel select { border: 1px solid var(--linie); border-radius: 10px; padding: 6px 8px; background: var(--karte); color: var(--text); font: inherit; font-size: .88rem; }
+.inst-aktiv { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.inst-aktiv button { border: none; background: var(--karte2); color: var(--text); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+/* Gruppen */
+.ig { margin: 0 0 8px; } .ig > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 8px; font-weight: 800; padding: 6px 2px; border-bottom: 1px solid var(--linie); margin-bottom: 6px; }
+.ig > summary::-webkit-details-marker { display: none; } .ig > summary::before { content: "▾"; color: var(--grau); font-size: .8rem; } .ig:not([open]) > summary::before { content: "▸"; }
+.ig > summary b { background: var(--karte2); border-radius: 999px; padding: 0 8px; font-size: .78rem; } .ig > summary small { margin-left: auto; color: var(--grau); font-weight: 700; font-size: .75rem; }
+/* 🔲 Kacheln */
+.ik-gitter { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.ik { position: relative; display: grid; gap: 1px; text-align: left; border: 1px solid var(--linie); border-left: 5px solid var(--grau); background: var(--karte); color: var(--text); border-radius: 12px; padding: 7px 9px 8px; font: inherit; cursor: pointer; box-shadow: var(--schatten); min-width: 0; }
+.ik.st-verfuegbar { border-left-color: #2e9e5b; } .ik.st-verliehen { border-left-color: #3b78c4; } .ik.st-reparatur { border-left-color: #e0a100; } .ik.st-ausgemustert { opacity: .6; } .ik.ueber { border-left-color: #c62828; }
+.ik-kopf { display: flex; align-items: center; gap: 6px; } .ik-sym { font-size: 1.25rem; } .ik-nr { font-size: .74rem; font-weight: 800; color: var(--grau); } .ik-merker { margin-left: auto; font-style: normal; font-size: .8rem; } .ik-merker i { font-style: normal; }
+.ik-typ { font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ik-typ small { font-weight: 700; color: var(--grau); }
+.ik-bez, .ik-status { font-size: .74rem; color: var(--grau); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ik-status { color: var(--text); font-weight: 700; } .ik .punkt { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; background: var(--grau); }
+.ik.st-verfuegbar .punkt { background: #2e9e5b; } .ik.st-verliehen .punkt { background: #3b78c4; } .ik.st-reparatur .punkt { background: #e0a100; } .ik.ueber .punkt { background: #c62828; }
+/* ☰ Liste */
+.iz-liste { list-style: none; margin: 0; padding: 0; background: var(--karte); border-radius: 12px; box-shadow: var(--schatten); overflow: hidden; }
+.iz { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px solid var(--linie); cursor: pointer; border-left: 4px solid transparent; }
+.iz:last-child { border-bottom: none; } .iz.st-verfuegbar { border-left-color: #2e9e5b; } .iz.st-verliehen { border-left-color: #3b78c4; } .iz.st-reparatur { border-left-color: #e0a100; } .iz.ueber { border-left-color: #c62828; } .iz.st-ausgemustert { opacity: .6; }
+.iz-sym { font-size: 1.2rem; flex: none; } .iz-haupt { flex: 1; min-width: 0; display: grid; } .iz-haupt b { font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iz-haupt small, .iz-rechts small { font-size: .74rem; color: var(--grau); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iz-rechts { flex: none; display: grid; justify-items: end; max-width: 42%; } .iz-rechts small i { font-style: normal; }
+/* 🗂️ Drehregister */
+.dreh-reiter { display: flex; gap: 4px; overflow-x: auto; padding: 0 0 0 4px; scrollbar-width: none; } .dreh-reiter::-webkit-scrollbar { display: none; }
+.dreh-reiter button { flex: none; border: 1px solid var(--linie); border-bottom: none; background: var(--karte2); color: var(--grau); border-radius: 10px 10px 0 0; padding: 5px 10px; font: inherit; font-size: .8rem; font-weight: 800; cursor: pointer; }
+.dreh-reiter button.an { background: var(--karte); color: var(--text); }
+.dreh { position: relative; }
+.dreh-bahn { display: flex; gap: 0; overflow-x: auto; scroll-snap-type: x mandatory; padding: 6px 9% 14px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.dreh-bahn::-webkit-scrollbar { display: none; }
+.dk { flex: 0 0 82%; scroll-snap-align: center; background: var(--karte); border: 1px solid var(--linie); border-top: 6px solid var(--grau); border-radius: 16px; padding: 10px 12px 12px; box-shadow: 0 8px 22px rgba(0,0,0,.14); transition: transform .08s linear, opacity .08s linear; will-change: transform; display: grid; gap: 8px; align-content: start; }
+.dk.st-verfuegbar { border-top-color: #2e9e5b; } .dk.st-verliehen { border-top-color: #3b78c4; } .dk.st-reparatur { border-top-color: #e0a100; }
+.dk-reiter { display: flex; justify-content: space-between; font-size: .74rem; font-weight: 800; color: var(--grau); }
+.dk-kopf { display: flex; gap: 10px; align-items: center; } .dk-sym { font-size: 2.2rem; } .dk-kopf div { display: grid; min-width: 0; } .dk-kopf b { font-size: 1.1rem; } .dk-kopf small { color: var(--grau); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dk-gitter { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.dk-feld { background: var(--karte2); border-radius: 10px; padding: 5px 8px; display: grid; min-width: 0; } .dk-feld small { font-size: .68rem; font-weight: 800; color: var(--grau); text-transform: uppercase; letter-spacing: .03em; }
+.dk-feld b { font-size: .88rem; overflow: hidden; text-overflow: ellipsis; } .dk-feld.warn { background: var(--rotbg); } .dk-feld.warn b { color: var(--rot); }
+.dk-notiz { margin: 0; font-size: .82rem; color: var(--grau); }
+.dreh-pfeil { position: absolute; top: 45%; z-index: 3; width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--karte); box-shadow: var(--schatten); font-size: 1.3rem; cursor: pointer; color: var(--text); }
+.dreh-pfeil.links { left: 0; } .dreh-pfeil.rechts { right: 0; }
+.inst-rep summary { cursor: pointer; font-weight: 800; }
+@media (min-width: 700px) { .dk { flex-basis: 46%; } }
+@media (prefers-reduced-motion: reduce) { .dk { transform: none !important; } }

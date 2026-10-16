@@ -79,6 +79,7 @@ const DATEIEN_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261021000000_bk_instrumente.sql": { titel: "Instrumentengruppen und Symbole (0.10.0)", tabellen: ["instrument_typen"] },
   "20261020000000_bk_anlagen.sql": { titel: "Anhänge, Sprachnachrichten, Umfragen, Selbstlöschen (0.9.0)", tabellen: ["nachrichten"], extra: DATEIEN_SQL },
   "20261019000000_bk_nachrichten.sql": { titel: "Nachrichten wie in der KC Club App (0.8.0)", tabellen: ["nachrichten", "nachricht_status"],
     pruefungen: [["unterhaltungen", "art"], ["kom_regeln", "ereignis"], ["kom_eskalationen", "ereignis"]], kom: { kom_regeln: ["kr-nachricht_wichtig", "kr-express"] } },

@@ -46,6 +46,10 @@ export const KOM_EREIGNISSE = {
   test: "Test", standard: "alle anderen (Standard)",
 };
 
+// ---------- Instrumentengruppen (Kacheln, Liste, Drehregister) ----------
+export const INSTRUMENT_GRUPPEN = { streicher: ["🎻", "Streicher"], holz: ["🪈", "Holzbläser"], blech: ["🎺", "Blechbläser"], schlag: ["🥁", "Schlagwerk"], tasten: ["🎹", "Tasten & Harfe"], sonstige: ["🎵", "Sonstiges"] };
+export const INSTRUMENT_GRUPPEN_NAMEN = Object.fromEntries(Object.entries(INSTRUMENT_GRUPPEN).map(([k, [, n]]) => [k, n]));
+
 // ---------- Nachrichten (gemeinsam für App und Server) ----------
 export const CHAT = { bearbeitenMin: 15, expressMax: 5, zeichen: 4000, expressUnbegrenzt: ["admin", "leitung"], anlagenMax: 10, selbstloeschenStd: [1, 24, 168] };
 // 📎 Anhänge (Fotos, Sprachnachrichten, Dateien, Noten): höchstens DATEI.max Bytes je Datei, nur diese Arten
@@ -158,8 +162,10 @@ export const TABELLEN = {
       { k: "name", t: "Name", typ: "text", pflicht: true },
       { k: "register_id", t: "Standard-Register", typ: "ref", ref: "register" },
       { k: "wartung_monate", t: "Wartung alle … Monate", typ: "zahl" },
+      { k: "gruppe", t: "Instrumentengruppe (leer = aus dem Register)", typ: "wahl", werte: INSTRUMENT_GRUPPEN_NAMEN },
+      { k: "symbol", t: "Symbol (Emoji, leer = automatisch)", typ: "text" },
     ],
-    liste: ["name", "register_id", "wartung_monate"],
+    liste: ["name", "gruppe", "register_id", "wartung_monate"],
     anzeige: (z) => z.name,
   },
   person_instrument: {

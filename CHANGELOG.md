@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.10.0 DEV – 16.10.2026
+- 🎻 Instrumente: Kacheln, Liste, Drehregister; Instrumentengruppen; Suche, Status-Chips, Filter, Gruppieren, Sortieren
+- Instrumententypen: Felder „Instrumentengruppe“ und „Symbol“ (PC-Verwaltung), Nachtrags-Migration 20261021000000_bk_instrumente.sql
+
 ## 0.9.0 DEV – 16.10.2026
 - 📂 Vergangene Tage im Chat eingeklappt (Datum rechts, ältere Wochen als KW), 📎 Anhänge (Fotos, Dateien, 🎼 Noten), 🎙️ Sprachnachrichten, 🗣️ Diktieren, 🎤 Sprachsteuerung, 📊 Umfragen, ⏳ Selbstlöschen
 - Datei-Ablage mit Adapter (Datenbank oder Supabase Storage), Aktionen datei_hochladen/datei_holen mit Rechte-Prüfung, Noten-PDFs an Stimmen, Aufräumen in bk-kom

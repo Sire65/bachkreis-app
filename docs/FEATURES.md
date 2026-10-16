@@ -61,3 +61,16 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F51 | Einstellungen wie KC: Farbdesigns, Themen + Schriften, Tag/Nacht A/T/N, Schrift-Zoom, Chat-Farben, Sparmodus | ✅ | e2e rundgang |
 | BK-F52 | Effekte wie KC: Sende-Effekte, Fee, Reißwolf, Anpinnen, Tipp des Tages, Was ist neu, Vorlesen, Feiertage | ✅ | e2e rundgang |
 | BK-F53 | Privatsphäre-Freigaben (Geburtstag, Handy, E-Mail, Adresse), andere Geräte abmelden | ✅ | server.test |
+
+## 🎻 Instrumente-Übersicht (0.10.0)
+- **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):
+  - 🔲 **Kacheln:** kompakt, Farbstreifen nach Status, Merker 🔧 ⏰ ⚠️ ❗.
+  - ☰ **Liste:** eine Zeile je Instrument.
+  - 🗂️ **Drehregister:** Karteikarten zum Wischen, mit Reitern je Instrumentengruppe und allen wichtigen Daten.
+- **Instrumentengruppen:** Streicher, Holzbläser, Blechbläser, Schlagwerk, Tasten & Harfe, Sonstiges.
+  - Die Gruppe kommt aus dem Register des Instrumententyps, oder sie wird in der PC-Verwaltung je Typ gesetzt (Feld „Instrumentengruppe“, dazu ein eigenes Symbol).
+  - Gruppen sind einklappbar und zeigen „x frei · y verliehen“.
+- **Suche:** nach Inventar-Nr., Instrument, Größe, Hersteller, Standort, Ausleiher und Notiz.
+- **Status-Chips mit Zahlen:** Alle, frei, verliehen, 🔧 Reparatur, ⏰ Wartung fällig, ⚠️ Rückgabe überfällig, ausgemustert.
+- **⚙️ Filter:** Gruppe, Instrument, Standort, Zustand; dazu Gruppieren (Gruppe/Instrument/Standort/Status/keine) und Sortieren (Nr., Instrument, Status, Rückgabe, Wartung). Aktive Filter erscheinen als Chips mit ✕.
+

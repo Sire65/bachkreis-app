@@ -1,39 +1,160 @@
 // Instrumente: Inventar, Verleih (Ausgabe/Rückgabe mit Zustand), Reparatur (Meldung → Kostenvoranschlag → Freigabe →
 // Werkstatt → erledigt), Einkauf, Förderverein (Spenden & Freigaben), „Mein Leihinstrument“. Vorbild: KC Club Leihmodul.
-import { S, VIEWS, db, zeige, kopf, name, vorname, istLeitung, istVorstand, istVerwalter, istEltern, hatRolle } from "./zustand.js";
+import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istLeitung, istVorstand, istVerwalter, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
+import { INSTRUMENT_GRUPPEN } from "../kern/schema.js";
 
 const STATUS = { verfuegbar: ["b-gruen", "verfügbar"], verliehen: ["b-blau", "verliehen"], reparatur: ["b-gelb", "in Reparatur"], ausgemustert: ["b-grau", "ausgemustert"] };
 const REP = { gemeldet: ["b-rot", "gemeldet"], angebot: ["b-gelb", "Kostenvoranschlag"], freigegeben: ["b-blau", "freigegeben"], in_arbeit: ["b-blau", "in der Werkstatt"], erledigt: ["b-gruen", "erledigt"], abgelehnt: ["b-grau", "abgelehnt"] };
 const typName = (id) => hole("instrument_typen", id)?.name || "Instrument";
 const darfFreigeben = (betrag) => istVorstand() || (istLeitung() && Number(betrag || 0) <= Number(konfig().freigabe_grenze_eur || 0));
 
+// ---------- Instrumente-Übersicht: 🔲 Kacheln · ☰ Liste · 🗂️ Drehregister, mit Gruppen, Suche, Filtern und Sortierung ----------
+// Die Daten pflegt die PC-Verwaltung (Inventar, Instrumententypen mit Instrumentengruppe und Symbol); hier steht je Instrument das Wichtigste.
+// Ansicht, Gruppierung und Sortierung merkt sich das Gerät; Suche und Filter gelten, bis man sie zurücksetzt.
+const IF = (() => { try { return { q: "", status: "aktiv", gruppe: "", typ: "", standort: "", zustand: "", panel: false, ...JSON.parse(sessionStorage.getItem("bk_inst_filter") || "{}") }; } catch { return { q: "", status: "aktiv", gruppe: "", typ: "", standort: "", zustand: "", panel: false }; } })();
+const ifMerken = () => { try { sessionStorage.setItem("bk_inst_filter", JSON.stringify(IF)); } catch {} };
+const ZUSTAND = { sehr_gut: "sehr gut", gut: "gut", gebraucht: "gebraucht", maengel: "Mängel" };
+const SORT = { nr: "Inventar-Nr.", typ: "Instrument", status: "Status", rueckgabe: "Rückgabe", wartung: "Wartung" };
+const GRUPPIEREN = { gruppe: "Instrumentengruppe", typ: "Instrument", standort: "Standort", status: "Status", keine: "nicht gruppieren" };
+const ANSICHTEN_I = [["kachel", "🔲", "Kacheln"], ["liste", "☰", "Liste"], ["dreh", "🗂️", "Drehregister"]];
+const SYMBOLE = [[/geige|violin/i, "🎻"], [/viola|bratsche/i, "🎻"], [/cello|kontrabass|bass/i, "🎻"], [/piccolo|flöte|floete/i, "🪈"], [/klarinette|oboe|fagott|saxo/i, "🎷"],
+  [/trompete|posaune|tuba|euphon/i, "🎺"], [/horn/i, "📯"], [/pauke|trommel|schlag|becken|percuss/i, "🥁"], [/klavier|piano|flügel|cembalo|orgel|keyboard/i, "🎹"], [/harfe/i, "🪕"], [/gitarre/i, "🎸"]];
+const typVon = (i) => hole("instrument_typen", i.typ_id);
+const gruppeVon = (i) => { const t = typVon(i); return t?.gruppe || hole("register", t?.register_id)?.familie || "sonstige"; };
+const symbolVon = (i) => { const t = typVon(i); return t?.symbol || SYMBOLE.find(([re]) => re.test(t?.name || ""))?.[1] || INSTRUMENT_GRUPPEN[gruppeVon(i)]?.[0] || "🎵"; };
+const heuteIso = () => tagIso(new Date());
+const wartungFaellig = (i) => !!i.wartung_faellig && i.wartung_faellig <= tagIso(new Date(Date.now() + 30 * 86400000));
+const offeneRep = (i) => liste("reparaturen", (r) => r.inventar_id === i.id && !["erledigt", "abgelehnt"].includes(r.status));
+function infoVon(i) {
+  const a = aktiveAusleihe(db, i.id), h = heuteIso();
+  return { i, a, typ: typName(i.typ_id), sym: symbolVon(i), gruppe: gruppeVon(i), rep: offeneRep(i), wartung: wartungFaellig(i), ueberfaellig: !!(a?.bis && a.bis < h), wartungUeber: !!(i.wartung_faellig && i.wartung_faellig < h) };
+}
+const STATUS_FILTER = { aktiv: ["Alle", (x) => x.i.status !== "ausgemustert"], verfuegbar: ["frei", (x) => x.i.status === "verfuegbar"], verliehen: ["verliehen", (x) => x.i.status === "verliehen"],
+  reparatur: ["🔧 Reparatur", (x) => x.i.status === "reparatur" || x.rep.length > 0], wartung: ["⏰ Wartung", (x) => x.wartung && x.i.status !== "ausgemustert"], ueberfaellig: ["⚠️ Rückgabe", (x) => x.ueberfaellig], ausgemustert: ["ausgemustert", (x) => x.i.status === "ausgemustert"] };
+function suchtreffer(x, q) {
+  if (!q) return true;
+  const t = [x.i.inventar_nr, x.typ, x.i.groesse, x.i.bezeichnung, x.i.standort, x.i.finanziert_von, x.i.notiz, INSTRUMENT_GRUPPEN[x.gruppe]?.[1], x.a ? name(x.a.person_id) : ""].join(" ").toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every((w) => t.includes(w));
+}
+function gefiltert() {
+  const alle = liste("inventar").map(infoVon);
+  const basis = alle.filter((x) => suchtreffer(x, IF.q) && (!IF.gruppe || x.gruppe === IF.gruppe) && (!IF.typ || x.i.typ_id === IF.typ) && (!IF.standort || (x.i.standort || "–") === IF.standort) && (!IF.zustand || x.i.zustand === IF.zustand));
+  const st = STATUS_FILTER[IF.status] || STATUS_FILTER.aktiv;
+  const sort = einst().instSort || "nr";
+  const cmp = { nr: (a, b) => a.i.inventar_nr.localeCompare(b.i.inventar_nr, "de", { numeric: true }), typ: (a, b) => a.typ.localeCompare(b.typ, "de") || cmp.nr(a, b),
+    status: (a, b) => String(a.i.status).localeCompare(String(b.i.status)) || cmp.nr(a, b), rueckgabe: (a, b) => String(a.a?.bis || "9").localeCompare(String(b.a?.bis || "9")) || cmp.nr(a, b),
+    wartung: (a, b) => String(a.i.wartung_faellig || "9").localeCompare(String(b.i.wartung_faellig || "9")) || cmp.nr(a, b) };
+  return { alle, basis, liste: basis.filter(st[1]).sort(cmp[sort] || cmp.nr) };
+}
+function gruppiert(l) {
+  const art = einst().instGruppe || "gruppe";
+  if (art === "keine") return [{ key: "", titel: "", l }];
+  const schluessel = (x) => (art === "typ" ? x.i.typ_id : art === "standort" ? x.i.standort || "–" : art === "status" ? x.i.status : x.gruppe);
+  const titel = (k, x) => (art === "typ" ? `${x.sym} ${x.typ}` : art === "standort" ? `📍 ${k}` : art === "status" ? (STATUS[k]?.[1] || k) : `${INSTRUMENT_GRUPPEN[k]?.[0] || "🎵"} ${INSTRUMENT_GRUPPEN[k]?.[1] || k}`);
+  const reihe = Object.keys(INSTRUMENT_GRUPPEN), m = new Map();
+  for (const x of l) { const k = schluessel(x); if (!m.has(k)) m.set(k, { key: k, titel: titel(k, x), l: [] }); m.get(k).l.push(x); }
+  return [...m.values()].sort((a, b) => (art === "gruppe" ? reihe.indexOf(a.key) - reihe.indexOf(b.key) : a.titel.localeCompare(b.titel, "de")));
+}
+const kurzName = (pid) => { const p = hole("personen", pid); return p ? `${p.vorname} ${(p.nachname || "")[0] || ""}.` : "?"; };
+const dm = (iso) => (iso ? `${iso.slice(8, 10)}.${iso.slice(5, 7)}.` : "");
+const merker = (x) => `${x.rep.length ? '<i title="Reparatur offen">🔧</i>' : ""}${x.wartung ? `<i title="Wartung ${x.wartungUeber ? "überfällig" : "fällig"} ${datumKurz(x.i.wartung_faellig)}">⏰</i>` : ""}${x.i.zustand === "maengel" ? '<i title="Mängel">⚠️</i>' : ""}${x.ueberfaellig ? '<i title="Rückgabe überfällig">❗</i>' : ""}`;
+const statusZeile = (x) => (x.a ? `👤 ${esc(kurzName(x.a.person_id))}${x.a.bis ? ` · bis ${dm(x.a.bis)}` : ""}` : x.i.status === "verfuegbar" ? `📍 ${esc(x.i.standort || "Lager")}` : esc(STATUS[x.i.status]?.[1] || ""));
+const kachelHtml = (x) => `<button type="button" class="ik st-${esc(x.i.status)}${x.ueberfaellig ? " ueber" : ""}" data-a="oeffne" data-x="instrument|${esc(x.i.id)}">
+  <span class="ik-kopf"><span class="ik-sym">${x.sym}</span><span class="ik-nr">${esc(x.i.inventar_nr)}</span><span class="ik-merker">${merker(x)}</span></span>
+  <b class="ik-typ">${esc(x.typ)}${x.i.groesse ? ` <small>${esc(x.i.groesse)}</small>` : ""}</b>
+  <small class="ik-bez">${esc(x.i.bezeichnung || "")}</small>
+  <small class="ik-status"><i class="punkt"></i>${statusZeile(x)}</small></button>`;
+const zeileHtml = (x) => `<li class="iz st-${esc(x.i.status)}${x.ueberfaellig ? " ueber" : ""}" data-a="oeffne" data-x="instrument|${esc(x.i.id)}">
+  <span class="iz-sym">${x.sym}</span><span class="iz-haupt"><b>${esc(x.i.inventar_nr)} · ${esc(x.typ)}${x.i.groesse ? " " + esc(x.i.groesse) : ""}</b><small>${esc(x.i.bezeichnung || "")}${x.i.standort ? " · 📍 " + esc(x.i.standort) : ""}</small></span>
+  <span class="iz-rechts"><span class="badge ${STATUS[x.i.status]?.[0] || ""}">${esc(STATUS[x.i.status]?.[1] || x.i.status)}</span><small>${x.a ? `${esc(kurzName(x.a.person_id))}${x.a.bis ? " · " + dm(x.a.bis) : ""}` : ""}${merker(x)}</small></span></li>`;
+const feld = (t, w, klasse = "") => (w ? `<div class="dk-feld ${klasse}"><small>${t}</small><b>${w}</b></div>` : "");
+const drehKarte = (x, n, gesamt) => `<article class="dk st-${esc(x.i.status)}" data-gruppe="${esc(x.gruppe)}" data-i="${n}">
+  <div class="dk-reiter"><span>${INSTRUMENT_GRUPPEN[x.gruppe]?.[0] || "🎵"} ${esc(INSTRUMENT_GRUPPEN[x.gruppe]?.[1] || "")}</span><span>${n + 1}/${gesamt}</span></div>
+  <div class="dk-kopf"><span class="dk-sym">${x.sym}</span><div><b>${esc(x.typ)}${x.i.groesse ? " " + esc(x.i.groesse) : ""}</b><small>${esc(x.i.inventar_nr)} · ${esc(x.i.bezeichnung || "")}</small></div></div>
+  <div class="dk-gitter">${feld("Status", `<span class="badge ${STATUS[x.i.status]?.[0] || ""}">${esc(STATUS[x.i.status]?.[1] || "")}</span>`)}${feld("Zustand", esc(ZUSTAND[x.i.zustand] || "–"), x.i.zustand === "maengel" ? "warn" : "")}
+    ${x.a ? feld("Ausgeliehen an", esc(name(x.a.person_id))) + feld("seit / bis", `${datumKurz(x.a.von)} – ${x.a.bis ? datumKurz(x.a.bis) : "offen"}`, x.ueberfaellig ? "warn" : "") : feld("Standort", esc(x.i.standort || "–"))}
+    ${feld("Wartung", x.i.wartung_faellig ? datumKurz(x.i.wartung_faellig) : "–", x.wartungUeber ? "warn" : "")}${feld("Wert", x.i.wert ? geld(x.i.wert) : "")}
+    ${x.rep.length ? feld("Reparatur", esc(REP[x.rep[0].status]?.[1] || x.rep[0].status), "warn") : ""}${feld("finanziert von", esc(x.i.finanziert_von || ""))}</div>
+  ${x.i.notiz ? `<p class="dk-notiz">${esc(x.i.notiz)}</p>` : ""}
+  <button class="knopf haupt breit" data-a="oeffne" data-x="instrument|${esc(x.i.id)}">Details, Verleih & Reparatur ›</button></article>`;
+
 VIEWS.instrumente = {
-  render(p) {
-    const filter = p.filter || "alle";
-    const heute = tagIso(new Date());
-    let inv = liste("inventar", (i) => i.status !== "ausgemustert");
-    if (filter === "verfuegbar") inv = inv.filter((i) => i.status === "verfuegbar");
-    if (filter === "verliehen") inv = inv.filter((i) => i.status === "verliehen");
-    if (filter === "reparatur") inv = inv.filter((i) => i.status === "reparatur");
-    if (filter === "wartung") inv = inv.filter((i) => i.wartung_faellig && i.wartung_faellig <= tagIso(new Date(Date.now() + 30 * 86400000)));
-    const n = (f) => liste("inventar", f).length;
+  render() {
+    const { alle, basis, liste: l } = gefiltert(), ans = einst().instAnsicht || "kachel";
+    const opt = (o, w) => Object.entries(o).map(([k, t]) => `<option value="${esc(k)}" ${w === k ? "selected" : ""}>${esc(t)}</option>`).join("");
+    const typen = Object.fromEntries(liste("instrument_typen").sort((a, b) => a.name.localeCompare(b.name, "de")).map((t) => [t.id, t.name]));
+    const orte = Object.fromEntries([...new Set(alle.map((x) => x.i.standort || "–"))].sort().map((o) => [o, o]));
+    const gruppen = Object.fromEntries(Object.keys(INSTRUMENT_GRUPPEN).filter((g) => alle.some((x) => x.gruppe === g)).map((g) => [g, `${INSTRUMENT_GRUPPEN[g][0]} ${INSTRUMENT_GRUPPEN[g][1]}`]));
+    const aktiv = [["gruppe", gruppen[IF.gruppe]], ["typ", typen[IF.typ]], ["standort", IF.standort && "📍 " + IF.standort], ["zustand", ZUSTAND[IF.zustand]]].filter(([, t]) => t);
     const reps = liste("reparaturen", (r) => !["erledigt", "abgelehnt"].includes(r.status));
-    return kopf("🎻 Instrumente") + `<div class="kennzahlen"><div class="kennzahl"><b>${n((i) => i.status !== "ausgemustert")}</b><small>im Inventar</small></div><div class="kennzahl"><b>${n((i) => i.status === "verliehen")}</b><small>verliehen</small></div><div class="kennzahl"><b>${n((i) => i.status === "verfuegbar")}</b><small>verfügbar</small></div><div class="kennzahl"><b>${reps.length}</b><small>Reparaturen offen</small></div></div>
-      ${reps.length ? `<div class="karte"><h3>🔧 Reparaturen</h3><ul class="liste">${reps.map((r) => `<li class="klick" data-a="oeffne" data-x="reparatur|${r.id}"><div class="fl"><div class="zeile-titel">${esc(hole("inventar", r.inventar_id)?.bezeichnung)}</div><div class="zeile-unter">${esc(r.meldung)}</div></div><span class="badge ${REP[r.status][0]}">${REP[r.status][1]}</span></li>`).join("")}</ul></div>` : ""}
-      <div class="umschalter">${[["alle", "Alle"], ["verfuegbar", "frei"], ["verliehen", "verliehen"], ["reparatur", "Reparatur"], ["wartung", "Wartung"]].map(([k, t]) => `<button class="${filter === k ? "an" : ""}" data-a="invFilter" data-x="${k}">${t}</button>`).join("")}</div>
-      <div class="karte"><ul class="liste">${inv.sort((a, b) => a.inventar_nr.localeCompare(b.inventar_nr)).map((i) => {
-        const a = aktiveAusleihe(db, i.id);
-        const wart = i.wartung_faellig && i.wartung_faellig < heute;
-        return `<li class="klick" data-a="oeffne" data-x="instrument|${i.id}"><div class="fl"><div class="zeile-titel">${esc(i.inventar_nr)} · ${esc(typName(i.typ_id))} ${esc(i.groesse || "")}</div><div class="zeile-unter">${esc(i.bezeichnung || "")}${a ? " · bei " + esc(name(a.person_id)) + " bis " + datumKurz(a.bis) : ""}${wart ? " · 🧰 Wartung überfällig" : ""}</div></div><span class="badge ${STATUS[i.status][0]}">${STATUS[i.status][1]}</span></li>`;
-      }).join("") || '<li class="leer">Keine Instrumente</li>'}</ul></div>
-      <p class="hinweis">Neue Instrumente, Inventarnummern und Werte werden in der PC-Verwaltung gepflegt.</p>`;
+    const gr = gruppiert(l);
+    let inhalt = "";
+    if (!l.length) inhalt = `<div class="leer">Keine Instrumente gefunden.${IF.q || aktiv.length || IF.status !== "aktiv" ? '<br><button class="knopf klein" data-a="instReset">↺ Suche & Filter zurücksetzen</button>' : ""}</div>`;
+    else if (ans === "liste") inhalt = gr.map((g) => (g.titel ? `<details class="ig" open><summary>${esc(g.titel)} <b>${g.l.length}</b></summary>` : "<div>") + `<ul class="iz-liste">${g.l.map(zeileHtml).join("")}</ul>` + (g.titel ? "</details>" : "</div>")).join("");
+    else if (ans === "dreh") {
+      const reihe = gr.flatMap((g) => g.l);
+      const reiter = [...new Set(reihe.map((x) => x.gruppe))];
+      inhalt = `<div class="dreh-reiter">${reiter.map((g) => `<button type="button" data-a="drehZu" data-x="${esc(g)}" data-g="${esc(g)}">${INSTRUMENT_GRUPPEN[g]?.[0] || "🎵"} ${esc(INSTRUMENT_GRUPPEN[g]?.[1] || g)}</button>`).join("")}</div>
+        <div class="dreh"><button type="button" class="dreh-pfeil links" data-a="drehSchritt" data-x="-1" aria-label="vorheriges Instrument">‹</button>
+        <div class="dreh-bahn" id="drehBahn">${reihe.map((x, n) => drehKarte(x, n, reihe.length)).join("")}</div>
+        <button type="button" class="dreh-pfeil rechts" data-a="drehSchritt" data-x="1" aria-label="nächstes Instrument">›</button></div>`;
+    } else inhalt = gr.map((g) => {
+      const frei = g.l.filter((x) => x.i.status === "verfuegbar").length, verl = g.l.filter((x) => x.i.status === "verliehen").length;
+      return (g.titel ? `<details class="ig" open><summary>${esc(g.titel)} <b>${g.l.length}</b><small>${frei} frei · ${verl} verliehen</small></summary>` : "<div>") + `<div class="ik-gitter">${g.l.map(kachelHtml).join("")}</div>` + (g.titel ? "</details>" : "</div>");
+    }).join("");
+    return kopf("🎻 Instrumente", `<span class="hinweis">${l.length}${l.length !== alle.length ? ` / ${alle.length}` : ""}</span>`)
+      + `<div class="inst-leiste"><input type="search" id="instSuche" placeholder="🔍 Nr., Instrument, Hersteller, Name …" value="${esc(IF.q)}" aria-label="Instrumente durchsuchen">
+        <div class="inst-ansicht" role="group" aria-label="Ansicht">${ANSICHTEN_I.map(([k, sym, t]) => `<button type="button" class="${ans === k ? "an" : ""}" data-a="instAnsicht" data-x="${k}" title="${t}" aria-label="${t}" aria-pressed="${ans === k}">${sym}</button>`).join("")}</div>
+        <button type="button" class="inst-filterknopf${IF.panel ? " an" : ""}" data-a="instPanel" aria-expanded="${IF.panel}" title="Filter, Gruppen & Sortierung">⚙️${aktiv.length ? `<i>${aktiv.length}</i>` : ""}</button></div>
+      <div class="inst-chips">${Object.entries(STATUS_FILTER).filter(([k]) => k !== "ausgemustert" || basis.some((x) => x.i.status === "ausgemustert")).map(([k, [t, f]]) => { const n = basis.filter(f).length; return n || k === "aktiv" || IF.status === k ? `<button type="button" class="${IF.status === k ? "an" : ""}" data-a="instStatus" data-x="${k}">${t} <b>${n}</b></button>` : ""; }).join("")}</div>
+      ${IF.panel ? `<div class="inst-panel karte">
+        <label>Gruppe<select data-c="instFeld" data-x="gruppe"><option value="">alle</option>${opt(gruppen, IF.gruppe)}</select></label>
+        <label>Instrument<select data-c="instFeld" data-x="typ"><option value="">alle</option>${opt(typen, IF.typ)}</select></label>
+        <label>Standort<select data-c="instFeld" data-x="standort"><option value="">alle</option>${opt(orte, IF.standort)}</select></label>
+        <label>Zustand<select data-c="instFeld" data-x="zustand"><option value="">alle</option>${opt(ZUSTAND, IF.zustand)}</select></label>
+        <label>Gruppieren<select data-c="instEinst" data-x="instGruppe">${opt(GRUPPIEREN, einst().instGruppe || "gruppe")}</select></label>
+        <label>Sortieren<select data-c="instEinst" data-x="instSort">${opt(SORT, einst().instSort || "nr")}</select></label>
+        <button type="button" class="knopf klein" data-a="instReset">↺ Zurücksetzen</button></div>` : ""}
+      ${aktiv.length ? `<div class="inst-aktiv">${aktiv.map(([k, t]) => `<button type="button" data-a="instFeldWeg" data-x="${k}">${esc(t)} ✕</button>`).join("")}</div>` : ""}
+      <div class="inst-inhalt ans-${ans}">${inhalt}</div>
+      ${reps.length ? `<details class="karte inst-rep"><summary>🔧 ${reps.length} offene ${reps.length === 1 ? "Reparatur" : "Reparaturen"}</summary><ul class="liste">${reps.map((r) => `<li class="klick" data-a="oeffne" data-x="reparatur|${r.id}"><div class="fl"><div class="zeile-titel">${esc(hole("inventar", r.inventar_id)?.inventar_nr || "")} · ${esc(hole("inventar", r.inventar_id)?.bezeichnung || "")}</div><div class="zeile-unter">${esc(r.meldung)}</div></div><span class="badge ${REP[r.status]?.[0] || ""}">${esc(REP[r.status]?.[1] || r.status)}</span></li>`).join("")}</ul></details>` : ""}
+      <p class="hinweis">Neue Instrumente, Inventarnummern, Werte, Instrumentengruppen und Symbole pflegt die PC-Verwaltung.</p>`;
+  },
+  nach(w) {
+    const f = w.querySelector("#instSuche");
+    f?.addEventListener("input", () => { IF.q = f.value; ifMerken(); const pos = f.selectionStart; zeichne(); const n = document.getElementById("instSuche"); n?.focus(); try { n?.setSelectionRange(pos, pos); } catch {} });
+    const bahn = w.querySelector("#drehBahn");
+    if (bahn) { bahn.addEventListener("scroll", () => requestAnimationFrame(() => drehen(bahn)), { passive: true }); requestAnimationFrame(() => { if (IF.drehPos) bahn.scrollLeft = IF.drehPos; drehen(bahn); }); }
   },
 };
-AKTIONEN.invFilter = (f) => zeige("instrumente", { filter: f }, { ersetzen: true });
+// 🗂️ Drehregister: Karten drehen sich beim Wischen wie eine Kartei; Reiter springen zur Gruppe
+function drehen(bahn) {
+  const mitte = bahn.scrollLeft + bahn.clientWidth / 2;
+  let aktiv = null, best = Infinity;
+  for (const k of bahn.children) {
+    const d = (k.offsetLeft + k.offsetWidth / 2 - mitte) / k.offsetWidth, a = Math.min(1, Math.abs(d));
+    k.style.transform = `perspective(900px) rotateY(${Math.max(-1, Math.min(1, d)) * -38}deg) scale(${1 - a * 0.12})`;
+    k.style.opacity = String(1 - a * 0.45);
+    if (Math.abs(d) < best) { best = Math.abs(d); aktiv = k; }
+  }
+  IF.drehPos = bahn.scrollLeft;
+  const g = aktiv?.dataset.gruppe;
+  document.querySelectorAll(".dreh-reiter button").forEach((b) => b.classList.toggle("an", b.dataset.g === g));
+}
+AKTIONEN.drehSchritt = (x) => { const b = document.getElementById("drehBahn"); if (b) b.scrollBy({ left: Number(x) * (b.firstElementChild?.offsetWidth || 300), behavior: "smooth" }); };
+AKTIONEN.drehZu = (g) => { const b = document.getElementById("drehBahn"), k = b?.querySelector(`[data-gruppe="${CSS.escape(g)}"]`); if (k) b.scrollTo({ left: k.offsetLeft - (b.clientWidth - k.offsetWidth) / 2, behavior: "smooth" }); };
+AKTIONEN.instAnsicht = (a) => { einstSetzen("instAnsicht", a); IF.drehPos = 0; zeichne(); };
+AKTIONEN.instStatus = (k) => { IF.status = k; IF.drehPos = 0; ifMerken(); zeichne(); };
+AKTIONEN.instPanel = () => { IF.panel = !IF.panel; ifMerken(); zeichne(); };
+AKTIONEN.instFeld = (v, el) => { IF[el.dataset.x] = v; IF.drehPos = 0; ifMerken(); zeichne(); };
+AKTIONEN.instFeldWeg = (k) => { IF[k] = ""; ifMerken(); zeichne(); };
+AKTIONEN.instEinst = (v, el) => { einstSetzen(el.dataset.x, v); zeichne(); };
+AKTIONEN.instReset = () => { Object.assign(IF, { q: "", status: "aktiv", gruppe: "", typ: "", standort: "", zustand: "", drehPos: 0 }); ifMerken(); zeichne(); };
+AKTIONEN.invFilter = (f) => { IF.status = f === "alle" ? "aktiv" : f; ifMerken(); zeige("instrumente", {}, { ersetzen: true }); }; // ältere Sprünge (Cockpit, Kopf)
 
 VIEWS.instrument = {
   render({ id }) {

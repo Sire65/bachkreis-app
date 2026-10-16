@@ -62,6 +62,13 @@ await p.waitForSelector("#chatVerlauf img[src^='blob:']", { timeout: 5000 }).cat
 await p.evaluate(async () => (await import("/js/app/sprachsteuerung.js")).befehl("Nachricht an Judith: Hallo aus dem Rundgang"));
 await p.waitForFunction(() => document.getElementById("chatText")?.value === "Hallo aus dem Rundgang", null, { timeout: 4000 }).catch(() => fehler.push("Sprachsteuerung: Nachricht nicht vorbereitet"));
 await p.evaluate(async () => (await import("/js/app/sprachsteuerung.js")).befehl("Öffne Termine")); await p.waitForTimeout(300);
+// 🎻 Instrumente: Kacheln · Liste · Drehregister, Suche und Filter
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("instrumente")); await p.waitForSelector(".ik-gitter");
+await p.click('[data-a="instAnsicht"][data-x="liste"]'); await p.waitForSelector(".iz-liste");
+await p.click('[data-a="instAnsicht"][data-x="dreh"]'); await p.waitForSelector(".dk"); await p.click('[data-a="drehSchritt"][data-x="1"]');
+await p.click('[data-a="instAnsicht"][data-x="kachel"]'); await p.fill("#instSuche", "cello"); await p.waitForTimeout(200);
+if ((await p.$$eval(".ik", (l) => l.filter((k) => !/Cello/i.test(k.textContent)).length)) > 0) fehler.push("Instrumente: Suche filtert nicht");
+await p.click('[data-a="instReset"]').catch(() => {}); await p.evaluate(() => { try { sessionStorage.removeItem("bk_inst_filter"); } catch {} });
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start"));
 await p.waitForSelector(".kachel");
 // Kopf wie KC: alle Infofeld-Karten, Wetter-Tag, Jalousie halb/ganz, Jahreszeiten-Vorschauen

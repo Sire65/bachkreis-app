@@ -359,17 +359,32 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       return { ok: true, zeile: { ...alt, erledigt } };
     }
     case "mitfahrten": {
-      // 🚗 Eltern bieten an (als Fahrer/in) oder buchen Plätze für die eigenen Kinder; fremde Mitfahrer bleiben unangetastet
+      // 🚗 Mitfahrbörse: Eltern bieten an oder suchen (immer im eigenen Namen); buchen nur für die eigenen Kinder; ein fremdes Gesuch
+      // kann man nur mit „Ich nehme mit“ annehmen (zusage_von = ich) bzw. die eigene Zusage zurücknehmen
       const t = ctx.tMap.get(neu.termin_id);
       if (!t || !ctx.termine.has(t.id) || (alt && alt.termin_id !== neu.termin_id)) return { ok: false, grund: "TERMIN_NICHT_SICHTBAR" };
       if (ctx.person?.typ === "schueler") return { ok: false, grund: "NUR_ERWACHSENE" };
+      const art = (alt?.art || neu.art) === "gesuch" ? "gesuch" : "angebot";
       const eigene = !alt ? neu.fahrer_id === ctx.ich : alt.fahrer_id === ctx.ich;
+      if (art === "gesuch") {
+        if (!eigene) {
+          if (!alt) return { ok: false, grund: "NUR_EIGENES_GESUCH" };
+          const zusage = neu.zusage_von === ctx.ich ? ctx.ich : alt.zusage_von === ctx.ich && !neu.zusage_von ? null : alt.zusage_von;
+          if (alt.zusage_von && alt.zusage_von !== ctx.ich && zusage !== alt.zusage_von) return { ok: false, grund: "SCHON_ZUGESAGT" };
+          return { ok: true, zeile: { ...alt, zusage_von: zusage } };
+        }
+        const kinder = [...new Set((Array.isArray(neu.mitfahrer) ? neu.mitfahrer : alt?.mitfahrer || []).filter((id) => ctx.kinder.has(id)))];
+        if (!kinder.length && !neu.geloescht_am) return { ok: false, grund: "KIND_FEHLT" };
+        return { ok: true, zeile: { ...(alt || {}), id: alt?.id || neu.id, termin_id: t.id, art, fahrer_id: ctx.ich, richtung: ["hin", "zurueck", "beides"].includes(neu.richtung) ? neu.richtung : "hin",
+          plaetze: kinder.length, abfahrt: String(neu.abfahrt || "").slice(0, 120), notiz: String(neu.notiz || "").slice(0, 200), mitfahrer: kinder, zusage_von: alt?.zusage_von ?? null, geloescht_am: neu.geloescht_am ?? null } };
+      }
       const plaetze = Math.max(0, Math.min(8, Number(eigene ? neu.plaetze : alt.plaetze) || 0));
       const vorher = alt?.mitfahrer || [], wunsch = Array.isArray(neu.mitfahrer) ? neu.mitfahrer : [];
       const mitfahrer = [...vorher.filter((id) => !ctx.meine.has(id) || wunsch.includes(id)), ...wunsch.filter((id) => ctx.meine.has(id) && id !== ctx.ich && !vorher.includes(id))];
       if (mitfahrer.length > plaetze) return { ok: false, grund: "VOLL" };
       if (!eigene) { if (!alt) return { ok: false, grund: "NUR_EIGENES_ANGEBOT" }; return { ok: true, zeile: { ...alt, mitfahrer } }; }
-      return { ok: true, zeile: { ...(alt || {}), id: alt?.id || neu.id, termin_id: t.id, fahrer_id: ctx.ich, richtung: ["hin", "zurueck", "beides"].includes(neu.richtung) ? neu.richtung : "hin", plaetze, abfahrt: String(neu.abfahrt || "").slice(0, 120), mitfahrer, geloescht_am: neu.geloescht_am ?? null } };
+      return { ok: true, zeile: { ...(alt || {}), id: alt?.id || neu.id, termin_id: t.id, art, fahrer_id: ctx.ich, richtung: ["hin", "zurueck", "beides"].includes(neu.richtung) ? neu.richtung : "hin", plaetze,
+        abfahrt: String(neu.abfahrt || "").slice(0, 120), notiz: String(neu.notiz || "").slice(0, 200), mitfahrer, geloescht_am: neu.geloescht_am ?? null } };
     }
     case "reise_anmeldungen": {
       // 🧳 Eltern melden ihr Kind an bzw. ab (Schüler/Ehemalige sich selbst): bis zum Anmeldeschluss, Warteliste wenn voll; Betrag/bezahlt/Zimmer setzt die Kasse

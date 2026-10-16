@@ -1,6 +1,6 @@
 // Termine: Liste/Kalender, Zu-/Absage (auch Eltern für ihre Kinder), Besetzungsampel, Nachfassen, Serientermine,
 // Abwesenheit (Zeitraum auf einmal absagen), Kalender-Export (.ics). Vorbild: KC Club „treffen“/„teilnahme“.
-import { mitfahrtHtml } from "./extras.js";
+import { mitfahrtHtml, mitfahrtZahlen } from "./extras.js";
 import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istLehrkraft, istLeitung, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
@@ -37,6 +37,8 @@ function antwortBereich(t, p) {
   }
   return `${name}<div class="antworten gross">${Object.entries(ANTW_ICH).map(([w, [s, n]]) => `<button class="${w} ${a?.antwort === w ? "an" : ""}" data-a="antworten" data-x="${esc(t.id)}|${esc(p)}|${w}">${s}<b>${istEltern() && w !== "vielleicht" ? (w === "ja" ? "kommt" : "kann nicht") : n}</b></button>`).join("")}</div>`;
 }
+// 🚗 kleine Anzeige in der Terminliste: freie Plätze / wer sucht
+const mfBadge = (t) => { if (new Date(t.beginn) < new Date()) return ""; const z = mitfahrtZahlen(t); return z.frei || z.suchen ? ` · <span class="mf-mini">${z.frei ? `🚗 ${z.frei}` : ""}${z.suchen ? ` 🙋 ${z.suchen}` : ""}</span>` : ""; };
 function terminKarte(t, { mitAntwort = true } = {}) {
   if (t.eigen) return eigenKarte(t);
   const a = art(t), planer = darfPlanen(), tn = teilnahmeVon(db, t);
@@ -52,7 +54,7 @@ function terminKarte(t, { mitAntwort = true } = {}) {
     <div class="kopf klick" data-a="oeffne" data-x="termin|${t.id}">
       <div class="datum">${wochentag(t.beginn)}<br>${new Date(t.beginn).getDate()}<small>${monatKurz(t.beginn)}</small></div>
       <div class="fl" style="flex:1;min-width:0"><div class="zeile-titel">${a.sym} ${esc(t.titel)}</div>
-        <div class="zeile-unter">🕒 ${uhr(t.beginn)}${t.ende ? "–" + uhr(t.ende) : ""} Uhr${t.ort ? ` · 📍 ${esc(t.ort)}` : ""}</div>
+        <div class="zeile-unter">🕒 ${uhr(t.beginn)}${t.ende ? "–" + uhr(t.ende) : ""} Uhr${t.ort ? ` · 📍 ${esc(t.ort)}` : ""}${mfBadge(t)}</div>
         <div class="t-marken">${teilnahmeBadge(t)}${gr}${t.status === "abgesagt" ? '<span class="badge b-rot">fällt aus</span>' : ""}${ampel ? `<span class="badge"><span class="punkt ${ampel}"></span>${AMPEL_TEXT[ampel]}</span>` : ""}</div></div>
     </div>
     ${z ? `<div class="zaehler"><span class="badge b-gruen">✅ ${z.ja}</span><span class="badge b-gelb">⏳ ${z.vielleicht}</span><span class="badge b-rot">❌ ${z.nein}</span><span class="badge b-grau">❔ ${z.offen} offen</span></div>` : ""}

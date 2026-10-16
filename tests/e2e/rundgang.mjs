@@ -124,6 +124,10 @@ if (!(await p.$(".sitzplan"))) fehler.push("Orchester: Sitzplan fehlt");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("instrumentenkunde")); await p.waitForSelector(".lehre-kachel");
 await p.click('.lehre-kachel[data-x="violine"]'); await p.waitForSelector(".lehre-figur svg");
 await p.click('[data-a="lehreSpielen"][data-x="violine|tonleiter"]'); await p.waitForTimeout(300);
+// Kopf bleibt beim Spielen über dem Körper (Wipp-Animation darf die Position nicht überschreiben)
+{ const k = await p.$eval(".figur-svg .kopf", (e) => { const r = e.getBoundingClientRect(), s = e.ownerSVGElement.getBoundingClientRect(); return (r.left + r.width / 2 - s.left) / s.width; });
+  if (k < 0.38 || k > 0.62) fehler.push(`Instrumentenkunde: Kopf beim Spielen verschoben (${k.toFixed(2)})`); }
+await p.screenshot({ path: `${BILDER}lehre-spielt.png` });
 await p.evaluate(async () => (await import("/js/kern/ui.js")).AKTIONEN.meinGesicht()); await p.waitForSelector(".gz-vorschau");
 await p.click('[data-a="gzZufall"]'); await p.click('[data-a="gzSpeichern"]'); await p.waitForTimeout(300);
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start"));
@@ -210,7 +214,10 @@ await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("kinder"
 // ✨ 0.22.0: 🚗 Mitfahren beim Termin (Eltern), 📝 Übeaufgabe abhaken (Schüler), 📜 GEMA-Liste (Leitung)
 await p.evaluate(async () => { const { liste } = await import("/js/kern/daten.js"); const m = liste("mitfahrten")[1] || liste("mitfahrten")[0]; (await import("/js/app/zustand.js")).zeige("termin", { id: m.termin_id }); });
 await p.waitForSelector(".mf-karte"); const mf = await p.$('[data-a="mfBuchen"]'); if (mf) { await mf.click(); await p.waitForTimeout(150); }
+const such = await p.$('[data-a="mfSuchen"]'); if (such) { await such.click(); await p.waitForSelector("#mfForm"); await p.fill('#mfForm [name="abfahrt"]', "Oberaden, Rathaus"); await p.click('[data-a="mfSucheSpeichern"]'); await p.waitForTimeout(150); }
 await p.screenshot({ path: `${BILDER}eltern-mitfahren.png`, fullPage: true });
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("mitfahrboerse")); await p.waitForSelector(".mf-zahlen");
+await p.screenshot({ path: `${BILDER}mitfahrboerse.png`, fullPage: true });
 await p.selectOption("#demoleiste select", "schueler"); await p.waitForTimeout(300);
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("ueben")); await p.waitForSelector(".ua-karte");
 await p.click('.ua-karte input[data-c="aufgabeHaken"]'); await p.waitForTimeout(150);

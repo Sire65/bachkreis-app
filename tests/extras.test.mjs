@@ -67,3 +67,21 @@ test("🧭 Cockpit: Mietmaterial, Schlüssel überfällig, Führungszeugnis der 
   assert.ok(c.some((t) => t.startsWith("🔑")), "Schlüssel überfällig");
   assert.ok(c.some((t) => t.startsWith("🛡️")), "Führungszeugnis fehlt");
 });
+
+test("🙋 Gesuch: Eltern suchen nur für eigene Kinder; „Ich nehme mit“ setzt nur sich selbst; eine fremde Zusage bleibt", async () => {
+  const fahrt = d.termine.find((t) => t.projekt_id === "pr-freizeit");
+  const fam = d.eltern_kind.filter((e) => codes[e.eltern_id] && d.gruppe_zuordnung.some((z) => z.person_id === e.kind_id && (fahrt.gruppen || []).includes(z.gruppe_id)));
+  const elternVon = (k) => d.eltern_kind.filter((e) => e.kind_id === k).map((e) => e.eltern_id);
+  const gewaehlt = [];
+  for (const e of fam) if (!gewaehlt.some((x) => x.kind_id === e.kind_id || elternVon(x.kind_id).includes(e.eltern_id) || elternVon(e.kind_id).includes(x.eltern_id))) gewaehlt.push(e);
+  const [a, b, c] = gewaehlt;
+  let r = await speichern(a.eltern_id, "mitfahrten", { id: "mf-g1", termin_id: fahrt.id, art: "gesuch", fahrer_id: a.eltern_id, richtung: "hin", mitfahrer: [a.kind_id, b.kind_id], zusage_von: c.eltern_id });
+  assert.deepEqual(r.gespeichert[0].mitfahrer, [a.kind_id], "nur das eigene Kind");
+  assert.equal(r.gespeichert[0].zusage_von, null, "Zusage nicht selbst setzen");
+  r = await speichern(b.eltern_id, "mitfahrten", { ...r.gespeichert[0], zusage_von: b.eltern_id, mitfahrer: [], abfahrt: "gehackt" });
+  assert.equal(r.gespeichert[0].zusage_von, b.eltern_id); assert.deepEqual(r.gespeichert[0].mitfahrer, [a.kind_id], "Gesuch sonst unverändert");
+  assert.equal((await speichern(c.eltern_id, "mitfahrten", { ...r.gespeichert[0], zusage_von: c.eltern_id })).konflikte[0].grund, "SCHON_ZUGESAGT");
+  r = await speichern(b.eltern_id, "mitfahrten", { ...r.gespeichert[0], zusage_von: null });
+  assert.equal(r.gespeichert[0].zusage_von, null, "eigene Zusage zurücknehmen");
+  assert.equal((await speichern(c.eltern_id, "mitfahrten", { id: "mf-g2", termin_id: fahrt.id, art: "gesuch", fahrer_id: c.eltern_id, mitfahrer: [a.kind_id] })).konflikte[0].grund, "KIND_FEHLT");
+});

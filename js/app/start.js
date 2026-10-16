@@ -10,6 +10,7 @@ import { kopfEinsetzen, kopfVerbinden, regEffekt } from "./kopf.js";
 import { dunkelUmschalten } from "./darstellung.js";
 import { pwOffenZahl } from "./pinnwand.js";
 import { gesundheitFuer, gesundheitVon } from "./schutz.js";
+import { mitfahrtZahlen } from "./extras.js";
 import { wochenStand } from "./ueben.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
@@ -43,6 +44,8 @@ function imVerteiler(v) {
 }
 const offeneGenehmigungen = () => istEltern() ? liste("genehmigungen", (g) => kinderVon(db, S.ich.id).includes(g.kind_id) && g.status === "ausstehend").length : 0;
 
+// 🚗 Wie viele Kinder suchen in den nächsten 2 Wochen noch eine Mitfahrt (zu Terminen, die mich betreffen)?
+const mitfahrSuchende = () => { const bis = Date.now() + 14 * 86400000; return liste("termine", (t) => new Date(t.beginn) > new Date() && new Date(t.beginn) < bis).reduce((s, t) => s + mitfahrtZahlen(t).suchen, 0); };
 export const KACHELN = {
   bachkreis: [
     { id: "cockpit", sym: "🧭", t: "Cockpit", u: "Was braucht meine Aufmerksamkeit?", v: "cockpit", nur: () => istLehrkraft() || istVorstand(), zahl: () => cockpit(db, S.ich.id).filter((c) => c.dring >= 2).length },
@@ -72,6 +75,7 @@ export const KACHELN = {
     { id: "meinenoten", sym: "🎼", t: "Meine Noten", u: "Stimmen für mein Instrument", v: "meinenoten", nur: () => istSchueler() || istEltern() },
     { id: "meininstrument", sym: "🎻", t: () => (istEltern() ? "Leihinstrumente" : "Mein Leihinstrument"), u: "Rückgabe · Schaden melden", v: "meininstrument", nur: () => istSchueler() || istEltern() },
     { id: "abwesenheit", sym: "🏖️", t: "Abwesenheit", u: "Zeitraum auf einmal absagen", v: "abwesenheit", nur: () => istSchueler() || istEltern() },
+    { id: "mitfahrboerse", sym: "🚗", t: "Mitfahrbörse", u: "Plätze anbieten · suchen · buchen", v: "mitfahrboerse", nur: () => istEltern() || istLehrkraft(), zahl: () => mitfahrSuchende() },
     { id: "meinregister", sym: "🎼", t: "Mein Register", u: "Wer kommt? Erinnern", v: "meinregister", nur: () => hatRolle("registerfuehrer") },
     { id: "wechselwunsch", sym: "🔀", t: "Gruppenwechsel", u: "Wunsch an die Leitung", v: "wechselwunsch", nur: () => istSchueler() },
     { id: "meingesicht", sym: "🙂", t: "Mein Gesicht", u: "Frisur, Brille, Farben – fürs Orchester", aktion: "meinGesicht" },

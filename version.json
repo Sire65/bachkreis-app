@@ -1,16 +1,26 @@
 {
-  "version": "0.22.0",
+  "version": "0.23.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🚗 Mitfahrgelegenheiten beim Termin: Eltern bieten Plätze an, andere Eltern buchen für ihr Kind – der Fahrer bekommt Bescheid",
-    "📝 Übeaufgaben von den Lehrkräften – für ein Kind, ein Register oder ein Orchester; die Kinder haken unter „Üben“ ab",
-    "📜 Mietmaterial & GEMA: Rückgabefrist an den Verlag mit Erinnerung, Papier-Exemplare je Spieler, GEMA-Liste aus dem Konzertprogramm",
-    "🚪 Räume & 🔑 Schlüssel, 💛 Förderverein-Mitglieder mit Beitrag (ohne Lastschrift), 🛡️ Vermerk Führungszeugnis für Begleitpersonen",
-    "🔧 Reparaturen auch für Ausstattung (Notenständer, Technik) · 📧 Auftrag per Mail an die Werkstatt · 🛒 Einkauf wird automatisch Instrument oder Ausstattung · 💛 Sachspenden mit Inventar verknüpft",
-    "🧹 Abgelaufene Gesundheitsangaben löscht der Server jetzt automatisch"
+    "🚗 Mitfahrbörse: zu jedem Termin Plätze anbieten, eine Mitfahrt suchen oder für das eigene Kind buchen – „Ich nehme mit“ nimmt ein Gesuch an, alle Beteiligten bekommen Bescheid",
+    "🚗 Übersicht „Mitfahrbörse“ mit allen Terminen der nächsten 6 Wochen (freie Plätze 🚗 / wer sucht 🙋) und kleine Anzeige in der Terminliste",
+    "🎺 Instrumentenkunde: der Kopf der Figur verrutscht beim Spielen nicht mehr nach links (auch beim Kontrabass)"
   ],
   "verlauf": [
+    {
+      "version": "0.22.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🚗 Mitfahrgelegenheiten beim Termin: Eltern bieten Plätze an, andere Eltern buchen für ihr Kind – der Fahrer bekommt Bescheid",
+        "📝 Übeaufgaben von den Lehrkräften – für ein Kind, ein Register oder ein Orchester; die Kinder haken unter „Üben“ ab",
+        "📜 Mietmaterial & GEMA: Rückgabefrist an den Verlag mit Erinnerung, Papier-Exemplare je Spieler, GEMA-Liste aus dem Konzertprogramm",
+        "🚪 Räume & 🔑 Schlüssel, 💛 Förderverein-Mitglieder mit Beitrag (ohne Lastschrift), 🛡️ Vermerk Führungszeugnis für Begleitpersonen",
+        "🔧 Reparaturen auch für Ausstattung (Notenständer, Technik) · 📧 Auftrag per Mail an die Werkstatt · 🛒 Einkauf wird automatisch Instrument oder Ausstattung · 💛 Sachspenden mit Inventar verknüpft",
+        "🧹 Abgelaufene Gesundheitsangaben löscht der Server jetzt automatisch"
+      ]
+    },
     {
       "version": "0.21.0",
       "datum": "2026-10-16",

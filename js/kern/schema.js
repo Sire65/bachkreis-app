@@ -36,6 +36,7 @@ export const ANWESENHEIT_NAMEN = { "": "nicht erfasst", ...Object.fromEntries(Ob
 export const GENEHMIGUNG_ZWECKE = { teilnahme: "Teilnahme & Datenschutz", foto_intern: "📷 Fotos intern (App, nur Mitglieder)", foto_website: "📷 Fotos Schul-Website",
   foto_presse: "📷 Fotos Presse", foto_social: "📷 Fotos Social Media", reise: "Fahrt / Freizeit", leihvertrag: "Leihvertrag Instrument", gesundheit: "Gesundheit / Erste Hilfe", sonstiges: "Sonstiges" };
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
+export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
 export const LEIH_ZUBEHOER = { koffer: "Koffer / Tasche", bogen: "Bogen", kolophonium: "Kolophonium", schulterstuetze: "Schulterstütze", mundstueck: "Mundstück", gurt: "Gurt", rohre: "Rohrblätter", pflege: "Pflegeset", staender: "Ständer" };
 export const TEILNAHME = { pflicht: ["❗", "Teilnahme erforderlich"], erwuenscht: ["🙂", "Teilnahme erwünscht"], info: ["ℹ️", "Nur zur Info"] };
@@ -374,18 +375,22 @@ export const TABELLEN = {
     liste: ["titel", "person_id", "register_id", "gruppe_id", "bis"],
     anzeige: (z) => z.titel,
   },
-  // 🚗 Mitfahrgelegenheiten (0.22.0): Eltern bieten Plätze zu einem Termin an; andere Eltern buchen für ihr Kind
+  // 🚗 Mitfahrbörse (0.22.0/0.23.0): Eltern bieten Plätze an (angebot) oder suchen eine Mitfahrt für ihr Kind (gesuch);
+  // gebucht wird für die eigenen Kinder, ein Gesuch nimmt ein/e Fahrer/in mit „Ich nehme mit“ an (zusage_von)
   mitfahrten: {
-    titel: "Mitfahrgelegenheiten", sym: "🚗", gruppe: "Termine", lesen: TERMIN_PLANER, schreiben: TERMIN_PLANER,
+    titel: "Mitfahrbörse", sym: "🚗", gruppe: "Termine", lesen: TERMIN_PLANER, schreiben: TERMIN_PLANER,
     felder: [
       { k: "termin_id", t: "Termin", typ: "ref", ref: "termine", pflicht: true },
-      { k: "fahrer_id", t: "Fahrer/in", typ: "ref", ref: "personen", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: MITFAHRT_ARTEN },
+      { k: "fahrer_id", t: "Fahrer/in bzw. suchende Eltern", typ: "ref", ref: "personen", pflicht: true },
       { k: "richtung", t: "Richtung", typ: "wahl", werte: { hin: "hin", zurueck: "zurück", beides: "hin & zurück" } },
-      { k: "plaetze", t: "freie Plätze", typ: "zahl" },
-      { k: "abfahrt", t: "Abfahrt (Ort, Uhrzeit)", typ: "text" },
-      { k: "mitfahrer", t: "Mitfahrer", typ: "refs", ref: "personen" },
+      { k: "plaetze", t: "Plätze (frei bzw. gesucht)", typ: "zahl" },
+      { k: "abfahrt", t: "Ort / Uhrzeit (Abfahrt bzw. Abholung)", typ: "text" },
+      { k: "mitfahrer", t: "Mitfahrer (Kinder)", typ: "refs", ref: "personen" },
+      { k: "zusage_von", t: "nimmt mit (bei Gesuch)", typ: "ref", ref: "personen" },
+      { k: "notiz", t: "Notiz", typ: "text" },
     ],
-    liste: ["termin_id", "fahrer_id", "richtung", "plaetze", "abfahrt"],
+    liste: ["termin_id", "art", "fahrer_id", "richtung", "plaetze", "abfahrt"],
   },
   ausleihen: {
     titel: "Ausleihen", sym: "🤝", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],

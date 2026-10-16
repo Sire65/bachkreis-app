@@ -103,7 +103,8 @@ function figurSvg(l, m) {
       <ellipse cx="56" cy="230" rx="11" ry="5" fill="#111"/><ellipse cx="144" cy="230" rx="11" ry="5" fill="#111"/>`
     : `<rect x="80" y="168" width="15" height="58" rx="6" fill="#24242e"/><rect x="105" y="168" width="15" height="58" rx="6" fill="#24242e"/><ellipse cx="85" cy="229" rx="12" ry="5" fill="#111"/><ellipse cx="115" cy="229" rx="12" ry="5" fill="#111"/>`;
   const rumpf = `<path d="M72 100 Q72 90 86 88 L114 88 Q128 90 128 100 L126 172 L74 172 Z" fill="#24242e"/><path d="M92 88 L100 100 L108 88" fill="#d4a017"/>`;
-  const kopfG = `<g class="kopf" transform="translate(68 14)">${gesichtSvg(m, { rund: false })}</g>`;
+  // Position (transform-Attribut) und Wipp-Animation (CSS transform) in getrennten Gruppen – sonst überschreibt die Animation die Position
+  const kopfG = `<g transform="translate(68 14)"><g class="kopf">${gesichtSvg(m, { rund: false })}</g></g>`;
   let hinter = "", vorn = "", arme = "";
   switch (l.haltung) {
     case "kinn": {
@@ -128,7 +129,7 @@ function figurSvg(l, m) {
       arme = arm([[75, 98], [70, 124], [97, 132]], haut) + arm([[125, 98], [130, 104], [103, 104]], haut); break;
     }
     case "schraeg":
-      hinter = `<g class="instr" transform="rotate(16 100 140)"><rect x="112" y="24" width="15" height="198" rx="7" fill="${c}"/><rect x="108" y="20" width="22" height="12" rx="4" fill="#d4c4a8"/></g>`;
+      hinter = `<g transform="rotate(16 100 140)"><g class="instr"><rect x="112" y="24" width="15" height="198" rx="7" fill="${c}"/><rect x="108" y="20" width="22" height="12" rx="4" fill="#d4c4a8"/></g></g>`;
       vorn = `<path d="M100 76 Q112 74 118 60" stroke="#c0c0c0" stroke-width="2.5" fill="none"/>`;
       arme = arm([[75, 98], [86, 140], [114, 150]], haut) + arm([[125, 98], [140, 112], [130, 92]], haut); break;
     case "vorn":

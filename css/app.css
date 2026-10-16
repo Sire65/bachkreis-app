@@ -254,3 +254,8 @@ body.mit-fuss .jz-vorschau-aus { bottom: calc(84px + env(safe-area-inset-bottom)
 .ua-ok .zeile-titel { text-decoration: line-through; opacity: .6; }
 .ua-spaet { color: var(--rot); font-weight: 800; }
 .mf-angebot { padding: 8px 0; border-bottom: 1px solid var(--linie); display: grid; gap: 4px; }
+/* 🚗 Mitfahrbörse (0.23.0) */
+.mf-gesuch { border-left: 3px solid var(--gelb); padding-left: 8px; }
+.mf-gesuch.ok { border-left-color: var(--gruen); }
+.mf-zahlen { display: inline-flex; gap: 2px; }
+.mf-mini { white-space: nowrap; font-weight: 700; }

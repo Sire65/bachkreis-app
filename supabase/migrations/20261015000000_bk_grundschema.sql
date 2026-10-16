@@ -331,15 +331,18 @@ alter table bk_uebeaufgaben enable row level security;
 drop trigger if exists bk_uebeaufgaben_stempel on bk_uebeaufgaben;
 create trigger bk_uebeaufgaben_stempel before update on bk_uebeaufgaben for each row execute function bk_abgleich_stempel();
 
--- Mitfahrgelegenheiten
+-- Mitfahrbörse
 create table if not exists bk_mitfahrten (
   id text primary key default gen_random_uuid()::text,
   termin_id text not null,
+  art text check (art is null or art in ('angebot', 'gesuch')),
   fahrer_id text not null,
   richtung text check (richtung is null or richtung in ('hin', 'zurueck', 'beides')),
   plaetze integer,
   abfahrt text,
   mitfahrer text[],
+  zusage_von text,
+  notiz text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -1256,6 +1259,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebea
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_von_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_von_id_fk foreign key (von_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_mitfahrten_termin_id_fk') then alter table bk_mitfahrten add constraint bk_mitfahrten_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_mitfahrten_fahrer_id_fk') then alter table bk_mitfahrten add constraint bk_mitfahrten_fahrer_id_fk foreign key (fahrer_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_mitfahrten_zusage_von_fk') then alter table bk_mitfahrten add constraint bk_mitfahrten_zusage_von_fk foreign key (zusage_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_inventar_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_inventar_id_fk foreign key (inventar_id) references bk_inventar(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_person_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_vertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_vertrag_id_fk foreign key (vertrag_id) references bk_genehmigungen(id) on delete restrict; end if; end $$;

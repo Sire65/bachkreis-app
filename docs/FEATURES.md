@@ -73,7 +73,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F63 | 🧳 Anmeldung zu Fahrten/Freizeiten (Plätze, Warteliste, Schluss, bezahlt) | ✅ | verein.test, e2e rundgang |
 | BK-F64 | 🎓 Schuljahreswechsel nach Regeln der Gruppen | ✅ | verein.test |
 | BK-F65 | 🔐 Auskunft über alle Tabellen, 🧹 Löschfristen/Anonymisieren | ✅ | verein.test |
-| BK-F66 | 🚗 Mitfahrgelegenheiten je Termin | ✅ | extras.test, e2e rundgang |
+| BK-F66 | 🚗 Mitfahrbörse je Termin: anbieten, suchen, buchen, „Ich nehme mit“, Übersicht | ✅ | extras.test, e2e rundgang |
 | BK-F67 | 📝 Übeaufgaben der Lehrkräfte | ✅ | extras.test, e2e rundgang |
 | BK-F68 | 📜 Mietmaterial, Papier-Exemplare, GEMA-Liste | ✅ | extras.test |
 | BK-F69 | 🚪 Räume, 🔑 Schlüssel, 💛 FV-Mitglieder, 🛡️ Führungszeugnis-Vermerk | ✅ | extras.test |

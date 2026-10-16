@@ -555,6 +555,10 @@ export function erzeugeDemodaten(heute = new Date()) {
   const elternA = [...new Set(d.eltern_kind.filter((e) => mitglieder("g-a").includes(e.kind_id)).map((e) => e.eltern_id))];
   if (fahrt && elternA[0]) d.mitfahrten.push({ id: "mf-1", termin_id: fahrt.id, fahrer_id: elternA[0], richtung: "hin", plaetze: 3, abfahrt: "14:30 Uhr Rathausplatz Oberaden", mitfahrer: [] });
   if (probe && elternA[1]) d.mitfahrten.push({ id: "mf-2", termin_id: probe.id, fahrer_id: elternA[1], richtung: "beides", plaetze: 2, abfahrt: "Weddinghofen, Kirche – 15:40 Uhr", mitfahrer: [] });
+  // 🙋 Gesuch: eine Familie sucht eine Mitfahrt zur Probenfreizeit (noch offen)
+  const sucher = elternA.find((e) => e !== elternA[0] && e !== elternA[1] && e !== demoEltern?.id);
+  if (fahrt && sucher) d.mitfahrten.push({ id: "mf-3", termin_id: fahrt.id, art: "gesuch", fahrer_id: sucher, richtung: "hin", plaetze: 1, abfahrt: "Rünthe, Marktplatz", mitfahrer: d.eltern_kind.filter((e) => e.eltern_id === sucher && mitglieder("g-a").includes(e.kind_id)).slice(0, 1).map((e) => e.kind_id), zusage_von: null, notiz: "mit Cello" });
+  for (const m of d.mitfahrten) { m.art ||= "angebot"; m.notiz ??= ""; m.zusage_von ??= null; }
   // 🛡️ Führungszeugnis-Vermerk (nur Datum): Lehrkräfte ja, eine Begleitperson fehlt noch
   for (const p of d.personen.filter((x) => x.typ === "lehrkraft" || x.id === "p-leitung")) p.fz_vorgelegt_am = isoTag(tag(jetzt, -Math.floor(100 + r() * 1500)));
 

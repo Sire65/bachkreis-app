@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.23.0 DEV – 16.10.2026
+- 🚗 mitfahrten: art (angebot/gesuch), zusage_von, notiz; Server: Gesuch nur für eigene Kinder, „Ich nehme mit“ nur als man selbst (SCHON_ZUGESAGT), eigene Zusage zurücknehmen; Benachrichtigungen bei Angebot, Gesuch, Zusage, Buchung, Rückzug
+- Ansicht „Mitfahrbörse“ (Kachel für Eltern und Lehrkräfte, Zahl = Kinder ohne Mitfahrt in 14 Tagen), Mini-Anzeige 🚗/🙋 in der Terminliste
+- 🐞 Instrumentenkunde: Position (transform-Attribut) und Wipp-Animation (CSS) in getrennten Gruppen – die Animation überschrieb die Position des Kopfes; Rundgang prüft die Kopfposition beim Spielen
+- Migration 20261030000000_bk_mitfahrboerse.sql
+
 ## 0.22.0 DEV – 16.10.2026
 - 🚗 Tabelle `mitfahrten` (Server: nur Erwachsene, eigene Kinder buchen, Plätze nur Fahrer, VOLL); Karte „Mitfahren“ im Termin
 - 📝 Tabelle `uebeaufgaben` (Person / Register / Gruppe; Schüler haken nur sich ab); Anzeige unter „Üben“, Verwaltung in der Übe-Übersicht

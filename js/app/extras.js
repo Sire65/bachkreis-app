@@ -21,7 +21,8 @@ export function aufgabenHtml(pid) {
   return `<div class="karte ua-karte"><h3>📝 Aufgaben ${pid === S.ich.id ? "für dich" : `für ${esc(vorname(pid))}`}</h3><ul class="liste">${l.map((a) => {
     const ok = (a.erledigt || []).includes(pid), w = a.werk_id ? hole("werke", a.werk_id) : null;
     return `<li class="${ok ? "ua-ok" : ""}"><label class="ua-haken"><input type="checkbox" data-c="aufgabeHaken" data-x="${a.id}|${pid}" aria-label="${esc(a.titel)} erledigt" ${ok ? "checked" : ""}></label><div class="fl"><div class="zeile-titel">${esc(a.titel)}</div>
-      <div class="zeile-unter">${w ? `🎼 ${esc(w.titel)} · ` : ""}${a.text ? esc(a.text) + " · " : ""}von ${esc(name(a.von_id))}${a.bis ? ` · <span class="${!ok && a.bis < heute ? "ua-spaet" : ""}">bis ${datumKurz(a.bis)}</span>` : ""}</div></div></li>`;
+      <div class="zeile-unter">${w ? `🎼 ${esc(w.titel)} · ` : ""}${a.text ? esc(a.text) + " · " : ""}von ${esc(name(a.von_id))}${a.bis ? ` · <span class="${!ok && a.bis < heute ? "ua-spaet" : ""}">bis ${datumKurz(a.bis)}</span>` : ""}</div></div>
+      <button type="button" class="knopf klein" data-a="ubAufgabeOeffnen" data-x="${a.id}|${pid}" title="Auf der Übe-Bühne üben">🎭 Üben</button></li>`;
   }).join("")}</ul></div>`;
 }
 AKTIONEN.aufgabeHaken = async (_, el) => {
@@ -37,26 +38,7 @@ export function aufgabenVerwaltenHtml() {
   const ziel = (a) => (a.person_id ? name(a.person_id) : [a.register_id && hole("register", a.register_id)?.name, a.gruppe_id && hole("gruppen", a.gruppe_id)?.name].filter(Boolean).join(" · "));
   return `<div class="karte"><h3>📝 Übeaufgaben <button class="knopf klein haupt" data-a="aufgabeNeu">＋ Aufgabe</button></h3><ul class="liste">${l.map((a) => `<li><div class="fl"><div class="zeile-titel">${esc(a.titel)}</div><div class="zeile-unter">für ${esc(ziel(a) || "–")}${a.bis ? ` · bis ${datumKurz(a.bis)}` : ""} · ✅ ${(a.erledigt || []).length} erledigt</div></div><button class="knopf klein" data-a="aufgabeWeg" data-x="${a.id}" aria-label="Aufgabe löschen">🗑️</button></li>`).join("") || '<li class="hinweis">Noch keine Aufgaben.</li>'}</ul></div>`;
 }
-AKTIONEN.aufgabeNeu = () => {
-  const opt = (l, f) => l.map((x) => `<option value="${x.id}">${esc(f(x))}</option>`).join("");
-  blatt("📝 Neue Übeaufgabe", `<div id="uaForm"><div class="feld"><label>Aufgabe</label><input name="titel" placeholder="z. B. Takt 17–32 langsam"></div><div class="feld"><label>Genauer</label><textarea name="text"></textarea></div>
-    <div class="feld"><label>Stück</label><select name="werk_id"><option value="">–</option>${opt(liste("werke"), (w) => `${w.komponist}: ${w.titel}`)}</select></div>
-    <div class="feld"><label>Für eine Person</label><select name="person_id"><option value="">– (oder Register/Gruppe)</option>${opt(liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten").sort((a, b) => name(a).localeCompare(name(b))), name)}</select></div>
-    <div class="gs-zwei"><div class="feld"><label>oder Register</label><select name="register_id"><option value="">alle</option>${opt(liste("register"), (r) => r.name)}</select></div><div class="feld"><label>in Gruppe</label><select name="gruppe_id"><option value="">alle</option>${opt(liste("gruppen"), (g) => g.name)}</select></div></div>
-    <div class="feld"><label>bis</label><input type="date" name="bis" value="${tagIso(new Date(Date.now() + 7 * 86400000))}"></div>
-    <label class="schalter"><span>Benachrichtigen</span><input type="checkbox" name="melden" checked></label>
-    <button class="knopf haupt breit" data-a="aufgabeSpeichern">💾 Aufgabe geben</button></div>`);
-};
-AKTIONEN.aufgabeSpeichern = async () => {
-  const f = formWerte(document.getElementById("uaForm"));
-  if (!f.titel || !(f.person_id || f.register_id || f.gruppe_id)) return toast("Bitte Aufgabe und Person, Register oder Gruppe wählen");
-  const a = await speichere("uebeaufgaben", { titel: f.titel, text: f.text, werk_id: f.werk_id || null, person_id: f.person_id || null, register_id: f.person_id ? null : f.register_id || null, gruppe_id: f.person_id ? null : f.gruppe_id || null, von_id: S.ich.id, bis: f.bis || null, erledigt: [] });
-  if (f.melden) {
-    const an = liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten").map((p) => p.id).filter((pid) => aufgabenFuer(pid).some((x) => x.id === a.id));
-    await senden({ an, betreff: `📝 Neue Übeaufgabe: ${a.titel}`, text: `${a.text || ""}${a.bis ? ` – bis ${datumKurz(a.bis)}` : ""}. In der App unter „Üben“.`, ereignis: "standard" });
-  }
-  blattZu(); toast("📝 Aufgabe gegeben"); zeichne();
-};
+// ＋ Aufgabe geben: Formular mit Übe-Bühne-Arten (Rhythmus-Baukasten …) in uebebuehne.js (AKTIONEN.aufgabeNeu)
 AKTIONEN.aufgabeWeg = async (id) => { if (await frage("Aufgabe löschen?")) { await loesche("uebeaufgaben", id); zeichne(); } };
 
 // ---------- 🚗 Mitfahrbörse: anbieten · suchen · buchen ----------

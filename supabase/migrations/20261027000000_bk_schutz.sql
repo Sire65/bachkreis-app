@@ -107,7 +107,7 @@ create table if not exists bk_genehmigung_vorlagen (
   text text not null,
   fassung integer,
   gueltig_monate integer,
-  zweck text check (zweck is null or zweck in ('teilnahme', 'foto_intern', 'foto_website', 'foto_presse', 'foto_social', 'reise', 'leihvertrag', 'gesundheit', 'sonstiges')),
+  zweck text check (zweck is null or zweck in ('teilnahme', 'foto_intern', 'foto_website', 'foto_presse', 'foto_social', 'reise', 'leihvertrag', 'gesundheit', 'uebeaufnahmen', 'sonstiges')),
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -125,7 +125,7 @@ alter table bk_genehmigung_vorlagen add column if not exists fassung integer;
 alter table bk_genehmigung_vorlagen add column if not exists gueltig_monate integer;
 alter table bk_genehmigung_vorlagen add column if not exists zweck text;
 alter table bk_genehmigung_vorlagen drop constraint if exists bk_genehmigung_vorlagen_zweck_check;
-alter table bk_genehmigung_vorlagen add constraint bk_genehmigung_vorlagen_zweck_check check (zweck is null or zweck in ('teilnahme', 'foto_intern', 'foto_website', 'foto_presse', 'foto_social', 'reise', 'leihvertrag', 'gesundheit', 'sonstiges'));
+alter table bk_genehmigung_vorlagen add constraint bk_genehmigung_vorlagen_zweck_check check (zweck is null or zweck in ('teilnahme', 'foto_intern', 'foto_website', 'foto_presse', 'foto_social', 'reise', 'leihvertrag', 'gesundheit', 'uebeaufnahmen', 'sonstiges'));
 
 -- Zu-/Absagen
 create table if not exists bk_antworten (

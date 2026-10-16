@@ -127,3 +127,8 @@ table.vw-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .vw-haupt .wahlen label, .vw-modal .wahlen label { display: flex; align-items: center; gap: 8px; }
 .vw-rm { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .vw-haupt input[type=color], .vw-modal input[type=color] { height: 44px; padding: 4px 6px; }
+/* 🎻 Übe-Bühne-Werkzeug (0.26.0): Aufgabenliste als Auswahl */
+.vw-link { display: grid; gap: 2px; width: 100%; text-align: left; border: 0; background: none; color: inherit; padding: 4px 6px; border-radius: 10px; cursor: pointer; font: inherit; }
+.vw-link:hover, .vw-kurzliste li.an .vw-link { background: var(--karte2); }
+.vw-kurzliste li.an .vw-link { box-shadow: inset 4px 0 0 var(--marke); }
+.vw-tabelle input[data-ue-rm] { width: 100%; min-width: 180px; border: 2px solid var(--linie); border-radius: 10px; padding: 5px 8px; background: var(--karte); color: var(--text); }

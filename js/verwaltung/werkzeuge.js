@@ -5,9 +5,9 @@
 // main.js übergibt seine Bausteine (registrieren); dieses Modul greift nicht selbst auf main.js zu.
 import { liste, hole, speichere, speichereViele, loesche, konfig } from "../kern/daten.js";
 import { esc, AKTIONEN, toast, frage, herunterladen, datumKurz, formWerte, vonLokal, zuLokal, $ } from "../kern/ui.js";
-import { TEILNAHME, GENEHMIGUNG_ZWECKE, FOTO_ZWECKE } from "../kern/schema.js";
+import { TEILNAHME, GENEHMIGUNG_ZWECKE, FOTO_ZWECKE, UEBE_ARTEN } from "../kern/schema.js";
 import { tagIso, eingeladene, antwortVon, antwortZaehler, besetzung, gesamtAmpel, genehmigungsUebersicht, genehmigungStatus, verteilerListe, verteilerAufloesen,
-  elternVon, gruppenMitglieder, instrumenteVon, fehlzeiten, fotoErlaubnis, csvAus } from "../kern/logik.js";
+  elternVon, gruppenMitglieder, instrumenteVon, fehlzeiten, fotoErlaubnis, csvAus, uebeStand } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 
 let A; // { ANSICHTEN, V, zeichne, darf, db, pn, sonder }
@@ -30,6 +30,7 @@ export function werkzeugeRegistrieren(api) {
     ["termineplanen", "📅", "Terminplanung", "Termine", planer], ["genehmigungen", "✍️", "Genehmigungen", "Genehmigungen", leitung], ["rundschreiben", "📣", "Rundschreiben", "Kommunikation", leitung],
     ["projekteplanen", "🎭", "Projekte & Konzerte", "Termine", leitung], ["kasse", "💶", "Kasse & Beiträge", "Förderverein", kasse], ["schutzlisten", "🛡️", "Notfall- & Foto-Listen", "Genehmigungen", leitung],
     ["mitfahrboerse", "🚗", "Mitfahrbörse", "Termine", planer], ["bescheinigung", "📜", "Teilnahmebescheinigungen", "Orchester", leitung], ["ferien", "🏖️", "Ferien & freie Tage", "Termine", planer],
+    ["uebebuehne", "🎻", "Übe-Bühne: Aufgaben & Fortschritt", "Orchester", leitung],
   ];
   for (const [k, sym, t, b, recht] of W) A.sonder(k, sym, t, b, recht);
 }
@@ -315,6 +316,39 @@ AKTIONEN.ferSpeichern = async () => {
 };
 AKTIONEN.ferWeg = async (id) => { if (await frage("Eintrag löschen?")) { await loesche("termine", id); A.zeichne(); } };
 
+// ---------- 🎻 Übe-Bühne: Aufgaben, Stand je Kind, Rückmeldung (0.26.0) ----------
+function uebeAnsicht() {
+  const l = liste("uebeaufgaben").sort((a, b) => String(b.bis || "").localeCompare(String(a.bis || "")));
+  const a = hole("uebeaufgaben", T.ua) || l[0];
+  const sterne = (n) => "⭐".repeat(n || 0) + "☆".repeat(Math.max(0, 3 - (n || 0)));
+  const st = a ? uebeStand(db(), a) : [];
+  const liste_ = `<ul class="liste vw-kurzliste">${l.map((x) => { const s = uebeStand(db(), x); return `<li class="${x.id === a?.id ? "an" : ""}"><button type="button" class="vw-link" data-a="ueWahl" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(UEBE_ARTEN[x.art || "frei"] || "")}${x.bis ? ` · bis ${datumKurz(x.bis)}` : ""} · ✅ ${s.filter((y) => y.ziel).length}/${s.length}</small></button></li>`; }).join("") || '<li class="hinweis">Noch keine Aufgaben</li>'}</ul>
+    <div class="vw-knoepfe"><button class="knopf" data-a="vwTabelle" data-x="uebeaufgaben">📝 Aufgaben bearbeiten</button><button class="knopf" data-a="vwTabelle" data-x="uebe_ergebnisse">⭐ Alle Ergebnisse</button></div>
+    <p class="hinweis">Rhythmus-Baukasten und Vorspiel-Aufnahme gibt es in der App unter Bühne › Üben › „＋ Übe-Aufgabe geben“.</p>`;
+  const tabelle = a ? `<div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Stand je Kind"><table class="vw-tabelle"><thead><tr><th>Kind</th><th>Stand</th><th>geübt</th><th>beste</th><th>Tempo</th><th>Rückmeldung</th><th></th></tr></thead><tbody>${st.map((s) => `<tr>
+      <td>${esc(A.pn(s.pid))}</td><td>${s.ziel ? '<span class="badge b-gruen">✅ Ziel</span>' : s.anzahl ? '<span class="badge b-gelb">🟡 geübt</span>' : '<span class="badge">⚪ offen</span>'}</td>
+      <td>${s.anzahl || "–"}</td><td>${s.anzahl ? sterne(s.sterne) : "–"}</td><td>${s.tempo ? `♩ ${s.tempo}` : "–"}</td>
+      <td><input data-ue-rm="${esc(s.pid)}" value="${esc(s.rueckmeldung?.rueckmeldung || "")}" placeholder="z. B. Super geübt!" aria-label="Rückmeldung für ${esc(A.pn(s.pid))}"></td>
+      <td class="vw-aktionen"><button class="knopf klein" data-a="ueRmSpeichern" data-x="${esc(s.pid)}" title="Rückmeldung speichern" aria-label="Rückmeldung speichern">💾</button></td></tr>`).join("") || '<tr><td colspan="7" class="hinweis">Diese Aufgabe gilt für niemanden.</td></tr>'}</tbody></table></div>
+    <div class="vw-knoepfe"><button class="knopf" data-a="ueCsv">⬇️ CSV</button></div>` : '<p class="hinweis">Links eine Aufgabe wählen.</p>';
+  return kopf("🎻 Übe-Bühne", "", "Aufgaben der Lehrkräfte und der Stand je Kind (nur Zahlen: Sterne, Tempo, wie oft geübt). Rückmeldungen sehen das Kind und seine Eltern.")
+    + `<div class="vw-raster3">${bereich("📝 Aufgaben", liste_)}${bereich(a ? `📊 ${esc(a.titel)}` : "📊 Stand", tabelle, "vw-breit2")}</div>`;
+}
+AKTIONEN.ueWahl = (id) => { T.ua = id; A.zeichne(); };
+AKTIONEN.ueRmSpeichern = async (pid) => {
+  const a = hole("uebeaufgaben", T.ua) || liste("uebeaufgaben").sort((x, y) => String(y.bis || "").localeCompare(String(x.bis || "")))[0];
+  const text = document.querySelector(`[data-ue-rm="${CSS.escape(pid)}"]`)?.value.trim();
+  if (!a || !text) return toast("Bitte eine Rückmeldung schreiben");
+  const e = uebeStand(db(), a).find((s) => s.pid === pid)?.letzte;
+  await speichere("uebe_ergebnisse", e ? { ...e, rueckmeldung: text, rueckmeldung_von: A.V.ich.id } : { person_id: pid, aufgabe_id: a.id, modus: null, datum: tagIso(new Date()), rueckmeldung: text, rueckmeldung_von: A.V.ich.id });
+  await senden({ an: [pid], betreff: `💬 Rückmeldung zu „${a.titel}“`, text, ereignis: "standard" });
+  toast("💬 Gespeichert"); A.zeichne();
+};
+AKTIONEN.ueCsv = () => {
+  const a = hole("uebeaufgaben", T.ua) || liste("uebeaufgaben")[0]; if (!a) return;
+  csv(`uebebuehne-${a.titel.replace(/[^\wäöüÄÖÜß-]+/g, "_")}`, uebeStand(db(), a).map((s) => ({ Kind: A.pn(s.pid), Ziel: s.ziel ? "ja" : "nein", Uebungen: s.anzahl, Sterne: s.sterne, Tempo: s.tempo || "", Rueckmeldung: s.rueckmeldung?.rueckmeldung || "" })));
+};
+
 // ---------- Anmelden der Ansichten ----------
 const db = () => A.db;
-export const WERKZEUG_ANSICHTEN = { termineplanen: terminAnsicht, genehmigungen: genehmigungAnsicht, rundschreiben: rundschreibenAnsicht, projekteplanen: projektAnsicht, kasse: kasseAnsicht, schutzlisten: schutzAnsicht, mitfahrboerse: mitfahrtAnsicht, bescheinigung: bescheinigungAnsicht, ferien: ferienAnsicht };
+export const WERKZEUG_ANSICHTEN = { termineplanen: terminAnsicht, genehmigungen: genehmigungAnsicht, rundschreiben: rundschreibenAnsicht, projekteplanen: projektAnsicht, kasse: kasseAnsicht, schutzlisten: schutzAnsicht, mitfahrboerse: mitfahrtAnsicht, bescheinigung: bescheinigungAnsicht, ferien: ferienAnsicht, uebebuehne: uebeAnsicht };

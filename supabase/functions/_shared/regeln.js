@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -47,6 +47,11 @@ export function kontext(person, alle) {
   ctx.personen = alle.personen || [];
   ctx.elternKind = ek;
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
+  // 🎙️ Übe-Aufnahmen: für welche (eigenen) Kinder haben die Eltern zuletzt „erteilt“ (Zweck uebeaufnahmen)?
+  const uaV = new Set((alle.genehmigung_vorlagen || []).filter((v) => v.zweck === "uebeaufnahmen" && !v.geloescht_am).map((v) => v.id)), uaLetzte = new Map();
+  for (const g of alle.genehmigungen || []) if (!g.geloescht_am && uaV.has(g.vorlage_id) && meine.has(g.kind_id) && g.status !== "ausstehend" && String(g.beantwortet_am || "") >= String(uaLetzte.get(g.kind_id)?.beantwortet_am || "")) uaLetzte.set(g.kind_id, g);
+  ctx.uebeAufnahmeOk = new Set([...uaLetzte].filter(([, g]) => g.status === "erteilt").map(([k]) => k));
+  ctx.uaMap = new Map((alle.uebeaufgaben || []).map((u) => [u.id, u]));
   ctx.prMap = new Map((alle.projekte || []).map((p) => [p.id, p]));
   ctx.reiseBelegt = new Map();
   for (const a of alle.reise_anmeldungen || []) if (!a.geloescht_am && a.status === "angemeldet") ctx.reiseBelegt.set(a.projekt_id, (ctx.reiseBelegt.get(a.projekt_id) || 0) + 1);
@@ -88,6 +93,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "notenexemplare": return ctx.meine.has(z.person_id); // 📄 eigene ausgeliehene Papier-Exemplare
     case "mitfahrten": return ctx.termine.has(z.termin_id); // 🚗 wer zum Termin eingeladen ist
     case "uebeaufgaben": return z.person_id ? ctx.meine.has(z.person_id) : (!z.register_id || ctx.register.has(z.register_id)) && (!z.gruppe_id || ctx.gruppen.has(z.gruppe_id)) && !!(z.register_id || z.gruppe_id);
+    case "uebe_ergebnisse": return ctx.meine.has(z.person_id); // ⭐ eigene bzw. die der Kinder
     case "gesundheit": return ctx.meine.has(z.person_id) || (ctx.begleitKinder?.has(z.person_id) && !(z.loeschen_am && z.loeschen_am < new Date().toISOString().slice(0, 10)));
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
@@ -356,6 +362,29 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       const vorher = new Set(alt.erledigt || []), nachher = new Set(Array.isArray(neu.erledigt) ? neu.erledigt : []);
       const erledigt = [...vorher].filter((id) => !ctx.meine.has(id) || nachher.has(id)).concat([...nachher].filter((id) => ctx.meine.has(id) && !vorher.has(id)));
       return { ok: true, zeile: { ...alt, erledigt } };
+    }
+    case "uebe_ergebnisse": {
+      // ⭐ Übe-Bühne: nur Zahlen für sich bzw. die eigenen Kinder; Rückmeldung schreibt nur die Lehrkraft;
+      // eine Aufnahme nur mit Einwilligung der Eltern (bei Minderjährigen) – sie wird nach UEBE_AUFNAHME_TAGE gelöscht
+      if (!ctx.meine.has(neu.person_id) || (alt && alt.person_id !== neu.person_id)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(neu.datum || ""))) return { ok: false, grund: "DATUM_UNGUELTIG" };
+      const zahl = (v, lo, hi) => (v == null || v === "" ? null : Number.isInteger(Number(v)) && Number(v) >= lo && Number(v) <= hi ? Number(v) : NaN);
+      const min = zahl(neu.minuten, 0, 240), st = zahl(neu.sterne, 0, 3), tp = zahl(neu.tempo, 20, 300);
+      if ([min, st, tp].some(Number.isNaN)) return { ok: false, grund: "WERT_UNGUELTIG" };
+      if (neu.aufgabe_id && !(ctx.uaMap.get(neu.aufgabe_id) && zeileSichtbar("uebeaufgaben", ctx.uaMap.get(neu.aufgabe_id), ctx))) return { ok: false, grund: "AUFGABE_NICHT_SICHTBAR" };
+      let aufnahme = alt?.aufnahme || null, loeschen = alt?.loeschen_am || null;
+      if (neu.aufnahme !== aufnahme) {
+        if (neu.aufnahme == null) { aufnahme = null; loeschen = null; }
+        else {
+          if (!/^datei:[\w-]{6,64}$/.test(String(neu.aufnahme))) return { ok: false, grund: "AUFNAHME_UNGUELTIG" };
+          const p = ctx.personen.find((x) => x.id === neu.person_id);
+          if (istMinderjaehrig(p) && !ctx.uebeAufnahmeOk.has(neu.person_id)) return { ok: false, grund: "KEINE_EINWILLIGUNG_AUFNAHME" };
+          aufnahme = neu.aufnahme; loeschen = new Date(Date.now() + UEBE_AUFNAHME_TAGE * 86400000).toISOString().slice(0, 10);
+        }
+      }
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "person_id", "datum", "geloescht_am"]), aufgabe_id: neu.aufgabe_id || null, modus: UEBE_MODI[neu.modus] ? neu.modus : null,
+        stueck: neu.stueck == null ? null : String(neu.stueck).slice(0, 40), minuten: min, sterne: st, tempo: tp, aufnahme, loeschen_am: loeschen,
+        rueckmeldung: alt?.rueckmeldung || null, rueckmeldung_von: alt?.rueckmeldung_von || null } };
     }
     case "mitfahrten": {
       // 🚗 Mitfahrbörse: Eltern bieten an oder suchen (immer im eigenen Namen); buchen nur für die eigenen Kinder; ein fremdes Gesuch

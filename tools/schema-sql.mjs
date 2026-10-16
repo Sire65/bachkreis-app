@@ -89,6 +89,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261101000000_bk_uebebuehne.sql": { titel: "Übe-Bühne: Aufgaben mit Notenstelle/Rhythmus/Tonleiter/Ton halten/Ohr-Spiel/Material, Ergebnisse, Einwilligung Übe-Aufnahmen (0.26.0)", tabellen: ["uebeaufgaben", "uebe_ergebnisse", "genehmigung_vorlagen"] },
   "20261031000000_bk_pc.sql": { titel: "PC-Verwaltung: Probenplan, Ausleihe von Ausstattung, Interessenten, Helfer- & Dienstplan (0.24.0)", tabellen: ["termine", "ausleihen", "interessenten", "dienste", "nachrichten"], extra: ["alter table bk_ausleihen alter column inventar_id drop not null;"] },
   "20261030000000_bk_mitfahrboerse.sql": { titel: "Mitfahrbörse: Angebote und Gesuche, Zusage (0.23.0)", tabellen: ["mitfahrten"] },
   "20261029000000_bk_extras.sql": { titel: "Mitfahrten, Räume & Schlüssel, Notenexemplare, Mietmaterial/GEMA, Übeaufgaben, Förderverein-Mitglieder, Führungszeugnis, Reparatur/Spende für Ausstattung (0.22.0)", tabellen: ["personen", "reparaturen", "werke", "spenden", "fv_mitglieder", "raeume", "schluessel", "notenexemplare", "uebeaufgaben", "mitfahrten"], extra: ["alter table bk_reparaturen alter column inventar_id drop not null;"] },

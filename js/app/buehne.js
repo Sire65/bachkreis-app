@@ -1,7 +1,7 @@
 // Bühne mit Orchester (statt Twinkey in der Club-App): Vorhang auf, das Bachkreis-Orchester spielt Melodien
 // (Musik-Engine js/kern/musik.js) oder Konzertaufnahmen (Datei/Mitschnitt) – die Musiker bewegen sich passend dazu.
 // Erreichbar über das Eselsohr am Kopf (doppelt tippen = Kopf umdrehen) und über die Kachel „Bühne“.
-import { S, VIEWS, kopf, istLehrkraft } from "./zustand.js";
+import { S, VIEWS, kopf, istLehrkraft, zeige } from "./zustand.js";
 import { esc, AKTIONEN, toast, datumKurz, herunterladen } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
 import { STUECKE, spielen, baender } from "../kern/musik.js";
@@ -105,7 +105,13 @@ function dirigent() {
     <path d="M-6 -19 L-14 -27" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/><circle cx="-14.4" cy="-27.4" r="1.4" fill="${haut}"/>
     <g class="taktstock" id="taktstock" style="transform-origin:6px -19px"><path d="M6 -19 L14 -28" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/><circle cx="14.4" cy="-28.4" r="1.4" fill="${haut}"/><line x1="14" y1="-28" x2="24" y2="-36" stroke="#f5f5f5" stroke-width=".9"/></g></g></g>`;
 }
-function orchesterSvg() {
+// 🎭 Übe-Bühne (0.26.0): eigener Avatar vorne als Solist (Instrument nach Notensatz-Schlüssel)
+const SOLO_INST = { v1: ["v1", "geige"], v2: ["v2", "geige"], va: ["va", "bratsche"], vc: ["vc", "cello"], kb: ["kb", "bass"], fl: ["fl", "floete"], ob: ["ob", "oboe"], kl: ["kl", "klarinette"],
+  fg: ["fg", "fagott"], hr: ["hr", "horn"], tr: ["tr", "trompete"], pos: ["pos", "posaune"], tb: ["pos", "posaune"], sw: ["pk", "pauke"] };
+export const soloMoeglich = (key) => !!SOLO_INST[key];
+// Weitere Bühnen-Modi (z. B. „Üben“ aus uebebuehne.js): { titel, html() }
+export const BUEHNE_MODI = {};
+export function orchesterSvg(opt = {}) {
   const m = [], bes = besetzungFuerBuehne();
   let nr = 0;
   const reihe = (sek, inst, xs, y, s) => { xs.forEach((x, k) => m.push(figur(x, y, s, sek, inst, bes[sek]?.[k], nr++))); };
@@ -128,20 +134,27 @@ function orchesterSvg() {
     <path d="M52 156 H348 V172 H52 Z" fill="#6a4421"/><path d="M52 172 H348 L356 178 H44 Z" fill="#3e2712"/>
     ${Array.from({ length: 8 }, (_, i) => `<ellipse cx="${30 + i * 48}" cy="248" rx="9" ry="2.6" fill="rgba(255,214,140,.55)" class="rampe"/>`).join("")}
     <rect width="400" height="250" fill="url(#bwSpot)" class="spot"/>
-    <g class="orchester">${m.join("")}</g><g id="bwNoten"></g>${dirigent()}
+    <g class="orchester">${m.join("")}</g><g id="bwNoten"></g>${opt.solist ? solistSvg(opt.solist) : dirigent()}
     <g class="vorhang vorhang-l"><rect x="-10" y="0" width="215" height="250" fill="url(#bwVorhang)"/>${falten(-10, 215)}</g>
     <g class="vorhang vorhang-r"><rect x="195" y="0" width="215" height="250" fill="url(#bwVorhang)"/>${falten(195, 215)}</g>
     <rect x="0" y="0" width="400" height="22" fill="#7c0c18"/><path d="M0 22 Q25 32 50 22 T100 22 T150 22 T200 22 T250 22 T300 22 T350 22 T400 22 V18 H0 Z" fill="#9d1022"/>
     <image href="icons/logo.png" x="186" y="2" width="28" height="28"/></svg>`;
 }
 
+function solistSvg({ pid, key }) {
+  const [sek, inst] = SOLO_INST[key] || SOLO_INST.v1;
+  return `<g class="solist-podest"><ellipse cx="200" cy="246" rx="46" ry="7" fill="rgba(255,230,160,.28)"/></g>` + figur(200, inst === "bass" ? 214 : 232, inst === "bass" ? 1.75 : 2.05, sek, inst, pid, 99).replace(`class="mus sek-${sek}"`, 'class="mus solist sek-solo"');
+}
+
 // ---------- Oberfläche ----------
 export function buehneHtml(kompakt = false) {
+  if (BUEHNE_MODI[B.modus] && !kompakt) return `<div class="buehne" id="buehne">${umschalter()}${BUEHNE_MODI[B.modus].html()}</div>`;
+  if (BUEHNE_MODI[B.modus]) B.modus = "melodien";
   const aufnahmen = liste("aufnahmen").sort((a, b) => (b.datum || "").localeCompare(a.datum || ""));
   const st = STUECKE.find((x) => x.id === B.stueck) || STUECKE[0];
   return `<div class="buehne ${kompakt ? "kompakt" : ""}" id="buehne">
     <div class="buehne-rahmen ${B.lauf || B.audio ? "offen" : ""}" id="bwRahmen">${orchesterSvg()}</div><div class="bw-titel" id="bwTitel">${esc(B.lauf ? st.titel : "Vorhang auf für den Bachkreis!")}</div>
-    <div class="umschalter"><button class="${B.modus === "melodien" ? "an" : ""}" data-a="bwModus" data-x="melodien">🎼 Melodien</button><button class="${B.modus === "aufnahmen" ? "an" : ""}" data-a="bwModus" data-x="aufnahmen">🎧 Konzertaufnahmen</button></div>
+    ${umschalter()}
     ${B.modus === "melodien" ? `
       <div class="bw-stuecke">${STUECKE.map((x) => `<button class="${x.id === B.stueck ? "an" : ""}" data-a="bwStueck" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.komponist)}</small></button>`).join("")}</div>
       <div class="knopfreihe"><button class="knopf haupt" data-a="bwSpielen">▶ Vorhang auf</button><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div>
@@ -158,7 +171,11 @@ export function buehneHtml(kompakt = false) {
   </div>`;
 }
 
-function sekAn(sek, dauer = 0.4) {
+function umschalter() {
+  const modi = [["melodien", "🎼 Melodien"], ["aufnahmen", "🎧 Aufnahmen"], ...Object.entries(BUEHNE_MODI).map(([k, m]) => [k, m.titel])];
+  return `<div class="umschalter">${modi.map(([k, t]) => `<button type="button" class="${B.modus === k ? "an" : ""}" data-a="bwModus" data-x="${k}">${t}</button>`).join("")}</div>`;
+}
+export function sekAn(sek, dauer = 0.4) {
   const r = document.getElementById("bwRahmen"); if (!r) return;
   for (const s of sek) for (const el of r.querySelectorAll(`.sek-${s}`)) {
     el.classList.add("aktiv");
@@ -174,7 +191,7 @@ function note(sek) {
   g.appendChild(t); setTimeout(() => t.remove(), 1800);
 }
 const SCHLAG_WINKEL = { 2: [40, -20], 3: [45, -35, -10], 4: [45, -30, 15, -40] };
-function takt(schlag, takte) {
+export function takt(schlag, takte) {
   const st = document.getElementById("taktstock"); if (!st) return;
   st.style.transform = `rotate(${(SCHLAG_WINKEL[takte] || SCHLAG_WINKEL[4])[schlag] ?? 0}deg)`;
 }
@@ -190,7 +207,12 @@ export function buehneStopp(ruhig = false) {
 }
 const kontext = () => { B.ctx = B.ctx || new (window.AudioContext || window.webkitAudioContext)(); if (B.ctx.state === "suspended") B.ctx.resume(); return B.ctx; };
 
-AKTIONEN.bwModus = (m) => { buehneStopp(true); B.modus = m; neuZeichnen(); };
+AKTIONEN.bwModus = (m) => {
+  buehneStopp(true);
+  if (BUEHNE_MODI[m] && document.getElementById("buehne")?.classList.contains("kompakt")) return zeige("buehne", { modus: m }); // Üben braucht Platz: ganze Seite
+  B.modus = m; neuZeichnen();
+};
+export const buehneModus = () => B.modus;
 AKTIONEN.bwStueck = (id) => { B.stueck = id; for (const b of document.querySelectorAll(".bw-stuecke button")) b.classList.toggle("an", b.dataset.x === id); if (B.lauf) AKTIONEN.bwSpielen(); };
 AKTIONEN.bwTempo = (v) => { B.tempo = Number(v); };
 AKTIONEN.bwLaut = (v) => { B.laut = Number(v); B.lauf?.lautstaerke(B.laut); if (B.audio) B.audio.volume = B.laut; };
@@ -301,5 +323,5 @@ function kopfDrehen(an) {
   }
 }
 
-VIEWS.buehne = { render() { return kopf("🎭 Bühne") + buehneHtml(false); } };
+VIEWS.buehne = { render(p = {}) { if (p.modus) { B.modus = p.modus; delete p.modus; } return kopf("🎭 Bühne") + buehneHtml(false); }, nach: (z, p) => BUEHNE_MODI[B.modus]?.nach?.(z, p) };
 export const kopfVorne = () => { if (document.getElementById("heroRueck")) kopfDrehen(false); };

@@ -365,6 +365,21 @@ create table if not exists bk_uebeaufgaben (
   von_id text,
   bis date,
   erledigt text[],
+  art text check (art is null or art in ('frei', 'notenstelle', 'rhythmus', 'tonleiter', 'tonhalten', 'gehoer', 'material')),
+  stueck text check (stueck is null or stueck in ('menuett', 'kanon', 'freude', 'nachtmusik', 'largo', 'fanfare')),
+  takt_von integer,
+  takt_bis integer,
+  tempo_ziel integer,
+  muster text,
+  taktart integer,
+  tonart text check (tonart is null or tonart in ('C', 'G', 'D', 'A', 'E', 'F', 'B', 'Es', 'a', 'e', 'h', 'd', 'g')),
+  oktaven integer,
+  ton text,
+  sekunden integer,
+  spiel text check (spiel is null or spiel in ('hoehe', 'durmoll', 'nachklatschen')),
+  ziel_sterne integer,
+  datei text,
+  vorspiel text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -375,6 +390,32 @@ create index if not exists bk_uebeaufgaben_geaendert on bk_uebeaufgaben (geaende
 alter table bk_uebeaufgaben enable row level security;
 drop trigger if exists bk_uebeaufgaben_stempel on bk_uebeaufgaben;
 create trigger bk_uebeaufgaben_stempel before update on bk_uebeaufgaben for each row execute function bk_abgleich_stempel();
+
+-- Übe-Bühne: Ergebnisse
+create table if not exists bk_uebe_ergebnisse (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  aufgabe_id text,
+  modus text check (modus is null or modus in ('mitspielen', 'griffe', 'rhythmus', 'stimmen', 'gehoer')),
+  stueck text,
+  datum date not null,
+  minuten integer,
+  sterne integer,
+  tempo integer,
+  aufnahme text,
+  loeschen_am date,
+  rueckmeldung text,
+  rueckmeldung_von text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_uebe_ergebnisse_geaendert on bk_uebe_ergebnisse (geaendert_am);
+alter table bk_uebe_ergebnisse enable row level security;
+drop trigger if exists bk_uebe_ergebnisse_stempel on bk_uebe_ergebnisse;
+create trigger bk_uebe_ergebnisse_stempel before update on bk_uebe_ergebnisse for each row execute function bk_abgleich_stempel();
 
 -- Mitfahrbörse
 create table if not exists bk_mitfahrten (
@@ -807,7 +848,7 @@ create table if not exists bk_genehmigung_vorlagen (
   text text not null,
   fassung integer,
   gueltig_monate integer,
-  zweck text check (zweck is null or zweck in ('teilnahme', 'foto_intern', 'foto_website', 'foto_presse', 'foto_social', 'reise', 'leihvertrag', 'gesundheit', 'sonstiges')),
+  zweck text check (zweck is null or zweck in ('teilnahme', 'foto_intern', 'foto_website', 'foto_presse', 'foto_social', 'reise', 'leihvertrag', 'gesundheit', 'uebeaufnahmen', 'sonstiges')),
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -1309,6 +1350,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebea
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_register_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_register_id_fk foreign key (register_id) references bk_register(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_gruppe_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_gruppe_id_fk foreign key (gruppe_id) references bk_gruppen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_von_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_von_id_fk foreign key (von_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_person_id_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_aufgabe_id_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_aufgabe_id_fk foreign key (aufgabe_id) references bk_uebeaufgaben(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_rueckmeldung_von_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_rueckmeldung_von_fk foreign key (rueckmeldung_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_mitfahrten_termin_id_fk') then alter table bk_mitfahrten add constraint bk_mitfahrten_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_mitfahrten_fahrer_id_fk') then alter table bk_mitfahrten add constraint bk_mitfahrten_fahrer_id_fk foreign key (fahrer_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_mitfahrten_zusage_von_fk') then alter table bk_mitfahrten add constraint bk_mitfahrten_zusage_von_fk foreign key (zusage_von) references bk_personen(id) on delete restrict; end if; end $$;

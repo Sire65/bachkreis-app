@@ -223,6 +223,28 @@ await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("ueben")
 await p.click('.ua-karte input[data-c="aufgabeHaken"]'); await p.waitForTimeout(150);
 if (!(await p.$(".ua-karte .ua-ok"))) fehler.push("Übeaufgabe: Abhaken greift nicht");
 await p.screenshot({ path: `${BILDER}schueler-aufgaben.png` });
+// 🎭🎻 Übe-Bühne (0.26.0): eigener Avatar vorne, alle Übe-Arten, Aufgabe öffnet die passende Übung, kein Seitenüberlauf
+await p.click('.ua-karte [data-a="ubAufgabeOeffnen"]'); await p.waitForSelector(".ub-panel");
+if (!(await p.$(".ub-buehne .mus.solist"))) fehler.push("Übe-Bühne: eigener Avatar fehlt vorne");
+await p.click('[data-a="ubZurueck"]'); await p.waitForSelector(".ub-wahl");
+for (const m of ["mitspielen", "griffe", "rhythmus", "stimmen", "gehoer"]) {
+  await p.click(`[data-a="ubModus"][data-x="${m}"]`); await p.waitForSelector(".ub-panel");
+  if (m === "mitspielen") { await p.click('[data-a="ubLos"]'); await p.waitForSelector("#ubNoten .an", { timeout: 6000 }).catch(() => fehler.push("Übe-Bühne: Notenkopf läuft nicht mit")); await p.click('[data-a="ubLos"]'); }
+  if (m === "griffe") { await p.click('[data-a="ubGriffSchritt"][data-x="1"]'); if (!(await p.$(".griff-svg"))) fehler.push("Übe-Bühne: kein Griffbild"); }
+  if (m === "rhythmus") { await p.click('[data-a="ubRTempo"][data-x="120"]'); await p.click('[data-a="ubRTippen"]'); await p.waitForTimeout(2000); for (let i = 0; i < 8; i++) { await p.dispatchEvent("#ubTipp", "pointerdown"); await p.waitForTimeout(500); }
+    await p.waitForSelector(".ub-ergebnis", { timeout: 6000 }).catch(() => fehler.push("Übe-Bühne: Rhythmus ohne Auswertung")); }
+  if (m === "gehoer") { await p.click('[data-a="ubSpielStart"]'); await p.click('[data-a="ubAntwort"][data-x="hoch"]'); await p.waitForSelector('[data-a="ubWeiter"]').catch(() => fehler.push("Übe-Bühne: Ohr-Spiel ohne Lösung")); }
+  if (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth > 2)) fehler.push(`Übe-Bühne ${m}: Seite breiter als der Bildschirm`);
+  await p.screenshot({ path: `${BILDER}uebebuehne-${m}.png`, fullPage: true });
+  await p.click('[data-a="ubZurueck"]'); await p.waitForSelector(".ub-wahl");
+}
+await p.selectOption("#demoleiste select", "lehrkraft"); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("buehne", { modus: "ueben" })); await p.waitForSelector(".ub-wahl");
+await p.click('[data-a="aufgabeNeu"]'); await p.selectOption('#ubForm select[name="art"]', "rhythmus"); await p.waitForSelector(".ub-baukasten");
+for (const w of ["1", "1", "0.5", "0.5", "1"]) await p.click(`[data-a="ubRmPlus"][data-x="${w}"]`);
+await p.fill('#ubForm input[name="titel"]', "Rundgang-Rhythmus"); await p.selectOption('#ubForm select[name="gruppe_id"]', "g-a"); await p.click('[data-a="ubAufgabeSpeichern"]'); await p.waitForTimeout(300);
+if (!(await p.evaluate(async () => (await import("/js/kern/daten.js")).liste("uebeaufgaben", (a) => a.titel === "Rundgang-Rhythmus" && a.muster === "1 1 .5 .5 1").length))) fehler.push("Übe-Aufgabe mit Rhythmus nicht gespeichert");
+await p.click('[data-a="ubFortschritt"]'); await p.waitForSelector(".ub-fort");
 await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(300);
 // PC-Verwaltung: alle Tabellen und Sonderansichten
 await p.setViewportSize({ width: 1280, height: 860 });
@@ -245,6 +267,9 @@ await p.click('.vw-seite [data-a="vwAnsicht"][data-x="projekteplanen"]'); await 
 await p.screenshot({ path: `${BILDER}verwaltung-projekte.png`, fullPage: true });
 await p.click('.vw-seite [data-a="vwAnsicht"][data-x="schutzlisten"]'); await p.waitForSelector(".vw-umbruch");
 await p.click('.vw-seite [data-a="vwAnsicht"][data-x="bescheinigung"]'); await p.waitForSelector(".vw-bescheinigung");
+await p.click('.vw-seite [data-a="vwAnsicht"][data-x="uebebuehne"]'); await p.waitForSelector('[data-a="ueRmSpeichern"]');
+await p.fill("[data-ue-rm]", "Rundgang: super!"); await p.click('[data-a="ueRmSpeichern"]'); await p.waitForTimeout(200);
+await p.screenshot({ path: `${BILDER}verwaltung-uebebuehne.png`, fullPage: true });
 for (const tab of ["nachrichten", "gruppen", "termine", "gesundheit", "ausleihen"]) {
   await p.click(`.vw-seite [data-a="vwTabelle"][data-x="${tab}"]`); await p.click(".vw-tabelle tbody tr"); await p.waitForTimeout(120);
   if (!(await p.$(".vw-modal #vwForm"))) fehler.push(`PC: Formular ${tab} öffnet nicht`);

@@ -35,7 +35,14 @@ export const ANWESENHEIT = { ja: ["✅", "da"], spaet: ["⏰", "verspätet"], en
 export const ANWESENHEIT_NAMEN = { "": "nicht erfasst", ...Object.fromEntries(Object.entries(ANWESENHEIT).map(([k, [, t]]) => [k, t])) };
 // 📷 Einwilligungen je Zweck (0.20.0): Genehmigungs-Vorlagen tragen einen Zweck; Foto-Zwecke ergeben die Foto-Liste
 export const GENEHMIGUNG_ZWECKE = { teilnahme: "Teilnahme & Datenschutz", foto_intern: "📷 Fotos intern (App, nur Mitglieder)", foto_website: "📷 Fotos Schul-Website",
-  foto_presse: "📷 Fotos Presse", foto_social: "📷 Fotos Social Media", reise: "Fahrt / Freizeit", leihvertrag: "Leihvertrag Instrument", gesundheit: "Gesundheit / Erste Hilfe", sonstiges: "Sonstiges" };
+  foto_presse: "📷 Fotos Presse", foto_social: "📷 Fotos Social Media", reise: "Fahrt / Freizeit", leihvertrag: "Leihvertrag Instrument", gesundheit: "Gesundheit / Erste Hilfe", uebeaufnahmen: "🎙️ Übe-Aufnahmen an die Lehrkraft", sonstiges: "Sonstiges" };
+// 🎭 Übe-Bühne (0.26.0): Arten von Übeaufgaben, Demo-Stücke (= musik.js STUECKE), Tonarten (= uebematerial.js TONARTEN)
+export const UEBE_ARTEN = { frei: "📝 Freie Aufgabe", notenstelle: "🎼 Notenstelle mitspielen", rhythmus: "🥁 Rhythmus", tonleiter: "🎵 Tonleiter", tonhalten: "🎯 Ton halten (Stimmgerät)", gehoer: "👂 Ohr-Spiel", material: "📎 Eigenes Material (PDF / Vorspiel)" };
+export const UEBE_STUECKE = { menuett: "Menuett G-Dur (Petzold)", kanon: "Kanon in D (Pachelbel)", freude: "Ode an die Freude (Beethoven)", nachtmusik: "Eine kleine Nachtmusik (Mozart)", largo: "Largo (Dvořák)", fanfare: "Bachkreis-Fanfare" };
+export const UEBE_TONARTEN = { C: "C-Dur", G: "G-Dur", D: "D-Dur", A: "A-Dur", E: "E-Dur", F: "F-Dur", B: "B-Dur", Es: "Es-Dur", a: "a-Moll", e: "e-Moll", h: "h-Moll", d: "d-Moll", g: "g-Moll" };
+export const UEBE_SPIELE = { hoehe: "Höher oder tiefer?", durmoll: "Dur oder Moll?", nachklatschen: "Rhythmus nachklatschen" };
+export const UEBE_MODI = { mitspielen: "Mitspielen", griffe: "Noten & Griffe", rhythmus: "Rhythmus", stimmen: "Stimmgerät", gehoer: "Ohr-Spiele" };
+export const UEBE_AUFNAHME_TAGE = 30; // Übe-Aufnahmen der Kinder werden nach 30 Tagen gelöscht
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
@@ -405,9 +412,46 @@ export const TABELLEN = {
       { k: "von_id", t: "von", typ: "ref", ref: "personen" },
       { k: "bis", t: "bis", typ: "datum" },
       { k: "erledigt", t: "erledigt von (Personen)", typ: "refs", ref: "personen" },
+      // 🎭 Übe-Bühne (0.26.0)
+      { k: "art", t: "Art", typ: "wahl", werte: UEBE_ARTEN },
+      { k: "stueck", t: "Stück (Übe-Bühne)", typ: "wahl", werte: UEBE_STUECKE },
+      { k: "takt_von", t: "Takt von", typ: "zahl" },
+      { k: "takt_bis", t: "Takt bis", typ: "zahl" },
+      { k: "tempo_ziel", t: "Zieltempo (Schläge/Min.)", typ: "zahl" },
+      { k: "muster", t: "Rhythmus (Schläge, − = Pause)", typ: "text" },
+      { k: "taktart", t: "Taktart (Schläge je Takt)", typ: "zahl" },
+      { k: "tonart", t: "Tonart", typ: "wahl", werte: UEBE_TONARTEN },
+      { k: "oktaven", t: "Oktaven", typ: "zahl" },
+      { k: "ton", t: "Ton (z. B. A4)", typ: "text" },
+      { k: "sekunden", t: "Ton halten (Sekunden)", typ: "zahl" },
+      { k: "spiel", t: "Ohr-Spiel", typ: "wahl", werte: UEBE_SPIELE },
+      { k: "ziel_sterne", t: "Ziel (Sterne 1–3)", typ: "zahl" },
+      { k: "datei", t: "Noten (PDF)", typ: "text" },
+      { k: "vorspiel", t: "Vorspiel-Aufnahme der Lehrkraft", typ: "text" },
     ],
-    liste: ["titel", "person_id", "register_id", "gruppe_id", "bis"],
+    liste: ["titel", "art", "person_id", "register_id", "gruppe_id", "bis"],
     anzeige: (z) => z.titel,
+  },
+  // 🎭 Übe-Bühne (0.26.0): Ergebnisse – nur Zahlen (Minuten, Sterne, Tempo). Kinder schreiben eigene, Eltern sehen die der Kinder,
+  // Leitung/Lehrkräfte alle und geben Rückmeldung. Aufnahme nur mit Einwilligung (Zweck „uebeaufnahmen“), Löschung nach 30 Tagen.
+  uebe_ergebnisse: {
+    titel: "Übe-Bühne: Ergebnisse", sym: "⭐", gruppe: "Orchester", lesen: LL, schreiben: LL,
+    felder: [
+      { k: "person_id", t: "Kind", typ: "ref", ref: "personen", pflicht: true },
+      { k: "aufgabe_id", t: "Aufgabe", typ: "ref", ref: "uebeaufgaben" },
+      { k: "modus", t: "Übe-Art", typ: "wahl", werte: UEBE_MODI },
+      { k: "stueck", t: "Stück", typ: "text" },
+      { k: "datum", t: "Datum", typ: "datum", pflicht: true },
+      { k: "minuten", t: "Minuten", typ: "zahl" },
+      { k: "sterne", t: "Sterne (0–3)", typ: "zahl" },
+      { k: "tempo", t: "Tempo (Schläge/Min.)", typ: "zahl" },
+      { k: "aufnahme", t: "Aufnahme an die Lehrkraft", typ: "text" },
+      { k: "loeschen_am", t: "Aufnahme löschen am", typ: "datum" },
+      { k: "rueckmeldung", t: "Rückmeldung der Lehrkraft", typ: "lang" },
+      { k: "rueckmeldung_von", t: "Rückmeldung von", typ: "ref", ref: "personen" },
+    ],
+    liste: ["datum", "person_id", "aufgabe_id", "modus", "sterne", "tempo"],
+    anzeige: (z) => `${z.datum} · ${"⭐".repeat(z.sterne || 0) || "–"}`,
   },
   // 🚗 Mitfahrbörse (0.22.0/0.23.0): Eltern bieten Plätze an (angebot) oder suchen eine Mitfahrt für ihr Kind (gesuch);
   // gebucht wird für die eigenen Kinder, ein Gesuch nimmt ein/e Fahrer/in mit „Ich nehme mit“ an (zusage_von)

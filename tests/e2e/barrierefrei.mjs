@@ -5,7 +5,7 @@
 import { chromium } from "playwright-core";
 import AxeBuilder from "@axe-core/playwright";
 const BASIS = process.env.BASIS || "http://localhost:8080";
-const VIEWS = "start termine nachrichten pinnwand instrumente noten orchester einstellungen meinedaten kinder kalender ueben cockpit genehmigungen meingesicht instrumentenkunde buehne mitfahrboerse projekte foerderverein einkauf meininstrument meinenoten meinegenehmigungen hilfe ueber sicherheit sos anwesenheit fotoliste gesundheit meinregister".split(" ");
+const VIEWS = "start termine nachrichten pinnwand instrumente noten orchester einstellungen meinedaten kinder kalender ueben cockpit genehmigungen meingesicht instrumentenkunde buehne mitfahrboerse projekte foerderverein einkauf meininstrument meinenoten meinegenehmigungen hilfe ueber sicherheit sos anwesenheit fotoliste gesundheit meinregister uebefortschritt".split(" ");
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const ctx = await b.newContext({ viewport: { width: 400, height: 860 }, bypassCSP: true });
 const p = await ctx.newPage(); p.on("dialog", (d) => d.dismiss());
@@ -27,6 +27,10 @@ for (const r of (process.env.NURPC ? [] : rollen)) {
     await p.evaluate(async (v) => { document.querySelectorAll("#pwFensterHg,#blattHg").forEach((e) => e.remove()); (await import("/js/app/zustand.js")).zeige(v, {}); }, v).catch(() => {});
     await p.waitForTimeout(120); await pruefe(r + ":" + v);
   }
+  // 🎭🎻 Übe-Bühne: jede Übe-Art
+  await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("buehne", { modus: "ueben" })).catch(() => {});
+  await p.waitForTimeout(150); await pruefe(r + ":ueben");
+  for (const m of ["mitspielen", "griffe", "rhythmus", "stimmen", "gehoer"]) { await p.click(`[data-a="ubModus"][data-x="${m}"]`).catch(() => {}); await p.waitForTimeout(150); await pruefe(r + ":ueben-" + m); await p.click('[data-a="ubZurueck"]').catch(() => {}); }
 }
 await ctx.setDefaultTimeout(3000); const q = await ctx.newPage(); q.on("dialog", (d) => d.dismiss()); await p.close(); const p2 = q;
 await q.setViewportSize({ width: 1400, height: 900 }); await q.goto(BASIS + "/verwaltung.html"); await q.waitForTimeout(800); await q.click('[data-a="vwAls"][data-x="p-leitung"]'); await q.waitForTimeout(500);

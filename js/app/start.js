@@ -12,6 +12,7 @@ import { pwOffenZahl } from "./pinnwand.js";
 import { gesundheitFuer, gesundheitVon } from "./schutz.js";
 import { mitfahrtZahlen } from "./extras.js";
 import { wochenStand } from "./ueben.js";
+import { offeneUebeAufgaben } from "./uebebuehne.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
 const registerSichtbar = () => REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung());
@@ -54,7 +55,7 @@ export const KACHELN = {
     { id: "nachrichten", sym: "💬", t: "Nachrichten", u: "Gruppen · Rundschreiben", v: "nachrichten", zahl: () => ungelesen() },
     { id: "orchester", sym: "🎼", t: "Orchester", u: "Sitzplan · Gesichter · Besetzung", v: "orchester", nur: () => !istEltern() },
     { id: "instrumentenkunde", sym: "🎺", t: "Instrumentenkunde", u: "Halten · Hören · Worauf achten", v: "instrumentenkunde" },
-    { id: "buehne", sym: "🎭", t: "Bühne", u: "Das Orchester spielt · Konzertaufnahmen", v: "buehne" },
+    { id: "buehne", sym: "🎭", t: "Bühne", u: "Das Orchester spielt · Konzertaufnahmen · Üben", v: "buehne" },
     { id: "pinnwand", sym: "📌", t: "Pinnwand", u: "Post-its · wichtig · für alle oder privat", v: "pinnwand", zahl: () => pwOffenZahl() },
     { id: "projekte", sym: "🎭", t: "Konzerte & Projekte", u: "Programm · Ablauf · Checkliste", v: "projekte" },
     { id: "noten", sym: "📚", t: "Notenarchiv", u: "Orchester › Stücke › Noten je Instrument", v: "noten", nur: () => istVerwalter() },
@@ -71,6 +72,7 @@ export const KACHELN = {
     { id: "meinegenehmigungen", sym: "✍️", t: "Genehmigungen", u: "Zustimmen · Ablehnen · Widerrufen", v: "meinegenehmigungen", nur: () => istEltern(), zahl: () => offeneGenehmigungen() },
     { id: "gesundheit", sym: "🩺", t: "Gesundheit & Notfall", u: "Allergien · Medikamente · Notfallkontakt", v: "gesundheit", nur: () => gesundheitFuer().length > 0, zahl: () => gesundheitFuer().filter((k) => !gesundheitVon(k)).length },
     { id: "ueben", sym: "🎻", t: "Üben", u: () => uebenUntertitel(), v: "ueben", nur: () => istSchueler() || istEltern() },
+    { id: "uebebuehne", sym: "🎻", t: "Übe-Bühne", u: "Mitspielen · Griffe · Rhythmus · Stimmgerät", v: "buehne", p: { modus: "ueben" }, nur: () => istSchueler() || istEltern() || hatRolle("leitung", "lehrkraft", "admin"), zahl: () => (istSchueler() ? offeneUebeAufgaben(S.ich.id) : istEltern() ? kinderVon(db, S.ich.id).reduce((s, k) => s + offeneUebeAufgaben(k), 0) : 0) },
     { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin") },
     { id: "meinenoten", sym: "🎼", t: "Meine Noten", u: "Stimmen für mein Instrument", v: "meinenoten", nur: () => istSchueler() || istEltern() },
     { id: "meininstrument", sym: "🎻", t: () => (istEltern() ? "Leihinstrumente" : "Mein Leihinstrument"), u: "Rückgabe · Schaden melden", v: "meininstrument", nur: () => istSchueler() || istEltern() },

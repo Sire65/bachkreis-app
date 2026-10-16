@@ -333,6 +333,21 @@ create table if not exists bk_uebeaufgaben (
   von_id text,
   bis date,
   erledigt text[],
+  art text check (art is null or art in ('frei', 'notenstelle', 'rhythmus', 'tonleiter', 'tonhalten', 'gehoer', 'material')),
+  stueck text check (stueck is null or stueck in ('menuett', 'kanon', 'freude', 'nachtmusik', 'largo', 'fanfare')),
+  takt_von integer,
+  takt_bis integer,
+  tempo_ziel integer,
+  muster text,
+  taktart integer,
+  tonart text check (tonart is null or tonart in ('C', 'G', 'D', 'A', 'E', 'F', 'B', 'Es', 'a', 'e', 'h', 'd', 'g')),
+  oktaven integer,
+  ton text,
+  sekunden integer,
+  spiel text check (spiel is null or spiel in ('hoehe', 'durmoll', 'nachklatschen')),
+  ziel_sterne integer,
+  datei text,
+  vorspiel text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -353,6 +368,29 @@ alter table bk_uebeaufgaben add column if not exists gruppe_id text;
 alter table bk_uebeaufgaben add column if not exists von_id text;
 alter table bk_uebeaufgaben add column if not exists bis date;
 alter table bk_uebeaufgaben add column if not exists erledigt text[];
+alter table bk_uebeaufgaben add column if not exists art text;
+alter table bk_uebeaufgaben drop constraint if exists bk_uebeaufgaben_art_check;
+alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_art_check check (art is null or art in ('frei', 'notenstelle', 'rhythmus', 'tonleiter', 'tonhalten', 'gehoer', 'material'));
+alter table bk_uebeaufgaben add column if not exists stueck text;
+alter table bk_uebeaufgaben drop constraint if exists bk_uebeaufgaben_stueck_check;
+alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_stueck_check check (stueck is null or stueck in ('menuett', 'kanon', 'freude', 'nachtmusik', 'largo', 'fanfare'));
+alter table bk_uebeaufgaben add column if not exists takt_von integer;
+alter table bk_uebeaufgaben add column if not exists takt_bis integer;
+alter table bk_uebeaufgaben add column if not exists tempo_ziel integer;
+alter table bk_uebeaufgaben add column if not exists muster text;
+alter table bk_uebeaufgaben add column if not exists taktart integer;
+alter table bk_uebeaufgaben add column if not exists tonart text;
+alter table bk_uebeaufgaben drop constraint if exists bk_uebeaufgaben_tonart_check;
+alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_tonart_check check (tonart is null or tonart in ('C', 'G', 'D', 'A', 'E', 'F', 'B', 'Es', 'a', 'e', 'h', 'd', 'g'));
+alter table bk_uebeaufgaben add column if not exists oktaven integer;
+alter table bk_uebeaufgaben add column if not exists ton text;
+alter table bk_uebeaufgaben add column if not exists sekunden integer;
+alter table bk_uebeaufgaben add column if not exists spiel text;
+alter table bk_uebeaufgaben drop constraint if exists bk_uebeaufgaben_spiel_check;
+alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_spiel_check check (spiel is null or spiel in ('hoehe', 'durmoll', 'nachklatschen'));
+alter table bk_uebeaufgaben add column if not exists ziel_sterne integer;
+alter table bk_uebeaufgaben add column if not exists datei text;
+alter table bk_uebeaufgaben add column if not exists vorspiel text;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_werk_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_person_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_register_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_register_id_fk foreign key (register_id) references bk_register(id) on delete restrict; end if; end $$;

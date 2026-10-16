@@ -375,6 +375,7 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "gv-6", titel: "Fotos Presse", zweck: "foto_presse", text: "Fotos von Konzerten, auf denen mein Kind zu sehen ist, dürfen an die Lokalpresse gegeben werden (ohne Nachnamen). Widerruf für künftige Fotos jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
     { id: "gv-7", titel: "Fotos Social Media", zweck: "foto_social", text: "Fotos von Konzerten mit meinem Kind dürfen auf den Social-Media-Kanälen des Bachkreises gezeigt werden. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
     { id: "gv-3", titel: "Probenfreizeit", text: "Mein Kind darf an der Probenfreizeit teilnehmen. Die Begleitpersonen dürfen im Notfall die nötigen Entscheidungen treffen. Gesundheitsangaben habe ich in der App hinterlegt.", fassung: 1, gueltig_monate: null, zweck: "reise" },
+    { id: "gv-8", titel: "Übe-Aufnahmen an die Lehrkraft", zweck: "uebeaufnahmen", text: "Mein Kind darf sich in der Übe-Bühne beim Vorspielen aufnehmen und die Aufnahme an seine Lehrkraft schicken. Nur die Lehrkräfte und die Leitung hören sie; sie wird nach 30 Tagen automatisch gelöscht. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
     { id: "gv-4", titel: "Instrumenten-Leihvertrag", text: "Das Leihinstrument wird pfleglich behandelt und bei Beschädigung sofort gemeldet. Rückgabe zum vereinbarten Datum.", fassung: 1, gueltig_monate: 12, zweck: "leihvertrag" },
   ];
   d.genehmigungen = [];
@@ -390,6 +391,12 @@ export function erzeugeDemodaten(heute = new Date()) {
   }
   for (const g of d.genehmigungen) if (g.status !== "ausstehend") { g.beantwortet_am = iso(tag(jetzt, -Math.floor(1 + r() * 20), 19)); g.beantwortet_von = d.eltern_kind.find((e) => e.kind_id === g.kind_id)?.eltern_id || null; }
   for (const g of d.genehmigungen) if (g.status !== "ausstehend") g.vorlage_version = d.genehmigung_vorlagen.find((v) => v.id === g.vorlage_id)?.fassung || 1;
+  // 🎙️ Übe-Aufnahmen (0.26.0): etwa zwei Drittel erteilt (fest, ohne Zufall – die übrigen Demodaten bleiben gleich)
+  [...kinderA, ...mitglieder("g-b")].forEach((kid, i) => {
+    const ja = kid === demoSchueler?.id || kid === demoKindB?.id || i % 3 !== 2;
+    d.genehmigungen.push({ id: `ge-${d.genehmigungen.length + 1}`, vorlage_id: "gv-8", kind_id: kid, frist: isoTag(tag(jetzt, 14)), status: ja ? "erteilt" : "ausstehend", vorlage_version: 1,
+      ...(ja ? { beantwortet_am: iso(tag(jetzt, -3 - (i % 9), 19)), beantwortet_von: d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || null } : {}) });
+  });
   // 🩺 Gesundheit & Notfall (0.20.0): Angaben für einen Teil der Kinder, eins davon abgelaufen; Begleitpersonen der Probenfreizeit
   d.gesundheit = [];
   const ALLERG = ["Erdnüsse (Notfallset im Rucksack)", "Heuschnupfen", "Wespenstich", "", "", "", "Laktose", ""];
@@ -548,7 +555,20 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.uebeaufgaben = [
     { id: "ua-1", titel: "Air: Takt 1–16 langsam (♩ = 60)", text: "Auf gleichmäßigen Bogen achten, Bindungen genau.", werk_id: "w-2", person_id: demoSchueler?.id || null, von_id: "p-lk1", bis: isoTag(tag(jetzt, 6)), erledigt: [] },
     { id: "ua-2", titel: "Tonleiter G-Dur über 2 Oktaven", text: "Jeden Tag 5 Minuten, mit Metronom.", register_id: regDemo, gruppe_id: "g-a", von_id: "p-lk1", bis: isoTag(tag(jetzt, 10)), erledigt: [] },
-    { id: "ua-3", titel: "Brandenburgisches Konzert: Einsätze üben", text: "Takte 40–60 mit Aufnahme mitspielen.", gruppe_id: "g-a", von_id: "p-leitung", bis: isoTag(tag(jetzt, 14)), erledigt: [] }];
+    { id: "ua-3", titel: "Brandenburgisches Konzert: Einsätze üben", text: "Takte 40–60 mit Aufnahme mitspielen.", gruppe_id: "g-a", von_id: "p-leitung", bis: isoTag(tag(jetzt, 14)), erledigt: [] },
+    // 🎭 Übe-Bühne (0.26.0): Aufgaben, die die Bühne direkt öffnen
+    { id: "ua-4", art: "notenstelle", titel: "Menuett: Takt 1–8 mitspielen", text: "Erst langsam, dann bis ♩ = 100 steigern.", stueck: "menuett", takt_von: 1, takt_bis: 8, tempo_ziel: 100, ziel_sterne: 3, gruppe_id: "g-a", von_id: "p-leitung", bis: isoTag(tag(jetzt, 9)), erledigt: [] },
+    { id: "ua-5", art: "rhythmus", titel: "Rhythmus mit Pause und Punkt", text: "Erst zuhören, dann mittippen.", muster: "1 .5 .5 1 -1 1.5 .5 1 1 2 -2", taktart: 4, tempo_ziel: 80, ziel_sterne: 3, gruppe_id: "g-a", von_id: "p-leitung", bis: isoTag(tag(jetzt, 7)), erledigt: [] },
+    { id: "ua-6", art: "tonleiter", titel: "D-Dur-Tonleiter, 1 Oktave", text: "Gleichmäßig, jeder Ton gleich lang.", tonart: "D", oktaven: 1, tempo_ziel: 72, register_id: regDemo, von_id: "p-lk1", bis: isoTag(tag(jetzt, 12)), erledigt: [] },
+    { id: "ua-7", art: "tonhalten", titel: "Langer Ton: A ganz ruhig halten", text: "4 Sekunden lang genau auf dem Ton bleiben.", ton: "A3", sekunden: 4, register_id: regDemo, von_id: "p-lk1", bis: isoTag(tag(jetzt, 12)), erledigt: [] },
+    { id: "ua-8", art: "gehoer", titel: "Ohr-Spiel: Dur oder Moll?", text: "10 Runden – schaffst du 8 richtige?", spiel: "durmoll", ziel_sterne: 2, gruppe_id: "g-b", von_id: "p-lk2", bis: isoTag(tag(jetzt, 8)), erledigt: [] },
+    { id: "ua-9", art: "rhythmus", titel: "Walzer-Rhythmus im 3/4-Takt", text: "Eins betonen!", muster: "2 1 1 1 1 3", taktart: 3, tempo_ziel: 90, ziel_sterne: 2, gruppe_id: "g-b", von_id: "p-lk2", bis: isoTag(tag(jetzt, 10)), erledigt: [] }];
+  // ⭐ Ergebnisse der Übe-Bühne (nur Zahlen) – mit einer Rückmeldung der Lehrkraft
+  d.uebe_ergebnisse = [];
+  if (demoSchueler) d.uebe_ergebnisse.push(
+    { id: "ue-1", person_id: demoSchueler.id, aufgabe_id: "ua-4", modus: "mitspielen", stueck: "menuett", datum: isoTag(tag(jetzt, -2)), minuten: 12, sterne: 2, tempo: 84, rueckmeldung: "Schon richtig gut! Achte in Takt 5 auf die Achtel.", rueckmeldung_von: "p-leitung" },
+    { id: "ue-2", person_id: demoSchueler.id, aufgabe_id: "ua-5", modus: "rhythmus", datum: isoTag(tag(jetzt, -1)), minuten: 6, sterne: 2, tempo: 80 });
+  if (demoKindB) d.uebe_ergebnisse.push({ id: "ue-3", person_id: demoKindB.id, aufgabe_id: "ua-8", modus: "gehoer", datum: isoTag(tag(jetzt, -1)), minuten: 5, sterne: 1 });
   // 🚗 Mitfahrgelegenheiten zur Probenfreizeit und zur nächsten Probe
   d.mitfahrten = [];
   const fahrt = d.termine.find((t) => t.projekt_id === "pr-freizeit"), probe = d.termine.filter((t) => new Date(t.beginn) > jetzt && (t.gruppen || []).includes("g-a")).sort((a, b) => a.beginn.localeCompare(b.beginn))[0];

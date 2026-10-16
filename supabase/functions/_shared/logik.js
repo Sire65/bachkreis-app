@@ -498,3 +498,28 @@ export function einkaufInventar(db, e, heute = new Date()) {
   return { tab: "ausstattung", zeile: { inventar_nr: naechsteInventarNr(db, "A-"), kategorie: /ständer|staender|pult/i.test(e.titel || "") ? "notenstaender" : /lautsprecher|beamer|mikro/i.test(e.titel || "") ? "technik" : "sonstiges",
     bezeichnung: e.titel, anzahl: Number((String(e.titel || "").match(/^(\d+)/) || [])[1]) || 1, status: "verfuegbar", zustand: "neu", wert: e.betrag ?? null, anschaffung: tag, finanzierung: e.finanzierung || null, einkauf_id: e.id, eigentuemer: eig, standort: "Instrumentenraum" } };
 }
+
+// ---------- 🎭 Übe-Bühne (0.26.0): Für wen gilt eine Übeaufgabe? Ziel erreicht? Stand je Kind ----------
+export function aufgabeGiltFuer(db, a, pid) {
+  if (a.person_id) return a.person_id === pid;
+  if (!a.register_id && !a.gruppe_id) return false;
+  return (!a.register_id || registerVon(db, pid) === a.register_id) && (!a.gruppe_id || wirksameGruppen(db, pid).includes(a.gruppe_id));
+}
+export const aufgabeKinder = (db, a) => db.liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten" && aufgabeGiltFuer(db, a, p.id)).map((p) => p.id);
+// Ziel: Sterne (Standard 2) und – bei Notenstelle/Tonleiter – das Zieltempo
+export function uebeZielErreicht(a, e) {
+  if (!a || !e) return false;
+  const sterne = Number(e.sterne) || 0, ziel = Number(a.ziel_sterne) || 2;
+  if (["notenstelle", "tonleiter"].includes(a.art) && a.tempo_ziel && (Number(e.tempo) || 0) < Number(a.tempo_ziel)) return false;
+  return sterne >= ziel;
+}
+// Stand je Kind: Anzahl Übungen, beste Sterne, bestes Tempo, Ziel erreicht, letzte Rückmeldung/Aufnahme
+export function uebeStand(db, a) {
+  const erg = db.liste("uebe_ergebnisse", (e) => e.aufgabe_id === a.id && !e.geloescht_am);
+  return aufgabeKinder(db, a).map((pid) => {
+    const l = erg.filter((e) => e.person_id === pid).sort((x, y) => String(y.datum).localeCompare(String(x.datum)) || String(y.erstellt_am || "").localeCompare(String(x.erstellt_am || "")));
+    const geuebt = l.filter((e) => e.modus);
+    return { pid, anzahl: geuebt.length, sterne: Math.max(0, ...geuebt.map((e) => Number(e.sterne) || 0)), tempo: Math.max(0, ...geuebt.map((e) => Number(e.tempo) || 0)) || null,
+      ziel: (a.erledigt || []).includes(pid) || geuebt.some((e) => uebeZielErreicht(a, e)), letzte: l[0] || null, aufnahme: l.find((e) => e.aufnahme) || null, rueckmeldung: l.find((e) => e.rueckmeldung) || null };
+  });
+}

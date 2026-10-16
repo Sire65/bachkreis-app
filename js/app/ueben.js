@@ -55,7 +55,7 @@ VIEWS.ueben = {
     const s = stopp(), max = Math.max(30, ...Object.values(w.jeTag), plan.dauer || 0);
     const heute = tagIsoLokal(), stuecke = stueckeFuer(pid);
     const wahl = leute().length > 1 ? `<div class="inst-chips">${leute().map((x) => `<button type="button" class="${x === pid ? "an" : ""}" data-a="uebenWer" data-x="${esc(x)}">${esc(vorname(x))}</button>`).join("")}</div>` : "";
-    return kopf("🎻 Üben", hatRolle("leitung", "lehrkraft", "admin") ? '<button class="knopf klein" data-a="uebenUebersicht" title="Geteilte Übezeiten der Schüler">📊 Übersicht</button>' : "") + wahl
+    return kopf("🎻 Üben", `<button class="knopf klein" data-a="ubBuehneOeffnen" title="Mitspielen, Griffe, Rhythmus, Stimmgerät">🎭 Übe-Bühne</button>${hatRolle("leitung", "lehrkraft", "admin") ? '<button class="knopf klein" data-a="uebenUebersicht" title="Geteilte Übezeiten der Schüler">📊 Übersicht</button>' : ""}`) + wahl
       + aufgabenHtml(pid) + `<div class="karte ue-woche"><div class="ue-kopf"><b>Diese Woche</b><span>${w.summe} Min.${ziel ? ` von ${ziel}` : ""}</span>${w.serie ? `<span class="ue-serie" title="Tage in Folge geübt">🔥 ${w.serie}</span>` : ""}</div>
         ${ziel ? `<div class="ue-ziel"><i style="width:${Math.min(100, Math.round((w.summe / ziel) * 100))}%"></i></div>` : ""}
         <div class="ue-balken">${w.tage.map((t, i) => `<div class="ue-tag${t === heute ? " heute" : ""}${plan.an && plan.tage.includes(i + 1) ? " plan" : ""}" title="${WT[i]}: ${w.jeTag[t]} Min."><span style="height:${Math.round((w.jeTag[t] / max) * 100)}%"></span><small>${w.jeTag[t] || ""}</small><b>${WT[i]}</b></div>`).join("")}</div>

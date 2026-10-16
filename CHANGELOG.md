@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.26.0 DEV – 16.10.2026
+- 🎭🎻 Übe-Bühne (js/app/uebebuehne.js, css/uebebuehne.css): Bühnen-Modus „🎻 Üben“ (`BUEHNE_MODI` in buehne.js) mit eigenem Avatar als Solist (`orchesterSvg({ solist })`), Kachel „Übe-Bühne“ (Zahl = offene Aufgaben), Knopf in „Üben“
+- 🎼 Mitspielen: Begleitung aus der Partitur (eigene Rolle ausgelassen), eigene Stimme laut/leise/aus, Takt von–bis (`stelleSt`), Tempo-Stufen, Einzählen, Schleife, Tempo steigern bis zum Zieltempo, Selbsteinschätzung ⭐
+- ✋ Noten & Griffe (js/kern/griffe.js): Streicher 1. Lage, Flöte, Klarinette (inkl. Clarion), Trompete/Horn/Tuba (Ventile über Naturtöne), Posaune (Zugpositionen); Oboe/Fagott bewusst ohne Bild. Tonleitern je Instrument (js/kern/uebematerial.js)
+- 🥁 Rhythmus (js/kern/rhythmus.js): Muster-Text, 7 Stufen, Mittippen per Fläche/Leertaste mit Latenz-Ausgleich, Auswertung je Note · 🎯 Stimmgerät (js/kern/stimmton.js, Autokorrelation, nur lokal) mit „Ton halten“ · 👂 Ohr-Spiele (höher/tiefer, Dur/Moll, nachklatschen)
+- 📝 uebeaufgaben: art, stueck, takt_von/bis, tempo_ziel, muster, taktart, tonart, oktaven, ton, sekunden, spiel, ziel_sterne, datei, vorspiel; Formular mit Rhythmus-Baukasten; neue Tabelle `uebe_ergebnisse` (nur Zahlen, Rückmeldung nur Lehrkraft); Einwilligungs-Zweck `uebeaufnahmen`
+- 🔒 Server: Ergebnisse nur für sich/eigene Kinder, Aufgabe muss sichtbar sein, Werte geprüft, Rückmeldung geschützt; Aufnahme nur mit Einwilligung (Minderjährige), Löschdatum +30 Tage vom Server, Wartung löscht Datei und Verweis; Dateizugriff für Aufgaben-PDF/Vorspiel und eigene Aufnahmen
+- 📊 Fortschritt & Rückmeldung in der App (`uebefortschritt`) und am PC (Werkzeug „Übe-Bühne“, CSV) – `uebeStand()`/`uebeZielErreicht()` in logik.js
+- Migration 20261101000000_bk_uebebuehne.sql; Tests tests/uebebuehne.test.mjs; Rundgang und axe-Prüfung decken alle Übe-Arten ab
+
 ## 0.25.0 DEV – 16.10.2026
 - ♿ Externe Prüfwerkzeuge aus Git: axe-core (WCAG 2.1 A/AA, aus KC-Infrastructure-Control-Center) über alle Ansichten × Demo-Rollen und alle PC-Bereiche – vorher ≈ 350 Verstöße, jetzt 0 (`npm run a11y`, tests/e2e/barrierefrei.mjs)
 - 🎨 Kontraste: `--gruen/--gelb/--rot` dunkler (≥ 4,5 : 1 auf den Marken-Hintergründen), SOS-Rot, Übe-Serie, „neu“ im Chat, Pinnwand „erledigt“ ohne Transparenz, Gruppenfarben als Randstreifen statt Schriftfarbe, PC-Seitenleiste feste Farben

@@ -1,15 +1,27 @@
 {
-  "version": "0.25.0",
+  "version": "0.26.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "♿ Mit den Prüfwerkzeugen aus Git geprüft (axe-core aus dem KC Infrastructure Control Center): alle Ansichten in allen Rollen und das PC-Programm ohne Barrierefreiheits-Verstoß",
-    "🎨 Bessere Lesbarkeit: kräftigere Farben bei Zusagen/Absagen, Teilnahme- und Status-Marken, SOS-Knöpfen und erledigten Pinnwand-Zetteln",
-    "🗣️ Bildschirmleser: alle Eingabefelder und Filter haben jetzt Namen, Lesehaken und Gesichter werden richtig angesagt",
-    "🩺 Datenbank-Prüfung des KC System Check (db_monitor) läuft bei jedem Test: jede Tabelle mit Zugriffsschutz, keine offenen Rechte",
-    "🐞 PC-Programm: Listen mit freiem Text (durch Komma getrennt) wurden als Text statt als Liste gespeichert"
+    "🎻 Übe-Bühne: Auf der Bühne üben – vorne sitzt dein eigener Avatar mit deinem Instrument, das Bachkreis-Orchester begleitet dich",
+    "🎼 Mitspielen mit Tempo (langsam bis schnell), Takt von–bis, Wiederholen, Einzählen und „Tempo steigern“ – der rote Notenkopf zeigt, wo ihr seid",
+    "✋ Noten & Griffe: Note antippen → Ton, Notenname und Griffbild (Streicher, Flöte, Klarinette, Blech, Posaune), auch für Tonleitern",
+    "🥁 Rhythmus-Trainer: anhören, mittippen, Auswertung genau/knapp/daneben mit Sternen · 🎯 Stimmgerät & „Ton halten“ (Mikrofon nur im Gerät) · 👂 Ohr-Spiele",
+    "👩‍🏫 Lehrkräfte geben Übe-Aufgaben mit Notenstelle, Rhythmus-Baukasten, Tonleiter, Ton halten, Ohr-Spiel oder eigenem PDF/Vorspiel – und sehen den Fortschritt je Kind mit Rückmeldung (App und PC)",
+    "🎙️ Vorspielen & an die Lehrkraft schicken – nur mit Einwilligung der Eltern, automatisch gelöscht nach 30 Tagen"
   ],
   "verlauf": [
+    {
+      "version": "0.25.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "♿ Mit den Prüfwerkzeugen aus Git geprüft (axe-core aus dem KC Infrastructure Control Center): alle Ansichten in allen Rollen und das PC-Programm ohne Barrierefreiheits-Verstoß",
+        "🎨 Bessere Lesbarkeit: kräftigere Farben bei Zusagen/Absagen, Teilnahme- und Status-Marken, SOS-Knöpfen und erledigten Pinnwand-Zetteln",
+        "🗣️ Bildschirmleser: alle Eingabefelder und Filter haben jetzt Namen, Lesehaken und Gesichter werden richtig angesagt",
+        "🩺 Datenbank-Prüfung des KC System Check (db_monitor) läuft bei jedem Test: jede Tabelle mit Zugriffsschutz, keine offenen Rechte",
+        "🐞 PC-Programm: Listen mit freiem Text (durch Komma getrennt) wurden als Text statt als Liste gespeichert"
+      ]
+    },
     {
       "version": "0.24.0",
       "datum": "2026-10-16",

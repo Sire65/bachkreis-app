@@ -381,6 +381,13 @@ export async function wartung(db, adapter, umg = {}) {
     allergien = null, ernaehrung = null, medikamente = null, erkrankungen = null, notfall_name = null, notfall_tel = null, krankenkasse = null, hausarzt = null
     where loeschen_am < current_date and geloescht_am is null returning id`);
   if (gs.length) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${gs.length} abgelaufene Gesundheitsangaben gelöscht` });
+  // 🎙️ Übe-Aufnahmen der Kinder: nach Ablauf Datei löschen und Verweis entfernen (Zahlen und Rückmeldung bleiben)
+  const ua = (await db.q(`select id, aufnahme from bk_uebe_ergebnisse where loeschen_am < current_date and aufnahme is not null and geloescht_am is null`));
+  if (ua.length) {
+    await db.q(`update bk_uebe_ergebnisse set aufnahme = null, loeschen_am = null, geaendert_am = now(), version = version + 1, geaendert_von = 'Löschfrist' where id = any($1::text[])`, [ua.map((x) => x.id)]);
+    await db.q(`update bk_dateien set inhalt = null, geloescht_am = now() where geloescht_am is null and id = any($1::text[])`, [ua.map((x) => String(x.aufnahme).replace(/^datei:/, ""))]);
+  }
+  if (ua.length) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${ua.length} abgelaufene Übe-Aufnahmen gelöscht` });
   await db.q(`delete from bk_kom_ereignisse where zeit < now() - interval '90 days'`);
   await db.q(`delete from bk_versand where zeit < now() - interval '365 days' and status <> all($1::text[])`, [OFFEN]);
   if (h.length) await protokoll(db, { art: "wartung", code: "HAENGER", text: `${h.length} hängende Aufträge erneut eingeplant` });

@@ -20,7 +20,7 @@ export function aufgabenHtml(pid) {
   if (!l.length) return "";
   return `<div class="karte ua-karte"><h3>📝 Aufgaben ${pid === S.ich.id ? "für dich" : `für ${esc(vorname(pid))}`}</h3><ul class="liste">${l.map((a) => {
     const ok = (a.erledigt || []).includes(pid), w = a.werk_id ? hole("werke", a.werk_id) : null;
-    return `<li class="${ok ? "ua-ok" : ""}"><label class="ua-haken"><input type="checkbox" data-c="aufgabeHaken" data-x="${a.id}|${pid}" ${ok ? "checked" : ""}></label><div class="fl"><div class="zeile-titel">${esc(a.titel)}</div>
+    return `<li class="${ok ? "ua-ok" : ""}"><label class="ua-haken"><input type="checkbox" data-c="aufgabeHaken" data-x="${a.id}|${pid}" aria-label="${esc(a.titel)} erledigt" ${ok ? "checked" : ""}></label><div class="fl"><div class="zeile-titel">${esc(a.titel)}</div>
       <div class="zeile-unter">${w ? `🎼 ${esc(w.titel)} · ` : ""}${a.text ? esc(a.text) + " · " : ""}von ${esc(name(a.von_id))}${a.bis ? ` · <span class="${!ok && a.bis < heute ? "ua-spaet" : ""}">bis ${datumKurz(a.bis)}</span>` : ""}</div></div></li>`;
   }).join("")}</ul></div>`;
 }

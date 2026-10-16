@@ -1,4 +1,4 @@
-# Konzept-Check Bachkreis (Stand 0.19.0, 16.10.2026)
+# Konzept-Check Bachkreis (Stand 0.25.0, 16.10.2026)
 
 Gesamtprüfung: Was braucht ein Schul-/Jugendorchester mit Förderverein, was hat die App schon, was fehlt noch?
 Rechte werden auf dem Server durchgesetzt (`supabase/functions/_shared/regeln.js`); was die Oberfläche nur ausblendet, gilt hier als **nicht** geschützt.
@@ -34,6 +34,12 @@ Die Abläufe Termine → Zusage/Absage → Ampel → Erinnerung, Nachrichten/Pin
 
 ## In 0.22.0 umgesetzt (alle „Kann“ und Inventar-Schritte)
 - ✅ Mitfahrgelegenheiten · ✅ Räume & Schlüssel · ✅ Papier-Notenexemplare · ✅ Mietmaterial-Fristen & GEMA-Liste · ✅ Übeaufgaben · ✅ Förderverein-Mitgliedschaft · ✅ Führungszeugnis-Vermerk · ✅ Werkstatt-Auftrag per Mail · ✅ Reparatur für Ausstattung · ✅ Einkauf → Inventar/Ausstattung · ✅ Sachspenden ↔ Inventar · ✅ automatische Löschfrist für Gesundheitsangaben
+
+## In 0.25.0: Prüfung mit externen Werkzeugen (aus Git)
+- ✅ **axe-core** (KC-Infrastructure-Control-Center): alle Ansichten × alle Demo-Rollen + PC-Programm – 0 Verstöße gegen WCAG 2.1 A/AA (vorher ≈ 350, v. a. Kontrast und fehlende Feldnamen)
+- ✅ **db_monitor** (KC-System-Check): RLS auf jeder Tabelle, keine ungedeckten Rechte für anon/authenticated, keine RLS-umgehenden Views, Definer-Funktionen mit festem search_path – „healthy“
+- ✅ **ESLint** (Regeln des KICC): 0 Fehler; 67 Hinweise auf ungenutzte Importe/Variablen bleiben als Aufräum-Liste
+- ➖ Testlabor-Internettumgebung prüft die KC-Kommunikation (nicht den Bachkreis) – nicht anwendbar
 
 > Damit ist die Liste unten abgearbeitet. Bewusst nicht gebaut: Lastschrift/SEPA (Konzept: kein Zahlungsverkehr in der App) und eine Ausleihe von Ausstattung über die App (läuft über die PC-Verwaltung).
 

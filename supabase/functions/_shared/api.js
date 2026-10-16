@@ -189,6 +189,7 @@ async function versenden(db, s, body, dienste) {
 
 // ---------- 📎 Dateien: hochladen (nur angemeldet, Art und Größe geprüft) und holen (nur wer sie sehen darf) ----------
 async function dateiHochladen(db, s, body, ablage) {
+  // eslint-disable-next-line no-control-regex -- Steuerzeichen in Dateinamen bewusst ersetzen
   const name = String(body.name || "Datei").replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_").slice(0, 120), mime = String(body.mime || "").toLowerCase().split(";")[0];
   const b64 = String(body.daten || "");
   if (!DATEI.mime.test(mime)) return fehler(400, "DATEIART_NICHT_ERLAUBT");

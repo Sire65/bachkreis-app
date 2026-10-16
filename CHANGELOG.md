@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.25.0 DEV – 16.10.2026
+- ♿ Externe Prüfwerkzeuge aus Git: axe-core (WCAG 2.1 A/AA, aus KC-Infrastructure-Control-Center) über alle Ansichten × Demo-Rollen und alle PC-Bereiche – vorher ≈ 350 Verstöße, jetzt 0 (`npm run a11y`, tests/e2e/barrierefrei.mjs)
+- 🎨 Kontraste: `--gruen/--gelb/--rot` dunkler (≥ 4,5 : 1 auf den Marken-Hintergründen), SOS-Rot, Übe-Serie, „neu“ im Chat, Pinnwand „erledigt“ ohne Transparenz, Gruppenfarben als Randstreifen statt Schriftfarbe, PC-Seitenleiste feste Farben
+- 🗣️ `beschriftungenVerknuepfen()` (ui.js) nach jedem Zeichnen/Blatt: verknüpft `<label>` mit dem Feld, gibt Feldern ohne Beschriftung einen Namen; Lesehaken `role="img"`, Gesichter ohne Namen `aria-hidden`, Übeaufgaben-Haken beschriftet, scrollbare Tabellen per Tastatur erreichbar
+- 🩺 db_monitor aus KC-System-Check (tools/db-monitor.sql) als Test mit nachgebildeten Supabase-Rollen: RLS überall, keine ungedeckten Rechte, keine RLS-umgehenden Views/Definer – Ergebnis „healthy“
+- 🧹 ESLint (Regeln wie im KICC + recommended, `npm run lint`): 0 Fehler. Behoben: PC-Formular speicherte Freitext-Listen als String (unerreichbarer Zweig), undefinierte Globale in effekte.js, toter Code in regeln.js
+
 ## 0.24.0 DEV – 16.10.2026
 - 🖥️ PC-Layout: `.vw-raster3`/`.vw-kz4`/`.vw-bereich`, Seitenleiste mit „Werkzeuge“, Übersicht nach Bereichen (alle Tabellen + Werkzeuge) mit Cockpit „Was ist zu tun?“; Formular als Fenster (`.vw-modal`, Esc schließt) mit 3 Spalten, Schaltern in einer Reihe, langen Feldern über volle Breite; Mehrfachauswahl als Chips (≤ 40); Einstellungen in Abschnitten
 - 🧰 js/verwaltung/werkzeuge.js: Terminplanung, Genehmigungen, Rundschreiben, Projekte & Konzerte, Kasse & Beiträge, Notfall- & Foto-Listen, Mitfahrbörse, Teilnahmebescheinigungen, Ferien

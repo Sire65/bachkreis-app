@@ -16,8 +16,8 @@
 .zettel .zknoepfe { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .zettel .zknoepfe button { border: 1px solid rgba(0,0,0,.25); background: rgba(255,255,255,.55); color: #2b2410; border-radius: 10px; padding: 5px 9px; font-weight: 800; font-size: .8rem; cursor: pointer; }
 .zettel .zknoepfe button.antw { background: #1a1500; color: #f5c400; border-color: #1a1500; font-size: .88rem; padding: 7px 12px; }
-.zettel .zknoepfe button.erl { background: #2e7d4f; color: #fff; border-color: #2e7d4f; }
-.zettel.erledigt { opacity: .7; }
+.zettel .zknoepfe button.erl { background: #25683f; color: #fff; border-color: #25683f; }
+.zettel.erledigt { filter: saturate(.55); } /* 0.25: statt Transparenz – Text bleibt lesbar (axe) */
 .zettel details { margin-top: 6px; font-size: .78rem; } .zettel summary { cursor: pointer; font-weight: 800; }
 .zettel-nadel { position: absolute; left: 50%; top: -10px; font-size: 1.6rem; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
 /* Aushang (🎂 Geburtstag): grün mit grüner Nadel, zählt nicht zu den 4 Zetteln */

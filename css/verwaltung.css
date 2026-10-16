@@ -7,7 +7,7 @@ body.vw { background: var(--bg); }
 .vw-seite h4 { color: var(--marke2); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; margin: 14px 8px 4px; }
 .vw-seite button { display: flex; width: 100%; gap: 8px; align-items: center; border: none; background: none; color: inherit; padding: 7px 10px; border-radius: 10px; cursor: pointer; text-align: left; font-weight: 700; font-size: .92rem; }
 .vw-seite button:hover { background: #ffffff14; } .vw-seite button.an { background: var(--marke); color: #1a1500; }
-.vw-seite .anz { margin-left: auto; opacity: .6; font-size: .8rem; }
+.vw-seite .anz { margin-left: auto; color: #b9b29c; font-size: .8rem; } .vw-seite button.an .anz { color: #1a1500; }
 .vw-haupt { padding: 16px 20px 40px; min-width: 0; }
 .vw-kopf { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .vw-kopf h2 { margin: 0; flex: 1; }

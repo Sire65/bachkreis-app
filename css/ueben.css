@@ -1,6 +1,6 @@
 /* 🎻 Üben (0.14.0): Woche, Stoppuhr, Eintragen, Übezeiten · 📆 Kalender */
 .ue-woche .ue-kopf { display: flex; align-items: baseline; gap: 10px; } .ue-woche .ue-kopf span { color: var(--grau); font-weight: 700; font-size: .9rem; }
-.ue-serie { margin-left: auto; color: #e65100 !important; font-weight: 900 !important; }
+.ue-serie { margin-left: auto; color: #b84000 !important; font-weight: 900 !important; }
 .ue-ziel { height: 8px; border-radius: 4px; background: var(--karte2); overflow: hidden; margin: 6px 0 8px; } .ue-ziel i { display: block; height: 100%; background: linear-gradient(90deg, #d9a21b, #2e9d5b); border-radius: 4px; }
 .ue-balken { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; height: 120px; align-items: end; }
 .ue-tag { display: grid; grid-template-rows: 1fr auto auto; height: 100%; text-align: center; gap: 2px; }

@@ -82,9 +82,9 @@ function hakenHtml(n) {
   if (n.zurueckgezogen_am) return "";
   let { anzahl, gelesen, stufe } = hakenStand(n);
   if (stufe === "gelesen" && einst().lesebestaetigung === false) stufe = "angekommen"; // wie WhatsApp: ohne eigene Lesebestätigung keine blauen Haken
-  const z = stufe === "gelesen" ? `<span class="haken blau" title="gelesen" aria-label="gelesen">${HAKEN_ZWEI}</span>`
-    : stufe === "angekommen" ? `<span class="haken" title="angekommen – noch nicht gelesen" aria-label="angekommen">${HAKEN_ZWEI}</span>`
-    : `<span class="haken" title="gesendet – noch nicht angekommen" aria-label="gesendet">${HAKEN_EINS}</span>`;
+  const z = stufe === "gelesen" ? `<span class="haken blau" role="img" title="gelesen" aria-label="gelesen">${HAKEN_ZWEI}</span>`
+    : stufe === "angekommen" ? `<span class="haken" role="img" title="angekommen – noch nicht gelesen" aria-label="angekommen">${HAKEN_ZWEI}</span>`
+    : `<span class="haken" role="img" title="gesendet – noch nicht angekommen" aria-label="gesendet">${HAKEN_EINS}</span>`;
   const teil = stufe !== "gelesen" && anzahl > 1 && gelesen && einst().lesebestaetigung !== false ? ` <small class="haken-teil" title="schon gelesen">${gelesen}/${anzahl}</small>` : "";
   return z + teil + ((n.kanaele || []).includes("mail") || n.wichtig || n.express ? ' <span class="zustellung" title="auch per E-Mail">✉️</span>' : "");
 }

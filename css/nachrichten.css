@@ -6,7 +6,7 @@
 .chat-bild.gross { width: 40px; height: 40px; min-width: 40px; }
 .chat-bild.klein { width: 30px; height: 30px; min-width: 30px; font-size: .75rem; }
 .chat-rechts { text-align: right; display: grid; justify-items: end; gap: 4px; }
-.chat-rechts .hinweis.neu { color: #25a35a; font-weight: 800; }
+.chat-rechts .hinweis.neu { color: #1e8048; font-weight: 800; }
 .chat-zahl { background: #25a35a; color: #fff; border-radius: 999px; min-width: 22px; padding: 1px 7px; font-size: .78rem; font-weight: 800; text-align: center; }
 .chat-zahl.express { background: #c0392b; }
 .zeile-unter .haken { vertical-align: -2px; margin: 0 1px 0 0; }
@@ -93,7 +93,7 @@
 .na-schnell button.an { border-color: var(--gold, #d4a017); background: rgba(212,160,23,.2); }
 .na-knoepfe { display: grid; gap: 8px; margin-bottom: 8px; } .na-knoepfe .knopf { text-align: left; }
 .ni-zeile { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--linie); flex-wrap: wrap; }
-.ni-zeile .hinweis { margin: 0; font-size: .82rem; } .ni-wichtig { color: #e65100; } .ni-express { color: #c0392b; }
+.ni-zeile .hinweis { margin: 0; font-size: .82rem; } .ni-wichtig { color: #b84000; } .ni-express { color: #c0392b; }
 @media (max-width: 380px) { .blase { max-width: 90%; } .chat-eingabe .rund { width: 36px; height: 36px; } }
 
 /* 0.9.0 – eingeklappte Tage („Mo, 11.11.26“) und Wochen („KW 45/26“) */

@@ -3,7 +3,7 @@
 :root {
   --marke: #f2b705; --marke2: #ffd23f; --marke-dunkel: #8a6400; --blau: #1f4f8f; --blau2: #2c6cbf;
   --bg: #f6f3ea; --karte: #ffffff; --karte2: #efe9da; --text: #1d1a14; --grau: #6b6455; --linie: #e3dccb;
-  --gruen: #2e7d4f; --gruenbg: #e3f2e8; --gelb: #9a6b00; --gelbbg: #fbf0d6; --rot: #c0392b; --rotbg: #fbe3e3; --graubg: #ecebe7;
+  --gruen: #25683f; --gruenbg: #e3f2e8; --gelb: #7d5700; --gelbbg: #fbf0d6; --rot: #a8322a; --rotbg: #fbe3e3; --graubg: #ecebe7;
   --lila: #7b3fa0; --lilabg: #f1e6f7; --tuerkis: #0e7c86; --tuerkisbg: #dcf1f3;
   --schatten: 0 6px 18px rgba(40, 30, 0, .10); --radius: 18px; --fs: 16px;
   --hero: linear-gradient(135deg, #111 0%, #26231b 40%, #3b3110 70%, #8a6400 100%);
@@ -52,7 +52,7 @@ a { color: var(--akzent); }
 .kachel b { display: block; font-size: 1.02rem; margin-top: 7px; overflow-wrap: break-word; }
 .kachel small { color: var(--grau); font-weight: 700; font-size: .82rem; display: block; }
 .kachel .zahl { position: absolute; right: 12px; top: 12px; background: var(--rot); color: #fff; border-radius: 12px; padding: 2px 9px; font-weight: 800; font-size: .85rem; z-index: 1; }
-.kachel.sos { background: #c0392b; color: #fff; } .kachel.sos small { color: #ffe3df; }
+.kachel.sos { background: #a8322a; color: #fff; } .kachel.sos small { color: #ffe3df; }
 .kachel.ad { min-height: 0; border-top: 5px solid var(--graubg); }
 .kachel.ad.l-gruen { border-top-color: #2e7d4f; } .kachel.ad.l-gelb { border-top-color: #e0a800; } .kachel.ad.l-rot { border-top-color: #c0392b; } .kachel.ad.l-grau { border-top-color: #8d8a80; }
 @keyframes rein { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
@@ -120,7 +120,7 @@ a { color: var(--akzent); }
 .eingabe textarea { flex: 1; border-radius: 14px; border: 2px solid var(--linie); padding: 8px 10px; background: var(--karte); resize: vertical; min-height: 44px; }
 
 /* SOS */
-.sos-gross { display: block; width: 100%; background: #c0392b; color: #fff; border: none; border-radius: 20px; padding: 18px; font-size: 1.3rem; font-weight: 900; margin: 8px 0; text-align: left; text-decoration: none; }
+.sos-gross { display: block; width: 100%; background: #a8322a; color: #fff; border: none; border-radius: 20px; padding: 18px; font-size: 1.3rem; font-weight: 900; margin: 8px 0; text-align: left; text-decoration: none; }
 .sos-gross small { display: block; font-size: .9rem; font-weight: 700; color: #ffe3df; }
 .sos-klein { background: var(--rotbg); color: var(--rot); }
 

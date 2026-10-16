@@ -1,15 +1,26 @@
 {
-  "version": "0.24.0",
+  "version": "0.25.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🖥️ PC-Programm aufgeräumt: Übersicht nach Bereichen in 3 Spalten mit gleich großen Knöpfen, „Was ist zu tun?“, Tabellen in voller Breite, Bearbeiten in einem großen Fenster mit 3 Spalten",
-    "🧰 Neue PC-Werkzeuge: Terminplanung (auch Serien & Registerproben), Genehmigungen anfordern/erinnern, Rundschreiben, Projekte & Konzerte, Kasse & Beiträge, Notfall- & Foto-Listen, Mitfahrbörse, Teilnahmebescheinigungen, Ferien",
-    "⚙️ Am PC passiert jetzt dasselbe wie in der App: Ausleihe/Rückgabe und Reparatur setzen den Instrumenten-Status, Einkauf wird Inventar, neue/abgesagte Termine benachrichtigen die Eingeladenen",
-    "🌱 Interessenten & Probespiel, 🙋 Helfer- & Dienstplan, 🎼 Probenplan beim Termin, Ausleihe auch von Ausstattung, Datenauskunft je Person am PC",
-    "🐞 Termine am PC richtig nach Datum sortiert, Namen statt Kennungen in allen Listen, Soll-Besetzung als Zahlenfelder statt Code, Absturz beim Öffnen einer Nachricht behoben"
+    "♿ Mit den Prüfwerkzeugen aus Git geprüft (axe-core aus dem KC Infrastructure Control Center): alle Ansichten in allen Rollen und das PC-Programm ohne Barrierefreiheits-Verstoß",
+    "🎨 Bessere Lesbarkeit: kräftigere Farben bei Zusagen/Absagen, Teilnahme- und Status-Marken, SOS-Knöpfen und erledigten Pinnwand-Zetteln",
+    "🗣️ Bildschirmleser: alle Eingabefelder und Filter haben jetzt Namen, Lesehaken und Gesichter werden richtig angesagt",
+    "🩺 Datenbank-Prüfung des KC System Check (db_monitor) läuft bei jedem Test: jede Tabelle mit Zugriffsschutz, keine offenen Rechte",
+    "🐞 PC-Programm: Listen mit freiem Text (durch Komma getrennt) wurden als Text statt als Liste gespeichert"
   ],
   "verlauf": [
+    {
+      "version": "0.24.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "🖥️ PC-Programm aufgeräumt: Übersicht nach Bereichen in 3 Spalten mit gleich großen Knöpfen, „Was ist zu tun?“, Tabellen in voller Breite, Bearbeiten in einem großen Fenster mit 3 Spalten",
+        "🧰 Neue PC-Werkzeuge: Terminplanung (auch Serien & Registerproben), Genehmigungen anfordern/erinnern, Rundschreiben, Projekte & Konzerte, Kasse & Beiträge, Notfall- & Foto-Listen, Mitfahrbörse, Teilnahmebescheinigungen, Ferien",
+        "⚙️ Am PC passiert jetzt dasselbe wie in der App: Ausleihe/Rückgabe und Reparatur setzen den Instrumenten-Status, Einkauf wird Inventar, neue/abgesagte Termine benachrichtigen die Eingeladenen",
+        "🌱 Interessenten & Probespiel, 🙋 Helfer- & Dienstplan, 🎼 Probenplan beim Termin, Ausleihe auch von Ausstattung, Datenauskunft je Person am PC",
+        "🐞 Termine am PC richtig nach Datum sortiert, Namen statt Kennungen in allen Listen, Soll-Besetzung als Zahlenfelder statt Code, Absturz beim Öffnen einer Nachricht behoben"
+      ]
+    },
     {
       "version": "0.23.0",
       "datum": "2026-10-16",

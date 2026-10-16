@@ -80,6 +80,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F70 | 🔧 Reparatur für Ausstattung, 📧 Werkstatt-Auftrag, 🛒 Einkauf → Inventar/Ausstattung, Sachspende ↔ Inventar | ✅ | e2e rundgang |
 | BK-F71 | 🖥️ PC-Programm: Bereiche in 3 Spalten, Bearbeiten-Fenster, Werkzeuge für Termine, Genehmigungen, Rundschreiben, Projekte, Kasse, Notfall-/Foto-Listen, Mitfahrbörse, Bescheinigungen, Ferien | ✅ | e2e rundgang |
 | BK-F72 | 🌱 Interessenten & Probespiel, 🙋 Helfer- & Dienstplan, 🎼 Probenplan | ✅ | e2e rundgang |
+| BK-F73 | ♿ Barrierefreiheit (axe, WCAG 2.1 AA) in allen Rollen + PC, 🩺 db_monitor-Prüfung, 🧹 ESLint | ✅ | tests/e2e/barrierefrei.mjs, tests/dbmonitor.test.mjs, npm run lint |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

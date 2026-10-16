@@ -137,7 +137,7 @@ function sendeFlug(r, art) {
   f.querySelectorAll(".rk-flamme").forEach((x) => { x.style.transformBox = "fill-box"; x.style.transformOrigin = "top"; x.animate([{ transform: "scaleY(.7)" }, { transform: "scaleY(1.25)" }], { duration: 90, iterations: Infinity, direction: "alternate" }); });
   setTimeout(() => f.remove(), dauer + 400);
 }
-function papierflieger(von, wichtig = typeof WICHTIG !== "undefined" && !!WICHTIG, mid = null, express = typeof EXPRESS !== "undefined" && !!EXPRESS) {
+function papierflieger(von, wichtig = false, mid = null, express = false) {
   if (!fxAn() || !von) return;
   const r = von.getBoundingClientRect(); if (!r.width) return;
   const wahl = sendeEffektWahl(); if (wahl === "aus") return;

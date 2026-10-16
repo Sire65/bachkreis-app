@@ -228,7 +228,7 @@ VIEWS.kinder = {
     return kopf("👪 Meine Kinder") + kinderVon(db, S.ich.id).map((k) => {
       const p = hole("personen", k);
       const g = wirksameGruppen(db, k).map((x) => hole("gruppen", x));
-      return `<div class="karte"><div class="zeile-titel">${esc(name(p))}</div><div>${g.map((x) => `<span class="badge" style="color:${esc(x.farbe)}">${esc(x.kuerzel)} – ${esc(x.name)}</span>`).join("")}</div>
+      return `<div class="karte"><div class="zeile-titel">${esc(name(p))}</div><div>${g.map((x) => `<span class="badge" style="border-left:5px solid ${esc(x.farbe)}">${esc(x.kuerzel)} – ${esc(x.name)}</span>`).join("")}</div>
         <div class="hinweis">${instrumenteVon(db, k).map((i) => esc(hole("instrument_typen", i.typ_id)?.name)).join(", ")}</div>
         <details class="kind-kontakt"><summary>✏️ Kontaktdaten von ${esc(p.vorname)} ändern</summary><div id="kk-${k}">${KIND_KONTAKT.map((f) => `<div class="feld"><label>${esc(TABELLEN.personen.felder.find((x) => x.k === f)?.t || f)}</label><input name="${f}" value="${esc(p[f] || "")}"></div>`).join("")}
           <button class="knopf haupt" data-a="kindKontakt" data-x="${k}">💾 Speichern</button></div></details></div>`;

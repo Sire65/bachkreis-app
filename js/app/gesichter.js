@@ -47,7 +47,7 @@ export function gesichtSvg(m, { rund = true, titel = "" } = {}) {
   const kopf = `${hinten}<circle cx="13.5" cy="36" r="3.2" fill="${haut}"/><circle cx="50.5" cy="36" r="3.2" fill="${haut}"/><ellipse cx="32" cy="35" rx="18" ry="19" fill="${haut}"/>
     <circle cx="21" cy="41" r="3" fill="#ff7b7b" opacity=".28"/><circle cx="43" cy="41" r="3" fill="#ff7b7b" opacity=".28"/>${vorn}${brauen}${augen}<path d="M31 39 Q32 40.5 33 39" stroke="rgba(0,0,0,.25)" stroke-width="1.2" fill="none"/>${mund}${brille}`;
   if (!rund) return kopf;
-  return `<svg viewBox="0 0 64 64" class="gesicht" role="img" aria-label="${titel.replace(/"/g, "&quot;")}"><defs><clipPath id="gk"><circle cx="32" cy="32" r="32"/></clipPath></defs>
+  return `<svg viewBox="0 0 64 64" class="gesicht" ${titel ? `role="img" aria-label="${String(titel).replace(/"/g, "&quot;")}"` : 'aria-hidden="true"'}><defs><clipPath id="gk"><circle cx="32" cy="32" r="32"/></clipPath></defs>
     <g clip-path="url(#gk)"><rect width="64" height="64" fill="${FARBEN[m.farbe % FARBEN.length]}"/><path d="M8 66 Q10 52 32 51 Q54 52 56 66 Z" fill="rgba(0,0,0,.18)"/><g transform="translate(0 2)">${kopf}</g></g></svg>`;
 }
 export const gesicht = (pOderId, titel = "") => gesichtSvg(merkmale(pOderId), { titel });

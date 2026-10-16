@@ -229,7 +229,6 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
     return { ok: true, zeile: z };
   }
   // Selbstbedienung für Schüler/Eltern (und Verwalter in Tabellen ohne Schreibrecht)
-  const neuOderEigen = (feld) => (!alt || alt[feld] === ctx.ich) && neu[feld] === ctx.ich;
   switch (tab) {
     case "antworten":
       if (!ctx.meine.has(neu.person_id) || (alt && alt.person_id !== neu.person_id)) return { ok: false, grund: "NICHT_MEINE_PERSON" };

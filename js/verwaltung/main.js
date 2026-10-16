@@ -4,7 +4,7 @@
 import { werkzeugeRegistrieren, WERKZEUG_ANSICHTEN } from "./werkzeuge.js";
 import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN } from "../kern/schema.js";
-import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO } from "../kern/ui.js";
+import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND, senden } from "../kern/versand.js";
 import { loeschKandidaten, ANONYM_LEEREN, ANONYM_LOESCHEN, schuljahrVorschlaege, einkaufInventar, eingeladene, personenDaten, cockpit, csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
@@ -71,7 +71,7 @@ function seitenleiste() {
   for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
   const btn = (an, a, x, sym, t, anz = "") => `<button class="${an ? "an" : ""}" data-a="${a}" data-x="${x}" title="${esc(t)}"><span class="sym">${sym}</span><span class="txt">${esc(t)}</span><span class="anz">${anz}</span></button>`;
   const sonder = SONDER.filter(sonderSichtbar);
-  return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;opacity:.7">v${APP_VERSION} ${APP_STUFE}</div></div></div>
+  return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;color:#b9b29c">v${APP_VERSION} ${APP_STUFE}</div></div></div>
     ${btn(V.ansicht === "uebersicht", "vwAnsicht", "uebersicht", "🏠", "Übersicht")}
     <h4>Werkzeuge</h4>${sonder.filter(([k]) => k !== "uebersicht").map(([k, sy, t]) => btn(V.ansicht === k, "vwAnsicht", k, sy, t)).join("")}
     ${Object.entries(gruppen).map(([g, ts]) => `<h4>${esc(g)}</h4>${ts.map((t) => btn(V.ansicht === "tabelle" && V.tab === t, "vwTabelle", t, TABELLEN[t].sym, TABELLEN[t].titel, liste(t).length)).join("")}`).join("")}
@@ -84,6 +84,7 @@ function zeichne() {
   catch (e) { console.error(e); haupt = `<div class="karte">⚠️ ${esc(e.message)}</div>`; }
   $("#vw").innerHTML = `<div class="vw-rahmen"><nav class="vw-seite">${seitenleiste()}</nav><section class="vw-haupt">${haupt}</section></div>`;
   NACH[V.ansicht]?.();
+  beschriftungenVerknuepfen($("#vw"));
 }
 AKTIONEN.vwAnsicht = (k) => { V.ansicht = k; V.auswahl = null; zeichne(); };
 AKTIONEN.vwTabelle = (t) => { V.ansicht = "tabelle"; V.tab = t; V.auswahl = null; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
@@ -164,9 +165,9 @@ function formLesen(tab, wurzel) {
     if (f.typ === "zahl" || f.typ === "geld") v = v === "" || v == null ? null : Number(v);
     else if (f.typ === "zeit") v = vonLokal(v);
     else if (f.typ === "ref" || f.typ === "wahl" || f.typ === "datum") v = v || null;
+    else if (f.typ === "liste" && !f.werte) v = String(roh[f.k] || "").split(",").map((x) => x.trim()).filter(Boolean);
     else if (f.typ === "liste" || f.typ === "refs") v = v || [];
     else if (f.editor === "soll") { const o2 = {}; for (const [k2, w] of Object.entries(roh)) if (k2.startsWith(f.k + "__") && Number(w) > 0) o2[k2.slice(f.k.length + 2)] = Number(w); v = Object.keys(o2).length ? o2 : null; }
-    else if (f.typ === "liste" && !f.werte) v = String(roh[f.k] || "").split(",").map((x) => x.trim()).filter(Boolean);
     else if (f.typ === "json") { try { v = v ? JSON.parse(v) : null; } catch { throw new Error(`${f.t}: kein gültiges JSON`); } }
     o[f.k] = v;
   }
@@ -196,7 +197,7 @@ ANSICHTEN.tabelle = () => {
     <input type="search" placeholder="Suchen …" value="${esc(V.suche)}" data-c="vwSuche">
     ${typFeld ? `<select data-c="vwFilter"><option value="">alle ${esc(typFeld.t)}</option>${Object.entries(typFeld.werte).map(([k, t]) => `<option value="${k}" ${V.filter === k ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>` : ""}
     ${schreiben ? `<button class="knopf haupt" data-a="vwNeu">＋ Neu</button>` : ""}<button class="knopf" data-a="vwCsv">📤 CSV</button></div>`;
-  const tabelle = `<div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr>${def.liste.map((k) => `<th data-a="vwSort" data-x="${k}">${esc(def.felder.find((f) => f.k === k)?.t || k)}${sortK === k ? (V.absteigend ? " ▴" : " ▾") : ""}</th>`).join("")}</tr></thead>
+  const tabelle = `<div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr>${def.liste.map((k) => `<th data-a="vwSort" data-x="${k}">${esc(def.felder.find((f) => f.k === k)?.t || k)}${sortK === k ? (V.absteigend ? " ▴" : " ▾") : ""}</th>`).join("")}</tr></thead>
     <tbody>${zeilen.slice(0, 1000).map((z) => `<tr class="${V.auswahl === z.id ? "gewaehlt" : ""}" data-a="vwWahl" data-x="${z.id}">${def.liste.map((k) => { const f = def.felder.find((x) => x.k === k); return `<td title="${esc(f ? String(zellWert(f, z[k])).replace(/<[^>]+>/g, "") : "")}">${f?.typ === "farbe" ? zellWert(f, z[k]) : esc(f ? zellWert(f, z[k]) : z[k] ?? "")}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
   const form = V.auswahl !== null ? formular(V.tab, V.auswahl === "neu" ? neuVorlage(V.tab) : hole(V.tab, V.auswahl), schreiben) : "";
   return kopf + tabelle + (form ? `<div class="vw-modal-hg"><div class="vw-modal" role="dialog" aria-modal="true">${form}</div></div>` : "");
@@ -340,7 +341,7 @@ ANSICHTEN.gruppenboard = () => {
   const ohne = schueler.filter((p) => !stammgruppe(db, p.id));
   const karte = (p) => `<div class="vw-karte" draggable="true" data-person="${p.id}"><span>${esc(name(p))}</span><small>${p.jahrgang ? "Jg " + p.jahrgang : ""} ${esc(hole("instrument_typen", instrumenteVon(db, p.id)[0]?.typ_id)?.name || "")}</small></div>`;
   return `<div class="vw-kopf"><h2>🧩 Gruppen-Board</h2><span class="hinweis">Karte in eine andere Spalte ziehen = genereller Wechsel ab heute (Verlauf bleibt erhalten). Temporäre Zuordnungen: Tabelle „Gruppen-Zuordnung“.</span></div>
-    <div class="vw-board">${gruppen.map((g) => { const m = schueler.filter((p) => stammgruppe(db, p.id) === g.id).sort((a, b) => name(a).localeCompare(name(b))); return `<div class="vw-spalte" data-gruppe="${g.id}"><h3 style="color:${esc(g.farbe)}">${esc(g.kuerzel)} – ${esc(g.name)} <span class="hinweis">(${m.length})</span></h3>${m.map(karte).join("")}</div>`; }).join("")}
+    <div class="vw-board">${gruppen.map((g) => { const m = schueler.filter((p) => stammgruppe(db, p.id) === g.id).sort((a, b) => name(a).localeCompare(name(b))); return `<div class="vw-spalte" data-gruppe="${g.id}"><h3 style="border-left:6px solid ${esc(g.farbe)};padding-left:8px">${esc(g.kuerzel)} – ${esc(g.name)} <span class="hinweis">(${m.length})</span></h3>${m.map(karte).join("")}</div>`; }).join("")}
     ${ohne.length ? `<div class="vw-spalte" data-gruppe=""><h3>ohne Gruppe (${ohne.length})</h3>${ohne.map(karte).join("")}</div>` : ""}</div>`;
 };
 NACH.gruppenboard = () => {
@@ -405,7 +406,7 @@ ANSICHTEN.zugaenge = () => {
   return `<div class="vw-kopf"><h2>🔑 Zugänge & QR-Karten</h2><select data-c="vwZugTyp">${["schueler", "eltern", "lehrkraft", "foerderverein", "leitung", "ehemalig"].map((t) => `<option value="${t}" ${t === typ ? "selected" : ""}>${esc(TABELLEN.personen.felder.find((f) => f.k === "typ").werte[t])}</option>`).join("")}</select>
     ${schreiben ? `<button class="knopf" data-a="zugAlleAnlegen">＋ fehlende Zugänge anlegen</button>` : ""}<button class="knopf haupt" data-a="zugKarten">🖨️ QR-Karten drucken</button></div>
     <div class="karte"><p class="hinweis">Anmeldung ohne Passwort über einen persönlichen Link/QR-Code (wie in der Club-App). Codes werden nur hier gepflegt – sperren, neu erzeugen, Verwaltungsrecht vergeben. Im Echtbetrieb liegt nur ein Hash des Codes auf dem Server.</p></div>
-    <div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Verwaltung</th><th>zuletzt</th><th></th></tr></thead><tbody>${personen.map((p) => {
+    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Verwaltung</th><th>zuletzt</th><th></th></tr></thead><tbody>${personen.map((p) => {
       const z = liste("zugaenge", (x) => x.person_id === p.id)[0];
       return `<tr><td>${esc(name(p))}</td><td><code>${esc(codeVon(z) || (z ? "•••• (verschlüsselt)" : "–"))}</code></td><td>${z ? (z.aktiv ? "✅ aktiv" : "⛔ gesperrt") : "–"}</td><td>${z?.verwaltung ? "💻" : ""}</td><td>${z?.zuletzt ? vorZeit(z.zuletzt) : "nie"}</td>
         <td style="white-space:nowrap">${schreiben ? (z ? `<button class="knopf klein" data-a="zugNeu" data-x="${z.id}">🔄 neuer Code</button> <button class="knopf klein" data-a="zugAktiv" data-x="${z.id}">${z.aktiv ? "sperren" : "freigeben"}</button> <button class="knopf klein" data-a="zugVw" data-x="${z.id}">💻</button>` : `<button class="knopf klein" data-a="zugAnlegen" data-x="${p.id}">anlegen</button>`) : ""} ${codeVon(z) ? `<button class="knopf klein" data-a="zugLink" data-x="${esc(codeVon(z))}">🔗</button>` : ""}</td></tr>`;
@@ -499,7 +500,7 @@ ANSICHTEN.inventarbericht = () => {
     ${probleme.length && IV.status !== "probleme" ? `<div class="karte inv-achtung"><b>⚠️ ${probleme.length} Problemfälle:</b> ${probleme.slice(0, 8).map((x) => `<button class="link" data-a="invOeffnen" data-x="${x.tab}|${x.id}">${esc(x.nr)} ${esc(x.name.split(" · ")[0])} (${esc(INVENTAR_STATUS[x.z.status])})</button>`).join(" · ")}${probleme.length > 8 ? " …" : ""} <button class="link" data-a="invFeldSetzen" data-x="status:probleme">alle zeigen ›</button></div>` : ""}
     ${abgaengeJahr.length ? `<div class="hinweis">Abgänge ${IV.jahr}: ${abgaengeJahr.map((x) => `${esc(x.nr)} ${esc(INVENTAR_STATUS[x.z.status])} (Buchwert ${geld(x.afa.buchwertAbgang ?? x.afa.restwert)})`).join(" · ")}</div>` : ""}
     ${IV.modus === "inventur" ? `<div class="karte inv-inventur"><b>✅ Inventur:</b> Gegenstand gefunden → „gesehen“ (Datum heute). Nicht gefunden → anklicken, Status „vermisst“. <button class="knopf klein" data-a="invAlleGesehen">alle angezeigten als gesehen</button> <button class="knopf klein" data-a="invModus" data-x="liste">fertig</button></div>` : ""}
-    <div class="vw-tabelle-wrap"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Nr.</th><th>Bezeichnung</th><th>Kategorie</th><th>Anz.</th><th>Status</th><th>Standort</th><th>Anschaffung</th><th>Preis</th><th>AfA</th><th>AfA ${IV.jahr}</th><th>Restwert</th>${IV.modus === "inventur" ? "<th>Inventur</th>" : ""}</tr></thead>
+    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Nr.</th><th>Bezeichnung</th><th>Kategorie</th><th>Anz.</th><th>Status</th><th>Standort</th><th>Anschaffung</th><th>Preis</th><th>AfA</th><th>AfA ${IV.jahr}</th><th>Restwert</th>${IV.modus === "inventur" ? "<th>Inventur</th>" : ""}</tr></thead>
       <tbody>${l.map(zeile).join("") || `<tr><td colspan="12" class="hinweis">Nichts gefunden.</td></tr>`}</tbody>
       <tfoot><tr><td colspan="7"><b>Summe (${l.length} Positionen, ${summe(l, (x) => x.anzahl)} Stück)</b></td><td class="r"><b>${geld(summe(l, (x) => x.afa.basis))}</b></td><td></td><td class="r"><b>${geld(summe(l, (x) => x.afa.afaJahr))}</b></td><td class="r"><b>${geld(summe(l, (x) => x.afa.restwert))}</b></td>${IV.modus === "inventur" ? "<td></td>" : ""}</tr></tfoot></table></div>
     <p class="hinweis">Abschreibung: linear monatsgenau ab Anschaffungsmonat, bis ${geld(800)} sofort (GWG) – Richtwerte je Kategorie (Instrumente 10 Jahre). Im Datensatz lässt sich Art und Nutzungsdauer ändern; maßgeblich sind die Vorgaben von Kassenprüfung bzw. Steuerberatung. Eigentum der Schule gehört meist nicht ins Anlagenverzeichnis des Fördervereins – dafür der Filter „Eigentümer“.</p>
@@ -546,7 +547,7 @@ ANSICHTEN.anwesenheit = () => {
       <select data-c="awFeld" data-x="gr"><option value="">alle Gruppen</option>${gruppen.map((g) => `<option value="${g.id}" ${AW.gr === g.id ? "selected" : ""}>${esc(g.kuerzel)} – ${esc(g.name)}</option>`).join("")}</select>
       <select data-c="awFeld" data-x="tage">${[[30, "30 Tage"], [90, "3 Monate"], [180, "Halbjahr"], [365, "Schuljahr / 1 Jahr"]].map(([k, t]) => `<option value="${k}" ${AW.tage === k ? "selected" : ""}>${t}</option>`).join("")}</select>
       <button class="knopf" data-a="awCsv">📤 CSV</button></div>
-    <div class="vw-tabelle-wrap"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Name</th><th>Gruppe</th><th class="r">✅ da</th><th class="r">⏰ verspätet</th><th class="r">🟡 entschuldigt</th><th class="r">❌ unentschuldigt</th><th class="r">erfasst</th><th class="r">Quote</th></tr></thead>
+    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Name</th><th>Gruppe</th><th class="r">✅ da</th><th class="r">⏰ verspätet</th><th class="r">🟡 entschuldigt</th><th class="r">❌ unentschuldigt</th><th class="r">erfasst</th><th class="r">Quote</th></tr></thead>
       <tbody>${l.map((z) => `<tr class="${z.nein >= 2 || (z.quote ?? 100) < 70 ? "inv-problem" : ""}"><td>${esc(z.name)}</td><td>${esc(z.gruppe)}</td><td class="r">${z.ja}</td><td class="r">${z.spaet}</td><td class="r">${z.entschuldigt}</td><td class="r">${z.nein}</td><td class="r">${z.erfasst}</td><td class="r"><b>${z.quote == null ? "UNBEKANNT" : z.quote + " %"}</b></td></tr>`).join("") || '<tr><td colspan="8" class="hinweis">Keine Anwesenheit erfasst.</td></tr>'}</tbody></table></div>
     <p class="hinweis">Quote = (da + verspätet) ÷ erfasste Termine. Rot: 2× unentschuldigt oder unter 70 %. Erfasst wird in der App im Termin unter „Teilnehmer“.</p>`;
 };
@@ -645,8 +646,8 @@ ANSICHTEN.abgleich = () => {
   const prot = liste("aenderungen").slice(-200).reverse();
   return `<div class="vw-kopf"><h2>🔁 Abgleich & Protokoll</h2></div>
     <div class="karte"><p>Datenquelle: <b>${esc(info.art)}</b> · ${esc(info.hinweis || "")}</p><p class="hinweis">Jede Tabelle hat die Abgleich-Spalten <code>version</code>, <code>geaendert_am</code>, <code>geaendert_von</code> und <code>geloescht_am</code> (weiches Löschen). Im Echtbetrieb übernimmt Supabase den Abgleich zwischen App und Verwaltung; ein Spiegel-Job kopiert nach Neon, Backups gehen nach B2.</p></div>
-    <div class="vw-geteilt"><div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr><th>Tabelle</th><th>Datensätze</th><th>gelöscht</th><th>letzte Änderung</th></tr></thead><tbody>${TABELLEN_NAMEN.map((t) => { const alle = liste(t); const letzte = alle.reduce((m, z) => (z.geaendert_am > m ? z.geaendert_am : m), ""); return `<tr><td>${TABELLEN[t].sym} bk_${t}</td><td>${alle.length}</td><td>${listeMitGeloeschten(t).length - alle.length}</td><td>${letzte ? vorZeit(letzte) : "–"}</td></tr>`; }).join("")}</tbody></table></div>
-    <div class="vw-form"><h3>Änderungsprotokoll</h3><ul class="liste">${prot.map((a) => `<li><div class="fl"><b>${esc(TABELLEN[a.tabelle]?.titel || a.tabelle)}</b> · ${esc(a.aktion)}<div class="zeile-unter">${esc(a.wer)} · ${esc(a.quelle)} · ${vorZeit(a.zeit)}</div></div></li>`).join("") || "<li>leer</li>"}</ul></div></div>`;
+    <div class="vw-geteilt"><div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Tabelle</th><th>Datensätze</th><th>gelöscht</th><th>letzte Änderung</th></tr></thead><tbody>${TABELLEN_NAMEN.map((t) => { const alle = liste(t); const letzte = alle.reduce((m, z) => (z.geaendert_am > m ? z.geaendert_am : m), ""); return `<tr><td>${TABELLEN[t].sym} bk_${t}</td><td>${alle.length}</td><td>${listeMitGeloeschten(t).length - alle.length}</td><td>${letzte ? vorZeit(letzte) : "–"}</td></tr>`; }).join("")}</tbody></table></div>
+    <div class="vw-form" tabindex="0" role="region" aria-label="Änderungsprotokoll"><h3>Änderungsprotokoll</h3><ul class="liste">${prot.map((a) => `<li><div class="fl"><b>${esc(TABELLEN[a.tabelle]?.titel || a.tabelle)}</b> · ${esc(a.aktion)}<div class="zeile-unter">${esc(a.wer)} · ${esc(a.quelle)} · ${vorZeit(a.zeit)}</div></div></li>`).join("") || "<li>leer</li>"}</ul></div></div>`;
 };
 
 
@@ -676,7 +677,7 @@ ANSICHTEN.communicator = () => {
     <div class="karte"><h3>Anbieter</h3><ul class="liste">${anbieter.map(({ a, z, routen }) => `<li><i class="led ${a.aktiv === false ? "grau" : zFarbe[z?.status || "unbekannt"]}"></i><div class="fl"><b>${esc(a.name)}</b> <span class="hinweis">${esc(a.kanal)} · ${esc(a.art)}${a.kostenlos ? " · kostenlos" : " · kostenpflichtig"}${routen.length ? " · Route " + routen.map((r) => "#" + r.rang).join(", ") : " · keine Route"}${a.aktiv === false ? " · inaktiv" : ""}</span>
       <div class="zeile-unter">${esc(KOM_ZUSTAND[z?.status] || "unbekannt")}${z?.fehler_folge ? ` · ${z.fehler_folge} Fehler in Folge` : ""}${z?.gesendet_24h ? ` · ${z.gesendet_24h} gesendet (24 Std.)` : ""}${z?.letzter_erfolg ? ` · zuletzt ok ${vorZeit(z.letzter_erfolg)}` : ""}${z?.fehler_text ? ` · ${esc(z.fehler_text)}` : ""}${a.geheimnis ? ` · Secret: <code>${esc(a.geheimnis)}</code>` : ""}</div></div></li>`).join("")}</ul></div>
     <div class="karte"><h3>Einstellen</h3><div class="knopfreihe">${KOM_TABS.filter((t) => darf(t, "lesen")).map((t) => `<button class="knopf" data-a="vwTabelle" data-x="${t}">${TABELLEN[t].sym} ${esc(TABELLEN[t].titel.replace("Communicator: ", ""))}</button>`).join("")}</div></div>
-    <div class="vw-geteilt"><div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr><th>Zeit</th><th>Kanal</th><th>an</th><th>Betreff</th><th>Status</th><th>Anbieter</th><th>Vers.</th><th>Fehler</th></tr></thead><tbody>
+    <div class="vw-geteilt"><div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Zeit</th><th>Kanal</th><th>an</th><th>Betreff</th><th>Status</th><th>Anbieter</th><th>Vers.</th><th>Fehler</th></tr></thead><tbody>
       ${v.slice(0, 300).map((x) => `<tr class="${V.komAuftrag === x.id ? "gewaehlt" : ""}" data-a="komWahl" data-x="${x.id}"><td>${vorZeit(x.zeit)}</td><td>${esc(KOM_KANAELE[x.kanal] || x.kanal)}</td><td>${nameP(x.an_id)}</td><td>${esc(x.betreff || "")}</td><td><span class="badge ${stFarbe(x.status)}">${esc(KOM_STATUS[x.status] || x.status)}</span></td><td>${esc(hole("kom_anbieter", x.anbieter_id)?.name || "")}</td><td>${x.versuche ?? ""}</td><td>${esc(x.fehler_code || "")}</td></tr>`).join("") || `<tr><td colspan="8" class="hinweis">noch keine Aufträge</td></tr>`}</tbody></table></div>
     ${gewaehlt ? `<div class="vw-form"><h3>${esc(gewaehlt.betreff || "Auftrag")}</h3><p>${esc(KOM_KANAELE[gewaehlt.kanal] || gewaehlt.kanal)} → <b>${nameP(gewaehlt.an_id)}</b> · <span class="badge ${stFarbe(gewaehlt.status)}">${esc(KOM_STATUS[gewaehlt.status] || gewaehlt.status)}</span></p>
       <p class="hinweis">Ereignis ${esc(gewaehlt.ereignis || "–")} · Programm ${esc(gewaehlt.programm || "–")} · Priorität ${esc(gewaehlt.prioritaet || "–")}${gewaehlt.naechster_versuch ? ` · nächster Versuch ${datumKurz(gewaehlt.naechster_versuch)} ${new Date(gewaehlt.naechster_versuch).toTimeString().slice(0, 5)}` : ""}${gewaehlt.fehler_text ? `<br>Fehler: ${esc(gewaehlt.fehler_text)}` : ""}</p>

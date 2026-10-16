@@ -1,6 +1,6 @@
 // Gemeinsamer Zustand der App: angemeldete Person, Ansicht (Rolle), Navigation, Geräte-Einstellungen.
 import * as D from "../kern/daten.js";
-import { esc, $, toast } from "../kern/ui.js";
+import { esc, $, toast, beschriftungenVerknuepfen } from "../kern/ui.js";
 
 export const db = { liste: D.liste, hole: D.hole, konfig: D.konfig };
 export const S = { ich: null, ansicht: "leitung", view: "start", params: {}, register: "bachkreis", verlauf: [] };
@@ -68,6 +68,7 @@ export function zeichne() {
   try {
     ziel.innerHTML = v.render(S.params);
     v.nach?.(ziel, S.params);
+    beschriftungenVerknuepfen(ziel);
   } catch (e) {
     console.error(e);
     ziel.innerHTML = `<div class="karte"><h3>⚠️ Fehler beim Anzeigen</h3><p class="hinweis">${esc(e.message)}</p><button class="knopf" data-a="start">Zur Startseite</button></div>`;

@@ -39,6 +39,7 @@ export function blatt(titel, inhalt) {
   hg.innerHTML = `<div class="blatt" role="dialog" aria-modal="true" aria-label="${esc(titel)}"><h3>${esc(titel)}</h3>${inhalt}<button class="knopf breit" data-a="blattZu">Schließen</button></div>`;
   hg.addEventListener("click", (e) => { if (e.target === hg) blattZu(); });
   document.body.appendChild(hg);
+  beschriftungenVerknuepfen(hg);
   return hg.querySelector(".blatt");
 }
 export function blattZu() { $("#blattHg")?.remove(); }
@@ -85,3 +86,22 @@ export function formWerte(wurzel) {
 }
 
 export const BACHKREIS_LOGO = `<img class="bk-logo" src="icons/logo.png" alt="Bachkreis Bergkamen" width="256" height="256">`;
+
+// ♿ 0.25.0 (axe-Prüfung): Beschriftungen ohne for= mit dem folgenden Eingabefeld verknüpfen – Bildschirmleser lesen dann den Feldnamen vor.
+let _lid = 0;
+export function beschriftungenVerknuepfen(wurzel) {
+  wurzel?.querySelectorAll?.("label:not([for])").forEach((l) => {
+    if (l.querySelector("input,select,textarea")) return;
+    const e = l.nextElementSibling;
+    if (!e || !/^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)) return;
+    if (!e.id) e.id = "bkf" + ++_lid;
+    l.htmlFor = e.id;
+  });
+  // Felder ganz ohne Beschriftung (Filter-Auswahl, Haken in Tabellen): Namen aus Titel, Platzhalter, Text davor, erster Option oder Zeile
+  wurzel?.querySelectorAll?.("select,input:not([type=hidden]):not([type=button]):not([type=submit]),textarea").forEach((e) => {
+    if (e.closest("label") || e.getAttribute("aria-label") || e.getAttribute("aria-labelledby") || (e.id && wurzel.querySelector?.(`label[for="${CSS.escape(e.id)}"]`))) return;
+    const vorher = e.previousSibling?.textContent?.trim();
+    const n = e.title || e.placeholder || (vorher && vorher.length < 40 ? vorher : "") || (e.tagName === "SELECT" ? e.options[0]?.textContent : "") || e.closest("tr,li")?.textContent?.trim().replace(/\s+/g, " ").slice(0, 60) || e.name || e.dataset.x || "";
+    if (n) e.setAttribute("aria-label", n.trim());
+  });
+}

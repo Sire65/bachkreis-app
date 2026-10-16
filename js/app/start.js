@@ -1,7 +1,8 @@
 // Startseite nach Club-Vorbild: Kopf mit Statusleiste/LEDs, Register (Bachkreis · Meins · Technik · Admin), Kacheln.
 import { S, VIEWS, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istVerwalter, istVorstand, istEltern, istSchueler, hatRolle, vorname, ANSICHTEN, fehlerListe } from "./zustand.js";
 import { esc, AKTIONEN, blatt, datum, uhr } from "../kern/ui.js";
-import { liste, datenInfo } from "../kern/daten.js";
+import { liste, hole, datenInfo } from "../kern/daten.js";
+import { nsId, nachrichtFrei } from "../kern/schema.js";
 import { cockpit, termineFuer, antwortVon, kinderVon, genehmigungStatus, ausleihenVon } from "../kern/logik.js";
 import { communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
@@ -19,11 +20,17 @@ function offeneAntworten() {
   for (const p of ids) for (const t of termineFuer(db, p)) if (t.status !== "abgesagt" && !antwortVon(db, t.id, p)) n++;
   return n;
 }
+// Gelesen? Eigene Nachrichten immer; sonst ✓✓-Status (gelesen_am), ältere Daten (gelesen_von) oder – ohne Lesebestätigung – nur auf diesem Gerät gemerkt
+const LOKAL_GELESEN = new Set((() => { try { return JSON.parse(localStorage.getItem("bk_gelesen_lokal") || "[]"); } catch { return []; } })());
+export function lokalGelesen(ids) { ids.forEach((id) => LOKAL_GELESEN.add(id)); try { localStorage.setItem("bk_gelesen_lokal", JSON.stringify([...LOKAL_GELESEN].slice(-3000))); } catch {} }
+export const gelesenVonMir = (n) => n.von === S.ich?.id || (n.gelesen_von || []).includes(S.ich?.id) || !!hole("nachricht_status", nsId(n.id, S.ich?.id))?.gelesen_am || LOKAL_GELESEN.has(n.id);
 export function ungelesen() {
-  return meineUnterhaltungen().reduce((s, u) => s + liste("nachrichten", (n) => n.unterhaltung_id === u.id && !(n.gelesen_von || []).includes(S.ich.id)).length, 0);
+  if (!S.ich) return 0;
+  return meineUnterhaltungen().reduce((s, u) => s + liste("nachrichten", (n) => n.unterhaltung_id === u.id && nachrichtFrei(n) && !gelesenVonMir(n)).length, 0);
 }
 export function meineUnterhaltungen() {
-  return liste("unterhaltungen").filter((u) => istLeitung() || (u.mitglieder || []).includes(S.ich.id) || imVerteiler(u.verteiler));
+  // Einzelchats und Runden sind privat – auch die Leitung sieht nur die, in denen sie dabei ist
+  return liste("unterhaltungen").filter((u) => (u.mitglieder || []).includes(S.ich.id) || (!["einzel", "runde"].includes(u.art) && (istLeitung() || imVerteiler(u.verteiler))));
 }
 function imVerteiler(v) {
   if (!v) return false;

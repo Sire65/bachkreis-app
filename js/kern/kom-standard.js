@@ -34,6 +34,9 @@ export const KOM_STANDARD = {
   ],
   kom_regeln: [
     R("nachricht", "kp-app", ["push", "app"], "rueckfall", "kv-standard", { eltern: "nein" }),
+    // wie KC: ❗ wichtig geht per Push UND E-Mail raus; 🏎️ Express kommt sofort durch – auch nachts (Ruhezeit gilt nicht)
+    R("nachricht_wichtig", "kp-app", ["push", "mail", "app"], "alle", "kv-standard", { prioritaet: "hoch", eltern: "nein" }),
+    R("express", "kp-app", ["push", "mail", "app"], "alle", "kv-standard", { prioritaet: "hoch", ruhezeit: "ignorieren", eltern: "nein" }),
     R("rundschreiben", "kp-leitung", ["push", "mail", "app"], "alle", "kv-standard"),
     R("termin_neu", "kp-termine", ["push", "mail", "app"], "rueckfall", "kv-termin"),
     R("termin_geaendert", "kp-termine", ["push", "mail", "app"], "rueckfall", "kv-termin", { prioritaet: "hoch" }),

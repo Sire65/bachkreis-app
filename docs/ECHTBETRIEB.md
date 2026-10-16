@@ -20,6 +20,11 @@ Server-Teil. Dieser ist **fertig gebaut und getestet**; er wird nur noch im Supa
   - Chat und Rückmeldungen
   - Schadensmeldungen, Änderungsmeldungen, Wechselwünsche
   - eigene Pinnwand-Zettel und Benachrichtigungs-Einstellungen
+- **Nachrichten (wie KC):** Die Regeln prüft der Server, nicht die App.
+  - Einzelchats und Runden sind privat; die Kinderschutz-Regel gilt für neue Chats (`chatPartnerErlaubt`).
+  - Express ist auf 5 am Tag begrenzt, Bearbeiten auf 15 Minuten. Nachrichten-Status setzt jede Person nur für sich.
+  - Geplante Nachrichten bleiben bis zur Sendezeit verborgen; `bk-kom` gibt sie jede Minute frei.
+  - Schon eingespielte Datenbanken bekommen die neuen Spalten und die Tabelle `nachricht_status` mit der Nachtrags-Migration `20261019000000_bk_nachrichten.sql`.
 - **Pinnwand (wie KC):** Die Regeln prüft der Server, nicht die App.
   - Wer einen Zettel sieht: der Verfasser, die Empfänger, bei „für alle“ alle. Private Zettel sieht auch die Leitung nicht.
   - Anheften: höchstens 4 Zettel je Person, je 200 Zeichen. Farbe (1–4), Zeit und Empfängerzahl setzt der Server.
@@ -34,7 +39,7 @@ Server-Teil. Dieser ist **fertig gebaut und getestet**; er wird nur noch im Supa
   - Jede Änderung wird im Änderungsprotokoll festgehalten.
 - **Versand:** Der BK Communicator nimmt Benachrichtigungen an, legt Aufträge in `bk_versand` an und stellt sie über Web-Push und E-Mail zu. Die Edge Function `bk-kom` wartet jede Minute (siehe `KOMMUNIKATION.md`).
 
-Getestet wird in `tests/server.test.mjs` (16 Tests gegen PostgreSQL/PGlite) und `tests/e2e/echtbetrieb.mjs` (Browser).
+Getestet wird in `tests/server.test.mjs` (16 Tests gegen PostgreSQL/PGlite, dazu 8 in `tests/nachrichten.test.mjs`) und `tests/e2e/echtbetrieb.mjs` (Browser).
 Lokal ausprobieren: `node tests/e2e/server-lokal.mjs` startet App und Server mit Demodaten. Die Zugangscodes erscheinen
 in der Konsole.
 

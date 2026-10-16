@@ -1,88 +1,13 @@
-// Kommunikation: Unterhaltungen (Gruppen/Verteiler), Rundschreiben mit Rückmeldung an automatische Zielgruppen,
-// Pinnwand, SOS. Vorbild: KC Club Nachrichten/Communicator, SOS-Kachel, Pinnwand.
-import { S, VIEWS, db, zeige, kopf, name, istLeitung, istLehrkraft, istVerwalter, istEltern } from "./zustand.js";
-import { meineUnterhaltungen } from "./start.js";
-import { esc, AKTIONEN, datumKurz, uhr, vorZeit, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
+// Kommunikation: Rundschreiben mit Rückmeldung an automatische Zielgruppen und SOS. Vorbild: KC Club Communicator, SOS-Kachel.
+// Nachrichten/Chats stehen in nachrichten.js, die Pinnwand in pinnwand.js.
+import { S, VIEWS, db, zeige, kopf, name, istLehrkraft, istEltern } from "./zustand.js";
+import { esc, AKTIONEN, toast, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
-import { verteilerListe, verteilerAufloesen, kinderVon, elternVon, waLink, wirksameGruppen } from "../kern/logik.js";
+import { verteilerListe, verteilerAufloesen, elternVon } from "../kern/logik.js";
 import { senden, whatsapp, KANAELE } from "../kern/versand.js";
 import { papierflieger } from "./effekte.js";
-import { cfAnwenden } from "./darstellung.js";
-import { einst } from "./zustand.js";
 
-// 🔊 Neue Nachrichten vorlesen (KC: „Neue Nachrichten vorlesen“) – nur im geöffneten Chat, nur fremde, noch ungelesene
-function nachrichtenVorlesen(uid) {
-  if (einst().vorlesen !== true || !("speechSynthesis" in globalThis)) return;
-  const neu = liste("nachrichten", (x) => x.unterhaltung_id === uid && x.von !== S.ich.id && !(x.gelesen_von || []).includes(S.ich.id)).slice(-3);
-  for (const n of neu) { const u = new SpeechSynthesisUtterance(`${name(n.von)} schreibt: ${n.text}`); u.lang = "de-DE"; speechSynthesis.speak(u); }
-}
-
-// ---------- Unterhaltungen ----------
-VIEWS.nachrichten = {
-  render() {
-    const us = meineUnterhaltungen().map((u) => {
-      const n = liste("nachrichten", (x) => x.unterhaltung_id === u.id).sort((a, b) => a.zeit.localeCompare(b.zeit));
-      return { u, letzte: n[n.length - 1], neu: n.filter((x) => !(x.gelesen_von || []).includes(S.ich.id)).length };
-    }).sort((a, b) => (b.letzte?.zeit || "").localeCompare(a.letzte?.zeit || ""));
-    const rechts = istVerwalter() ? `<button class="knopf haupt klein" data-a="kachel" data-x="rundschreiben">📣 Rundschreiben</button>` : "";
-    return kopf("💬 Nachrichten", rechts) + `<div class="karte"><ul class="liste">${us.map(({ u, letzte, neu }) => `<li class="klick" data-a="oeffne" data-x="unterhaltung|${u.id}">
-      <span style="font-size:1.5rem">${u.art === "verteiler" ? "📣" : "👥"}</span><div class="fl"><div class="zeile-titel">${esc(u.titel)}</div><div class="zeile-unter">${letzte ? esc(name(letzte.von).split(" ")[0]) + ": " + esc(letzte.text.slice(0, 60)) : "noch keine Nachricht"}</div></div>
-      <div style="text-align:right"><div class="hinweis">${letzte ? vorZeit(letzte.zeit) : ""}</div>${neu ? `<span class="badge b-rot">${neu}</span>` : ""}</div></li>`).join("") || '<li class="leer">Keine Unterhaltungen</li>'}</ul></div>`;
-  },
-};
-VIEWS.unterhaltung = {
-  render({ id }) {
-    const u = hole("unterhaltungen", id);
-    if (!u) return kopf("Nachrichten") + '<div class="leer">Nicht gefunden.</div>';
-    const ns = liste("nachrichten", (x) => x.unterhaltung_id === id).sort((a, b) => a.zeit.localeCompare(b.zeit));
-    const darfSchreiben = u.art !== "verteiler" || istVerwalter();
-    const empf = empfaengerVon(u);
-    return kopf(esc(u.titel), `<span class="hinweis">${empf.length} Pers.</span>`) + `<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat">${ns.map((n) => {
-      const ich = n.von === S.ich.id;
-      const rueck = n.rueckmeldung ? rueckmeldungHtml(n) : "";
-      return `<div class="blase ${ich ? "ich" : ""}" id="msg-${n.id}">${ich ? "" : `<div class="von">${esc(name(n.von))}</div>`}${esc(n.text).replace(/\n/g, "<br>")}${rueck}<div class="zeit">${datumKurz(n.zeit)} ${uhr(n.zeit)}${istLeitung() && ich ? ` · gelesen ${(n.gelesen_von || []).length - 1}/${empf.length - 1}` : ""}</div></div>`;
-    }).join("") || '<div class="leer">Noch keine Nachrichten.</div>'}</div>
-    ${darfSchreiben ? `<div class="eingabe"><textarea id="nachrichtText" placeholder="Nachricht …" rows="1"></textarea><button class="knopf haupt" data-a="nachrichtSenden" data-x="${id}">➤</button></div>` : '<p class="hinweis">Rundschreiben – nur die Leitung kann hier schreiben.</p>'}`;
-  },
-  async nach(_, { id }) {
-    window.scrollTo(0, document.body.scrollHeight);
-    cfAnwenden(); // Chat-Hintergrund
-    nachrichtenVorlesen(id);
-    // als gelesen markieren (läuft im Hintergrund weiter, auch wenn schon eine andere Ansicht offen ist)
-    const ich = S.ich.id;
-    for (const n of liste("nachrichten", (x) => x.unterhaltung_id === id && !(x.gelesen_von || []).includes(ich)))
-      await speichere("nachrichten", { ...n, gelesen_von: [...(n.gelesen_von || []), ich] }, { still: true });
-  },
-};
-function empfaengerVon(u) {
-  if (u.verteiler) {
-    const ids = verteilerAufloesen(db, u.verteiler);
-    return [...new Set([...ids, ...(u.mitglieder || []), konfig().leitung_id])];
-  }
-  return u.mitglieder || [];
-}
-function rueckmeldungHtml(n) {
-  const r = n.rueckmeldungen || {};
-  const meine = r[S.ich.id];
-  const zahl = (w) => Object.values(r).filter((x) => x === w).length;
-  return `<div class="knopfreihe">${[["ja", "👍 Ja / dabei"], ["nein", "👎 Nein"], ["gelesen", "👁️ Gelesen"]].map(([k, t]) => `<button class="knopf klein ${meine === k ? "gruen" : ""}" data-a="rueckmelden" data-x="${n.id}|${k}">${t}${istLeitung() ? " " + zahl(k) : ""}</button>`).join("")}</div>`;
-}
-AKTIONEN.rueckmelden = async (x) => {
-  const [id, w] = x.split("|");
-  const n = hole("nachrichten", id);
-  await speichere("nachrichten", { ...n, rueckmeldungen: { ...(n.rueckmeldungen || {}), [S.ich.id]: w } });
-  toast("Rückmeldung gespeichert");
-  zeige(S.view, S.params, { ersetzen: true });
-};
-AKTIONEN.nachrichtSenden = async (id) => {
-  const text = document.getElementById("nachrichtText").value.trim();
-  if (!text) return;
-  const u = hole("unterhaltungen", id);
-  papierflieger(document.querySelector('[data-a="nachrichtSenden"]'), false); // Sende-Effekt (Papierflieger, Taube, Postauto …)
-  await speichere("nachrichten", { unterhaltung_id: id, von: S.ich.id, text, zeit: new Date().toISOString(), gelesen_von: [S.ich.id] });
-  await senden({ an: empfaengerVon(u).filter((p) => p !== S.ich.id), betreff: u.titel, text, ereignis: "nachricht", kanaele: ["push"], unterhaltung_id: id });
-  zeige(S.view, S.params, { ersetzen: true });
-};
+// Chatliste, Unterhaltungen, Haken, Express usw.: eigenes Modul nachrichten.js (wie KC Club App)
 
 // ---------- Rundschreiben ----------
 VIEWS.rundschreiben = {

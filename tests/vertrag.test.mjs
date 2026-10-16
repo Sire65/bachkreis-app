@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { APP_VERSION, APP_STUFE } from "../js/kern/version.js";
 import { erzeugeSql, erzeugeNachtragSql, NACHTRAEGE } from "../tools/schema-sql.mjs";
-import { serverSchema } from "../tools/server-kopie.mjs";
+import { serverSchema, serverLogik } from "../tools/server-kopie.mjs";
 import { UMGEBUNG } from "../js/kern/umgebung.js";
 
 const W = path.resolve(import.meta.dirname, "..");
@@ -72,6 +72,7 @@ test("Keine externen Skripte/Dienste im Browsercode (Zero-Cost, Datenschutz)", (
 
 test("Server-Kopie der Tabellen-Registry ist aktuell (npm run schema)", () => {
   assert.equal(lies("supabase/functions/_shared/schema.js"), serverSchema());
+  assert.equal(lies("supabase/functions/_shared/logik.js"), serverLogik());
 });
 
 test("Repository steht auf Vorführversion – Echtbetrieb nur über die Veröffentlichung (Variablen)", () => {

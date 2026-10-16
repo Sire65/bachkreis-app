@@ -340,7 +340,7 @@ create trigger bk_antworten_stempel before update on bk_antworten for each row e
 create table if not exists bk_unterhaltungen (
   id text primary key default gen_random_uuid()::text,
   titel text not null,
-  art text check (art is null or art in ('gruppe', 'einzel', 'verteiler')),
+  art text check (art is null or art in ('gruppe', 'einzel', 'runde', 'verteiler')),
   verteiler text,
   mitglieder text[],
   version integer not null default 1,
@@ -362,8 +362,19 @@ create table if not exists bk_nachrichten (
   text text not null,
   zeit timestamptz,
   rueckmeldung boolean,
+  wichtig boolean,
+  express boolean,
+  antwort_auf text,
+  kanaele text[],
+  geplant_um timestamptz,
+  wiederholung text check (wiederholung is null or wiederholung in ('einmal', 'taeglich', 'werktags', 'woechentlich', 'monatlich')),
   gelesen_von text[],
   rueckmeldungen jsonb,
+  reaktionen jsonb,
+  anzahl integer,
+  bearbeitet_am timestamptz,
+  zurueckgezogen_am timestamptz,
+  geplant_frei timestamptz,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -374,6 +385,27 @@ create index if not exists bk_nachrichten_geaendert on bk_nachrichten (geaendert
 alter table bk_nachrichten enable row level security;
 drop trigger if exists bk_nachrichten_stempel on bk_nachrichten;
 create trigger bk_nachrichten_stempel before update on bk_nachrichten for each row execute function bk_abgleich_stempel();
+
+-- Nachrichten: angekommen & gelesen
+create table if not exists bk_nachricht_status (
+  id text primary key default gen_random_uuid()::text,
+  nachricht_id text not null,
+  person_id text not null,
+  autor_id text,
+  zugestellt_am timestamptz,
+  gelesen_am timestamptz,
+  express_antwort text check (express_antwort is null or express_antwort in ('geoeffnet', 'spaeter', 'nein')),
+  express_bestaetigt_am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_nachricht_status_geaendert on bk_nachricht_status (geaendert_am);
+alter table bk_nachricht_status enable row level security;
+drop trigger if exists bk_nachricht_status_stempel on bk_nachricht_status;
+create trigger bk_nachricht_status_stempel before update on bk_nachricht_status for each row execute function bk_abgleich_stempel();
 
 -- Pinnwand
 create table if not exists bk_pinnwand (
@@ -684,7 +716,7 @@ create trigger bk_kom_vorlagen_stempel before update on bk_kom_vorlagen for each
 -- Communicator: Regeln je Ereignis
 create table if not exists bk_kom_regeln (
   id text primary key default gen_random_uuid()::text,
-  ereignis text not null check (ereignis is null or ereignis in ('termin_neu', 'termin_geaendert', 'erinnerung', 'nachfassen', 'nachricht', 'rundschreiben', 'genehmigung', 'instrument', 'pinnwand', 'sos', 'test', 'standard')),
+  ereignis text not null check (ereignis is null or ereignis in ('termin_neu', 'termin_geaendert', 'erinnerung', 'nachfassen', 'nachricht', 'nachricht_wichtig', 'express', 'rundschreiben', 'genehmigung', 'instrument', 'pinnwand', 'sos', 'test', 'standard')),
   programm_id text not null,
   kanaele text[],
   modus text check (modus is null or modus in ('rueckfall', 'alle')),
@@ -753,7 +785,7 @@ create trigger bk_kom_routen_stempel before update on bk_kom_routen for each row
 create table if not exists bk_kom_eskalationen (
   id text primary key default gen_random_uuid()::text,
   name text not null,
-  ereignis text not null check (ereignis is null or ereignis in ('termin_neu', 'termin_geaendert', 'erinnerung', 'nachfassen', 'nachricht', 'rundschreiben', 'genehmigung', 'instrument', 'pinnwand', 'sos', 'test', 'standard')),
+  ereignis text not null check (ereignis is null or ereignis in ('termin_neu', 'termin_geaendert', 'erinnerung', 'nachfassen', 'nachricht', 'nachricht_wichtig', 'express', 'rundschreiben', 'genehmigung', 'instrument', 'pinnwand', 'sos', 'test', 'standard')),
   ausloeser text not null check (ausloeser is null or ausloeser in ('nicht_quittiert', 'fehlgeschlagen')),
   warte_sekunden integer,
   kanaele text[],
@@ -859,6 +891,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_antwo
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_antworten_register_id_fk') then alter table bk_antworten add constraint bk_antworten_register_id_fk foreign key (register_id) references bk_register(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_unterhaltung_id_fk') then alter table bk_nachrichten add constraint bk_nachrichten_unterhaltung_id_fk foreign key (unterhaltung_id) references bk_unterhaltungen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_von_fk') then alter table bk_nachrichten add constraint bk_nachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_nachricht_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_nachricht_id_fk foreign key (nachricht_id) references bk_nachrichten(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_person_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_autor_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_autor_id_fk foreign key (autor_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_von_fk') then alter table bk_pinnwand add constraint bk_pinnwand_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_gelesen_zettel_id_fk') then alter table bk_pinnwand_gelesen add constraint bk_pinnwand_gelesen_zettel_id_fk foreign key (zettel_id) references bk_pinnwand(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_gelesen_person_id_fk') then alter table bk_pinnwand_gelesen add constraint bk_pinnwand_gelesen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;

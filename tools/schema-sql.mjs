@@ -71,6 +71,8 @@ const komZeile = (t, r) => `insert into bk_${t} select * from jsonb_populate_rec
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261019000000_bk_nachrichten.sql": { titel: "Nachrichten wie in der KC Club App (0.8.0)", tabellen: ["nachrichten", "nachricht_status"],
+    pruefungen: [["unterhaltungen", "art"], ["kom_regeln", "ereignis"], ["kom_eskalationen", "ereignis"]], kom: { kom_regeln: ["kr-nachricht_wichtig", "kr-express"] } },
   "20261018000000_bk_pinnwand.sql": { titel: "Pinnwand wie in der KC Club App (0.7.0)", tabellen: ["pinnwand", "pinnwand_gelesen"], pruefungen: [["kom_regeln", "ereignis"], ["kom_eskalationen", "ereignis"]], kom: { kom_regeln: ["kr-pinnwand"] } },
 };
 export function erzeugeNachtragSql(datei) {

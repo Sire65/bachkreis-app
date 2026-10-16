@@ -1,16 +1,30 @@
 {
-  "version": "0.7.0",
-  "datum": "2026-10-15",
+  "version": "0.8.0",
+  "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "📌 Pinnwand wie in der KC Club App: Korkwand mit Post-its in vier Farben (1. gelb, 2. rosé, 3. hellgrün, 4. hellblau), leicht schräg mit Nadel",
-    "Bis zu 4 Zettel je Person mit je 200 Zeichen und Emoji-Schnellreihe; Wichtigkeit (❗ Hoch – beim Öffnen zeigen), für wen (nur ich · alle · bestimmte Personen), mit oder ohne Antwort-Knopf",
-    "✍️ Antworten mit privatem Gegen-Zettel, ✓ Erledigt je Person, 👁️ der Verfasser sieht, wer gelesen und erledigt hat; nachträglich ❗ wichtig machen – auf Wunsch mit erneutem Bescheid",
-    "Neue Zettel gehen beim Öffnen als Post-it-Fenster auf (✓ Gelesen · 📌 Zur Pinnwand · ✍️ Antworten); wichtige offene Zettel öffnen die Pinnwand; Erinnerung an eigene Zettel nach 3 Tagen (Hängen lassen = 7 Tage Ruhe)",
-    "🎂 Geburtstags-Aushang an der Pinnwand mit „Ich möchte gratulieren“; Bescheid per Push über den BK Communicator (Regel „Pinnwand-Zettel“)",
-    "Datenschutz: private Zettel sieht wirklich nur, an wen sie gerichtet sind – auch die Leitung nicht; die Leitung darf sichtbare Zettel abnehmen"
+    "💬 Nachrichten wie in der KC Club App – aufgebaut wie WhatsApp: Chatliste mit Suche, Bild, letzter Nachricht und Zähler; Sprechblasen mit „Heute/Gestern“, „⬇ Neue Nachrichten“ und Uhrzeit",
+    "✓ gesendet · ✓✓ angekommen · blaue ✓✓ gelesen – in Gruppen mit „2/5“; ℹ️ Details zeigen je Empfänger, wann angekommen und gelesen (auf die Sekunde) und was der BK Communicator je Weg gemacht hat",
+    "❗ Wichtig (orange, per Push und E-Mail, auf Wunsch vorher fragen) und 🏎️ Express (kommt sofort durch – auch nachts; beim Empfänger geht ein Fenster auf mit „Empfang bestätigen“; höchstens 5 am Tag)",
+    "⏰ Später senden zu einer Uhrzeit – auch jeden Tag, werktags, jede Woche oder jeden Monat; der Server sendet, auch wenn das Handy aus ist",
+    "🔔 Je Nachricht wählen: Push, E-Mail, WhatsApp; ↩️ Antworten mit Zitat, Reaktionen, ✏️ Bearbeiten (15 Min.), 🗑️ für alle löschen, 📋 Kopieren, 🔊 Vorlesen, Entwürfe je Chat",
+    "＋ Neue Nachricht: Einzelchat oder Runde – mit Kinderschutz (Eltern schreiben privat nur Leitung, Lehrkräften und eigenen Kindern); private Chats sieht auch die Leitung nicht",
+    "⚙️ Mehr › 💬 Nachrichten: Lesebestätigung, Wichtigkeit fragen, Ton, Vorlesen, Entwürfe, Enter sendet, vorausgewählte Benachrichtigung, Chat-Farben"
   ],
   "verlauf": [
+    {
+      "version": "0.7.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "📌 Pinnwand wie in der KC Club App: Korkwand mit Post-its in vier Farben (1. gelb, 2. rosé, 3. hellgrün, 4. hellblau), leicht schräg mit Nadel",
+        "Bis zu 4 Zettel je Person mit je 200 Zeichen und Emoji-Schnellreihe; Wichtigkeit (❗ Hoch – beim Öffnen zeigen), für wen (nur ich · alle · bestimmte Personen), mit oder ohne Antwort-Knopf",
+        "✍️ Antworten mit privatem Gegen-Zettel, ✓ Erledigt je Person, 👁️ der Verfasser sieht, wer gelesen und erledigt hat; nachträglich ❗ wichtig machen – auf Wunsch mit erneutem Bescheid",
+        "Neue Zettel gehen beim Öffnen als Post-it-Fenster auf (✓ Gelesen · 📌 Zur Pinnwand · ✍️ Antworten); wichtige offene Zettel öffnen die Pinnwand; Erinnerung an eigene Zettel nach 3 Tagen (Hängen lassen = 7 Tage Ruhe)",
+        "🎂 Geburtstags-Aushang an der Pinnwand mit „Ich möchte gratulieren“; Bescheid per Push über den BK Communicator (Regel „Pinnwand-Zettel“)",
+        "Datenschutz: private Zettel sieht wirklich nur, an wen sie gerichtet sind – auch die Leitung nicht; die Leitung darf sichtbare Zettel abnehmen"
+      ]
+    },
     {
       "version": "0.6.1",
       "datum": "2026-10-15",

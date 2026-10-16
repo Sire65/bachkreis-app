@@ -330,6 +330,9 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "u-eb", titel: "Eltern B-Orchester", art: "verteiler", verteiler: "eltern:g-b" },
     { id: "u-fv", titel: "Leitung & Förderverein", art: "gruppe", mitglieder: ["p-leitung", "p-fv1", "p-fv2", "p-fv3"] },
     { id: "u-lk", titel: "Lehrkräfte Bachkreis", art: "gruppe", mitglieder: ["p-leitung", "p-lk1", "p-lk2", "p-lk3"] },
+    // eigene Unterhaltungen (wie KC Einzelchat) – privat: nur die Beteiligten sehen sie
+    { id: "u-e1", titel: "Einzelgespräch", art: "einzel", mitglieder: ["p-leitung", "p-lk2"] },
+    ...(demoSchueler ? [{ id: "u-e2", titel: "Einzelgespräch", art: "einzel", mitglieder: [demoSchueler.id, "p-lk1"] }] : []),
   ];
   d.nachrichten = [];
   const nachricht = (u, von, text, minVorher, extra = {}) => d.nachrichten.push({ id: `n-${d.nachrichten.length + 1}`, unterhaltung_id: u, von, text, zeit: iso(new Date(jetzt.getTime() - minVorher * 60000)), gelesen_von: [von], ...extra });
@@ -340,6 +343,17 @@ export function erzeugeDemodaten(heute = new Date()) {
   nachricht("u-eb", "p-leitung", "Liebe Eltern, für das Herbstkonzert suchen wir Helfer beim Kuchenverkauf und beim Transport der Instrumente. Bitte kurz zurückmelden!", 60 * 30, { rueckmeldung: true });
   nachricht("u-fv", "p-fv2", "Kostenvoranschlag für das Cello ist da (280 €). Freigabe über die App?", 60 * 3);
   nachricht("u-lk", "p-lk1", "Ich habe die Air-Bearbeitung ins Notenarchiv gestellt.", 60 * 48);
+  // Nachrichten wie KC: ❗ wichtig, 🏎️ Express, ↩️ Antwort, Reaktionen, ⏰ geplant
+  nachricht("u-a", "p-leitung", "Generalprobe am Samstag: Treffpunkt 9:30 Uhr in der Aula, Instrumente schon gestimmt mitbringen!", 60 * 3, { wichtig: true, reaktionen: demoSchueler ? { [demoSchueler.id]: "👍" } : {} });
+  nachricht("u-e1", "p-lk2", "Hallo Bettina, hast du die Programmhefte schon bestellt?", 60 * 50);
+  nachricht("u-e1", "p-leitung", "Noch nicht – mache ich heute Abend. 📖", 60 * 49, { antwort_auf: "n-" + d.nachrichten.length, reaktionen: { "p-lk2": "🙏" } });
+  nachricht("u-e1", "p-leitung", "Der Bus für Sevilla muss bis morgen 12 Uhr bestätigt werden – bitte kurz zurückrufen!", 25, { express: true });
+  if (demoSchueler) {
+    nachricht("u-e2", "p-lk1", `Hallo ${demoSchueler.vorname}, kannst du am Donnerstag 15 Minuten früher zum Einspielen kommen?`, 90);
+    nachricht("u-e2", demoSchueler.id, "Ja, klappt! 👍", 80, { antwort_auf: "n-" + d.nachrichten.length });
+  }
+  const morgen8 = tag(jetzt, 1, 8);
+  nachricht("u-b", "p-leitung", "Guten Morgen! Denkt heute an eure Notenmappen. 🎼", 0, { zeit: iso(morgen8), geplant_um: iso(morgen8), wiederholung: "woechentlich" });
   // Pinnwand wie KC: Post-its in 4 Farben (je Verfasser 1 gelb, 2 rosé, 3 hellgrün, 4 hellblau), für alle / bestimmte / nur mich
   const andererSchueler = d.personen.find((p) => p.typ === "schueler" && p.id !== demoSchueler?.id);
   d.pinnwand = [
@@ -359,6 +373,23 @@ export function erzeugeDemodaten(heute = new Date()) {
     d.pinnwand_gelesen.push({ id: pwGelesenId("pw-2", p.id), zettel_id: "pw-2", person_id: p.id, gesehen_am: iso(tag(jetzt, -5, 10 + (i % 8))), erledigt_am: i % 4 ? null : iso(tag(jetzt, -4, 18)) });
     if (i % 3 === 0) d.pinnwand_gelesen.push({ id: pwGelesenId("pw-1", p.id), zettel_id: "pw-1", person_id: p.id, gesehen_am: iso(tag(jetzt, -1, 17)), erledigt_am: null });
   });
+  // ✓✓ angekommen / blaue ✓✓ gelesen je Empfänger (wie KC-CLUB-HAKEN) – für die Nachrichten der Leitung und das Einzelgespräch
+  d.nachricht_status = [];
+  const empfDemo = (u) => (u.verteiler ? d.gruppe_zuordnung.filter((z) => z.gruppe_id === u.verteiler.split(":")[1]).map((z) => z.person_id) : u.mitglieder || []);
+  for (const n of d.nachrichten.filter((x) => !x.geplant_um)) {
+    const u = d.unterhaltungen.find((x) => x.id === n.unterhaltung_id);
+    if (!u || u.art === "verteiler") continue;
+    const andere = [...new Set(empfDemo(u))].filter((p) => p !== n.von);
+    n.anzahl = andere.length;
+    andere.forEach((p, i) => {
+      const t0 = new Date(n.zeit).getTime(), alt = jetzt.getTime() - t0 > 3600000;
+      if (!alt && i % 3 === 2 && !n.express) return; // ganz neue Nachricht: noch nicht bei allen angekommen
+      const bis = (ms) => iso(new Date(Math.min(t0 + ms, jetzt.getTime() - 30000)));
+      d.nachricht_status.push({ id: `${n.id}:${p}`, nachricht_id: n.id, person_id: p, autor_id: n.von, zugestellt_am: bis((1 + i % 5) * 60000),
+        gelesen_am: alt || i % 2 === 0 ? bis((6 + i * 7 % 300) * 60000) : null,
+        ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
+    });
+  }
   d.aufgaben = [
     { id: "au-1", titel: "Neue Anschrift melden", art: "aenderung", status: "offen", von_id: demoEltern?.id || null, zustaendig_id: "p-leitung", text: "Wir sind umgezogen: Am Römerberg 12, 59192 Bergkamen.", frist: isoTag(tag(jetzt, 7)) },
     { id: "au-2", titel: "Pressetext Herbstkonzert schreiben", art: "aufgabe", status: "in_arbeit", zustaendig_id: "p-lk2", von_id: "p-leitung", frist: isoTag(tag(konzertTag, -14)) },
@@ -381,6 +412,9 @@ export function erzeugeDemodaten(heute = new Date()) {
     freigabe_grenze_eur: 250,
     nachfass_tage: 3,
     pinnwand_erinnern_tage: 3,
+    express_max_tag: 5,
+    bearbeiten_minuten: 15,
+    chat_schueler_untereinander: true,
     pinnwand_pause_tage: 7,
   };
   for (const t of Object.keys(d)) if (Array.isArray(d[t])) for (const z of d[t]) { z.version = 1; z.erstellt_am = z.erstellt_am || iso(jetzt); z.geaendert_am = z.geaendert_am || iso(jetzt); z.geaendert_von = "Demodaten"; }

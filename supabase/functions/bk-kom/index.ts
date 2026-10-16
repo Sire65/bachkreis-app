@@ -5,6 +5,7 @@
 // Die Logik steckt in ../_shared/kom/kern.js (in den Node-Tests gegen PGlite geprüft).
 import postgres from "npm:postgres@3.4.4";
 import { wartung, quittung } from "../_shared/kom/kern.js";
+import { nachrichtenFreigeben } from "../_shared/nachrichten.js";
 import { KANAELE, umgebung } from "../_shared/kom/kanaele-deno.js";
 import { gleich } from "../_shared/krypto.js";
 
@@ -38,7 +39,10 @@ Deno.serve(async (req) => {
       return antwort(r.status, r.json, h);
     }
     if (!TOKEN || !gleich(req.headers.get("x-bk-planer") ?? "", TOKEN)) return antwort(401, { ok: false, fehler: "PLANER_TOKEN" }, h);
-    if (body.aufgabe === "wartung") return antwort(200, { ok: true, bericht: await wartung(db, KANAELE, umgebung()) }, h);
+    if (body.aufgabe === "wartung") {
+      const geplant = await nachrichtenFreigeben(db).catch((e) => { console.error("geplante Nachrichten", e); return { fehler: true }; }); // ⏰ zuerst freigeben, dann gleich zustellen
+      return antwort(200, { ok: true, geplant, bericht: await wartung(db, KANAELE, umgebung()) }, h);
+    }
     if (body.aufgabe === "einrichten") {
       const url = umgebung().quittungUrl;
       await vaultSetzen("bk_kom_url", url);

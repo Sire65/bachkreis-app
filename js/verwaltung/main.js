@@ -466,7 +466,8 @@ ANSICHTEN.konfig = () => {
   const darfK = (V.ich?.rollen || []).some((r) => ["leitung", "admin"].includes(r));
   const f = (key, t, typ = "text") => `<div class="feld"><label>${t}</label><input type="${typ}" data-konfig="${key}" value="${esc(k[key] ?? "")}" ${darfK ? "" : "disabled"}></div>`;
   return `<div class="vw-kopf"><h2>⚙️ Einstellungen</h2></div><div class="karte" id="konfForm">
-    ${f("name", "Name")}${f("untertitel", "Untertitel")}${f("webseite", "Internetseite (Logo oben links öffnet sie)", "url")}${f("schule_telefon", "Telefon Schule (SOS)")}${f("freigabe_grenze_eur", "Freigabegrenze Leitung (€) – darüber entscheidet der Förderverein", "number")}${f("nachfass_tage", "Nachfassen … Tage vor Antwortfrist", "number")}${f("pinnwand_erinnern_tage", "📌 Pinnwand: an eigene Zettel erinnern nach … Tagen (leer = 3)", "number")}${f("pinnwand_pause_tage", "📌 Pinnwand: nach „Hängen lassen“ wieder fragen nach … Tagen (leer = 7)", "number")}
+    ${f("name", "Name")}${f("untertitel", "Untertitel")}${f("webseite", "Internetseite (Logo oben links öffnet sie)", "url")}${f("schule_telefon", "Telefon Schule (SOS)")}${f("freigabe_grenze_eur", "Freigabegrenze Leitung (€) – darüber entscheidet der Förderverein", "number")}${f("nachfass_tage", "Nachfassen … Tage vor Antwortfrist", "number")}${f("express_max_tag", "🏎️ Express-Sendungen je Person und Tag (leer = 5, Leitung unbegrenzt)", "number")}${f("bearbeiten_minuten", "✏️ Nachrichten bearbeiten bis … Minuten nach dem Senden (leer = 15)", "number")}
+    <div class="feld"><label>💬 Schüler dürfen sich gegenseitig privat schreiben</label><select data-konfig="chat_schueler_untereinander" ${darfK ? "" : "disabled"}><option value="ja" ${k.chat_schueler_untereinander !== false ? "selected" : ""}>Ja</option><option value="nein" ${k.chat_schueler_untereinander === false ? "selected" : ""}>Nein – nur mit Leitung, Lehrkräften und den eigenen Eltern</option></select></div>${f("pinnwand_erinnern_tage", "📌 Pinnwand: an eigene Zettel erinnern nach … Tagen (leer = 3)", "number")}${f("pinnwand_pause_tage", "📌 Pinnwand: nach „Hängen lassen“ wieder fragen nach … Tagen (leer = 7)", "number")}
     <div class="feld"><label>Notrufnummern (eine je Zeile: Symbol;Bezeichnung;Nummer)</label><textarea data-konfig="notrufe" ${darfK ? "" : "disabled"}>${esc((k.notrufe || []).map((x) => x.join(";")).join("\n"))}</textarea></div>
     ${darfK ? `<button class="knopf haupt" data-a="konfSpeichern">💾 Speichern</button>` : '<p class="hinweis">Nur die Leitung kann die Einstellungen ändern.</p>'}
     <p class="hinweis">Register, Terminarten, Gruppen und Genehmigungsvorlagen sind eigene Tabellen (links in der Seitenleiste) – nichts ist fest eingebaut.</p></div>`;
@@ -476,6 +477,7 @@ AKTIONEN.konfSpeichern = async () => {
     let v = el.value;
     if (el.dataset.konfig === "notrufe") v = v.split("\n").map((z) => z.split(";").map((x) => x.trim())).filter((z) => z.length === 3);
     else if (el.type === "number") v = Number(v);
+    else if (el.dataset.konfig === "chat_schueler_untereinander") v = v !== "nein";
     await konfigSetzen(el.dataset.konfig, v);
   }
   toast("💾 Einstellungen gespeichert");

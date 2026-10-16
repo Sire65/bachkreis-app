@@ -3,7 +3,7 @@
 // Startseite & Ansicht · App-Installation · App-Info. Fast alles gilt nur für dieses Gerät; die Privatsphäre wird beim Server gemerkt.
 import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt } from "../kern/ui.js";
-import { speichere, datenInfo, serverAktion } from "../kern/daten.js";
+import { speichere, datenInfo, serverAktion, konfig } from "../kern/daten.js";
 import { EREIGNISSE, KANAELE, wahlVon } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { KACHELN, REGISTER_ALLE } from "./start.js";
@@ -44,6 +44,22 @@ function themaWahlHtml() {
     <p class="hinweis">${akt ? `Gerade: <b>${akt.sym} ${esc(akt.name)}</b>${akt.quelle === "kalender" ? " – nach Kalender" : ""}. Farbe, Jahreszeit und Sende-Effekt kannst du trotzdem einzeln ändern.` : "Kein Thema – es gelten deine eigenen Einstellungen."}</p>
     ${schalter("themaSchrift", "✍️ Schrift des Themas", "Begrüßung im Kopf in der passenden Schrift (z. B. Weihnachten, Halloween)", D.themaSchriftAn(), "themaSchrift")}`;
 }
+
+// 💬 Nachrichten wie KC: Lesebestätigung (blaue Haken), Wichtigkeit fragen, Enter sendet, Entwürfe, Ton, Vorlesen, Standard-Zustellung
+function nachrichtenEinst(e) {
+  const zs = e.zustellStandard || "regel";
+  return `${schalter("lesebestaetigung", "✓✓ Lesebestätigungen (blaue Haken)", "Andere sehen, wann du ihre Nachricht gelesen hast. Aus: du siehst auch bei anderen keine blauen Haken – wie bei WhatsApp", e.lesebestaetigung !== false)}
+    ${schalter("wichtigFragen", "❗ Vor dem Senden nach der Wichtigkeit fragen", "📝 Normal oder ❗ Hoch – höchstens alle 30 Min. je Chat", e.wichtigFragen ?? (S.ich?.rollen || []).some((r) => ["leitung", "admin"].includes(r)))}
+    ${schalter("chatTon", "🔔 Ton bei neuer Nachricht im offenen Chat", "Kurzer Ton und Vibrieren", e.chatTon !== false)}
+    ${schalter("vorlesen", "🔊 Neue Nachrichten vorlesen", "Im geöffneten Chat liest das Handy neue Nachrichten vor", e.vorlesen === true)}
+    ${schalter("entwuerfe", "✏️ Entwürfe merken", "Angefangene Nachrichten bleiben je Chat stehen – auch nach dem Schließen", e.entwuerfe !== false)}
+    ${schalter("enterSendet", "⏎ Enter-Taste sendet", "Für PC und Tablet mit Tastatur – Umschalt+Enter = neue Zeile", e.enterSendet === true)}
+    <h4>🔔 Benachrichtigen beim Senden (vorausgewählt)</h4>${chips([["regel", "Wie eingestellt"], ["push", "🔔 Push"], ["pushmail", "🔔 + ✉️ E-Mail"]], zs, "zustellStandardWahl")}
+    <p class="hinweis">„Wie eingestellt“ = so, wie jede Person es unter 🔔 Benachrichtigungen gewählt hat. Im Chat lässt es sich mit 🔔 je Nachricht ändern.</p>
+    <h4>🏎️ Express & ❗ Wichtig</h4><p class="hinweis">❗ Wichtig: bei allen orange umrandet, geht per Push <b>und</b> E-Mail raus. 🏎️ Express: kommt sofort an – auch nachts –, beim Empfänger geht ein Fenster auf (Öffnen · Später · Nein, Empfang bestätigen). Höchstens ${Number(konfig().express_max_tag) > 0 ? Number(konfig().express_max_tag) : 5} Express am Tag (Leitung unbegrenzt).</p>
+    <div class="schalter"><span><b>💬 Chat-Farben & Hintergrund</b><div class="hinweis">Farbe deiner und der fremden Sprechblasen, Hintergrund mit Motiv</div></span><button class="knopf klein" data-a="cfOeffnen">🎨 Wählen</button></div>`;
+}
+AKTIONEN.zustellStandardWahl = (w) => { einstSetzen("zustellStandard", w === "regel" ? null : w); neu(); };
 
 VIEWS.einstellungen = {
   render() {
@@ -104,6 +120,7 @@ VIEWS.einstellungen = {
       + bereich("benachrichtigung", "🔔 Benachrichtigungen", `<div class="knopfreihe"><button class="knopf" data-a="pushErlauben">📲 Push auf diesem Handy</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>
         ${schalter("ruhe", "🌙 Nicht stören", "", !!e.ruhe)}<div class="einst-zeile"><label>von <input type="time" data-c="ruheZeit" data-x="ruheVon" value="${esc(e.ruheVon)}"></label><label>bis <input type="time" data-c="ruheZeit" data-x="ruheBis" value="${esc(e.ruheBis)}"></label></div>
         <h4>Was willst du wie bekommen?</h4>${matrix}`)
+      + bereich("nachrichten", "💬 Nachrichten", nachrichtenEinst(e))
       + bereich("ansagen", "🗣️ Ansagen, Töne & Tipps", tipps)
       + bereich("privat", "🔒 Privatsphäre", privat)
       + bereich("kalender", "📆 Termine im Handy-Kalender", `<p>Alle deine Termine als Kalender-Datei fürs Handy (Google, Apple, Outlook).</p><button class="knopf" data-a="kachel" data-x="kalender">📆 Zum Kalender-Export</button>`)

@@ -40,6 +40,16 @@ if (!(await p.$("#pwNeuKnopf .pwStand.voll"))) fehler.push("Pinnwand: 4/4 nicht 
 await p.click('.zettel [data-a="pwErledigt"]'); await p.waitForSelector(".zettel .erl");
 await p.screenshot({ path: `${BILDER}pinnwand.png`, fullPage: true });
 await p.click('[data-a="zurueck"]'); await p.waitForSelector(".kachel");
+// 💬 Nachrichten wie KC: Chatliste, Einzelchat, ❗ wichtig senden → Haken wandern (Vorführversion spielt Ankunft/Lesen nach), Details, ⏰ planen
+await p.click('.fuss-leiste [data-x="nachrichten"]'); await p.waitForSelector(".chatliste");
+await p.click('[data-x="unterhaltung|u-e1"]'); await p.waitForSelector("#chatVerlauf .blase");
+await p.click('[data-a="wichtigUm"]'); await p.fill("#chatText", "Rundgang: bitte Noten mitbringen"); await p.click('[data-a="chatSenden"]');
+await p.waitForSelector("#chatVerlauf .blase.ich.wichtig:last-of-type .haken.blau", { timeout: 9000 }).catch(() => fehler.push("Chat: blaue Haken kamen nicht"));
+const letzte = (await p.$$("#chatVerlauf .blase.ich")).pop(); await letzte.click(); await p.click('[data-a="naInfo"]'); await p.waitForSelector(".ni-zeile");
+await p.screenshot({ path: `${BILDER}chat-details.png` }); await p.click('#blattHg [data-a="blattZu"]');
+await p.fill("#chatText", "Rundgang geplant"); await p.click('[data-a="spaeterWahl"]'); await p.click('[data-a="gpZeit"][data-x="1"]'); await p.click('[data-a="gpPlanen"]');
+await p.waitForSelector(".gp-blase"); await p.screenshot({ path: `${BILDER}chat.png` });
+await p.click('[data-a="zurueck"]'); await p.waitForSelector(".chatliste"); await p.click('[data-a="zurueck"]'); await p.waitForSelector(".kachel");
 // Kopf wie KC: alle Infofeld-Karten, Wetter-Tag, Jalousie halb/ganz, Jahreszeiten-Vorschauen
 const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);
 for (let i = 0; i < karten; i++) { await p.click(`#infoPunkte .ipunkt[data-x="${i}"]`); await p.waitForTimeout(150); }

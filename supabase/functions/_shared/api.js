@@ -4,7 +4,8 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger } from "./schema.js";
+import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, nachrichtFrei } from "./schema.js";
+import { nachrichtBescheid } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
 import { sha256, zufallsToken } from "./krypto.js";
 import * as kom from "./kom/kern.js";
@@ -25,7 +26,12 @@ async function kontextLaden(db, person) {
   const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "unterhaltungen", "pinnwand", "personen"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
-  return kontext(person, alle);
+  const ctx = kontext(person, alle);
+  ctx.konfig = Object.fromEntries((await db.q(`select schluessel, wert from bk_konfig`)).map((r) => [r.schluessel, r.wert]));
+  ctx.expressMax = Number(ctx.konfig.express_max_tag) > 0 ? Number(ctx.konfig.express_max_tag) : CHAT.expressMax;
+  ctx.bearbeitenMin = Number(ctx.konfig.bearbeiten_minuten) > 0 ? Number(ctx.konfig.bearbeiten_minuten) : CHAT.bearbeitenMin;
+  ctx.expressHeute = (await db.q(`select count(*)::int as n from bk_nachrichten where von = $1 and express is true and zeit > now() - interval '1 day' and geloescht_am is null`, [person.id]))[0].n;
+  return ctx;
 }
 
 // ---------- Sitzung ----------
@@ -89,6 +95,11 @@ async function speichern(db, s, body) {
   const cols = ["id", ...spalten(tab).filter((k) => k !== "id"), "geaendert_von", "geloescht_am"];
   if (tab === "zugaenge") cols.push("code_hash");
   const gespeichert = [], konflikte = [];
+  // ✓✓-Status braucht die Nachricht (Absender, Unterhaltung, Express) – einmal für alle Zeilen holen
+  if (tab === "nachricht_status") {
+    const ids = [...new Set(zeilen.map((z) => String(z?.nachricht_id || "")))];
+    ctx.nMap = new Map((await db.q(`select to_jsonb(n) as z from bk_nachrichten n where id = any($1::text[])`, [ids])).map((r) => [r.z.id, r.z]));
+  }
   for (const neuRoh of zeilen) {
     if (!neuRoh || typeof neuRoh !== "object") continue;
     const { basis_version, ...neu } = neuRoh;
@@ -110,6 +121,7 @@ async function speichern(db, s, body) {
        on conflict (id) do update set ${upd} returning to_jsonb(bk_${tab}.*) as z`, [JSON.stringify(daten)]);
     const zeile = r[0].z;
     if (tab === "pinnwand") ctx.pw.set(zeile.id, zeile); // mehrere Zettel in einem Rutsch: Grenze und Farben stimmen weiter
+    if (tab === "unterhaltungen") { ctx.unterhaltungen.add(zeile.id); ctx.uMap.set(zeile.id, zeile); }
     await db.q(`insert into bk_aenderungen (zeit, tabelle, zeile_id, aktion, wer, quelle) values (now(), $1, $2, $3, $4, $5)`,
       [tab, zeile.id, z.geloescht_am && !alt?.geloescht_am ? "geloescht" : alt ? "geaendert" : "neu", name(s.person), body.quelle === "verwaltung" ? "verwaltung" : "app"]);
     gespeichert.push(filtern(tab, [zeile], ctx)[0] || { id: zeile.id, version: zeile.version });
@@ -126,6 +138,14 @@ async function versenden(db, s, body, dienste) {
   let an = Array.isArray(body.an) ? body.an.map(String).slice(0, 2000) : [];
   const ereignis = String(body.ereignis || "standard");
   let korrelation = body.korrelation;
+  if (body.nachricht_id) {
+    // BK-NACHRICHTEN: Bescheid zu einer eigenen Nachricht – Empfänger, Ereignis (❗/🏎️) und Kanäle bestimmt der Server, je Nachricht einmal
+    const n = (await db.q(`select to_jsonb(n) as z from bk_nachrichten n where id = $1`, [String(body.nachricht_id)]))[0]?.z;
+    if (!n || n.von !== ctx.ich || n.geloescht_am || n.zurueckgezogen_am || !ctx.unterhaltungen.has(n.unterhaltung_id) || !nachrichtFrei(n)) return fehler(403, "KEIN_VERSANDRECHT");
+    const r = await nachrichtBescheid(db, n, { ausloeser: name(s.person), kanaele: Array.isArray(body.kanaele) && body.kanaele.length ? body.kanaele : null });
+    if (r.ok && !r.schon && dienste.adapter) dienste.hintergrund(kom.zustellen(db, dienste.adapter, dienste.umgebung, { korrelation: r.korrelation, limit: 200 }).catch((e) => console.error("bk-kom zustellen", e)));
+    return { status: 200, json: { ...r, vorgemerkt: r.auftraege } };
+  }
   if (ereignis === "pinnwand") {
     // BK-PINNWAND: Bescheid nur durch den Verfasser, Empfänger bestimmt der Server aus dem Zettel – je Zettel (und „jetzt wichtig“) nur einmal
     const z = ctx.pw.get(String(body.zettel_id || ""));
@@ -154,6 +174,16 @@ async function versenden(db, s, body, dienste) {
   return { status: 200, json: { ...r, vorgemerkt: r.auftraege } };
 }
 
+// ℹ️ Details einer eigenen Nachricht: was der Communicator je Empfänger und Weg gemacht hat (nur der Absender sieht das)
+async function nachrichtZustellung(db, s, body) {
+  const n = (await db.q(`select von from bk_nachrichten where id = $1`, [String(body.id || "")]))[0];
+  if (!n || n.von !== s.person.id) return fehler(403, "NUR_ABSENDER");
+  const wege = (await db.q(`select v.an_id, v.kanal, v.status, v.zeit, v.gesendet_am, v.status_am, v.fehler_code, v.naechster_versuch, p.vorname, p.nachname
+    from bk_versand v left join bk_personen p on p.id = v.an_id where v.korrelation = $1 order by v.zeit`, [`nachricht:${body.id}`]))
+    .map((v) => ({ an_id: v.an_id, name: `${v.vorname || ""} ${v.nachname || ""}`.trim(), kanal: v.kanal, status: v.status, zeit: v.zeit, gesendet_am: v.gesendet_am, status_am: v.status_am, fehler: v.fehler_code, naechster: v.naechster_versuch }));
+  return { status: 200, json: { ok: true, wege } };
+}
+
 // Push-Abo dieses Geräts speichern (Web-Push, VAPID). Der öffentliche Schlüssel kommt vom Server.
 async function pushAbo(db, s, body) {
   const a = body.abo || {};
@@ -176,6 +206,7 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
     if (aktion === "laden") return await laden(db, s, body);
     if (aktion === "speichern") return await speichern(db, s, body);
     if (aktion === "versenden") return await versenden(db, s, body, dienste);
+    if (aktion === "nachricht_zustellung") return await nachrichtZustellung(db, s, body);
     if (aktion === "push_schluessel") return { status: 200, json: { ok: !!dienste.umgebung.vapidPublic, schluessel: dienste.umgebung.vapidPublic || null } };
     if (aktion === "push_abo") return await pushAbo(db, s, body);
     if (aktion === "push_ab") { await db.q(`update bk_push_abos set aktiv = false, fehler = 'abgemeldet' where endpoint = $1 and person_id = $2`, [String(body.endpoint || ""), s.person.id]); return { status: 200, json: { ok: true } }; }

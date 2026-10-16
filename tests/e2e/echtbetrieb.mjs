@@ -59,6 +59,21 @@ try {
   const n = await seite();
   await n.goto(B + "/index.html?k=" + code); await n.waitForSelector(".kachel", { timeout: 20000 });
   await pinnwandGelesen(n);
+  // 💬 Nachrichten über den Server: Lehrkraft schickt 🏎️ Express in den Einzelchat → Schülerin bekommt das Fenster, bestätigt
+  // den Empfang → die Lehrkraft sieht blaue Haken und „✅ Empfang bestätigt“; der Communicator hat einen Auftrag „express“
+  const sch = await seite(), lk = await seite();
+  await sch.goto(B + "/index.html?k=" + info.codes.schueler.code); await sch.waitForSelector(".kachel", { timeout: 20000 }); await pinnwandGelesen(sch);
+  await lk.goto(B + "/index.html?k=" + info.codes.lehrkraft.code); await lk.waitForSelector(".kachel", { timeout: 20000 }); await pinnwandGelesen(lk);
+  await lk.evaluate(async () => (await import("/js/app/zustand.js")).zeige("unterhaltung", { id: "u-e2" })); await lk.waitForSelector("#chatText");
+  await lk.click('[data-a="expressUm"]'); await lk.fill("#chatText", "Echtbetrieb: Probe heute im Musikraum!"); await lk.click('[data-a="chatSenden"]');
+  await lk.waitForTimeout(2500);
+  await sch.evaluate(async () => (await import("/js/kern/daten.js")).jetztAbgleichen());
+  await sch.waitForSelector('[data-a="expressAntwort"][data-x="geoeffnet"]', { timeout: 10000 });
+  await sch.click('[data-a="expressAntwort"][data-x="geoeffnet"]'); await sch.waitForSelector("#chatVerlauf"); await sch.waitForTimeout(2500);
+  await sch.evaluate(async () => (await import("/js/kern/daten.js")).jetztAbgleichen()); await sch.waitForTimeout(1000);
+  await lk.evaluate(async () => (await import("/js/kern/daten.js")).jetztAbgleichen()); await lk.waitForTimeout(800);
+  await lk.waitForFunction(() => [...document.querySelectorAll("#chatVerlauf .blase.express")].pop()?.textContent.includes("Empfang bestätigt"), null, { timeout: 10000 });
+  assert.ok(await lk.$("#chatVerlauf .blase.express:last-of-type .haken.blau") || await lk.evaluate(() => !![...document.querySelectorAll("#chatVerlauf .blase.express")].pop()?.querySelector(".haken.blau")), "blaue Haken beim Absender");
   assert.deepEqual(fehler.filter((x) => !/401/.test(x)), [], "keine Seitenfehler");
   console.log("Echtbetrieb-Test ✔");
 } finally { await b.close(); srv.kill(); }

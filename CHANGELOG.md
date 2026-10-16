@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.8.0 DEV – 16.10.2026
+- 💬 Nachrichten wie in der KC Club App (WhatsApp-artig): Haken ✓/✓✓/blau, ❗ wichtig, 🏎️ Express mit Empfangsbestätigung, ⏰ später senden (auch wiederholt), Zustellwahl, Antworten, Reaktionen, Bearbeiten, Löschen, Details mit Zustellzeiten, Einzelchats und Runden mit Kinderschutz, Einstellungen im Zahnrad
+- Anschluss an den BK Communicator: Regeln „❗ Wichtige Nachricht“ und „🏎️ Express-Sendung“, Bescheid je Nachricht einmal, Push-Quittung → ✓✓ angekommen, geplante Nachrichten gibt bk-kom frei
+- Neue Tabelle nachricht_status, Nachtrags-Migration 20261019000000_bk_nachrichten.sql
+
 ## 0.7.0 DEV – 15.10.2026
 - 📌 Pinnwand wie in der KC Club App: Korkwand, Post-its in 4 Farben, wichtig, für wen, Antworten, Erledigt je Person, „gelesen x/y“, Post-it-Fenster beim Öffnen, Erinnerung, Geburtstags-Aushang, Bescheid über den BK Communicator
 - Neue Tabelle pinnwand_gelesen, Nachtrags-Migration 20261018000000_bk_pinnwand.sql (für schon eingespielte Datenbanken)

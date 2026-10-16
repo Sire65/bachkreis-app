@@ -115,3 +115,50 @@ Ohne Brevo-Schlüssel und Absender steht der Mail-Anbieter auf „nicht eingeric
 
 Die Schlüssel stehen **nie** in der Datenbank oder im Repository. In `kom_anbieter.geheimnis` steht nur der *Name*
 des Secrets.
+
+## Nachrichten wie in der KC Club App (0.8.0)
+
+Der Chat ist aufgebaut wie WhatsApp und arbeitet mit dem BK Communicator zusammen.
+
+### Was die App kann
+
+- **Chatliste:** Suche, Bild, letzte Nachricht mit Haken, Uhrzeit, Zähler. Mit „＋ Neue Nachricht“ entsteht bei einer Person ein Einzelchat (gibt es ihn schon, öffnet er sich), bei mehreren eine Runde mit Betreff.
+- **Sprechblasen:** Tages-Trenner („Heute“, „Gestern“), „⬇ Neue Nachrichten“, Uhrzeit. In Gruppen hat jeder Absender seine Farbe.
+- **Haken:** ✓ gesendet · ✓✓ angekommen · blaue ✓✓ gelesen. In Gruppen erst, wenn es für alle gilt; daneben steht klein „2/5“.
+  - „Angekommen“ meldet das Gerät des Empfängers. Im Echtbetrieb kommt die Meldung auch von der Push-Quittung („angezeigt“), also auch bei geschlossener App.
+  - Ohne eigene Lesebestätigung (⚙️ › 💬 Nachrichten) gibt es keine blauen Haken – in beide Richtungen, wie bei WhatsApp.
+- **❗ Wichtig:** orange umrandet, Regel „❗ Wichtige Nachricht“ (Push **und** E-Mail). Auf Wunsch fragt die App vor dem Senden nach der Wichtigkeit.
+- **🏎️ Express:** Regel „🏎️ Express-Sendung“: Push, E-Mail und App, die Ruhezeit gilt nicht.
+  - Beim Empfänger geht ein Fenster auf: Öffnen · Später (30 Min.) · Nein, dazu „📬 Empfang bestätigen“.
+  - Der Absender sieht je Empfänger: angekommen um …, gelesen um …, ✅ Empfang bestätigt.
+  - Höchstens 5 am Tag je Person, die Leitung unbegrenzt (PC-Verwaltung › Einstellungen).
+- **⏰ Später senden:** heute Abend, morgen früh, morgen Mittag oder eine eigene Zeit.
+  - Wiederholung: einmal, jeden Tag, werktags, jede Woche, jeden Monat.
+  - Bis dahin sieht nur der Absender die Nachricht, blass und gestrichelt. Antippen: jetzt senden, Zeit ändern, löschen.
+  - Im Echtbetrieb gibt `bk-kom` die Nachricht jede Minute frei, auch wenn das Handy aus ist. Dann geht der Bescheid raus und die nächste Wiederholung wird eingeplant.
+- **🔔 Zustellwahl je Nachricht:** Push, E-Mail, WhatsApp-Übergabe. Ohne Wahl gilt die Einstellung der Empfänger.
+- **Antippen einer Nachricht:** Reaktion, ↩️ Antworten (Zitat), 📋 Kopieren, ✏️ Bearbeiten (15 Min.), 🔊 Vorlesen, ℹ️ Details, 🗑️ für alle löschen („Diese Nachricht wurde gelöscht“).
+  - Details zeigen, wann gesendet, angekommen und gelesen.
+  - Der Absender sieht dazu, was der Communicator je Weg gemacht hat (Aktion `nachricht_zustellung`).
+- **Entwürfe:** je Chat auf dem Gerät gemerkt.
+
+### Speicherung
+
+- Nachrichten liegen in `bk_nachrichten`: wichtig, express, antwort_auf, kanaele, geplant_um/wiederholung, reaktionen, bearbeitet_am, zurueckgezogen_am.
+- Je Empfänger gibt es eine Zeile in `bk_nachricht_status` (zugestellt_am, gelesen_am, express_antwort, express_bestaetigt_am).
+  - Diese Zeilen sieht nur der Absender und die Person selbst.
+  - So wird eine Gruppen-Nachricht nicht bei jeder Lesebestätigung neu an alle Geräte verteilt.
+- Bescheid: Aktion `versenden` mit `nachricht_id`. Der Server bestimmt Empfänger, Ereignis und Kanäle selbst und gibt je Nachricht nur einmal Bescheid (Korrelation `nachricht:<id>`).
+
+### Datenschutz und Kinderschutz
+
+- Einzelchats und Runden sieht nur, wer dabei ist – auch die Leitung nicht.
+- Eltern schreiben privat nur der Leitung, den Lehrkräften, Verwaltern und den eigenen Kindern.
+- Schüler schreiben Schülern (abschaltbar in der PC-Verwaltung), der Leitung, den Lehrkräften und den eigenen Eltern.
+- Die Leitung kann jede sichtbare Nachricht für alle löschen.
+
+### Einstellungen
+
+- **⚙️ Mehr › 💬 Nachrichten:** Lesebestätigung, Wichtigkeit fragen, Ton, Vorlesen, Entwürfe, Enter sendet, vorausgewählte Benachrichtigung, Chat-Farben.
+- **PC-Verwaltung › Einstellungen:** Express je Tag, Bearbeiten-Frist, Schüler untereinander.
+

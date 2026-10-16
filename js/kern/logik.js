@@ -285,3 +285,23 @@ export function feiertageNRW(jahr) {
     [plusTage(o, 39), "Christi Himmelfahrt"], [plusTage(o, 50), "Pfingstmontag"], [plusTage(o, 60), "Fronleichnam"], [`${jahr}-10-03`, "Tag der Deutschen Einheit"],
     [`${jahr}-11-01`, "Allerheiligen"], [`${jahr}-12-25`, "1. Weihnachtstag"], [`${jahr}-12-26`, "2. Weihnachtstag"]]);
 }
+
+// ---------- Nachrichten (gemeinsam für App und Server – tools/server-kopie.mjs kopiert diese Datei) ----------
+// Wer bekommt Nachrichten einer Unterhaltung? Verteiler (automatisch) + feste Mitglieder (+ Leitung bei Verteilern)
+export function empfaengerVon(db, u) {
+  if (!u) return [];
+  if (u.verteiler) return [...new Set([...verteilerAufloesen(db, u.verteiler), ...(u.mitglieder || []), db.konfig().leitung_id].filter(Boolean))];
+  return [...new Set(u.mitglieder || [])];
+}
+// ⏰ Wiederholung: nächster Sendezeitpunkt nach iso (jeden Tag, werktags, jede Woche, jeden Monat) – null bei „einmal“
+export function naechsteSendung(iso, wdh) {
+  const d = new Date(iso);
+  if (wdh === "taeglich") d.setDate(d.getDate() + 1);
+  else if (wdh === "werktags") { do d.setDate(d.getDate() + 1); while ([0, 6].includes(d.getDay())); }
+  else if (wdh === "woechentlich") d.setDate(d.getDate() + 7);
+  else if (wdh === "monatlich") { const tag = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + 1); d.setDate(Math.min(tag, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); }
+  else return null;
+  return d.toISOString();
+}
+// Communicator-Ereignis einer Nachricht
+export const nachrichtEreignis = (n, u) => (n.express ? "express" : n.wichtig ? "nachricht_wichtig" : u?.art === "verteiler" ? "rundschreiben" : "nachricht");

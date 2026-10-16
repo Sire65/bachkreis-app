@@ -386,6 +386,13 @@ export async function wartung(db, adapter, umg = {}) {
 const QUITTUNG = ["angezeigt", "geoeffnet", "quittiert"];
 async function quittungAnwenden(db, a, art) {
   if (RANG[a.status] !== undefined && RANG[art] > RANG[a.status]) await setzen(db, a.id, { status: art });
+  // BK-NACHRICHTEN: Push auf dem Handy angezeigt/geöffnet → Chat-Nachricht ist „angekommen“ (✓✓), auch wenn die App zu ist
+  if (String(a.korrelation || "").startsWith("nachricht:") && a.an_id) {
+    const nid = a.korrelation.slice(10);
+    await db.q(`insert into bk_nachricht_status (id, nachricht_id, person_id, autor_id, zugestellt_am, geaendert_von)
+      select $1 || ':' || $2, n.id, $2, n.von, now(), 'Communicator' from bk_nachrichten n where n.id = $1 and n.von <> $2
+      on conflict (id) do update set zugestellt_am = coalesce(bk_nachricht_status.zugestellt_am, now()), geaendert_von = 'Communicator' where bk_nachricht_status.zugestellt_am is null`, [nid, a.an_id]).catch((e) => console.error("nachricht angekommen", e));
+  }
   if (art === "quittiert") {
     // Bestätigt = ganzer Vorgang für diese Person erledigt; noch offene Aufträge (z. B. Mail später) entfallen
     await db.q(`update bk_versand set status = 'quittiert', status_am = now(), geaendert_von = '${WER}' where korrelation = $1 and an_id = $2 and status = any($3::text[])`, [a.korrelation, a.an_id, ["gesendet", "zugestellt", "angezeigt", "geoeffnet"]]);

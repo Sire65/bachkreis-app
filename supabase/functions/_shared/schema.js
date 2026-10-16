@@ -43,9 +43,25 @@ export const KOM_STATUS = {
 };
 export const KOM_EREIGNISSE = {
   termin_neu: "Neuer Termin", termin_geaendert: "Termin geändert/abgesagt", erinnerung: "Erinnerung vor Terminen", nachfassen: "Nachfassen bei fehlender Antwort",
-  nachricht: "Neue Nachricht", rundschreiben: "Rundschreiben", genehmigung: "Genehmigung angefragt", instrument: "Leihinstrument (Rückgabe, Schaden)", pinnwand: "Pinnwand-Zettel", sos: "SOS / Notfall",
+  nachricht: "Neue Nachricht", nachricht_wichtig: "❗ Wichtige Nachricht", express: "🏎️ Express-Sendung", rundschreiben: "Rundschreiben", genehmigung: "Genehmigung angefragt", instrument: "Leihinstrument (Rückgabe, Schaden)", pinnwand: "Pinnwand-Zettel", sos: "SOS / Notfall",
   test: "Test", standard: "alle anderen (Standard)",
 };
+
+// ---------- Nachrichten (gemeinsam für App und Server) ----------
+export const CHAT = { bearbeitenMin: 15, expressMax: 5, zeichen: 4000, expressUnbegrenzt: ["admin", "leitung"] };
+export const nsId = (nachrichtId, personId) => `${nachrichtId}:${personId}`;
+// Geplante Nachrichten (⏰) sieht bis zur Sendezeit nur der Absender
+export const nachrichtFrei = (n, jetzt = new Date().toISOString()) => !n.geplant_um || !!n.geplant_frei || n.geplant_um <= jetzt;
+// Mit wem darf jemand eine eigene Unterhaltung (Einzelchat/Runde) anfangen? Kinderschutz: Eltern schreiben privat nur Leitung,
+// Lehrkräften, Verwaltern und den eigenen Kindern; Schüler nur Schülern (abschaltbar), Leitung, Lehrkräften und den eigenen Eltern.
+// verwandt = Eltern-Kind-Beziehung zwischen beiden. Verwalter dürfen mit allen App-Nutzern schreiben.
+export function chatPartnerErlaubt(ich, p, { verwandt = false, schuelerUntereinander = true } = {}) {
+  if (!ich || !p || p.id === ich.id || !pwAppPerson(p)) return false;
+  const verw = (x) => ["leitung", "lehrkraft"].includes(x.typ) || (x.rollen || []).some((r) => VERWALTER.includes(r));
+  if (verw(ich) || verw(p) || verwandt) return true;
+  if (ich.typ === "schueler" && p.typ === "schueler") return schuelerUntereinander !== false;
+  return false;
+}
 
 // ---------- Pinnwand (gemeinsam für App und Server) ----------
 export const PINNWAND = { max: 4, zeichen: 200, erinnernTage: 3, pauseTage: 7 };
@@ -275,24 +291,47 @@ export const TABELLEN = {
     titel: "Unterhaltungen", sym: "💬", gruppe: "Kommunikation", lesen: L, schreiben: ALLE_VERWALTER,
     felder: [
       { k: "titel", t: "Titel", typ: "text", pflicht: true },
-      { k: "art", t: "Art", typ: "wahl", werte: { gruppe: "Gruppe", einzel: "Einzelgespräch", verteiler: "Rundschreiben" } },
+      { k: "art", t: "Art", typ: "wahl", werte: { gruppe: "Gruppe", einzel: "Einzelgespräch", runde: "Runde (selbst angelegt)", verteiler: "Rundschreiben" } },
       { k: "verteiler", t: "Verteiler (automatisch)", typ: "text" },
       { k: "mitglieder", t: "Mitglieder", typ: "refs", ref: "personen" },
     ],
     liste: ["titel", "art", "verteiler"],
     anzeige: (z) => z.titel,
   },
+  // BK-NACHRICHTEN (0.8.0, wie KC-CLUB-CHAT): ❗ wichtig, 🏎️ Express, ↩️ Antwort, ⏰ später senden (auch wiederholt), Reaktionen,
+  // Bearbeiten (Frist), Zurückziehen. Haken (✓ gesendet · ✓✓ angekommen · blaue ✓✓ gelesen) stehen je Empfänger in nachricht_status –
+  // so wird eine Gruppen-Nachricht nicht bei jeder Lesebestätigung neu an alle verteilt. Schreiben nur über die Regeln (regeln.js).
   nachrichten: {
-    titel: "Nachrichten", sym: "✉️", gruppe: "Kommunikation", lesen: L, schreiben: ALLE_VERWALTER,
+    titel: "Nachrichten", sym: "✉️", gruppe: "Kommunikation", lesen: L, schreiben: [],
     felder: [
       { k: "unterhaltung_id", t: "Unterhaltung", typ: "ref", ref: "unterhaltungen", pflicht: true },
       { k: "von", t: "von", typ: "ref", ref: "personen" },
       { k: "text", t: "Text", typ: "lang", pflicht: true },
       { k: "zeit", t: "Zeit", typ: "zeit" },
       { k: "rueckmeldung", t: "Rückmeldung erbeten", typ: "ja" },
+      { k: "wichtig", t: "❗ wichtig", typ: "ja" },
+      { k: "express", t: "🏎️ Express", typ: "ja" },
+      { k: "antwort_auf", t: "Antwort auf", typ: "text" },
+      { k: "kanaele", t: "Benachrichtigen über", typ: "liste" },
+      { k: "geplant_um", t: "⏰ senden um", typ: "zeit" },
+      { k: "wiederholung", t: "Wiederholung", typ: "wahl", werte: { einmal: "einmal", taeglich: "jeden Tag", werktags: "werktags", woechentlich: "jede Woche", monatlich: "jeden Monat" } },
     ],
     liste: ["unterhaltung_id", "von", "text", "zeit"],
-    intern: [{ k: "gelesen_von", typ: "refs", ref: "personen" }, { k: "rueckmeldungen", typ: "json" }],
+    intern: [{ k: "gelesen_von", typ: "refs", ref: "personen" }, { k: "rueckmeldungen", typ: "json" }, { k: "reaktionen", typ: "json" }, { k: "anzahl", typ: "zahl" },
+      { k: "bearbeitet_am", typ: "zeit" }, { k: "zurueckgezogen_am", typ: "zeit" }, { k: "geplant_frei", typ: "zeit" }],
+  },
+  nachricht_status: {
+    titel: "Nachrichten: angekommen & gelesen", sym: "✓✓", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "nachricht_id", t: "Nachricht", typ: "ref", ref: "nachrichten", pflicht: true },
+      { k: "person_id", t: "Empfänger", typ: "ref", ref: "personen", pflicht: true },
+      { k: "autor_id", t: "Absender", typ: "ref", ref: "personen" },
+      { k: "zugestellt_am", t: "angekommen", typ: "zeit" },
+      { k: "gelesen_am", t: "gelesen", typ: "zeit" },
+      { k: "express_antwort", t: "Express-Antwort", typ: "wahl", werte: { geoeffnet: "geöffnet", spaeter: "später", nein: "jetzt nicht" } },
+      { k: "express_bestaetigt_am", t: "Empfang bestätigt", typ: "zeit" },
+    ],
+    liste: ["nachricht_id", "person_id", "zugestellt_am", "gelesen_am"],
   },
   // BK-PINNWAND (0.7.0, wie KC-CLUB-PINNWAND): Post-its – höchstens PINNWAND.max je Person, je höchstens PINNWAND.zeichen Zeichen,
   // Farbe 1–4 vergibt der Server (gelb, rosé, hellgrün, hellblau). Sichtbar nur für Verfasser, Empfänger bzw. alle (fuer = alle) –

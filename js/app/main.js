@@ -8,6 +8,7 @@ import "./start.js";
 import "./termine.js";
 import "./kommunikation.js";
 import { pinnwandStart } from "./pinnwand.js";
+import { nachrichtenStart, expressPruefen } from "./nachrichten.js";
 import "./orchester.js";
 import "./instrumente.js";
 import "./leitung.js";
@@ -109,7 +110,10 @@ async function starten() {
   const view = location.hash.slice(1);
   zeige("start", {}, { ersetzen: true });
   // Pinnwand zuerst (neue Zettel, wichtige, Erinnerung – wie KC pwStart); dann Tipp des Tages, „Was ist neu“, ab und zu die Fee
-  beimStart(pinnwandStart());
+  nachrichtenStart();
+  const express = expressPruefen(); // 🏎️ Express-Sendungen zuerst (wie KC)
+  const pw = pinnwandStart();
+  beimStart(express || pw);
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
   // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird

@@ -2,11 +2,11 @@
 // bequem am PC/Notebook pflegen. Formulare, Listen, CSV-Import/-Export entstehen aus der Tabellen-Registry (schema.js).
 // Zugänge (Codes/QR-Karten, Sperren, Verwaltungsrecht) werden HIER – außerhalb der App – gepflegt.
 import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
-import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName } from "../kern/schema.js";
+import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN } from "../kern/schema.js";
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND } from "../kern/versand.js";
-import { csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon } from "../kern/logik.js";
+import { csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr } from "../kern/logik.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 
 const db = { liste, hole, konfig };
@@ -59,13 +59,13 @@ function demoLeiste() {
 }
 
 // ---------- Rahmen ----------
-const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
+const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["inventarbericht", "📦", "Inventar & Abschreibung"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
 function seitenleiste() {
   const gruppen = {};
   for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
   const btn = (an, a, x, sym, t, anz = "") => `<button class="${an ? "an" : ""}" data-a="${a}" data-x="${x}">${sym} ${esc(t)}<span class="anz">${anz}</span></button>`;
   return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;opacity:.7">v${APP_VERSION} ${APP_STUFE}</div></div></div>
-    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "communicator" || darf("kom_einstellungen", "lesen")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
+    ${SONDER.filter(([k]) => k !== "zugaenge" || darf("zugaenge", "lesen")).filter(([k]) => k !== "communicator" || darf("kom_einstellungen", "lesen")).filter(([k]) => k !== "inventarbericht" || darf("ausstattung", "lesen")).filter(([k]) => k !== "schuljahr" && k !== "gruppenboard" || darf("gruppe_zuordnung", "schreiben")).map(([k, s, t]) => btn(V.ansicht === k, "vwAnsicht", k, s, t)).join("")}
     ${Object.entries(gruppen).map(([g, ts]) => `<h4>${esc(g)}</h4>${ts.map((t) => btn(V.ansicht === "tabelle" && V.tab === t, "vwTabelle", t, TABELLEN[t].sym, TABELLEN[t].titel, liste(t).length)).join("")}`).join("")}
     <h4>Sitzung</h4><button data-a="vwApp">📱 App öffnen</button><button data-a="vwAbmelden">🚪 Abmelden</button>`;
 }
@@ -160,7 +160,7 @@ ANSICHTEN.tabelle = () => {
     ${schreiben ? `<button class="knopf haupt" data-a="vwNeu">＋ Neu</button>` : ""}<button class="knopf" data-a="vwCsv">📤 CSV</button></div>`;
   const tabelle = `<div class="vw-tabelle-wrap"><table class="vw-tabelle"><thead><tr>${def.liste.map((k) => `<th data-a="vwSort" data-x="${k}">${esc(def.felder.find((f) => f.k === k)?.t || k)}${sortK === k ? " ▾" : ""}</th>`).join("")}</tr></thead>
     <tbody>${zeilen.slice(0, 1000).map((z) => `<tr class="${V.auswahl === z.id ? "gewaehlt" : ""}" data-a="vwWahl" data-x="${z.id}">${def.liste.map((k) => { const f = def.felder.find((x) => x.k === k); return `<td title="${esc(f ? String(zellWert(f, z[k])).replace(/<[^>]+>/g, "") : "")}">${f?.typ === "farbe" ? zellWert(f, z[k]) : esc(f ? zellWert(f, z[k]) : z[k] ?? "")}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
-  const form = V.auswahl !== null ? formular(V.tab, V.auswahl === "neu" ? {} : hole(V.tab, V.auswahl), schreiben) : "";
+  const form = V.auswahl !== null ? formular(V.tab, V.auswahl === "neu" ? neuVorlage(V.tab) : hole(V.tab, V.auswahl), schreiben) : "";
   return kopf + (form ? `<div class="vw-geteilt">${tabelle}${form}</div>` : tabelle);
 };
 function formular(tab, z, schreiben) {
@@ -173,7 +173,27 @@ function formular(tab, z, schreiben) {
     ${z.id ? `<div class="hinweis">Version ${z.version || 1} · geändert ${vorZeit(z.geaendert_am)} von ${esc(z.geaendert_von || "–")}</div>` : ""}
     <div class="knopfreihe">${schreiben ? `<button class="knopf haupt" data-a="vwSpeichern">💾 Speichern</button>${z.id ? `<button class="knopf rot" data-a="vwLoeschen">🗑️ Löschen</button>` : ""}` : '<span class="hinweis">Nur Lesen – keine Schreibrechte.</span>'}<button class="knopf" data-a="vwSchliessen">Schließen</button></div></div>`;
 }
+// Neue Datensätze: Inventar bekommt gleich die nächste freie Nummer (über Instrumente und Ausstattung eindeutig)
+function neuVorlage(tab) {
+  if (tab === "ausstattung") return { inventar_nr: naechsteInventarNr(db, "A-"), anzahl: 1, status: "verfuegbar", zustand: "neu", eigentuemer: "foerderverein", anschaffung: tagIso(new Date()) };
+  if (tab === "inventar") return { inventar_nr: naechsteInventarNr(db, "BK-"), status: "verfuegbar", eigentuemer: "foerderverein", anschaffung: tagIso(new Date()) };
+  return {};
+}
+const geld = (v) => Number(v || 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+// 📦 Abschreibung und Verbleib direkt im Formular eines Inventar-Datensatzes
+function afaKasten(tab, z) {
+  const a = abschreibung(tab, z), J = new Date().getFullYear();
+  const zeilen = a.ohneDaten ? '<div class="hinweis">Für die Abschreibung fehlen Anschaffungsdatum und/oder -preis.</div>'
+    : `<div><b>Abschreibung:</b> ${esc(AFA_ARTEN[a.art])}${a.art === "linear" ? ` · ${a.jahre} Jahre (bis ${a.endeJahr})` : ""}</div>
+      <div><b>AfA ${J}:</b> ${geld(a.afaJahr)} · <b>bisher gesamt:</b> ${geld(a.kumuliert)}</div>
+      <div><b>Restbuchwert heute:</b> ${geld(a.restwert)}${a.abgang ? ` · Abgang mit Buchwert ${geld(a.buchwertAbgang)}` : ""}</div>`;
+  const warn = [INVENTAR_PROBLEM.includes(z.status) && `⚠️ ${esc(INVENTAR_STATUS[z.status])}${z.status === "gestohlen" ? " – Anzeige erstatten, Versicherung informieren, „ausgeschieden am“ und Aktenzeichen eintragen" : z.status === "vermisst" ? " – bei der nächsten Inventur suchen; bleibt es weg: „gestohlen“ oder „verschrottet“ mit Datum" : ""}`,
+    z.garantie_bis && z.garantie_bis >= tagIso(new Date()) && `🛡️ Garantie bis ${datumKurz(z.garantie_bis)}`,
+    (!z.inventur_am || z.inventur_am < tagIso(new Date(Date.now() - 365 * 86400000))) && !INVENTAR_ABGANG.includes(z.status) && "🔍 seit über einem Jahr nicht inventarisiert"].filter(Boolean);
+  return `<div class="karte inv-afa">${zeilen}${warn.map((w) => `<div class="hinweis">${w}</div>`).join("")}</div>`;
+}
 function beziehungen(tab, z) {
+  if (tab === "inventar" || tab === "ausstattung") return afaKasten(tab, z);
   if (tab !== "personen") return "";
   const teile = [];
   if (z.typ === "schueler") {
@@ -199,6 +219,11 @@ AKTIONEN.vwSpeichern = async () => {
   const fehlt = def.felder.filter((f) => f.pflicht && (o[f.k] == null || o[f.k] === "" || (Array.isArray(o[f.k]) && !o[f.k].length)));
   if (fehlt.length) { toast("Pflichtfelder fehlen: " + fehlt.map((f) => f.t).join(", ")); return; }
   const alt = V.auswahl !== "neu" ? hole(V.tab, V.auswahl) : {};
+  if (V.tab === "inventar" || V.tab === "ausstattung") { // Inventar-Nr. eindeutig über beide Tabellen; Abgang braucht ein Datum
+    const doppelt = [...liste("inventar"), ...liste("ausstattung")].find((x) => x.id !== alt.id && String(x.inventar_nr).trim().toLowerCase() === String(o.inventar_nr).trim().toLowerCase());
+    if (doppelt) { toast(`⚠️ Inventar-Nr. ${o.inventar_nr} ist schon vergeben (${anzeigeName(liste("inventar").includes(doppelt) ? "inventar" : "ausstattung", doppelt)})`, 4500); return; }
+    if (INVENTAR_ABGANG.includes(o.status) && !o.ausgeschieden_am) { o.ausgeschieden_am = tagIso(new Date()); toast("📅 „ausgeschieden am“ auf heute gesetzt", 3000); }
+  }
   const z = await speichere(V.tab, { ...alt, ...o });
   if (V.tab === "personen" && !liste("zugaenge", (x) => x.person_id === z.id).length && ["schueler", "eltern", "lehrkraft", "leitung", "foerderverein"].includes(z.typ))
     await zugangSpeichern({ person_id: z.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: ["leitung", "lehrkraft", "foerderverein"].includes(z.typ) });
@@ -341,6 +366,96 @@ AKTIONEN.zugKarten = () => {
   $("#qrBereich").scrollIntoView({ behavior: "smooth" });
 };
 AKTIONEN.vwDrucken = () => window.print();
+
+// ---------- 📦 Inventar & Abschreibung (0.19.0): Instrumente + Ausstattung in einer Liste ----------
+// Kennzahlen (Bestand, Anschaffungswert, Restbuchwert, AfA im Jahr), Problemfälle, Anlagenverzeichnis (CSV), Inventur, QR-Etiketten.
+const IV = { bereich: "", kat: "", status: "bestand", eig: "", q: "", jahr: new Date().getFullYear(), modus: "liste" };
+const ST_FARBE = { verfuegbar: "b-gruen", im_einsatz: "b-blau", verliehen: "b-blau", reparatur: "b-gelb", defekt: "b-rot", vermisst: "b-rot", gestohlen: "b-rot", ausgemustert: "b-grau", verkauft: "b-grau", verschrottet: "b-grau" };
+const STATUS_WAHL = { bestand: "im Bestand", probleme: "⚠️ Problemfälle", abgang: "Abgänge", alle: "alle", ...INVENTAR_STATUS };
+const katName = (x) => (x.art === "instrument" ? "🎻 Instrument" : `${AUSSTATTUNG_KATEGORIEN[x.art]?.[0] || "📦"} ${AUSSTATTUNG_KATEGORIEN[x.art]?.[1] || x.art}`);
+function invGefiltert() {
+  const stichtag = IV.jahr < new Date().getFullYear() ? new Date(IV.jahr, 11, 31) : new Date();
+  const q = IV.q.trim().toLowerCase();
+  return inventarBestand(db, { stichtag, jahr: IV.jahr }).filter((x) => {
+    const st = x.z.status || "verfuegbar";
+    if (IV.bereich && x.tab !== IV.bereich) return false;
+    if (IV.kat && x.art !== IV.kat) return false;
+    if (IV.eig && (x.z.eigentuemer || "") !== IV.eig) return false;
+    if (IV.status === "bestand" && INVENTAR_ABGANG.includes(st)) return false;
+    if (IV.status === "probleme" && !INVENTAR_PROBLEM.includes(st)) return false;
+    if (IV.status === "abgang" && !INVENTAR_ABGANG.includes(st)) return false;
+    if (INVENTAR_STATUS[IV.status] && st !== IV.status) return false;
+    return !q || [x.nr, x.name, x.z.standort, x.z.seriennummer, x.z.hersteller, x.z.notiz, x.z.ausgeschieden_grund].some((v) => String(v || "").toLowerCase().includes(q));
+  });
+}
+ANSICHTEN.inventarbericht = () => {
+  const l = invGefiltert(), alle = inventarBestand(db, { jahr: IV.jahr }), heute = tagIso(new Date());
+  const bestand = alle.filter((x) => !INVENTAR_ABGANG.includes(x.z.status));
+  const summe = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+  const probleme = alle.filter((x) => INVENTAR_PROBLEM.includes(x.z.status));
+  const abgaengeJahr = alle.filter((x) => INVENTAR_ABGANG.includes(x.z.status) && String(x.z.ausgeschieden_am || "").startsWith(String(IV.jahr)));
+  const inventurAlt = bestand.filter((x) => !x.z.inventur_am || x.z.inventur_am < tagIso(new Date(Date.now() - 365 * 86400000)));
+  const kz = [["📦", bestand.length + " Positionen", `${summe(bestand, (x) => x.anzahl)} Stück im Bestand`], ["💶", geld(summe(bestand, (x) => x.afa.basis)), "Anschaffungswert (Bestand)"],
+    ["📉", geld(summe(alle, (x) => x.afa.afaJahr)), `Abschreibung ${IV.jahr}`], ["🧾", geld(summe(bestand, (x) => x.afa.restwert)), "Restbuchwert heute"],
+    ["⚠️", probleme.length, "Reparatur, defekt, vermisst, gestohlen"], ["🔍", inventurAlt.length, "seit über 1 Jahr nicht inventarisiert"]];
+  const sel = (c, o, w, leer) => `<select data-c="${c}">${leer ? `<option value="">${esc(leer)}</option>` : ""}${Object.entries(o).map(([k, t]) => `<option value="${esc(k)}" ${String(w) === k ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>`;
+  const jahre = Object.fromEntries(Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 4 + i).map((j) => [String(j), "AfA " + j]));
+  const schreibA = darf("ausstattung", "schreiben"), schreibI = darf("inventar", "schreiben");
+  const zeile = (x) => {
+    const st = x.z.status || "verfuegbar", a = x.afa;
+    return `<tr data-a="invOeffnen" data-x="${x.tab}|${x.id}" class="${INVENTAR_PROBLEM.includes(st) ? "inv-problem" : INVENTAR_ABGANG.includes(st) ? "inv-abgang" : ""}">
+      <td><b>${esc(x.nr)}</b></td><td>${esc(x.name)}${x.z.seriennummer ? `<br><small class="hinweis">SN ${esc(x.z.seriennummer)}</small>` : ""}</td><td>${esc(katName(x))}</td><td class="r">${x.anzahl}</td>
+      <td><span class="badge ${ST_FARBE[st] || ""}">${esc(INVENTAR_STATUS[st] || st)}</span>${INVENTAR_ABGANG.includes(st) && x.z.ausgeschieden_am ? `<br><small class="hinweis">${datumKurz(x.z.ausgeschieden_am)}</small>` : ""}</td>
+      <td>${esc(x.z.standort || "")}</td><td>${x.z.anschaffung ? datumKurz(x.z.anschaffung) : "–"}</td><td class="r">${a.basis ? geld(a.basis) : "–"}</td>
+      <td>${a.ohneDaten ? "–" : a.art === "linear" ? `${a.jahre} J.` : a.art === "sofort" ? "GWG" : "keine"}</td><td class="r">${a.afaJahr ? geld(a.afaJahr) : "–"}</td><td class="r">${a.ohneDaten ? "–" : geld(a.restwert)}</td>
+      ${IV.modus === "inventur" ? `<td>${INVENTAR_ABGANG.includes(st) ? "" : x.z.inventur_am === heute ? "✅ heute" : `<button class="knopf klein" data-a="invGesehen" data-x="${x.tab}|${x.id}">✅ gesehen</button><br><small class="hinweis">${x.z.inventur_am ? datumKurz(x.z.inventur_am) : "nie"}</small>`}</td>` : ""}</tr>`;
+  };
+  return `<div class="vw-kopf"><h2>📦 Inventar & Abschreibung <span class="hinweis">(${l.length})</span></h2>
+      <input type="search" placeholder="Nr., Name, Standort, Seriennr. …" value="${esc(IV.q)}" data-c="invSuche">
+      ${sel("invFeld", { inventar: "🎻 Instrumente", ausstattung: "📦 Ausstattung" }, IV.bereich, "Instrumente + Ausstattung").replace('data-c="invFeld"', 'data-c="invFeld" data-x="bereich"')}
+      ${sel("invFeld", Object.fromEntries(Object.entries(AUSSTATTUNG_KATEGORIEN).map(([k, [sym, t]]) => [k, `${sym} ${t}`])), IV.kat, "alle Kategorien").replace('data-c="invFeld"', 'data-c="invFeld" data-x="kat"')}
+      ${sel("invFeld", STATUS_WAHL, IV.status).replace('data-c="invFeld"', 'data-c="invFeld" data-x="status"')}
+      ${sel("invFeld", EIGENTUEMER, IV.eig, "alle Eigentümer").replace('data-c="invFeld"', 'data-c="invFeld" data-x="eig"')}
+      ${sel("invFeld", jahre, IV.jahr).replace('data-c="invFeld"', 'data-c="invFeld" data-x="jahr"')}</div>
+    <div class="kennzahlen">${kz.map(([s, n, t]) => `<div class="kennzahl"><b>${s} ${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
+    <div class="knopfreihe vw-noprint" style="margin:10px 0">${schreibA ? `<button class="knopf haupt" data-a="invNeu" data-x="ausstattung">＋ Ausstattung (Notenständer, Taktstock …)</button>` : ""}${schreibI ? `<button class="knopf" data-a="invNeu" data-x="inventar">＋ Instrument</button>` : ""}
+      <button class="knopf ${IV.modus === "inventur" ? "haupt" : ""}" data-a="invModus" data-x="inventur">✅ Inventur</button><button class="knopf" data-a="invEtiketten">🏷️ QR-Etiketten</button><button class="knopf" data-a="invCsv">📤 Anlagenverzeichnis ${IV.jahr} (CSV)</button></div>
+    ${probleme.length && IV.status !== "probleme" ? `<div class="karte inv-achtung"><b>⚠️ ${probleme.length} Problemfälle:</b> ${probleme.slice(0, 8).map((x) => `<button class="link" data-a="invOeffnen" data-x="${x.tab}|${x.id}">${esc(x.nr)} ${esc(x.name.split(" · ")[0])} (${esc(INVENTAR_STATUS[x.z.status])})</button>`).join(" · ")}${probleme.length > 8 ? " …" : ""} <button class="link" data-a="invFeldSetzen" data-x="status:probleme">alle zeigen ›</button></div>` : ""}
+    ${abgaengeJahr.length ? `<div class="hinweis">Abgänge ${IV.jahr}: ${abgaengeJahr.map((x) => `${esc(x.nr)} ${esc(INVENTAR_STATUS[x.z.status])} (Buchwert ${geld(x.afa.buchwertAbgang ?? x.afa.restwert)})`).join(" · ")}</div>` : ""}
+    ${IV.modus === "inventur" ? `<div class="karte inv-inventur"><b>✅ Inventur:</b> Gegenstand gefunden → „gesehen“ (Datum heute). Nicht gefunden → anklicken, Status „vermisst“. <button class="knopf klein" data-a="invAlleGesehen">alle angezeigten als gesehen</button> <button class="knopf klein" data-a="invModus" data-x="liste">fertig</button></div>` : ""}
+    <div class="vw-tabelle-wrap"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Nr.</th><th>Bezeichnung</th><th>Kategorie</th><th>Anz.</th><th>Status</th><th>Standort</th><th>Anschaffung</th><th>Preis</th><th>AfA</th><th>AfA ${IV.jahr}</th><th>Restwert</th>${IV.modus === "inventur" ? "<th>Inventur</th>" : ""}</tr></thead>
+      <tbody>${l.map(zeile).join("") || `<tr><td colspan="12" class="hinweis">Nichts gefunden.</td></tr>`}</tbody>
+      <tfoot><tr><td colspan="7"><b>Summe (${l.length} Positionen, ${summe(l, (x) => x.anzahl)} Stück)</b></td><td class="r"><b>${geld(summe(l, (x) => x.afa.basis))}</b></td><td></td><td class="r"><b>${geld(summe(l, (x) => x.afa.afaJahr))}</b></td><td class="r"><b>${geld(summe(l, (x) => x.afa.restwert))}</b></td>${IV.modus === "inventur" ? "<td></td>" : ""}</tr></tfoot></table></div>
+    <p class="hinweis">Abschreibung: linear monatsgenau ab Anschaffungsmonat, bis ${geld(800)} sofort (GWG) – Richtwerte je Kategorie (Instrumente 10 Jahre). Im Datensatz lässt sich Art und Nutzungsdauer ändern; maßgeblich sind die Vorgaben von Kassenprüfung bzw. Steuerberatung. Eigentum der Schule gehört meist nicht ins Anlagenverzeichnis des Fördervereins – dafür der Filter „Eigentümer“.</p>
+    <div id="qrBereich"></div>`;
+};
+AKTIONEN.invSuche = (v) => { IV.q = v; zeichne(); };
+AKTIONEN.invFeld = (_, el) => { IV[el.dataset.x] = el.dataset.x === "jahr" ? Number(el.value) : el.value; zeichne(); };
+AKTIONEN.invFeldSetzen = (x) => { const [k, v] = x.split(":"); IV[k] = v; zeichne(); };
+AKTIONEN.invModus = (m) => { IV.modus = IV.modus === m ? "liste" : m; zeichne(); };
+AKTIONEN.invOeffnen = (x) => { const [t, id] = x.split("|"); V.ansicht = "tabelle"; V.tab = t; V.auswahl = id; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
+AKTIONEN.invNeu = (t) => { V.ansicht = "tabelle"; V.tab = t; V.auswahl = "neu"; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
+AKTIONEN.invGesehen = async (x) => { const [t, id] = x.split("|"); await speichere(t, { ...hole(t, id), inventur_am: tagIso(new Date()) }); zeichne(); };
+AKTIONEN.invAlleGesehen = async () => {
+  const l = invGefiltert().filter((x) => !INVENTAR_ABGANG.includes(x.z.status) && x.z.inventur_am !== tagIso(new Date()));
+  if (!l.length || !(await frage(`${l.length} angezeigte Positionen als „heute gesehen“ markieren?`))) return;
+  for (const t of ["inventar", "ausstattung"]) { const z = l.filter((x) => x.tab === t).map((x) => ({ ...x.z, inventur_am: tagIso(new Date()) })); if (z.length) await speichereViele(t, z); }
+  toast(`✅ ${l.length} Positionen inventarisiert`); zeichne();
+};
+AKTIONEN.invCsv = () => {
+  const l = invGefiltert().map((x) => ({ nr: x.nr, bezeichnung: x.name, bereich: x.tab === "inventar" ? "Instrument" : "Ausstattung", kategorie: katName(x).replace(/^\S+ /, ""), anzahl: x.anzahl,
+    status: INVENTAR_STATUS[x.z.status || "verfuegbar"], eigentuemer: EIGENTUEMER[x.z.eigentuemer] || "", standort: x.z.standort || "", seriennummer: x.z.seriennummer || "", anschaffung: x.z.anschaffung || "",
+    anschaffungswert: x.afa.basis.toFixed(2).replace(".", ","), afa_art: AFA_ARTEN[x.afa.art], nutzungsdauer: x.afa.art === "linear" ? x.afa.jahre : "", ["afa_" + IV.jahr]: x.afa.afaJahr.toFixed(2).replace(".", ","),
+    afa_kumuliert: x.afa.kumuliert.toFixed(2).replace(".", ","), restbuchwert: x.afa.restwert.toFixed(2).replace(".", ","), abgang_am: x.z.ausgeschieden_am || "", abgang_grund: x.z.ausgeschieden_grund || "", beleg: x.z.beleg || "", inventur_am: x.z.inventur_am || "" }));
+  if (!l.length) return toast("Nichts zu exportieren");
+  herunterladen(`anlagenverzeichnis-${IV.jahr}-${tagIso(new Date())}.csv`, "\ufeff" + csvAus(l, Object.keys(l[0])), "text/csv");
+};
+AKTIONEN.invEtiketten = () => {
+  const l = invGefiltert().filter((x) => !INVENTAR_ABGANG.includes(x.z.status)), k = konfig();
+  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">🏷️ Etiketten (${l.length}) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3><p class="hinweis vw-noprint">Auf Etikettenpapier drucken und aufkleben. Der QR-Code enthält Inventar-Nr. und Bezeichnung – mit jeder Handy-Kamera lesbar (Inventur, Schadensmeldung).</p>
+    <div class="inv-etiketten">${l.map((x) => `<div class="inv-etikett"><img alt="QR ${esc(x.nr)}" src="${qrBild(`${k.name || "Bachkreis"} Inventar ${x.nr}: ${x.name}`)}"><div><b>${esc(x.nr)}</b><small>${esc(x.name)}</small><small>Eigentum ${esc(EIGENTUEMER[x.z.eigentuemer] || k.name || "Bachkreis")}</small></div></div>`).join("")}</div>`;
+  $("#qrBereich").scrollIntoView({ behavior: "smooth" });
+};
 
 // ---------- Import / Export ----------
 ANSICHTEN.import = () => {

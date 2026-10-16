@@ -54,6 +54,37 @@ export const KOM_EREIGNISSE = {
 export const INSTRUMENT_GRUPPEN = { streicher: ["🎻", "Streicher"], holz: ["🪈", "Holzbläser"], blech: ["🎺", "Blechbläser"], schlag: ["🥁", "Schlagwerk"], tasten: ["🎹", "Tasten & Harfe"], sonstige: ["🎵", "Sonstiges"] };
 export const INSTRUMENT_GRUPPEN_NAMEN = Object.fromEntries(Object.entries(INSTRUMENT_GRUPPEN).map(([k, [, n]]) => [k, n]));
 
+// ---------- 📦 Inventar (0.19.0): Status, Eigentümer, Abschreibung – gemeinsam für Instrumente und Ausstattung ----------
+export const INVENTAR_STATUS = { verfuegbar: "verfügbar", im_einsatz: "im Einsatz (fest)", verliehen: "verliehen", reparatur: "in Reparatur", defekt: "defekt",
+  vermisst: "vermisst / verloren", gestohlen: "gestohlen", ausgemustert: "ausgemustert", verkauft: "verkauft", verschrottet: "verschrottet / entsorgt" };
+export const INVENTAR_ABGANG = ["ausgemustert", "verkauft", "verschrottet", "gestohlen"]; // nicht mehr im Bestand (Abgang im Anlagenverzeichnis)
+export const INVENTAR_PROBLEM = ["reparatur", "defekt", "vermisst", "gestohlen"];
+export const EIGENTUEMER = { foerderverein: "Förderverein", schule: "Schule / Schulträger", leihgabe: "Leihgabe Dritter", privat: "privat" };
+export const AFA_ARTEN = { linear: "linear über die Nutzungsdauer", sofort: "sofort (geringwertig, GWG)", keine: "keine Abschreibung" };
+export const AUSSTATTUNG_KATEGORIEN = {
+  notenstaender: ["🎼", "Notenständer & Pultleuchten", 10], dirigent: ["🪄", "Dirigentenpult & Taktstock", 10], stuhl: ["🪑", "Stühle & Hocker", 10],
+  schlagwerk: ["🥁", "Schlagwerk-Zubehör", 8], koffer: ["🧳", "Koffer, Taschen & Transport", 5], technik: ["🎤", "Ton- & Videotechnik", 5],
+  licht: ["💡", "Licht, Strom & Kabel", 8], notenarchiv: ["📚", "Notenmappen & Archiv", 10], edv: ["💻", "Büro & EDV", 3], moebel: ["🗄️", "Möbel & Schränke", 13],
+  kleidung: ["👕", "Kleidung & Auftritt", 3], pflege: ["🧴", "Pflege & Ersatzteile", 1], sonstiges: ["📦", "Sonstiges", 5],
+};
+export const AUSSTATTUNG_KATEGORIEN_NAMEN = Object.fromEntries(Object.entries(AUSSTATTUNG_KATEGORIEN).map(([k, [, n]]) => [k, n]));
+export const ND_INSTRUMENT = 10; // Richtwert Nutzungsdauer Musikinstrumente (Jahre) – mit Kassenprüfung/Steuerberatung abstimmen
+export const GWG_GRENZE = 800; // € – bis hierhin standardmäßig Sofortabschreibung
+// Felder, die Instrumente und Ausstattung gemeinsam haben (Anschaffung, Abschreibung, Verbleib)
+const INV_FELDER = [
+  { k: "seriennummer", t: "Seriennummer", typ: "text" },
+  { k: "eigentuemer", t: "Eigentümer", typ: "wahl", werte: EIGENTUEMER },
+  { k: "haendler", t: "gekauft bei", typ: "text" },
+  { k: "beleg", t: "Beleg / Rechnungs-Nr.", typ: "text" },
+  { k: "garantie_bis", t: "Garantie bis", typ: "datum" },
+  { k: "afa_art", t: "Abschreibung", typ: "wahl", werte: AFA_ARTEN },
+  { k: "afa_jahre", t: "Nutzungsdauer (Jahre, leer = Richtwert)", typ: "zahl" },
+  { k: "verantwortlich_id", t: "verantwortlich", typ: "ref", ref: "personen", filter: (p) => ["leitung", "lehrkraft", "foerderverein"].includes(p.typ) },
+  { k: "inventur_am", t: "zuletzt gesehen (Inventur)", typ: "datum" },
+  { k: "ausgeschieden_am", t: "ausgeschieden am (verkauft, gestohlen …)", typ: "datum" },
+  { k: "ausgeschieden_grund", t: "Grund / Verbleib (z. B. Anzeige-Nr., Käufer)", typ: "text" },
+];
+
 // ---------- Nachrichten (gemeinsam für App und Server) ----------
 export const CHAT = { bearbeitenMin: 15, expressMax: 5, zeichen: 4000, expressUnbegrenzt: ["admin", "leitung"], anlagenMax: 10, selbstloeschenStd: [1, 24, 168] };
 // 📎 Anhänge (Fotos, Sprachnachrichten, Dateien, Noten): höchstens DATEI.max Bytes je Datei, nur diese Arten
@@ -202,15 +233,38 @@ export const TABELLEN = {
       { k: "bezeichnung", t: "Bezeichnung / Hersteller", typ: "text" },
       { k: "groesse", t: "Größe", typ: "text" },
       { k: "zustand", t: "Zustand", typ: "wahl", werte: { sehr_gut: "sehr gut", gut: "gut", gebraucht: "gebraucht", maengel: "Mängel" } },
-      { k: "status", t: "Status", typ: "wahl", werte: { verfuegbar: "verfügbar", verliehen: "verliehen", reparatur: "in Reparatur", ausgemustert: "ausgemustert" } },
+      { k: "status", t: "Status", typ: "wahl", werte: INVENTAR_STATUS },
       { k: "standort", t: "Standort", typ: "text" },
-      { k: "wert", t: "Wert (€)", typ: "geld" },
+      { k: "wert", t: "Anschaffungswert (€)", typ: "geld" },
       { k: "anschaffung", t: "Anschaffung", typ: "datum" },
       { k: "finanziert_von", t: "finanziert von", typ: "text" },
       { k: "wartung_faellig", t: "Wartung fällig", typ: "datum" },
+      ...INV_FELDER,
       { k: "notiz", t: "Notiz", typ: "lang" },
     ],
     liste: ["inventar_nr", "typ_id", "bezeichnung", "groesse", "status", "zustand", "wartung_faellig"],
+    anzeige: (z) => `${z.inventar_nr} ${z.bezeichnung || ""}`.trim(),
+  },
+  // 📦 Weiteres Inventar (0.19.0): Notenständer, Taktstock, Stühle, Technik … – je Stück oder als Sammelposten (Anzahl)
+  ausstattung: {
+    titel: "Ausstattung & Zubehör", sym: "📦", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
+    felder: [
+      { k: "inventar_nr", t: "Inventar-Nr. (ID)", typ: "text", pflicht: true },
+      { k: "kategorie", t: "Kategorie", typ: "wahl", werte: AUSSTATTUNG_KATEGORIEN_NAMEN, pflicht: true },
+      { k: "bezeichnung", t: "Bezeichnung", typ: "text", pflicht: true },
+      { k: "hersteller", t: "Hersteller / Modell", typ: "text" },
+      { k: "anzahl", t: "Anzahl (Sammelposten)", typ: "zahl" },
+      { k: "status", t: "Status", typ: "wahl", werte: INVENTAR_STATUS },
+      { k: "zustand", t: "Zustand", typ: "wahl", werte: { neu: "neu", sehr_gut: "sehr gut", gut: "gut", gebraucht: "gebraucht", maengel: "Mängel" } },
+      { k: "standort", t: "Standort", typ: "text" },
+      { k: "anschaffung", t: "Anschaffung", typ: "datum" },
+      { k: "wert", t: "Anschaffungspreis gesamt (€)", typ: "geld" },
+      { k: "finanzierung", t: "finanziert von", typ: "wahl", werte: { foerderverein: "Förderverein", schule: "Schuletat", spende: "Spende", zuschuss: "Zuschuss / Förderung", sonstige: "sonstige" } },
+      { k: "einkauf_id", t: "aus Einkauf", typ: "ref", ref: "einkaeufe" },
+      ...INV_FELDER,
+      { k: "notiz", t: "Notiz", typ: "lang" },
+    ],
+    liste: ["inventar_nr", "kategorie", "bezeichnung", "anzahl", "status", "standort", "anschaffung", "wert"],
     anzeige: (z) => `${z.inventar_nr} ${z.bezeichnung || ""}`.trim(),
   },
   ausleihen: {

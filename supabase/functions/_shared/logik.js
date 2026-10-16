@@ -1,6 +1,7 @@
 // AUTOMATISCH KOPIERT aus js/kern/logik.js (tools/server-kopie.mjs) – nicht von Hand ändern.
 // Fachlogik ohne Oberfläche – rein, testbar (tests/logik.test.mjs). Bekommt einen Datenzugriff „db“ mit
 // liste(tab, filter), hole(tab, id), konfig(). Dieselben Regeln gelten später serverseitig.
+import { AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG } from "./schema.js";
 
 export const tagIso = (d) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
 const imZeitraum = (z, tag) => (!z.von || z.von <= tag) && (!z.bis || z.bis >= tag);
@@ -227,7 +228,7 @@ export function cockpit(db, ichId, heute = new Date()) {
   }
   for (const e of db.liste("einkaeufe", (e) => e.status === "bestellt")) out.push({ bereich: "andere", dring: 0, sym: "📦", text: `Bestellt, Lieferung offen: ${e.titel}`, ziel: { view: "einkauf", id: e.id } });
   // Fällig bald: Wartung, temporäre Zuordnungen laufen aus, Termin-Fristen
-  const wartung = db.liste("inventar", (i) => i.status !== "ausgemustert" && i.wartung_faellig && i.wartung_faellig <= inTagen(30));
+  const wartung = db.liste("inventar", (i) => !INVENTAR_ABGANG.includes(i.status) && i.wartung_faellig && i.wartung_faellig <= inTagen(30));
   if (wartung.length) out.push({ bereich: "bald", dring: wartung.some((i) => i.wartung_faellig < h) ? 2 : 1, sym: "🧰", text: `Wartung fällig: ${wartung.length} Instrument${wartung.length === 1 ? "" : "e"}`, ziel: { view: "instrumente", filter: "wartung" } });
   for (const z of db.liste("gruppe_zuordnung", (z) => z.art === "temporaer" && z.bis && z.bis >= h && z.bis <= inTagen(21))) {
     const p = db.hole("personen", z.person_id), g = db.hole("gruppen", z.gruppe_id);
@@ -352,4 +353,46 @@ export function nachrichtKurz(n) {
   const mehr = (n.anlagen || []).length > 1 ? ` (+${n.anlagen.length - 1})` : "";
   const d = (s) => `${Math.floor((s || 0) / 60)}:${String(Math.round(s || 0) % 60).padStart(2, "0")}`;
   return (a.art === "sprache" ? `🎤 Sprachnachricht${a.dauer ? " " + d(a.dauer) : ""}` : a.art === "bild" ? "📷 Foto" : a.art === "video" ? "🎬 Video" : a.art === "noten" ? `🎼 Noten: ${a.name}` : `📄 ${a.name}`) + mehr;
+}
+
+// ---------- 📦 Abschreibung (0.19.0) ----------
+// Linear monatsgenau ab dem Monat der Anschaffung (pro rata temporis), bis zum Monat des Abgangs; „sofort“ = ganz im
+// Anschaffungsjahr (geringwertige Wirtschaftsgüter); ohne Angabe: bis GWG_GRENZE sofort, sonst linear. Richtwerte –
+// die Werte der Kassenprüfung / Steuerberatung gehen vor (afa_art, afa_jahre am Datensatz).
+const mIndex = (d) => d.getFullYear() * 12 + d.getMonth();
+const rund2 = (x) => Math.round(x * 100) / 100;
+export function nutzungsdauer(tab, z) {
+  return Number(z.afa_jahre) || (tab === "ausstattung" ? AUSSTATTUNG_KATEGORIEN[z.kategorie]?.[2] || 5 : ND_INSTRUMENT);
+}
+export function abschreibung(tab, z, { stichtag = new Date(), jahr } = {}) {
+  const basis = Number(z.wert) || 0, jahre = nutzungsdauer(tab, z);
+  const art = z.afa_art || (basis > 0 && basis <= GWG_GRENZE ? "sofort" : "linear");
+  const J = jahr ?? stichtag.getFullYear();
+  const leer = { art, jahre, basis, kumuliert: 0, restwert: basis, afaJahr: 0, abgang: false, endeJahr: null };
+  if (!basis || !z.anschaffung) return { ...leer, ohneDaten: true };
+  const start = mIndex(new Date(z.anschaffung + "T12:00:00"));
+  const abgang = INVENTAR_ABGANG.includes(z.status) && z.ausgeschieden_am ? mIndex(new Date(z.ausgeschieden_am + "T12:00:00")) : null;
+  const monat = art === "linear" ? basis / (jahre * 12) : 0;
+  const kumBis = (m) => { // kumulierte Abschreibung bis einschließlich Monat m
+    if (abgang != null) m = Math.min(m, abgang);
+    if (m < start || art === "keine") return 0;
+    return art === "sofort" ? basis : Math.min(basis, (m - start + 1) * monat);
+  };
+  const jetzt = mIndex(stichtag), kum = kumBis(jetzt), weg = abgang != null && abgang <= jetzt;
+  return { art, jahre, basis, kumuliert: rund2(kum), restwert: weg ? 0 : rund2(basis - kum), buchwertAbgang: weg ? rund2(basis - kum) : null,
+    afaJahr: rund2(kumBis(J * 12 + 11) - kumBis(J * 12 - 1)), abgang: weg, endeJahr: art === "linear" ? Math.floor((start + jahre * 12 - 1) / 12) : art === "sofort" ? Math.floor(start / 12) : null };
+}
+// Ein Inventar-Bestand aus Instrumenten (inventar) und Ausstattung – einheitliche Zeilen für Übersicht, Anlagenverzeichnis, Etiketten
+export function inventarBestand(db, { stichtag = new Date(), jahr } = {}) {
+  const typName = (id) => db.hole("instrument_typen", id)?.name || "Instrument";
+  const zeile = (tab, z) => ({ tab, z, id: z.id, nr: z.inventar_nr || "", art: tab === "inventar" ? "instrument" : z.kategorie || "sonstiges",
+    name: tab === "inventar" ? `${typName(z.typ_id)}${z.groesse ? " " + z.groesse : ""}${z.bezeichnung ? " · " + z.bezeichnung : ""}` : z.bezeichnung || "",
+    anzahl: tab === "inventar" ? 1 : Number(z.anzahl) || 1, afa: abschreibung(tab, z, { stichtag, jahr }) });
+  return [...db.liste("inventar").map((z) => zeile("inventar", z)), ...db.liste("ausstattung").map((z) => zeile("ausstattung", z))]
+    .sort((a, b) => a.nr.localeCompare(b.nr, "de", { numeric: true }));
+}
+// Nächste freie Inventar-Nr. mit Präfix (Instrumente „BK-“, Ausstattung „A-“) – über beide Tabellen eindeutig
+export function naechsteInventarNr(db, praefix = "A-") {
+  const n = [...db.liste("inventar"), ...db.liste("ausstattung")].map((z) => String(z.inventar_nr || "")).filter((x) => x.startsWith(praefix)).map((x) => parseInt(x.slice(praefix.length), 10) || 0);
+  return praefix + String(Math.max(0, ...n) + 1).padStart(3, "0");
 }

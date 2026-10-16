@@ -42,7 +42,7 @@ async function sitzungPruefen(db, token) {
   const h = await sha256(token);
   const r = await db.q(
     `select to_jsonb(p) as p, s.id as sid from bk_sitzungen s join bk_personen p on p.id = s.person_id
-     where s.token_hash = $1 and s.ablauf > now() and s.widerrufen_am is null and p.geloescht_am is null`, [h]);
+     where s.token_hash = $1 and s.ablauf > now() and s.widerrufen_am is null and p.geloescht_am is null and p.status is distinct from 'ausgetreten'`, [h]);
   if (!r.length) return null;
   await db.q(`update bk_sitzungen set zuletzt = now() where id = $1`, [r[0].sid]);
   return { person: r[0].p, sid: r[0].sid };
@@ -55,7 +55,7 @@ async function anmelden(db, body, meta) {
   const code = String(body.code || "").trim().toUpperCase();
   const treffer = code.length >= 6 ? await db.q(
     `select to_jsonb(z) as z, to_jsonb(p) as p from bk_zugaenge z join bk_personen p on p.id = z.person_id
-     where z.code_hash = $1 and z.aktiv is true and z.geloescht_am is null and p.geloescht_am is null`, [await sha256(code)]) : [];
+     where z.code_hash = $1 and z.aktiv is true and z.geloescht_am is null and p.geloescht_am is null and p.status is distinct from 'ausgetreten'`, [await sha256(code)]) : [];
   await db.q(`insert into bk_anmeldeversuche (ip_hash, ok) values ($1, $2)`, [ipHash, treffer.length > 0]);
   if (!treffer.length) return fehler(401, "CODE_UNGUELTIG");
   const { z, p } = treffer[0];

@@ -247,11 +247,42 @@ export function erzeugeDemodaten(heute = new Date()) {
     i.anschaffung = isoTag(tag(jetzt, -Math.floor(200 + r() * 2500)));
     i.wartung_faellig = isoTag(tag(jetzt, Math.floor(-40 + r() * monate * 30)));
   }
+  for (const i of d.inventar) Object.assign(i, { eigentuemer: i.finanziert_von ? "foerderverein" : wahl(["foerderverein", "foerderverein", "schule"]), inventur_am: isoTag(tag(jetzt, -Math.floor(20 + r() * 400))) });
+  // 📦 Inventar-Fälle (0.19.0): eine Geige defekt, ein Cello auf der Konzertreise gestohlen (Anzeige erstattet)
+  Object.assign(d.inventar[2], { status: "defekt", zustand: "maengel", notiz: "Steg umgefallen, Decke gerissen – Kostenvoranschlag anfragen" });
+  Object.assign(d.inventar[12], { status: "gestohlen", ausgeschieden_am: isoTag(tag(jetzt, -48)), ausgeschieden_grund: "Diebstahl aus dem Bus, Anzeige Polizei Bergkamen Az. 123/26 (Beispiel), Versicherung informiert" });
+
+  // 📦 Ausstattung & Zubehör (0.19.0): Notenständer, Taktstock, Stühle, Technik … mit Anschaffung, Preis und Status
+  d.ausstattung = [];
+  const aus = (kategorie, bezeichnung, extra) => d.ausstattung.push({ id: `au-${d.ausstattung.length + 1}`, inventar_nr: `A-${String(d.ausstattung.length + 1).padStart(3, "0")}`, kategorie, bezeichnung,
+    anzahl: 1, status: "verfuegbar", zustand: "gut", standort: "Instrumentenraum", eigentuemer: "foerderverein", finanzierung: "foerderverein", ...extra });
+  const vor = (tage) => isoTag(tag(jetzt, -tage));
+  aus("notenstaender", "Orchester-Notenständer (schwarz, klappbar)", { hersteller: "König & Meyer 101", anzahl: 40, wert: 1960, anschaffung: vor(900), haendler: "Musikhaus (Beispiel)", beleg: "RE-2024-0815", inventur_am: vor(30) });
+  aus("notenstaender", "Pultleuchten LED", { hersteller: "K&M 12250", anzahl: 12, wert: 540, anschaffung: vor(400), inventur_am: vor(30) });
+  aus("notenstaender", "Notenständer Stahl", { hersteller: "K&M 100/1", anzahl: 4, status: "defekt", zustand: "maengel", wert: 120, anschaffung: vor(3200), notiz: "Klemmschrauben gebrochen", inventur_am: vor(30) });
+  aus("dirigent", "Dirigentenpult mit Ablage", { hersteller: "K&M 12330", wert: 289, anschaffung: vor(1500), standort: "PZ Bühne", inventur_am: vor(30) });
+  aus("dirigent", "Taktstock Ebenholz-Griff", { hersteller: "Mollard (Beispiel)", wert: 85, anschaffung: vor(700), status: "im_einsatz", standort: "bei der Leitung", inventur_am: vor(30) });
+  aus("dirigent", "Ersatz-Taktstock", { wert: 25, anschaffung: vor(200), status: "vermisst", notiz: "seit dem Sommerkonzert nicht wiedergefunden" });
+  aus("stuhl", "Orchesterstühle (höhenverstellbar)", { anzahl: 30, wert: 4500, anschaffung: vor(1800), finanzierung: "zuschuss", eigentuemer: "schule", standort: "Musikraum 104", inventur_am: vor(200) });
+  aus("stuhl", "Cellistenhocker", { anzahl: 4, wert: 380, anschaffung: vor(1100), inventur_am: vor(200) });
+  aus("schlagwerk", "Paukenfelle Ersatzsatz", { wert: 310, anschaffung: vor(300), standort: "PZ Bühnenlager" });
+  aus("koffer", "Transportcase Pauke", { anzahl: 2, wert: 890, anschaffung: vor(600), standort: "PZ Bühnenlager", status: "reparatur", notiz: "Rolle abgebrochen – beim Sattler" });
+  aus("technik", "Aktive Lautsprecher (Paar)", { hersteller: "the box pro (Beispiel)", wert: 699, anschaffung: vor(500), seriennummer: "SN-4471-A/B", garantie_bis: isoTag(tag(jetzt, 230)) });
+  aus("technik", "Aufnahmegerät Stereo", { hersteller: "Zoom H5", wert: 279, anschaffung: vor(380), status: "verliehen", standort: "ausgeliehen an Lehrkraft", seriennummer: "H5-88213" });
+  aus("technik", "Beamer für Probenraum", { wert: 640, anschaffung: vor(2400), status: "gestohlen", ausgeschieden_am: vor(120), ausgeschieden_grund: "Einbruch Musikraum, Anzeige Az. 77/26 (Beispiel)", eigentuemer: "schule", finanzierung: "schule" });
+  aus("licht", "Verlängerungskabel & Mehrfachstecker", { anzahl: 10, wert: 140, anschaffung: vor(800) });
+  aus("notenarchiv", "Notenmappen schwarz mit Logo", { anzahl: 80, wert: 560, anschaffung: vor(650), finanzierung: "spende" });
+  aus("edv", "Notebook Notenwart", { hersteller: "Lenovo (Beispiel)", wert: 749, anschaffung: vor(420), standort: "Notenwart", seriennummer: "PF-3K2Q9", afa_art: "linear", afa_jahre: 1 });
+  aus("moebel", "Notenschrank 4 Türen", { wert: 1250, anschaffung: vor(3000), standort: "Musikraum 104" });
+  aus("kleidung", "Bachkreis-Poloshirts (Größen-Mix)", { anzahl: 60, wert: 900, anschaffung: vor(250), finanzierung: "spende", eigentuemer: "foerderverein" });
+  aus("pflege", "Kolophonium, Saiten, Rohrblätter", { wert: 160, anschaffung: vor(60), afa_art: "sofort" });
+  aus("sonstiges", "Alte Notenpulte (Holz)", { anzahl: 6, wert: 300, anschaffung: vor(4500), status: "verkauft", ausgeschieden_am: vor(90), ausgeschieden_grund: "Flohmarkt Schulfest, Erlös 60 € an den Förderverein" });
+
   // Ausleihen
   d.ausleihen = [];
   const schuelerOhneEigenes = d.person_instrument.filter((x) => !x.eigenes && x.haupt && d.personen.find((p) => p.id === x.person_id)?.typ === "schueler");
   for (const i of d.inventar) {
-    if (["t-pk", "t-sw", "t-kla"].includes(i.typ_id)) continue;
+    if (["t-pk", "t-sw", "t-kla"].includes(i.typ_id) || i.status !== "verfuegbar") continue;
     const kand = schuelerOhneEigenes.find((x) => x.typ_id === i.typ_id && !d.ausleihen.find((a) => a.person_id === x.person_id));
     if (kand && r() < 0.75) {
       const von = tag(jetzt, -Math.floor(30 + r() * 300));

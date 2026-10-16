@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.19.0 DEV – 16.10.2026
+- 📦 Tabelle `ausstattung` (Kategorien mit Richtwert-Nutzungsdauer, Sammelposten, Eigentümer, Finanzierung, Einkauf-Verweis) und gemeinsame Inventar-Felder auch für `inventar` (Seriennummer, Eigentümer, Händler, Beleg, Garantie, AfA-Art/-Jahre, verantwortlich, Inventur, Abgang); Status-Katalog INVENTAR_STATUS
+- logik.js: `abschreibung()` (linear pro rata temporis, GWG sofort, Abgang), `inventarBestand()`, `naechsteInventarNr()`
+- PC-Verwaltung: Ansicht „Inventar & Abschreibung“ (Kennzahlen, Filter, Problemfälle, Inventur, QR-Etiketten, Anlagenverzeichnis-CSV), Abschreibungs-Kasten im Formular, Nummernvorschlag, Prüfung auf doppelte Inventar-Nr., Abgangsdatum automatisch
+- Korrekturen: Anmeldung/Sitzung bei „ausgetreten“ gesperrt; `stimmen.gruppe_id` serverseitig beachtet; Reparatur erledigt → „verliehen“ bei aktiver Ausleihe; ausgeschiedene Instrumente überall ausgeblendet
+- Nachtrags-Migration 20261026000000_bk_inventar.sql; Tests tests/inventar.test.mjs; docs/KONZEPT-CHECK.md (Lückenanalyse)
+
 ## 0.18.0 DEV – 16.10.2026
 - 🎼 Demo-Probenoten: js/kern/notensatz.js setzt die gemeinfreien Stücke der Musik-Engine als SVG (ohne Bibliothek/Schriftart) – je Instrument Melodie, Mittelstimme (Akkordtöne mit kurzen Wegen) oder Bass aus der Harmonie, Pauken auf Grundton/Dominante, Klavier zweizeilig, Partitur dreizeilig
 - Schlüssel, Tonart, Transposition (Kl/Tr in B, Hr in F, Kb 8va), Vorzeichen-Rechtschreibung je Takt, Haltebögen über Taktstriche, Balken, Pausen, Ganztaktpausen

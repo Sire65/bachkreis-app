@@ -4,7 +4,7 @@ import { S, VIEWS, db, zeige, kopf, name, istVerwalter } from "./zustand.js";
 import { esc, AKTIONEN, toast } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
 import { instrumentSpielen, midi } from "../kern/musik.js";
-import { INSTRUMENT_GRUPPEN } from "../kern/schema.js";
+import { INSTRUMENT_GRUPPEN, INVENTAR_ABGANG } from "../kern/schema.js";
 import { merkmale, gesichtSvg, gesicht } from "./gesichter.js";
 
 // Haltung: kinn · zwischen (Cello) · bass · quer (Flöte) · gerade · schraeg (Fagott) · vorn (Trompete) · zug (Posaune) · horn · tuba · pauke · trommel · harfe · klavier
@@ -193,7 +193,7 @@ function notenFlug(fig) {
 const imBachkreis = (l) => {
   const typen = liste("instrument_typen", (t) => l.finde.test(t.name)).map((t) => t.id);
   const spieler = [...new Set(liste("person_instrument", (x) => typen.includes(x.typ_id)).map((x) => x.person_id))].filter((p) => hole("personen", p));
-  const inv = liste("inventar", (i) => typen.includes(i.typ_id) && i.status !== "ausgemustert");
+  const inv = liste("inventar", (i) => typen.includes(i.typ_id) && !INVENTAR_ABGANG.includes(i.status));
   return { typen, spieler, inv, frei: inv.filter((i) => i.status === "verfuegbar").length };
 };
 VIEWS.instrumentenkunde = {

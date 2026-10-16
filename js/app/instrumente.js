@@ -5,9 +5,11 @@ import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte, frage
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
-import { INSTRUMENT_GRUPPEN } from "../kern/schema.js";
+import { INSTRUMENT_GRUPPEN, INVENTAR_ABGANG } from "../kern/schema.js";
 
-const STATUS = { verfuegbar: ["b-gruen", "verfügbar"], verliehen: ["b-blau", "verliehen"], reparatur: ["b-gelb", "in Reparatur"], ausgemustert: ["b-grau", "ausgemustert"] };
+const STATUS = { verfuegbar: ["b-gruen", "verfügbar"], im_einsatz: ["b-blau", "im Einsatz"], verliehen: ["b-blau", "verliehen"], reparatur: ["b-gelb", "in Reparatur"], defekt: ["b-rot", "defekt"], vermisst: ["b-rot", "vermisst"],
+  gestohlen: ["b-rot", "gestohlen"], ausgemustert: ["b-grau", "ausgemustert"], verkauft: ["b-grau", "verkauft"], verschrottet: ["b-grau", "verschrottet"] };
+const weg = (i) => INVENTAR_ABGANG.includes(i.status); // ausgeschieden (ausgemustert, verkauft, verschrottet, gestohlen)
 const REP = { gemeldet: ["b-rot", "gemeldet"], angebot: ["b-gelb", "Kostenvoranschlag"], freigegeben: ["b-blau", "freigegeben"], in_arbeit: ["b-blau", "in der Werkstatt"], erledigt: ["b-gruen", "erledigt"], abgelehnt: ["b-grau", "abgelehnt"] };
 const typName = (id) => hole("instrument_typen", id)?.name || "Instrument";
 const darfFreigeben = (betrag) => istVorstand() || (istLeitung() && Number(betrag || 0) <= Number(konfig().freigabe_grenze_eur || 0));
@@ -33,8 +35,8 @@ function infoVon(i) {
   const a = aktiveAusleihe(db, i.id), h = heuteIso();
   return { i, a, typ: typName(i.typ_id), sym: symbolVon(i), gruppe: gruppeVon(i), rep: offeneRep(i), wartung: wartungFaellig(i), ueberfaellig: !!(a?.bis && a.bis < h), wartungUeber: !!(i.wartung_faellig && i.wartung_faellig < h) };
 }
-const STATUS_FILTER = { aktiv: ["Alle", (x) => x.i.status !== "ausgemustert"], verfuegbar: ["frei", (x) => x.i.status === "verfuegbar"], verliehen: ["verliehen", (x) => x.i.status === "verliehen"],
-  reparatur: ["🔧 Reparatur", (x) => x.i.status === "reparatur" || x.rep.length > 0], wartung: ["⏰ Wartung", (x) => x.wartung && x.i.status !== "ausgemustert"], ueberfaellig: ["⚠️ Rückgabe", (x) => x.ueberfaellig], ausgemustert: ["ausgemustert", (x) => x.i.status === "ausgemustert"] };
+const STATUS_FILTER = { aktiv: ["Alle", (x) => !weg(x.i)], verfuegbar: ["frei", (x) => x.i.status === "verfuegbar"], verliehen: ["verliehen", (x) => x.i.status === "verliehen"],
+  reparatur: ["🔧 Reparatur", (x) => x.i.status === "reparatur" || x.rep.length > 0], defekt: ["⚠️ defekt/vermisst", (x) => ["defekt", "vermisst"].includes(x.i.status)], wartung: ["⏰ Wartung", (x) => x.wartung && !weg(x.i)], ueberfaellig: ["⚠️ Rückgabe", (x) => x.ueberfaellig], ausgemustert: ["ausgeschieden", (x) => weg(x.i)] };
 function suchtreffer(x, q) {
   if (!q) return true;
   const t = [x.i.inventar_nr, x.typ, x.i.groesse, x.i.bezeichnung, x.i.standort, x.i.finanziert_von, x.i.notiz, INSTRUMENT_GRUPPEN[x.gruppe]?.[1], x.a ? name(x.a.person_id) : ""].join(" ").toLowerCase();
@@ -110,7 +112,7 @@ VIEWS.instrumente = {
       + `<div class="inst-leiste"><input type="search" id="instSuche" placeholder="🔍 Nr., Instrument, Hersteller, Name …" value="${esc(IF.q)}" aria-label="Instrumente durchsuchen">
         <div class="inst-ansicht" role="group" aria-label="Ansicht">${ANSICHTEN_I.map(([k, sym, t]) => `<button type="button" class="${ans === k ? "an" : ""}" data-a="instAnsicht" data-x="${k}" title="${t}" aria-label="${t}" aria-pressed="${ans === k}">${sym}</button>`).join("")}</div>
         <button type="button" class="inst-filterknopf${IF.panel ? " an" : ""}" data-a="instPanel" aria-expanded="${IF.panel}" title="Filter, Gruppen & Sortierung">⚙️${aktiv.length ? `<i>${aktiv.length}</i>` : ""}</button></div>
-      <div class="inst-chips">${Object.entries(STATUS_FILTER).filter(([k]) => k !== "ausgemustert" || basis.some((x) => x.i.status === "ausgemustert")).map(([k, [t, f]]) => { const n = basis.filter(f).length; return n || k === "aktiv" || IF.status === k ? `<button type="button" class="${IF.status === k ? "an" : ""}" data-a="instStatus" data-x="${k}">${t} <b>${n}</b></button>` : ""; }).join("")}</div>
+      <div class="inst-chips">${Object.entries(STATUS_FILTER).filter(([k]) => k !== "ausgemustert" || basis.some((x) => weg(x.i))).map(([k, [t, f]]) => { const n = basis.filter(f).length; return n || k === "aktiv" || IF.status === k ? `<button type="button" class="${IF.status === k ? "an" : ""}" data-a="instStatus" data-x="${k}">${t} <b>${n}</b></button>` : ""; }).join("")}</div>
       ${IF.panel ? `<div class="inst-panel karte">
         <label>Gruppe<select data-c="instFeld" data-x="gruppe"><option value="">alle</option>${opt(gruppen, IF.gruppe)}</select></label>
         <label>Instrument<select data-c="instFeld" data-x="typ"><option value="">alle</option>${opt(typen, IF.typ)}</select></label>
@@ -251,7 +253,7 @@ AKTIONEN.repStatus = async (x) => {
   const [id, st] = x.split("|");
   const r = hole("reparaturen", id);
   await speichere("reparaturen", { ...r, status: st, ...(st === "freigegeben" ? { freigegeben_von: S.ich.id } : {}) });
-  if (st === "erledigt" || st === "abgelehnt") await speichere("inventar", { ...hole("inventar", r.inventar_id), status: "verfuegbar" });
+  if (st === "erledigt" || st === "abgelehnt") await speichere("inventar", { ...hole("inventar", r.inventar_id), status: aktiveAusleihe(db, r.inventar_id) ? "verliehen" : "verfuegbar" }); // noch verliehen → bleibt verliehen
   if (st === "in_arbeit") await speichere("inventar", { ...hole("inventar", r.inventar_id), status: "reparatur" });
   toast("Status: " + REP[st][1]);
   zeige("reparatur", { id }, { ersetzen: true });

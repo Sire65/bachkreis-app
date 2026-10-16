@@ -39,3 +39,19 @@ table.vw-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .qr-karte code { font-size: 1.2rem; font-weight: 900; letter-spacing: .1em; }
 @media (max-width: 900px) { .vw-rahmen { grid-template-columns: 1fr; } .vw-seite { position: static; height: auto; } .vw-geteilt { grid-template-columns: 1fr; } .vw-form { position: static; max-height: none; } }
 @media print { .vw-seite, .vw-kopf, .demoleiste, .vw-noprint { display: none !important; } .vw-rahmen { display: block; } .qr-karte { border-color: #999; } }
+
+/* 📦 Inventar & Abschreibung (0.19.0) */
+.inv-tabelle td.r, .inv-tabelle th.r { text-align: right; white-space: nowrap; }
+.inv-tabelle tfoot td { border-top: 2px solid var(--linie); background: var(--karte2); }
+.inv-tabelle tr.inv-problem td { background: color-mix(in srgb, var(--rotbg) 55%, transparent); }
+.inv-tabelle tr.inv-abgang td { color: var(--grau); text-decoration-color: var(--grau); }
+.inv-tabelle tr.inv-abgang td:first-child b { text-decoration: line-through; }
+.inv-achtung { border-left: 4px solid var(--rot); }
+.inv-inventur { border-left: 4px solid var(--gruen); }
+.inv-afa { background: var(--karte2); box-shadow: none; display: grid; gap: 4px; }
+.inv-etiketten { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.inv-etikett { display: flex; gap: 8px; align-items: center; border: 1px dashed var(--linie); border-radius: 8px; padding: 6px; background: #fff; color: #111; break-inside: avoid; }
+.inv-etikett img { width: 84px; height: 84px; image-rendering: pixelated; flex: 0 0 auto; }
+.inv-etikett b { display: block; font-size: 1.1rem; letter-spacing: .04em; }
+.inv-etikett small { display: block; font-size: .72rem; line-height: 1.25; }
+@media print { .inv-tabelle, .kennzahlen, .inv-achtung, .vw-haupt > .hinweis { display: none; } .inv-etikett { border-color: #999; } }

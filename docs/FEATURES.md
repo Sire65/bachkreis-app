@@ -61,6 +61,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F51 | Einstellungen wie KC: Farbdesigns, Themen + Schriften, Tag/Nacht A/T/N, Schrift-Zoom, Chat-Farben, Sparmodus | ✅ | e2e rundgang |
 | BK-F52 | Effekte wie KC: Sende-Effekte, Fee, Reißwolf, Anpinnen, Tipp des Tages, Was ist neu, Vorlesen, Feiertage | ✅ | e2e rundgang |
 | BK-F53 | Privatsphäre-Freigaben (Geburtstag, Handy, E-Mail, Adresse), andere Geräte abmelden | ✅ | server.test |
+| BK-F54 | 📦 Inventar & Ausstattung (Notenständer, Taktstock, Stühle, Technik …): Inventar-Nr., Anschaffung, Preis, Abschreibung, Status inkl. defekt/vermisst/gestohlen/verkauft, Inventur, QR-Etiketten, Anlagenverzeichnis | ✅ | inventar.test, e2e rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):
@@ -94,6 +95,13 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 - **Stücke:** Suche (Titel, Komponist, Werkverzeichnis, Ausgabe, Stimme), Chips „📄 PDF fehlt“ / „📕 vollständig“, ⚙️ Filter Instrument · Projekt · Schwierigkeit · Rechte, Sortieren. Mit Instrument-Filter steht die passende Stimme direkt auf der Karte.
 - **Noten eines Stücks:** nach Instrumentengruppen (Partitur, Streicher, Holz, Blech, Schlagwerk, Tasten & Harfe, Solo/Sonderstimmen) mit Chips zum Filtern, 👥 Spieler je Instrument im gewählten Orchester, PDF öffnen und 📤 hochladen (Leitung, Lehrkräfte, Notenwart).
 - **Zuordnung:** werke.gruppen („für Orchester / Klasse“, PC-Verwaltung); ohne Angabe zählen die Gruppen der Stimmen. Stimmen mit „nur Gruppe“ erscheinen nur in diesem Orchester.
+
+## 📦 Inventar & Abschreibung (0.19.0)
+- **Ausstattung & Zubehör** (PC-Programm, Tabelle `ausstattung`): Notenständer & Pultleuchten, Dirigentenpult & Taktstock, Stühle, Schlagwerk-Zubehör, Koffer/Transport, Ton- & Videotechnik, Licht/Kabel, Notenmappen, Büro & EDV, Möbel, Kleidung, Pflege/Ersatzteile, Sonstiges. Je Stück oder als Sammelposten (Anzahl).
+- **Felder** (auch bei Instrumenten): Inventar-Nr. (wird vorgeschlagen, über Instrumente und Ausstattung eindeutig), Seriennummer, Eigentümer (Förderverein, Schule, Leihgabe, privat), Anschaffung, Preis, gekauft bei, Beleg, Garantie, Abschreibung (Art, Nutzungsdauer), verantwortlich, zuletzt gesehen (Inventur), ausgeschieden am + Grund.
+- **Status:** verfügbar · im Einsatz · verliehen · in Reparatur · defekt · vermisst · gestohlen · ausgemustert · verkauft · verschrottet. Abgang (gestohlen, verkauft …) ohne Datum → heute.
+- **Abschreibung:** linear monatsgenau ab Anschaffungsmonat bis zum Abgang; bis 800 € sofort (GWG); Richtwerte je Kategorie (Instrumente 10 Jahre), im Datensatz änderbar. Im Formular: AfA dieses Jahr, bisher, Restbuchwert.
+- **Übersicht „📦 Inventar & Abschreibung“:** Kennzahlen (Bestand, Anschaffungswert, AfA des Jahres, Restbuchwert, Problemfälle, Inventur überfällig), Filter (Bereich, Kategorie, Status, Eigentümer, Jahr), Problemfälle, Abgänge, ✅ Inventur-Modus, 🏷️ QR-Etiketten zum Aufkleben, 📤 Anlagenverzeichnis (CSV für Kassenprüfung).
 
 ## 🎼 Demo-Probenoten · 🗂️ Explorer (0.18.0)
 - **Explorer:** dritte Ansicht im Notenarchiv (🗂️) – ein Baum wie im Windows-Explorer: 📁 Stück › 🎻 Instrument › 📄 Noten, ▸/▾ zum Auf- und Zuklappen, eingerückt mit Hilfslinien; Orchester-Chips, Suche (Treffer klappen auf), ⊞/⊟ alles auf/zu, › öffnet die Stück-Seite.

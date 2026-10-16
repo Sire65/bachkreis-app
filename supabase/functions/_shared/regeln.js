@@ -78,7 +78,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "nachrichten": return ctx.unterhaltungen.has(z.unterhaltung_id) && (z.von === ctx.ich || nachrichtFrei(z));
     case "nachricht_status": return z.person_id === ctx.ich || z.autor_id === ctx.ich;
     case "genehmigungen": return ctx.meine.has(z.kind_id);
-    case "stimmen": return ctx.meine.has(z.person_id) || (!z.person_id && (!z.register_id || ctx.register.has(z.register_id)));
+    case "stimmen": return ctx.meine.has(z.person_id) || (!z.person_id && (!z.register_id || ctx.register.has(z.register_id)) && (!z.gruppe_id || ctx.gruppen.has(z.gruppe_id))); // „nur Gruppe“ nur für diese Gruppe
     case "aufnahmen": return z.freigabe === "mitglieder" || z.freigabe === "oeffentlich";
     case "aufgaben": return ctx.meine.has(z.von_id);
     case "pinnwand": return pwSichtbar(z, ctx.ich);

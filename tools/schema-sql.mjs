@@ -89,6 +89,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261026000000_bk_inventar.sql": { titel: "Ausstattung & Zubehör, Inventar-Status, Abschreibung, Inventur (0.19.0)", tabellen: ["inventar", "ausstattung"] },
   "20261025000000_bk_termine_online.sql": { titel: "Termine für alle, Teilnahme, eigene Termine, Wer ist online, Anklopfen (0.16.0)", tabellen: ["termine", "antworten", "eigene_termine", "klopfen"], extra: ONLINE_SQL },
   "20261024000000_bk_ueben_kalender.sql": { titel: "Übe-Tagebuch, Übezeiten und Kalender-Abo (0.14.0)", tabellen: ["uebungen", "personen"], extra: KALENDER_SQL },
   "20261023000000_bk_notenarchiv.sql": { titel: "Notenarchiv: Orchester/Klasse, Schwierigkeit, Dauer je Werk (0.13.0)", tabellen: ["werke"] },

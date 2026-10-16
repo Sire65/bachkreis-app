@@ -190,6 +190,21 @@ for (const x of await p.$$eval('[data-a="vwTabelle"],[data-a="vwAnsicht"]', (l) 
   await p.waitForTimeout(60);
   if (x[1] === "uebersicht" || x[1] === "personen" || x[1] === "gruppenboard") await p.screenshot({ path: `${BILDER}verwaltung-${x[1]}.png` });
 }
+// 📦 Inventar & Abschreibung: Kennzahlen, Problemfälle, Inventur, Etiketten, neue Ausstattung mit Nummer und Abschreibung
+await p.click('[data-a="vwAnsicht"][data-x="inventarbericht"]'); await p.waitForSelector(".inv-tabelle");
+if (!/Notenständer/.test(await p.textContent(".inv-tabelle"))) fehler.push("Inventar: Notenständer fehlen");
+await p.screenshot({ path: `${BILDER}verwaltung-inventar.png` });
+await p.selectOption('select[data-x="status"]', "probleme"); await p.waitForTimeout(80);
+if ((await p.$$eval(".inv-tabelle tbody tr.inv-problem", (l) => l.length)) < 3) fehler.push("Inventar: Problemfälle-Filter");
+await p.selectOption('select[data-x="status"]', "bestand");
+await p.click('[data-a="invModus"][data-x="inventur"]'); await p.click('[data-a="invGesehen"]'); await p.waitForTimeout(80);
+await p.click('[data-a="invEtiketten"]'); await p.waitForSelector(".inv-etikett img");
+await p.click('[data-a="invNeu"][data-x="ausstattung"]'); await p.waitForSelector("#vwForm");
+if (!/^A-\d{3}$/.test(await p.inputValue('#vwForm [name="inventar_nr"]'))) fehler.push("Ausstattung: keine Inventar-Nr. vorgeschlagen");
+await p.selectOption('#vwForm [name="kategorie"]', "dirigent"); await p.fill('#vwForm [name="bezeichnung"]', "Taktstock Test"); await p.fill('#vwForm [name="wert"]', "1500");
+await p.click('[data-a="vwSpeichern"]'); await p.waitForSelector(".inv-afa");
+if (!/AfA \d{4}/.test(await p.textContent(".inv-afa"))) fehler.push("Ausstattung: Abschreibung fehlt im Formular");
+await p.screenshot({ path: `${BILDER}verwaltung-ausstattung.png` });
 await b.close();
 if (fehler.length) { console.error(fehler.join("\n")); process.exit(1); }
 console.log("Rundgang ohne Fehler ✔");

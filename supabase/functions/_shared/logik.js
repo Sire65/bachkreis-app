@@ -204,7 +204,7 @@ export function cockpit(db, ichId, heute = new Date()) {
   // Wartet auf mich: Freigaben, Änderungsmeldungen, Wechselwünsche
   const grenze = Number(k.freigabe_grenze_eur || 0);
   for (const r of db.liste("reparaturen", (r) => r.status === "angebot")) {
-    const i = db.hole("inventar", r.inventar_id);
+    const i = r.inventar_id ? db.hole("inventar", r.inventar_id) : db.hole("ausstattung", r.ausstattung_id);
     out.push({ bereich: "ich", dring: 2, sym: "🔧", text: `Reparatur freigeben: ${i?.bezeichnung || "Instrument"} (${r.kosten ?? "?"} €)${r.kosten > grenze ? " – über Freigabegrenze, Förderverein" : ""}`, ziel: { view: "reparatur", id: r.id } });
   }
   for (const e of db.liste("einkaeufe", (e) => e.status === "angebote")) out.push({ bereich: "ich", dring: 1, sym: "🛒", text: `Einkauf entscheiden: ${e.titel} (${e.betrag} €)`, ziel: { view: "einkauf", id: e.id } });
@@ -219,14 +219,30 @@ export function cockpit(db, ichId, heute = new Date()) {
     out.push({ bereich: a.bis < h ? "andere" : "bald", dring: a.bis < h ? 2 : 1, sym: "🎻", text: `${a.bis < h ? "Rückgabe überfällig" : "Rückgabe bald"}: ${i?.bezeichnung || "Instrument"} (${p ? p.vorname + " " + p.nachname : "?"})`, ziel: { view: "instrument", id: a.inventar_id } });
   }
   for (const r of db.liste("reparaturen", (r) => r.status === "in_arbeit" || r.status === "freigegeben")) {
-    const i = db.hole("inventar", r.inventar_id);
+    const i = r.inventar_id ? db.hole("inventar", r.inventar_id) : db.hole("ausstattung", r.ausstattung_id);
     out.push({ bereich: "andere", dring: 0, sym: "🔧", text: `In der Werkstatt: ${i?.bezeichnung || "Instrument"}`, ziel: { view: "reparatur", id: r.id } });
   }
   for (const r of db.liste("reparaturen", (r) => r.status === "gemeldet")) {
-    const i = db.hole("inventar", r.inventar_id);
+    const i = r.inventar_id ? db.hole("inventar", r.inventar_id) : db.hole("ausstattung", r.ausstattung_id);
     out.push({ bereich: "ich", dring: 1, sym: "🩹", text: `Neue Schadensmeldung: ${i?.bezeichnung || "Instrument"} – Kostenvoranschlag einholen`, ziel: { view: "reparatur", id: r.id } });
   }
   for (const e of db.liste("einkaeufe", (e) => e.status === "bestellt")) out.push({ bereich: "andere", dring: 0, sym: "📦", text: `Bestellt, Lieferung offen: ${e.titel}`, ziel: { view: "einkauf", id: e.id } });
+  // ✨ 0.22.0: Mietmaterial zurück an den Verlag, Schlüssel überfällig, Führungszeugnis der Begleitpersonen, Förderverein-Beiträge
+  for (const w of db.liste("werke", (w) => w.miete_bis && w.miete_bis <= inTagen(30))) {
+    const st = new Set(db.liste("stimmen", (x) => x.werk_id === w.id).map((x) => x.id));
+    const draussen = db.liste("notenexemplare", (e) => st.has(e.stimme_id) && e.person_id && !e.zurueck_am).length;
+    out.push({ bereich: w.miete_bis < h ? "heute" : "bald", dring: w.miete_bis < h ? 3 : 2, sym: "📜", text: `Mietmaterial „${w.titel}“ zurück bis ${w.miete_bis.split("-").reverse().join(".")}${draussen ? ` – ${draussen} Exemplare noch bei Spielern` : ""}`, ziel: { view: "noten", werk: w.id } });
+  }
+  for (const s2 of db.liste("schluessel", (x) => x.status === "ausgegeben" && x.rueckgabe_bis && x.rueckgabe_bis < h)) {
+    const p = db.hole("personen", s2.person_id);
+    out.push({ bereich: "andere", dring: 1, sym: "🔑", text: `Schlüssel ${s2.nr} (${s2.bezeichnung || ""}) überfällig bei ${p ? p.vorname + " " + p.nachname : "?"}`, ziel: { view: "cockpit" } });
+  }
+  const fzAlt = new Date(heute); fzAlt.setFullYear(fzAlt.getFullYear() - 5);
+  const begleiter = new Set(db.liste("projekte", (p) => p.bis && p.bis >= h).flatMap((p) => p.begleiter || []));
+  const ohneFz = [...begleiter].map((id) => db.hole("personen", id)).filter((p) => p && (!p.fz_vorgelegt_am || new Date(p.fz_vorgelegt_am) < fzAlt));
+  if (ohneFz.length) out.push({ bereich: "ich", dring: 2, sym: "🛡️", text: `Führungszeugnis fehlt/älter als 5 Jahre: ${ohneFz.map((p) => p.vorname + " " + p.nachname).join(", ")} (Begleitperson)`, ziel: { view: "cockpit" } });
+  const offenFv = db.liste("fv_mitglieder", (m) => !m.austritt && m.beitrag_art !== "ehren" && (!m.bezahlt_bis || m.bezahlt_bis < `${heute.getFullYear()}-01-01`)).length;
+  if (offenFv) out.push({ bereich: "andere", dring: 0, sym: "💛", text: `Förderverein: ${offenFv} Mitgliedsbeiträge für ${heute.getFullYear()} offen`, ziel: { view: "foerderverein" } });
   // Fällig bald: Wartung, temporäre Zuordnungen laufen aus, Termin-Fristen
   const wartung = db.liste("inventar", (i) => !INVENTAR_ABGANG.includes(i.status) && i.wartung_faellig && i.wartung_faellig <= inTagen(30));
   if (wartung.length) out.push({ bereich: "bald", dring: wartung.some((i) => i.wartung_faellig < h) ? 2 : 1, sym: "🧰", text: `Wartung fällig: ${wartung.length} Instrument${wartung.length === 1 ? "" : "e"}`, ziel: { view: "instrumente", filter: "wartung" } });

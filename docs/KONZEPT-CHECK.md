@@ -32,7 +32,12 @@ Die Abläufe Termine → Zusage/Absage → Ampel → Erinnerung, Nachrichten/Pin
 ## In 0.21.0 umgesetzt (alle „Sollte“)
 - ✅ Registerproben · ✅ Registerführer · ✅ Leihvertrag mit Kaution/Gebühr/Zubehör, Ausleihe an Lehrkräfte/Ehemalige · ✅ Eltern-Selbstpflege & 18+ · ✅ Konzertprogramm, Kleiderordnung, Treffpunkt, Transportliste · ✅ Reise-Anmeldung · ✅ Schuljahreswechsel nach Regeln · ✅ Auskunft über alle Tabellen, Löschfristen · ✅ Ehemalige in Pinnwand/Chat
 
-## Noch offen – Vorschlag zur Reihenfolge
+## In 0.22.0 umgesetzt (alle „Kann“ und Inventar-Schritte)
+- ✅ Mitfahrgelegenheiten · ✅ Räume & Schlüssel · ✅ Papier-Notenexemplare · ✅ Mietmaterial-Fristen & GEMA-Liste · ✅ Übeaufgaben · ✅ Förderverein-Mitgliedschaft · ✅ Führungszeugnis-Vermerk · ✅ Werkstatt-Auftrag per Mail · ✅ Reparatur für Ausstattung · ✅ Einkauf → Inventar/Ausstattung · ✅ Sachspenden ↔ Inventar · ✅ automatische Löschfrist für Gesundheitsangaben
+
+> Damit ist die Liste unten abgearbeitet. Bewusst nicht gebaut: Lastschrift/SEPA (Konzept: kein Zahlungsverkehr in der App) und eine Ausleihe von Ausstattung über die App (läuft über die PC-Verwaltung).
+
+## Ursprüngliche Liste (Stand 0.19.0)
 
 ### Muss (Datenschutz, Kinderschutz, Sicherheit)
 1. **Kinderschutz im Chat:** Jede Verwalter-Rolle (auch Notenwart, Instrumentenwart, Vorstand – oft selbst Eltern) darf einem Kind privat schreiben (`schema.js` `chatPartnerErlaubt`). Vorschlag: Einzelchats Erwachsener mit Kindern nur Leitung/Lehrkräfte, Eltern automatisch in Kopie (Vier-Augen-Prinzip).

@@ -11,7 +11,7 @@ import { PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfae
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
-const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm"]);
+const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
 const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen"]);
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
@@ -85,6 +85,9 @@ function zeileSichtbar(tab, z, ctx) {
     case "inventar": return ctx.inventar.has(z.id);
     case "eigene_termine": return ctx.meine.has(z.person_id);
     case "reise_anmeldungen": return ctx.meine.has(z.person_id);
+    case "notenexemplare": return ctx.meine.has(z.person_id); // 📄 eigene ausgeliehene Papier-Exemplare
+    case "mitfahrten": return ctx.termine.has(z.termin_id); // 🚗 wer zum Termin eingeladen ist
+    case "uebeaufgaben": return z.person_id ? ctx.meine.has(z.person_id) : (!z.register_id || ctx.register.has(z.register_id)) && (!z.gruppe_id || ctx.gruppen.has(z.gruppe_id)) && !!(z.register_id || z.gruppe_id);
     case "gesundheit": return ctx.meine.has(z.person_id) || (ctx.begleitKinder?.has(z.person_id) && !(z.loeschen_am && z.loeschen_am < new Date().toISOString().slice(0, 10)));
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
@@ -348,6 +351,26 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (neu.status === "widerrufen" && alt.status !== "erteilt") return { ok: false, grund: "NUR_ERTEILTE_WIDERRUFBAR" };
       // Textfassung kommt vom Server (welche Fassung die Eltern bestätigt haben), nicht vom Gerät
       return { ok: true, zeile: { ...alt, status: neu.status, beantwortet_von: ctx.ich, beantwortet_am: jetzt, vorlage_version: ctx.gvMap?.get(alt.vorlage_id)?.fassung ?? alt.vorlage_version ?? 1 } };
+    case "uebeaufgaben": {
+      // 📝 Schüler/Eltern haken nur sich bzw. die eigenen Kinder als erledigt ab – sonst bleibt die Aufgabe unverändert
+      if (!alt || !zeileSichtbar("uebeaufgaben", alt, ctx)) return { ok: false, grund: "NICHT_SICHTBAR" };
+      const vorher = new Set(alt.erledigt || []), nachher = new Set(Array.isArray(neu.erledigt) ? neu.erledigt : []);
+      const erledigt = [...vorher].filter((id) => !ctx.meine.has(id) || nachher.has(id)).concat([...nachher].filter((id) => ctx.meine.has(id) && !vorher.has(id)));
+      return { ok: true, zeile: { ...alt, erledigt } };
+    }
+    case "mitfahrten": {
+      // 🚗 Eltern bieten an (als Fahrer/in) oder buchen Plätze für die eigenen Kinder; fremde Mitfahrer bleiben unangetastet
+      const t = ctx.tMap.get(neu.termin_id);
+      if (!t || !ctx.termine.has(t.id) || (alt && alt.termin_id !== neu.termin_id)) return { ok: false, grund: "TERMIN_NICHT_SICHTBAR" };
+      if (ctx.person?.typ === "schueler") return { ok: false, grund: "NUR_ERWACHSENE" };
+      const eigene = !alt ? neu.fahrer_id === ctx.ich : alt.fahrer_id === ctx.ich;
+      const plaetze = Math.max(0, Math.min(8, Number(eigene ? neu.plaetze : alt.plaetze) || 0));
+      const vorher = alt?.mitfahrer || [], wunsch = Array.isArray(neu.mitfahrer) ? neu.mitfahrer : [];
+      const mitfahrer = [...vorher.filter((id) => !ctx.meine.has(id) || wunsch.includes(id)), ...wunsch.filter((id) => ctx.meine.has(id) && id !== ctx.ich && !vorher.includes(id))];
+      if (mitfahrer.length > plaetze) return { ok: false, grund: "VOLL" };
+      if (!eigene) { if (!alt) return { ok: false, grund: "NUR_EIGENES_ANGEBOT" }; return { ok: true, zeile: { ...alt, mitfahrer } }; }
+      return { ok: true, zeile: { ...(alt || {}), id: alt?.id || neu.id, termin_id: t.id, fahrer_id: ctx.ich, richtung: ["hin", "zurueck", "beides"].includes(neu.richtung) ? neu.richtung : "hin", plaetze, abfahrt: String(neu.abfahrt || "").slice(0, 120), mitfahrer, geloescht_am: neu.geloescht_am ?? null } };
+    }
     case "reise_anmeldungen": {
       // 🧳 Eltern melden ihr Kind an bzw. ab (Schüler/Ehemalige sich selbst): bis zum Anmeldeschluss, Warteliste wenn voll; Betrag/bezahlt/Zimmer setzt die Kasse
       const pr = ctx.prMap?.get(neu.projekt_id);

@@ -178,6 +178,7 @@ export const TABELLEN = {
       { k: "typ", t: "Art", typ: "wahl", werte: PERSONEN_TYPEN, pflicht: true },
       { k: "status", t: "Status", typ: "wahl", werte: { aktiv: "aktiv", pausiert: "pausiert", gast: "Gast/Aushilfe", ausgetreten: "ausgetreten" } },
       { k: "ausgetreten_am", t: "ausgetreten am (Löschfrist beginnt)", typ: "datum" },
+      { k: "fz_vorgelegt_am", t: "erweitertes Führungszeugnis eingesehen am (nur Datum, kein Inhalt)", typ: "datum", geschuetzt: true, nur: (z) => !["schueler"].includes(z.typ) },
       { k: "jahrgang", t: "Jahrgangsstufe", typ: "zahl", nur: (z) => z.typ === "schueler" },
       { k: "schule", t: "Schule", typ: "text", nur: (z) => z.typ === "schueler" },
       { k: "firma", t: "Firma / Einrichtung", typ: "text", nur: (z) => ["partner", "dienstleister", "spender", "unterstuetzer"].includes(z.typ) },
@@ -317,6 +318,76 @@ export const TABELLEN = {
     liste: ["inventar_nr", "kategorie", "bezeichnung", "anzahl", "status", "standort", "anschaffung", "wert"],
     anzeige: (z) => `${z.inventar_nr} ${z.bezeichnung || ""}`.trim(),
   },
+  // 🚪 Räume & Schlüssel (0.22.0)
+  raeume: {
+    titel: "Räume", sym: "🚪", gruppe: "Orchester", lesen: ALLE_VERWALTER, schreiben: L,
+    felder: [
+      { k: "name", t: "Raum", typ: "text", pflicht: true },
+      { k: "ort", t: "Gebäude / Ort", typ: "text" },
+      { k: "plaetze", t: "Plätze", typ: "zahl" },
+      { k: "ausstattung", t: "Ausstattung (Klavier, Beamer …)", typ: "text" },
+      { k: "hinweis", t: "Hinweis (Hausmeister, Schließzeiten)", typ: "text" },
+    ],
+    liste: ["name", "ort", "plaetze", "ausstattung"],
+    anzeige: (z) => z.name,
+  },
+  schluessel: {
+    titel: "Schlüssel", sym: "🔑", gruppe: "Orchester", lesen: [...L, "lehrkraft", "instrumentenwart"], schreiben: [...L, "instrumentenwart"],
+    felder: [
+      { k: "nr", t: "Schlüssel-Nr.", typ: "text", pflicht: true },
+      { k: "raum_id", t: "für Raum", typ: "ref", ref: "raeume" },
+      { k: "bezeichnung", t: "Bezeichnung (z. B. Schrank, Generalschlüssel)", typ: "text" },
+      { k: "person_id", t: "ausgegeben an", typ: "ref", ref: "personen", filter: (p) => !["schueler", "eltern"].includes(p.typ) || (p.rollen || []).length > 1 },
+      { k: "ausgegeben_am", t: "ausgegeben am", typ: "datum" },
+      { k: "rueckgabe_bis", t: "Rückgabe bis", typ: "datum" },
+      { k: "status", t: "Status", typ: "wahl", werte: { da: "im Schlüsselkasten", ausgegeben: "ausgegeben", verloren: "verloren" } },
+      { k: "kaution", t: "Kaution (€)", typ: "geld" },
+    ],
+    liste: ["nr", "raum_id", "bezeichnung", "person_id", "status", "rueckgabe_bis"],
+  },
+  // 📄 Papier-Notenexemplare (0.22.0): wer hat welche Stimme ausgeliehen (Mietmaterial vollständig zurück?)
+  notenexemplare: {
+    titel: "Notenexemplare (Papier)", sym: "📄", gruppe: "Noten", lesen: ALLE_VERWALTER, schreiben: [...LL, "notenwart"],
+    felder: [
+      { k: "stimme_id", t: "Stimme", typ: "ref", ref: "stimmen", pflicht: true },
+      { k: "nr", t: "Exemplar-Nr.", typ: "text", pflicht: true },
+      { k: "person_id", t: "ausgegeben an", typ: "ref", ref: "personen" },
+      { k: "ausgegeben_am", t: "ausgegeben am", typ: "datum" },
+      { k: "zurueck_am", t: "zurück am", typ: "datum" },
+      { k: "zustand", t: "Zustand", typ: "wahl", werte: { gut: "gut", bleistift: "mit Bleistift (radieren!)", beschaedigt: "beschädigt", fehlt: "fehlt" } },
+    ],
+    liste: ["stimme_id", "nr", "person_id", "ausgegeben_am", "zurueck_am", "zustand"],
+  },
+  // 🎻 Übeaufgaben (0.22.0): Lehrkraft gibt einer Person, einem Register oder einer Gruppe eine Aufgabe; Schüler haken ab
+  uebeaufgaben: {
+    titel: "Übeaufgaben", sym: "📝", gruppe: "Orchester", lesen: LL, schreiben: LL,
+    felder: [
+      { k: "titel", t: "Aufgabe", typ: "text", pflicht: true },
+      { k: "text", t: "Beschreibung (Takte, Tempo …)", typ: "lang" },
+      { k: "werk_id", t: "Stück", typ: "ref", ref: "werke" },
+      { k: "person_id", t: "für Person", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler" },
+      { k: "register_id", t: "oder für Register", typ: "ref", ref: "register" },
+      { k: "gruppe_id", t: "in Gruppe", typ: "ref", ref: "gruppen" },
+      { k: "von_id", t: "von", typ: "ref", ref: "personen" },
+      { k: "bis", t: "bis", typ: "datum" },
+      { k: "erledigt", t: "erledigt von (Personen)", typ: "refs", ref: "personen" },
+    ],
+    liste: ["titel", "person_id", "register_id", "gruppe_id", "bis"],
+    anzeige: (z) => z.titel,
+  },
+  // 🚗 Mitfahrgelegenheiten (0.22.0): Eltern bieten Plätze zu einem Termin an; andere Eltern buchen für ihr Kind
+  mitfahrten: {
+    titel: "Mitfahrgelegenheiten", sym: "🚗", gruppe: "Termine", lesen: TERMIN_PLANER, schreiben: TERMIN_PLANER,
+    felder: [
+      { k: "termin_id", t: "Termin", typ: "ref", ref: "termine", pflicht: true },
+      { k: "fahrer_id", t: "Fahrer/in", typ: "ref", ref: "personen", pflicht: true },
+      { k: "richtung", t: "Richtung", typ: "wahl", werte: { hin: "hin", zurueck: "zurück", beides: "hin & zurück" } },
+      { k: "plaetze", t: "freie Plätze", typ: "zahl" },
+      { k: "abfahrt", t: "Abfahrt (Ort, Uhrzeit)", typ: "text" },
+      { k: "mitfahrer", t: "Mitfahrer", typ: "refs", ref: "personen" },
+    ],
+    liste: ["termin_id", "fahrer_id", "richtung", "plaetze", "abfahrt"],
+  },
   ausleihen: {
     titel: "Ausleihen", sym: "🤝", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
     felder: [
@@ -341,7 +412,8 @@ export const TABELLEN = {
   reparaturen: {
     titel: "Reparaturen & Wartung", sym: "🔧", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
     felder: [
-      { k: "inventar_id", t: "Instrument", typ: "ref", ref: "inventar", pflicht: true },
+      { k: "inventar_id", t: "Instrument", typ: "ref", ref: "inventar" },
+      { k: "ausstattung_id", t: "oder Ausstattung (Notenständer, Technik …)", typ: "ref", ref: "ausstattung" },
       { k: "meldung", t: "Schaden / Auftrag", typ: "lang", pflicht: true },
       { k: "status", t: "Status", typ: "wahl", werte: { gemeldet: "gemeldet", angebot: "Kostenvoranschlag liegt vor", freigegeben: "freigegeben", in_arbeit: "in der Werkstatt", erledigt: "erledigt", abgelehnt: "abgelehnt" } },
       { k: "werkstatt_id", t: "Werkstatt", typ: "ref", ref: "personen", filter: (p) => p.typ === "dienstleister" },
@@ -653,8 +725,13 @@ export const TABELLEN = {
       { k: "gruppen", t: "für Orchester / Klasse", typ: "refs", ref: "gruppen" },
       { k: "schwierigkeit", t: "Schwierigkeit", typ: "wahl", werte: { leicht: "leicht", mittel: "mittel", schwer: "schwer" } },
       { k: "dauer_min", t: "Dauer (Minuten)", typ: "zahl" },
+      // 📜 Mietmaterial & GEMA (0.22.0)
+      { k: "verlag", t: "Verlag (für GEMA)", typ: "text" },
+      { k: "bearbeiter", t: "Bearbeiter / Arrangeur", typ: "text" },
+      { k: "miete_bis", t: "Mietmaterial: Rückgabe an den Verlag bis", typ: "datum" },
+      { k: "gema", t: "GEMA-pflichtig (Komponist/Bearbeiter < 70 Jahre tot)", typ: "ja" },
     ],
-    liste: ["komponist", "titel", "werkverzeichnis", "gruppen", "rechte"],
+    liste: ["komponist", "titel", "werkverzeichnis", "gruppen", "rechte", "miete_bis"],
     anzeige: (z) => `${z.komponist}: ${z.titel}`,
   },
   stimmen: {
@@ -693,8 +770,26 @@ export const TABELLEN = {
       { k: "sachspende", t: "Sachspende", typ: "text" },
       { k: "zweck", t: "Zweck", typ: "text" },
       { k: "dank_gesendet", t: "Dank gesendet", typ: "ja" },
+      { k: "inventar_id", t: "Sachspende ist Instrument", typ: "ref", ref: "inventar" },
+      { k: "ausstattung_id", t: "Sachspende ist Ausstattung", typ: "ref", ref: "ausstattung" },
     ],
     liste: ["datum", "person_id", "betrag", "sachspende", "zweck", "dank_gesendet"],
+  },
+  // 💛 Fördervereins-Mitgliedschaft (0.22.0) – ohne Lastschrift/SEPA (bewusst), nur „bezahlt bis“
+  fv_mitglieder: {
+    titel: "Förderverein – Mitglieder", sym: "🤝", gruppe: "Förderverein", lesen: [...L, "vorstand"], schreiben: [...L, "vorstand"],
+    felder: [
+      { k: "person_id", t: "Mitglied", typ: "ref", ref: "personen", pflicht: true },
+      { k: "mitglied_nr", t: "Mitglieds-Nr.", typ: "text" },
+      { k: "eintritt", t: "Eintritt", typ: "datum", pflicht: true },
+      { k: "austritt", t: "Austritt", typ: "datum" },
+      { k: "beitrag_art", t: "Beitrag", typ: "wahl", werte: { familie: "Familie", einzel: "Einzel", ermaessigt: "ermäßigt", foerder: "Fördermitglied", ehren: "Ehrenmitglied (frei)" } },
+      { k: "beitrag", t: "Beitrag je Jahr (€)", typ: "geld" },
+      { k: "zahlweise", t: "Zahlweise", typ: "wahl", werte: { ueberweisung: "Überweisung", bar: "bar", dauerauftrag: "Dauerauftrag" } },
+      { k: "bezahlt_bis", t: "bezahlt bis", typ: "datum" },
+      { k: "notiz", t: "Notiz", typ: "text" },
+    ],
+    liste: ["person_id", "mitglied_nr", "eintritt", "beitrag_art", "beitrag", "bezahlt_bis", "austritt"],
   },
   aufgaben: {
     titel: "Vorgänge & Aufgaben", sym: "🗂️", gruppe: "Leitung", lesen: ALLE_VERWALTER, schreiben: ALLE_VERWALTER,

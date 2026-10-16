@@ -207,6 +207,15 @@ await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("projekt
 const anm = await p.$('[data-a="anmelden"]'); if (anm) { await anm.click(); await p.waitForTimeout(200); }
 await p.screenshot({ path: `${BILDER}eltern-freizeit.png`, fullPage: true });
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("kinder")); await p.waitForSelector(".kind-kontakt");
+// ✨ 0.22.0: 🚗 Mitfahren beim Termin (Eltern), 📝 Übeaufgabe abhaken (Schüler), 📜 GEMA-Liste (Leitung)
+await p.evaluate(async () => { const { liste } = await import("/js/kern/daten.js"); const m = liste("mitfahrten")[1] || liste("mitfahrten")[0]; (await import("/js/app/zustand.js")).zeige("termin", { id: m.termin_id }); });
+await p.waitForSelector(".mf-karte"); const mf = await p.$('[data-a="mfBuchen"]'); if (mf) { await mf.click(); await p.waitForTimeout(150); }
+await p.screenshot({ path: `${BILDER}eltern-mitfahren.png`, fullPage: true });
+await p.selectOption("#demoleiste select", "schueler"); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("ueben")); await p.waitForSelector(".ua-karte");
+await p.click('.ua-karte input[data-c="aufgabeHaken"]'); await p.waitForTimeout(150);
+if (!(await p.$(".ua-karte .ua-ok"))) fehler.push("Übeaufgabe: Abhaken greift nicht");
+await p.screenshot({ path: `${BILDER}schueler-aufgaben.png` });
 await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(300);
 // PC-Verwaltung: alle Tabellen und Sonderansichten
 await p.setViewportSize({ width: 1280, height: 860 });

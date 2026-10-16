@@ -3,13 +3,15 @@
 import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istLeitung, istVorstand, istVerwalter, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
-import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon } from "../kern/logik.js";
+import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon, naechsteInventarNr } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 import { INSTRUMENT_GRUPPEN, INVENTAR_ABGANG, LEIH_ZUBEHOER } from "../kern/schema.js";
 
 const STATUS = { verfuegbar: ["b-gruen", "verfügbar"], im_einsatz: ["b-blau", "im Einsatz"], verliehen: ["b-blau", "verliehen"], reparatur: ["b-gelb", "in Reparatur"], defekt: ["b-rot", "defekt"], vermisst: ["b-rot", "vermisst"],
   gestohlen: ["b-rot", "gestohlen"], ausgemustert: ["b-grau", "ausgemustert"], verkauft: ["b-grau", "verkauft"], verschrottet: ["b-grau", "verschrottet"] };
 const weg = (i) => INVENTAR_ABGANG.includes(i.status); // ausgeschieden (ausgemustert, verkauft, verschrottet, gestohlen)
+// 🔧 Reparatur betrifft ein Instrument oder (0.22.0) ein Stück Ausstattung
+const gegenstand = (r) => (r.inventar_id ? ["inventar", hole("inventar", r.inventar_id)] : ["ausstattung", hole("ausstattung", r.ausstattung_id)]);
 const REP = { gemeldet: ["b-rot", "gemeldet"], angebot: ["b-gelb", "Kostenvoranschlag"], freigegeben: ["b-blau", "freigegeben"], in_arbeit: ["b-blau", "in der Werkstatt"], erledigt: ["b-gruen", "erledigt"], abgelehnt: ["b-grau", "abgelehnt"] };
 const typName = (id) => hole("instrument_typen", id)?.name || "Instrument";
 const darfFreigeben = (betrag) => istVorstand() || (istLeitung() && Number(betrag || 0) <= Number(konfig().freigabe_grenze_eur || 0));
@@ -244,7 +246,7 @@ VIEWS.reparatur = {
   render({ id }) {
     const r = hole("reparaturen", id);
     if (!r) return kopf("Reparatur") + '<div class="leer">Nicht gefunden.</div>';
-    const i = hole("inventar", r.inventar_id);
+    const [tab, i] = gegenstand(r);
     const grenze = Number(konfig().freigabe_grenze_eur || 0);
     const schritte = ["gemeldet", "angebot", "freigegeben", "in_arbeit", "erledigt"];
     const pos = schritte.indexOf(r.status);
@@ -254,8 +256,9 @@ VIEWS.reparatur = {
       if (r.status === "angebot") aktion = darfFreigeben(r.kosten) ? `<div class="knopfreihe"><button class="knopf gruen" data-a="repStatus" data-x="${id}|freigegeben">✅ Freigeben (${geld(r.kosten)})</button><button class="knopf rot" data-a="repStatus" data-x="${id}|abgelehnt">Ablehnen</button></div>` : `<p class="badge b-gelb">Über ${geld(grenze)} – Freigabe durch den Förderverein-Vorstand</p><button class="knopf" data-a="repAnFv" data-x="${id}">📨 Vorstand um Freigabe bitten</button>`;
       if (r.status === "freigegeben") aktion = `<button class="knopf haupt" data-a="repStatus" data-x="${id}|in_arbeit">🚚 In die Werkstatt gebracht</button>`;
       if (r.status === "in_arbeit") aktion = `<button class="knopf haupt" data-a="repStatus" data-x="${id}|erledigt">✅ Zurück & erledigt</button>`;
+      if (["freigegeben", "in_arbeit"].includes(r.status) && r.werkstatt_id) aktion += ` <button class="knopf" data-a="werkstattAuftrag" data-x="${id}">📧 Auftrag an die Werkstatt</button>`;
     }
-    return kopf("🔧 Reparatur") + `<div class="karte"><div class="zeile-titel klick" data-a="oeffne" data-x="instrument|${i.id}">${esc(i.inventar_nr)} ${esc(i.bezeichnung)} ›</div><p>${esc(r.meldung)}</p>
+    return kopf("🔧 Reparatur") + `<div class="karte">${tab === "inventar" ? `<div class="zeile-titel klick" data-a="oeffne" data-x="instrument|${i?.id}">${esc(i?.inventar_nr)} ${esc(i?.bezeichnung)} ›</div>` : `<div class="zeile-titel">📦 ${esc(i?.inventar_nr)} ${esc(i?.bezeichnung)}</div>`}<p>${esc(r.meldung)}</p>
       <div class="hinweis">gemeldet ${datumKurz(r.gemeldet_am)} von ${esc(name(r.gemeldet_von))}${r.werkstatt_id ? " · Werkstatt: " + esc(hole("personen", r.werkstatt_id)?.firma || "") : ""}${r.kosten ? " · Kosten " + geld(r.kosten) : ""}${r.freigegeben_von ? " · freigegeben von " + esc(name(r.freigegeben_von)) : ""}</div>
       <div class="zaehler">${schritte.map((s, k) => `<span class="badge ${k < pos ? "b-gruen" : k === pos ? REP[s][0] : "b-grau"}">${k + 1}. ${REP[s][1]}</span>`).join("")}${r.status === "abgelehnt" ? '<span class="badge b-grau">abgelehnt</span>' : ""}</div></div>
       ${aktion ? `<div class="karte">${aktion}</div>` : ""}`;
@@ -270,8 +273,9 @@ AKTIONEN.repStatus = async (x) => {
   const [id, st] = x.split("|");
   const r = hole("reparaturen", id);
   await speichere("reparaturen", { ...r, status: st, ...(st === "freigegeben" ? { freigegeben_von: S.ich.id } : {}) });
-  if (st === "erledigt" || st === "abgelehnt") await speichere("inventar", { ...hole("inventar", r.inventar_id), status: aktiveAusleihe(db, r.inventar_id) ? "verliehen" : "verfuegbar" }); // noch verliehen → bleibt verliehen
-  if (st === "in_arbeit") await speichere("inventar", { ...hole("inventar", r.inventar_id), status: "reparatur" });
+  const [tab, g] = gegenstand(r);
+  if (g && (st === "erledigt" || st === "abgelehnt")) await speichere(tab, { ...g, status: tab === "inventar" && aktiveAusleihe(db, g.id) ? "verliehen" : "verfuegbar" }); // noch verliehen → bleibt verliehen
+  if (g && st === "in_arbeit") await speichere(tab, { ...g, status: "reparatur" });
   toast("Status: " + REP[st][1]);
   zeige("reparatur", { id }, { ersetzen: true });
 };
@@ -314,9 +318,14 @@ AKTIONEN.ekWeiter = async (x) => {
   const e = hole("einkaeufe", id);
   await speichere("einkaeufe", { ...e, status: st });
   if (st === "inventarisiert") {
-    const nr = `BK-${String(liste("inventar").length + 1).padStart(3, "0")}`;
-    await speichere("inventar", { inventar_nr: nr, typ_id: liste("instrument_typen")[0].id, bezeichnung: e.titel, status: "verfuegbar", zustand: "sehr_gut", wert: e.betrag, anschaffung: tagIso(new Date()), finanziert_von: e.finanzierung, standort: "Instrumentenraum" });
-    toast(`🏷️ Als ${nr} inventarisiert – Typ bitte in der PC-Verwaltung prüfen`);
+    // 📦 Instrument (Typ erkannt am Titel) oder Ausstattung (Notenständer, Technik …) – Nummer über beide Tabellen eindeutig
+    const typ = liste("instrument_typen").find((t) => new RegExp(t.name.split(/[ /]/)[0], "i").test(e.titel));
+    const instrument = !!typ && !/ständer|staender|pult|stuhl|koffer|kabel|lautsprecher|beamer|mappe/i.test(e.titel);
+    const nr = naechsteInventarNr(db, instrument ? "BK-" : "A-");
+    if (instrument) await speichere("inventar", { inventar_nr: nr, typ_id: typ.id, bezeichnung: e.titel, status: "verfuegbar", zustand: "sehr_gut", wert: e.betrag, anschaffung: tagIso(new Date()), finanziert_von: e.finanzierung, standort: "Instrumentenraum", eigentuemer: e.finanzierung === "schule" ? "schule" : "foerderverein" });
+    else await speichere("ausstattung", { inventar_nr: nr, kategorie: /ständer|staender|pult/i.test(e.titel) ? "notenstaender" : /lautsprecher|beamer|mikro/i.test(e.titel) ? "technik" : "sonstiges", bezeichnung: e.titel, anzahl: Number((e.titel.match(/^(\d+)/) || [])[1]) || 1,
+      status: "verfuegbar", zustand: "neu", wert: e.betrag, anschaffung: tagIso(new Date()), finanzierung: e.finanzierung, einkauf_id: e.id, eigentuemer: e.finanzierung === "schule" ? "schule" : "foerderverein", standort: "Instrumentenraum" });
+    toast(`🏷️ Als ${nr} ${instrument ? "(Instrument)" : "(Ausstattung)"} inventarisiert – Angaben in der PC-Verwaltung prüfen`);
   }
   zeige("einkauf", { id }, { ersetzen: true });
 };

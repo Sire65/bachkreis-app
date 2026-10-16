@@ -1,5 +1,6 @@
 // Termine: Liste/Kalender, Zu-/Absage (auch Eltern für ihre Kinder), Besetzungsampel, Nachfassen, Serientermine,
 // Abwesenheit (Zeitraum auf einmal absagen), Kalender-Export (.ics). Vorbild: KC Club „treffen“/„teilnahme“.
+import { mitfahrtHtml } from "./extras.js";
 import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istLehrkraft, istLeitung, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
@@ -203,6 +204,7 @@ VIEWS.termin = {
     const meine = fuerWen().filter((p) => eingeladen(db, t, p));
     if (teilnahmeVon(db, t) === "info") html += '<div class="karte t-info">ℹ️ Nur zur Info – du musst nicht antworten.</div>';
     else if (meine.length) html += `<div class="karte"><h3>${istEltern() ? "Antwort für meine Kinder" : "Kommst du?"}</h3>${meine.map((p) => `${antwortBereich(t, p)}${instrumentWahl(t, p)}`).join("")}</div>`;
+    html += mitfahrtHtml(t);
     if (darfPlanen() && teilnahmeVon(db, t) !== "info") {
       const z = antwortZaehler(db, t);
       html += `<div class="karte"><h3>Rückmeldungen (${z.gesamt} eingeladen)</h3><div class="zaehler"><span class="badge b-gruen">✅ ${z.ja}</span><span class="badge b-gelb">🤔 ${z.vielleicht}</span><span class="badge b-rot">❌ ${z.nein}</span><span class="badge b-grau">❔ ${z.offen} offen</span></div>

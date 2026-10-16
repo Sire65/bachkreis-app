@@ -376,10 +376,15 @@ export async function wartung(db, adapter, umg = {}) {
     await db.q(`update bk_kom_zustand z set gesendet_24h = s.n, geprueft_am = now() from (select count(*)::int as n from bk_versand where anbieter_id = $1 and gesendet_am > now() - interval '1 day') s
       where z.anbieter_id = $1 and z.gesendet_24h is distinct from s.n`, [an.id]);
   }
+  // 🧹 Löschfrist (0.22.0): Gesundheitsangaben ohne neue Bestätigung werden nach loeschen_am automatisch gelöscht (für alle Geräte)
+  const gs = await db.q(`update bk_gesundheit set geloescht_am = now(), geaendert_am = now(), version = version + 1, geaendert_von = 'Löschfrist',
+    allergien = null, ernaehrung = null, medikamente = null, erkrankungen = null, notfall_name = null, notfall_tel = null, krankenkasse = null, hausarzt = null
+    where loeschen_am < current_date and geloescht_am is null returning id`);
+  if (gs.length) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${gs.length} abgelaufene Gesundheitsangaben gelöscht` });
   await db.q(`delete from bk_kom_ereignisse where zeit < now() - interval '90 days'`);
   await db.q(`delete from bk_versand where zeit < now() - interval '365 days' and status <> all($1::text[])`, [OFFEN]);
   if (h.length) await protokoll(db, { art: "wartung", code: "HAENGER", text: `${h.length} hängende Aufträge erneut eingeplant` });
-  return { haenger: h.length, zustellung: z, eskaliert, nachEskalation: z2 };
+  return { haenger: h.length, zustellung: z, eskaliert, nachEskalation: z2, geloescht: gs.length };
 }
 
 // ---------- Quittungen ----------

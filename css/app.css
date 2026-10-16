@@ -247,3 +247,10 @@ body.mit-fuss .jz-vorschau-aus { bottom: calc(84px + env(safe-area-inset-bottom)
 .leih-details { display: grid; gap: 4px; margin: 6px 0; }
 .kind-kontakt summary { cursor: pointer; font-weight: 700; margin-top: 6px; }
 @media print { .pg-knoepfe { display: none; } }
+
+/* ✨ Extras (0.22.0): Übeaufgaben, Mitfahren */
+.ua-karte li { align-items: flex-start; }
+.ua-haken input { width: 22px; height: 22px; margin: 4px 8px 0 0; }
+.ua-ok .zeile-titel { text-decoration: line-through; opacity: .6; }
+.ua-spaet { color: var(--rot); font-weight: 800; }
+.mf-angebot { padding: 8px 0; border-bottom: 1px solid var(--linie); display: grid; gap: 4px; }

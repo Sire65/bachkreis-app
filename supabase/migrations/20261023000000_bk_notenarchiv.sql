@@ -12,6 +12,10 @@ create table if not exists bk_werke (
   gruppen text[],
   schwierigkeit text check (schwierigkeit is null or schwierigkeit in ('leicht', 'mittel', 'schwer')),
   dauer_min integer,
+  verlag text,
+  bearbeiter text,
+  miete_bis date,
+  gema boolean,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -36,4 +40,8 @@ alter table bk_werke add column if not exists schwierigkeit text;
 alter table bk_werke drop constraint if exists bk_werke_schwierigkeit_check;
 alter table bk_werke add constraint bk_werke_schwierigkeit_check check (schwierigkeit is null or schwierigkeit in ('leicht', 'mittel', 'schwer'));
 alter table bk_werke add column if not exists dauer_min integer;
+alter table bk_werke add column if not exists verlag text;
+alter table bk_werke add column if not exists bearbeiter text;
+alter table bk_werke add column if not exists miete_bis date;
+alter table bk_werke add column if not exists gema boolean;
 

@@ -30,7 +30,7 @@ export function programmHtml(p) {
   const leer = !l.length && alt.length ? `<ol>${alt.map((w) => `<li><b>${esc(w.komponist)}</b>: ${esc(w.titel)}</li>`).join("")}</ol><p class="hinweis">Reihenfolge noch nicht festgelegt.</p>` : "";
   return `<div class="karte"><h3>🎼 Programm${l.length ? ` <span class="hinweis">· ${mm(summe)}${ohneDauer ? ` (${ohneDauer} ohne Dauer)` : ""}</span>` : ""}</h3>
     ${l.length ? `<ol class="pg-liste">${l.map(zeile).join("")}</ol>` : leer || '<p class="hinweis">Noch kein Programm.</p>'}
-    ${darfProgramm() ? `<div class="knopfreihe"><button class="knopf klein" data-a="pgNeu" data-x="${p.id}">＋ Programmpunkt</button>${!l.length && alt.length ? `<button class="knopf klein" data-a="pgUebernehmen" data-x="${p.id}">⤵️ Werke übernehmen</button>` : ""}<button class="knopf klein" data-a="drucken">🖨️ Programmzettel</button></div>` : ""}</div>`;
+    ${darfProgramm() ? `<div class="knopfreihe"><button class="knopf klein" data-a="pgNeu" data-x="${p.id}">＋ Programmpunkt</button>${!l.length && alt.length ? `<button class="knopf klein" data-a="pgUebernehmen" data-x="${p.id}">⤵️ Werke übernehmen</button>` : ""}<button class="knopf klein" data-a="drucken">🖨️ Programmzettel</button>${l.some((x) => x.werk_id) ? `<button class="knopf klein" data-a="gemaListe" data-x="${p.id}">📜 GEMA-Liste</button>` : ""}</div>` : ""}</div>`;
 }
 AKTIONEN.pgNeu = (pid) => {
   const werke = liste("werke").sort((a, b) => a.komponist.localeCompare(b.komponist, "de"));

@@ -1,17 +1,30 @@
 {
-  "version": "0.21.0",
+  "version": "0.22.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🎼 Registerproben: beim Termin einfach die Register anhaken · Registerführer sehen unter „Mein Register“, wer kommt, und können erinnern",
-    "🤝 Leihvertrag direkt an der Ausleihe: Zubehör, Kaution, Leihgebühr, Versicherung – „bezahlt“ mit einem Tipp; Ausleihe auch an Lehrkräfte und Ehemalige",
-    "👪 Eltern ändern Telefon, E-Mail und Adresse ihrer Kinder selbst · ab 18 entscheiden die Kinder, ob die Eltern weiter Zugriff haben",
-    "🎭 Konzertprogramm mit Reihenfolge, Pause, Ansagen, Zugabe, Uhrzeiten und Gesamtdauer · Treffpunkt, Kleiderordnung und Transportliste zum Abhaken",
-    "🧳 Anmeldung zu Fahrten und Freizeiten in der App – mit Plätzen, Warteliste, Anmeldeschluss und „bezahlt“",
-    "🎓 Schuljahreswechsel nach Regeln (C → B → A → Ehemalige) mit Hinweisen auf Leihinstrumente und offene Genehmigungen",
-    "🔐 Datenauskunft über alle gespeicherten Daten · 🧹 Löschfristen: Ausgetretene nach der Frist anonymisieren · Ehemalige auch in Pinnwand und Chat"
+    "🚗 Mitfahrgelegenheiten beim Termin: Eltern bieten Plätze an, andere Eltern buchen für ihr Kind – der Fahrer bekommt Bescheid",
+    "📝 Übeaufgaben von den Lehrkräften – für ein Kind, ein Register oder ein Orchester; die Kinder haken unter „Üben“ ab",
+    "📜 Mietmaterial & GEMA: Rückgabefrist an den Verlag mit Erinnerung, Papier-Exemplare je Spieler, GEMA-Liste aus dem Konzertprogramm",
+    "🚪 Räume & 🔑 Schlüssel, 💛 Förderverein-Mitglieder mit Beitrag (ohne Lastschrift), 🛡️ Vermerk Führungszeugnis für Begleitpersonen",
+    "🔧 Reparaturen auch für Ausstattung (Notenständer, Technik) · 📧 Auftrag per Mail an die Werkstatt · 🛒 Einkauf wird automatisch Instrument oder Ausstattung · 💛 Sachspenden mit Inventar verknüpft",
+    "🧹 Abgelaufene Gesundheitsangaben löscht der Server jetzt automatisch"
   ],
   "verlauf": [
+    {
+      "version": "0.21.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎼 Registerproben: beim Termin einfach die Register anhaken · Registerführer sehen unter „Mein Register“, wer kommt, und können erinnern",
+        "🤝 Leihvertrag direkt an der Ausleihe: Zubehör, Kaution, Leihgebühr, Versicherung – „bezahlt“ mit einem Tipp; Ausleihe auch an Lehrkräfte und Ehemalige",
+        "👪 Eltern ändern Telefon, E-Mail und Adresse ihrer Kinder selbst · ab 18 entscheiden die Kinder, ob die Eltern weiter Zugriff haben",
+        "🎭 Konzertprogramm mit Reihenfolge, Pause, Ansagen, Zugabe, Uhrzeiten und Gesamtdauer · Treffpunkt, Kleiderordnung und Transportliste zum Abhaken",
+        "🧳 Anmeldung zu Fahrten und Freizeiten in der App – mit Plätzen, Warteliste, Anmeldeschluss und „bezahlt“",
+        "🎓 Schuljahreswechsel nach Regeln (C → B → A → Ehemalige) mit Hinweisen auf Leihinstrumente und offene Genehmigungen",
+        "🔐 Datenauskunft über alle gespeicherten Daten · 🧹 Löschfristen: Ausgetretene nach der Frist anonymisieren · Ehemalige auch in Pinnwand und Chat"
+      ]
+    },
     {
       "version": "0.20.0",
       "datum": "2026-10-16",

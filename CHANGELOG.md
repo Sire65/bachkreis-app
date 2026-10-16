@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.22.0 DEV – 16.10.2026
+- 🚗 Tabelle `mitfahrten` (Server: nur Erwachsene, eigene Kinder buchen, Plätze nur Fahrer, VOLL); Karte „Mitfahren“ im Termin
+- 📝 Tabelle `uebeaufgaben` (Person / Register / Gruppe; Schüler haken nur sich ab); Anzeige unter „Üben“, Verwaltung in der Übe-Übersicht
+- 📜 werke: verlag, bearbeiter, miete_bis, gema; Tabelle `notenexemplare` (eigene sichtbar, „Meine Noten“); GEMA-CSV aus dem Programm; Cockpit: Mietmaterial-Frist mit offenen Exemplaren
+- 🚪 `raeume` (allgemein sichtbar), 🔑 `schluessel` (Cockpit: überfällig), 💛 `fv_mitglieder` (Cockpit: offene Beiträge), personen.fz_vorgelegt_am (geschützt; Cockpit: Begleitpersonen ohne gültiges Führungszeugnis)
+- 🔧 reparaturen.ausstattung_id (inventar_id nicht mehr Pflicht), Reparatur-Ansicht/Status für Ausstattung, „Auftrag an die Werkstatt“ per Communicator-Mail; Einkauf „inventarisiert“ → Instrument oder Ausstattung; spenden.inventar_id/ausstattung_id
+- 🧹 bk-kom Wartung: abgelaufene Gesundheitsangaben automatisch löschen (Inhalt geleert, Protokoll LOESCHFRIST)
+- Migration 20261029000000_bk_extras.sql; Tests tests/extras.test.mjs; Rundgang erweitert
+
 ## 0.21.0 DEV – 16.10.2026
 - 🎼 Terminformular: Register-Auswahl (termine.register); Registerführer: Server-Sicht auf Antworten des eigenen Registers ohne `notiz`, Ansicht „Mein Register“ mit Erinnern
 - 🤝 ausleihen: zubehoer, kaution(+status), gebuehr(+bezahlt bis), versicherung, vertrag_id; genehmigungen.ausleihe_id; Vorlage per Zweck „leihvertrag“; Kaution bei Rückgabe; konfig leih_kaution/leih_gebuehr

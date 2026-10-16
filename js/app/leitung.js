@@ -163,6 +163,9 @@ VIEWS.meinenoten = {
       html += `${istEltern() ? `<h3>${esc(vorname(pid))}</h3>` : ""}` + (passend.map(({ w, st }) => `<div class="karte"><div class="zeile-titel">${esc(w.titel)}</div><div class="hinweis">${esc(w.komponist)} · ${(w.projekte || []).filter((p) => projekte.has(p)).map((p) => esc(hole("projekte", p)?.titel)).join(", ")}</div>
         <div class="knopfreihe">${st.map((s) => `<button class="knopf klein" data-a="notenDatei" data-x="${s.id}">${s.datei?.startsWith("datei:") ? "📕" : istDemoNoten(s) ? "🎼" : "📄"} ${esc(s.bezeichnung)}</button>`).join("")}</div></div>`).join("") || '<div class="leer">Für deine Projekte sind noch keine Stimmen hinterlegt.</div>');
     }
+    // 📄 Papier-Exemplare, die ich (bzw. meine Kinder) ausgeliehen habe – Mietmaterial pünktlich zurück
+    const ex = liste("notenexemplare", (e) => ids.includes(e.person_id) && !e.zurueck_am);
+    if (ex.length) html += `<div class="karte"><h3>📄 Ausgeliehene Noten (Papier)</h3><ul class="liste">${ex.map((e) => { const st = hole("stimmen", e.stimme_id), w = st && hole("werke", st.werk_id); return `<li><div class="fl"><div class="zeile-titel">${esc(w?.titel || "")} – ${esc(st?.bezeichnung || "")}</div><div class="zeile-unter">Exemplar ${esc(e.nr)}${istEltern() ? " · " + esc(vorname(e.person_id)) : ""}${w?.miete_bis ? ` · <b>zurück bis ${datumKurz(w.miete_bis)}</b> (Leihmaterial vom Verlag)` : ""}</div></div></li>`; }).join("")}</ul><p class="hinweis">Bleistift-Eintragungen bitte vor der Rückgabe wegradieren.</p></div>`;
     return html + '<p class="hinweis">Du siehst automatisch die Stimmen für deine Instrumente, deine Gruppe und deine Projekte – auch bei einem temporären Gruppenwechsel.</p>';
   },
 };

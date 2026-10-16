@@ -2,6 +2,7 @@
 // ⏰ Übezeiten (Wochentage, Uhrzeit, Dauer): erinnern über den Handy-Kalender (Apple, Google – mit Erinnerung vorher, zuverlässig auch
 // bei geschlossener App) und beim Öffnen der App („Heute ist Übetag“). Einträge sind privat: nur ich, meine Eltern und – wenn geteilt –
 // Leitung/Lehrkräfte (Server-Regel). Leitung/Lehrkräfte sehen unter „Übe-Übersicht“ die geteilten Übezeiten der Woche.
+import { aufgabenHtml, aufgabenVerwaltenHtml } from "./extras.js";
 import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istEltern, istSchueler, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, frage, blatt, blattZu, herunterladen } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
@@ -55,7 +56,7 @@ VIEWS.ueben = {
     const heute = tagIsoLokal(), stuecke = stueckeFuer(pid);
     const wahl = leute().length > 1 ? `<div class="inst-chips">${leute().map((x) => `<button type="button" class="${x === pid ? "an" : ""}" data-a="uebenWer" data-x="${esc(x)}">${esc(vorname(x))}</button>`).join("")}</div>` : "";
     return kopf("🎻 Üben", hatRolle("leitung", "lehrkraft", "admin") ? '<button class="knopf klein" data-a="uebenUebersicht" title="Geteilte Übezeiten der Schüler">📊 Übersicht</button>' : "") + wahl
-      + `<div class="karte ue-woche"><div class="ue-kopf"><b>Diese Woche</b><span>${w.summe} Min.${ziel ? ` von ${ziel}` : ""}</span>${w.serie ? `<span class="ue-serie" title="Tage in Folge geübt">🔥 ${w.serie}</span>` : ""}</div>
+      + aufgabenHtml(pid) + `<div class="karte ue-woche"><div class="ue-kopf"><b>Diese Woche</b><span>${w.summe} Min.${ziel ? ` von ${ziel}` : ""}</span>${w.serie ? `<span class="ue-serie" title="Tage in Folge geübt">🔥 ${w.serie}</span>` : ""}</div>
         ${ziel ? `<div class="ue-ziel"><i style="width:${Math.min(100, Math.round((w.summe / ziel) * 100))}%"></i></div>` : ""}
         <div class="ue-balken">${w.tage.map((t, i) => `<div class="ue-tag${t === heute ? " heute" : ""}${plan.an && plan.tage.includes(i + 1) ? " plan" : ""}" title="${WT[i]}: ${w.jeTag[t]} Min."><span style="height:${Math.round((w.jeTag[t] / max) * 100)}%"></span><small>${w.jeTag[t] || ""}</small><b>${WT[i]}</b></div>`).join("")}</div>
         ${plan.an ? `<p class="hinweis">⏰ Übezeiten: ${plan.tage.map((t) => WT[t - 1]).join(", ")} um ${esc(plan.zeit)} (${plan.dauer} Min.)</p>` : ""}</div>
@@ -176,7 +177,7 @@ VIEWS.uebenUebersicht = {
     return kopf("📊 Übe-Übersicht") + `<div class="karte"><ul class="liste">${zeilen.map(({ pid, w, letzte }) => `<li><div class="fl"><div class="zeile-titel">${esc(name(pid))}</div>
       <div class="zeile-unter">diese Woche ${w.summe} Min.${w.serie ? ` · 🔥 ${w.serie}` : ""} · zuletzt ${esc(datumText(letzte))}</div></div>
       <div class="ue-mini">${w.tage.map((t) => `<i style="height:${Math.min(100, Math.round((w.jeTag[t] / 60) * 100))}%"></i>`).join("")}</div></li>`).join("") || '<li class="leer">Noch keine geteilten Übezeiten.</li>'}</ul></div>
-      <p class="hinweis">Hier stehen nur Einträge, die Schüler bewusst mit Leitung & Lehrkräften teilen.</p>`;
+      <p class="hinweis">Hier stehen nur Einträge, die Schüler bewusst mit Leitung & Lehrkräften teilen.</p>` + aufgabenVerwaltenHtml();
   },
 };
 AKTIONEN.uebenUebersicht = () => zeige("uebenUebersicht");

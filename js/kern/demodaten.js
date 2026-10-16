@@ -517,6 +517,47 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.kom_ereignisse = [];
   d.aenderungen = [];
 
+  // ---------- 0.22.0: Extras ----------
+  // 🔧 Reparatur auch für Ausstattung (Transportcase beim Sattler) · 💛 Sachspende = Inventar
+  const caseA = d.ausstattung.find((x) => x.status === "reparatur");
+  if (caseA) d.reparaturen.push({ id: "rp-4", ausstattung_id: caseA.id, meldung: "Rolle am Transportcase abgebrochen", status: "in_arbeit", werkstatt_id: "p-w2", kosten: 45, gemeldet_von: "p-lk3", gemeldet_am: isoTag(tag(jetzt, -9)) });
+  const fagott = d.inventar.find((i) => i.typ_id === "t-fg"); if (fagott) Object.assign(d.spenden.find((x) => x.id === "sp-3"), { inventar_id: fagott.id });
+  // 📜 Mietmaterial & GEMA: das Filmmusik-Medley ist gemietet und GEMA-pflichtig
+  Object.assign(d.werke.find((w) => w.id === "w-4"), { verlag: "Musikverlag (Beispiel)", bearbeiter: "J. Beispiel", miete_bis: isoTag(tag(konzertTag, 21)), gema: true });
+  for (const w of d.werke) if (!w.verlag && w.rechte === "gemeinfrei") w.verlag = "gemeinfrei";
+  // 💛 Förderverein-Mitglieder (ohne Lastschrift): Vorstand und einige Eltern
+  d.fv_mitglieder = [...d.personen.filter((p) => p.typ === "foerderverein"), ...d.personen.filter((p) => p.typ === "eltern").filter(() => r() < 0.25)].map((p, i) => ({ id: `fv-${i + 1}`, person_id: p.id, mitglied_nr: String(101 + i),
+    eintritt: isoTag(tag(jetzt, -Math.floor(100 + r() * 2000))), beitrag_art: i < 3 ? "einzel" : wahl(["familie", "familie", "einzel", "ermaessigt"]), beitrag: i < 3 ? 24 : wahl([36, 36, 24, 12]), zahlweise: wahl(["ueberweisung", "dauerauftrag"]),
+    bezahlt_bis: isoTag(new Date(jetzt.getFullYear() + (r() < 0.8 ? 0 : -1), 11, 31)), austritt: null, notiz: "" }));
+  // 🚪 Räume & 🔑 Schlüssel
+  d.raeume = [{ id: "rm-1", name: "Musikraum 104", ort: "Städt. Gymnasium, Altbau", plaetze: 60, ausstattung: "Flügel, Beamer, 40 Notenständer", hinweis: "Hausmeister bis 18 Uhr" },
+    { id: "rm-2", name: "PZ / Aula", ort: "Städt. Gymnasium", plaetze: 450, ausstattung: "Bühne, Licht, Tonanlage", hinweis: "Nur nach Absprache mit der Schulleitung" },
+    { id: "rm-3", name: "Instrumentenraum", ort: "Altbau Keller", plaetze: 0, ausstattung: "Regale, Notenschrank", hinweis: "" }];
+  d.schluessel = [{ id: "sl-1", nr: "S-01", raum_id: "rm-1", bezeichnung: "Musikraum 104", person_id: "p-leitung", ausgegeben_am: isoTag(tag(jetzt, -400)), status: "ausgegeben", kaution: 0 },
+    { id: "sl-2", nr: "S-02", raum_id: "rm-3", bezeichnung: "Instrumentenraum", person_id: "p-lk3", ausgegeben_am: isoTag(tag(jetzt, -200)), status: "ausgegeben", kaution: 0 },
+    { id: "sl-3", nr: "S-03", raum_id: "rm-3", bezeichnung: "Instrumentenraum (Ersatz)", status: "da" },
+    { id: "sl-4", nr: "S-04", raum_id: "rm-2", bezeichnung: "PZ Bühnenlager", person_id: "p-lk2", ausgegeben_am: isoTag(tag(jetzt, -30)), rueckgabe_bis: isoTag(tag(jetzt, -2)), status: "ausgegeben", kaution: 20 }];
+  // 📄 Papier-Notenexemplare: Mietmaterial Filmmusik-Medley an das A-Orchester ausgegeben
+  d.notenexemplare = [];
+  for (const st of d.stimmen.filter((x) => x.werk_id === "w-4" && x.register_id).slice(0, 8)) {
+    const spieler = d.person_instrument.filter((x) => x.register_id === st.register_id).slice(0, 2);
+    spieler.forEach((x, j) => d.notenexemplare.push({ id: `ne-${d.notenexemplare.length + 1}`, stimme_id: st.id, nr: `${st.bezeichnung.slice(0, 3)}-${j + 1}`, person_id: x.person_id, ausgegeben_am: isoTag(tag(jetzt, -40)), zurueck_am: null, zustand: j ? "bleistift" : "gut" }));
+  }
+  // 📝 Übeaufgaben der Lehrkräfte
+  const regDemo = demoSchueler ? d.person_instrument.find((x) => x.person_id === demoSchueler.id)?.register_id : null;
+  d.uebeaufgaben = [
+    { id: "ua-1", titel: "Air: Takt 1–16 langsam (♩ = 60)", text: "Auf gleichmäßigen Bogen achten, Bindungen genau.", werk_id: "w-2", person_id: demoSchueler?.id || null, von_id: "p-lk1", bis: isoTag(tag(jetzt, 6)), erledigt: [] },
+    { id: "ua-2", titel: "Tonleiter G-Dur über 2 Oktaven", text: "Jeden Tag 5 Minuten, mit Metronom.", register_id: regDemo, gruppe_id: "g-a", von_id: "p-lk1", bis: isoTag(tag(jetzt, 10)), erledigt: [] },
+    { id: "ua-3", titel: "Brandenburgisches Konzert: Einsätze üben", text: "Takte 40–60 mit Aufnahme mitspielen.", gruppe_id: "g-a", von_id: "p-leitung", bis: isoTag(tag(jetzt, 14)), erledigt: [] }];
+  // 🚗 Mitfahrgelegenheiten zur Probenfreizeit und zur nächsten Probe
+  d.mitfahrten = [];
+  const fahrt = d.termine.find((t) => t.projekt_id === "pr-freizeit"), probe = d.termine.filter((t) => new Date(t.beginn) > jetzt && (t.gruppen || []).includes("g-a")).sort((a, b) => a.beginn.localeCompare(b.beginn))[0];
+  const elternA = [...new Set(d.eltern_kind.filter((e) => mitglieder("g-a").includes(e.kind_id)).map((e) => e.eltern_id))];
+  if (fahrt && elternA[0]) d.mitfahrten.push({ id: "mf-1", termin_id: fahrt.id, fahrer_id: elternA[0], richtung: "hin", plaetze: 3, abfahrt: "14:30 Uhr Rathausplatz Oberaden", mitfahrer: [] });
+  if (probe && elternA[1]) d.mitfahrten.push({ id: "mf-2", termin_id: probe.id, fahrer_id: elternA[1], richtung: "beides", plaetze: 2, abfahrt: "Weddinghofen, Kirche – 15:40 Uhr", mitfahrer: [] });
+  // 🛡️ Führungszeugnis-Vermerk (nur Datum): Lehrkräfte ja, eine Begleitperson fehlt noch
+  for (const p of d.personen.filter((x) => x.typ === "lehrkraft" || x.id === "p-leitung")) p.fz_vorgelegt_am = isoTag(tag(jetzt, -Math.floor(100 + r() * 1500)));
+
   // Privatsphäre (⚙️ Mehr): etwa die Hälfte der Schüler zeigt ihren Geburtstag
   d.personen.forEach((p, i) => { if (p.typ === "schueler" && i % 2 === 0) p.freigaben = { geburtstag: true }; });
   d.__konfig = {

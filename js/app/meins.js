@@ -3,7 +3,7 @@
 import { S, VIEWS, db, zeige, zurueck, kopf, name, einst, einstSetzen, istLeitung, istEltern, istVerwalter, fehlerListe } from "./zustand.js";
 import { KACHELN, kachelnFuer, REGISTER_ALLE, adminZustaende } from "./start.js";
 import { esc, AKTIONEN, datumKurz, uhr, vorZeit, toast, blatt, formWerte, herunterladen, frage } from "../kern/ui.js";
-import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb } from "../kern/daten.js";
+import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb, konfig } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
 import { kinderVon, elternVon, wirksameGruppen, instrumenteVon, tagIso, personenDaten } from "../kern/logik.js";
 import { EREIGNISSE, KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
@@ -131,9 +131,11 @@ VIEWS.ueber = {
     return kopf("ℹ️ Über die App") + `<div class="karte"><h3>Bachkreis-App</h3><p>Version <b>${APP_VERSION} ${APP_STUFE}</b></p><p>Datenquelle: <b>${esc(ADAPTER[i.art]?.name || i.art)}</b><br><span class="hinweis">${esc(i.hinweis || "")} · Speicher: ${esc(i.speicher || "")}</span></p>
       <p>Versand: <b>BK Communicator</b> – ${adapterInfo().map((a) => esc(a.name)).join(" · ")} · WhatsApp-Übergabe (wa.me)</p>
       <p class="hinweis">Abgeleitet aus der KC Club App (Muster für Termine, Zusagen, Nachrichten, SOS, Register & Kacheln). Kostenfrei: keine kostenpflichtigen Dienste oder APIs.</p>
-      <p class="hinweis">Mitgelieferte Bibliothek: qrcode-generator (Kazuhiko Arase, MIT-Lizenz).</p></div>`;
+      <p class="hinweis">Mitgelieferte Bibliothek: qrcode-generator (Kazuhiko Arase, MIT-Lizenz).</p>
+      <div class="knopfreihe">${konfig().webseite ? `<a class="knopf klein" href="${esc(konfig().webseite)}" target="_blank" rel="noopener">🌐 Bachkreis im Internet ↗</a>` : ""}${konfig().instagram ? `<a class="knopf klein" href="${esc(konfig().instagram)}" target="_blank" rel="noopener">📸 Instagram ↗</a>` : ""}<button class="knopf klein" data-a="ueberChronik">📜 Chronik & Über uns</button></div></div>`;
   },
 };
+AKTIONEN.ueberChronik = () => zeige("chronik", { tab: "ueber" });
 AKTIONEN.updatePruefen = async () => {
   const reg = await navigator.serviceWorker?.getRegistration();
   if (!reg) { toast(`Installiert: v${APP_VERSION} – kein Offline-Speicher aktiv`); return; }

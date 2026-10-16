@@ -391,6 +391,156 @@ alter table bk_uebeaufgaben enable row level security;
 drop trigger if exists bk_uebeaufgaben_stempel on bk_uebeaufgaben;
 create trigger bk_uebeaufgaben_stempel before update on bk_uebeaufgaben for each row execute function bk_abgleich_stempel();
 
+-- Gastfamilien
+create table if not exists bk_gastgeber (
+  id text primary key default gen_random_uuid()::text,
+  projekt_id text not null,
+  person_id text not null,
+  plaetze integer not null,
+  schlafplatz text,
+  hinweise text,
+  status text check (status is null or status in ('angeboten', 'bestaetigt', 'abgesagt')),
+  notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_gastgeber_geaendert on bk_gastgeber (geaendert_am);
+alter table bk_gastgeber enable row level security;
+drop trigger if exists bk_gastgeber_stempel on bk_gastgeber;
+create trigger bk_gastgeber_stempel before update on bk_gastgeber for each row execute function bk_abgleich_stempel();
+
+-- Gäste (Austausch)
+create table if not exists bk_gaeste (
+  id text primary key default gen_random_uuid()::text,
+  projekt_id text not null,
+  vorname text not null,
+  nachname text,
+  alter integer,
+  herkunft text,
+  instrument text,
+  gastgeber_id text,
+  ankunft timestamptz,
+  abreise timestamptz,
+  essen text,
+  allergien text,
+  notfall_tel text,
+  notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_gaeste_geaendert on bk_gaeste (geaendert_am);
+alter table bk_gaeste enable row level security;
+drop trigger if exists bk_gaeste_stempel on bk_gaeste;
+create trigger bk_gaeste_stempel before update on bk_gaeste for each row execute function bk_abgleich_stempel();
+
+-- Auftrittsanfragen
+create table if not exists bk_anfragen (
+  id text primary key default gen_random_uuid()::text,
+  anlass text not null,
+  veranstalter text not null,
+  kontakt_name text,
+  kontakt_tel text,
+  kontakt_email text,
+  datum timestamptz,
+  dauer_min integer,
+  ort text,
+  besetzung text check (besetzung is null or besetzung in ('a', 'b', 'beide', 'ensemble', 'streicher', 'blaeser', 'kammer')),
+  gruppen text[],
+  honorar numeric(10,2),
+  status text check (status is null or status in ('neu', 'pruefung', 'zugesagt', 'abgesagt', 'erledigt')),
+  termin_id text,
+  eingegangen_am date,
+  notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_anfragen_geaendert on bk_anfragen (geaendert_am);
+alter table bk_anfragen enable row level security;
+drop trigger if exists bk_anfragen_stempel on bk_anfragen;
+create trigger bk_anfragen_stempel before update on bk_anfragen for each row execute function bk_abgleich_stempel();
+
+-- Chronik
+create table if not exists bk_chronik (
+  id text primary key default gen_random_uuid()::text,
+  jahr integer not null,
+  datum date,
+  titel text not null,
+  art text check (art is null or art in ('gruendung', 'konzert', 'reise', 'austausch', 'cd', 'urauffuehrung', 'partner', 'auszeichnung', 'sonstiges')),
+  ort text,
+  beschreibung text,
+  programm text,
+  projekt_id text,
+  aufnahme_id text,
+  partner_id text,
+  quelle text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_chronik_geaendert on bk_chronik (geaendert_am);
+alter table bk_chronik enable row level security;
+drop trigger if exists bk_chronik_stempel on bk_chronik;
+create trigger bk_chronik_stempel before update on bk_chronik for each row execute function bk_abgleich_stempel();
+
+-- Dokumente
+create table if not exists bk_dokumente (
+  id text primary key default gen_random_uuid()::text,
+  titel text not null,
+  art text check (art is null or art in ('satzung', 'flyer', 'formular', 'vorlage', 'info', 'protokoll')),
+  beschreibung text,
+  datei text,
+  url text,
+  fassung text,
+  sichtbar text check (sichtbar is null or sichtbar in ('alle', 'eltern', 'schueler', 'verwaltung')),
+  sort integer,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_dokumente_geaendert on bk_dokumente (geaendert_am);
+alter table bk_dokumente enable row level security;
+drop trigger if exists bk_dokumente_stempel on bk_dokumente;
+create trigger bk_dokumente_stempel before update on bk_dokumente for each row execute function bk_abgleich_stempel();
+
+-- Partner & Kontakte
+create table if not exists bk_partner (
+  id text primary key default gen_random_uuid()::text,
+  name text not null,
+  art text check (art is null or art in ('musikschule', 'orchester', 'austausch', 'schule', 'kirche', 'stadt', 'presse', 'sonstige')),
+  ort text,
+  land text,
+  ansprechpartner text,
+  email text,
+  telefon text,
+  website text,
+  seit integer,
+  letzte_begegnung date,
+  naechste_planung text,
+  notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_partner_geaendert on bk_partner (geaendert_am);
+alter table bk_partner enable row level security;
+drop trigger if exists bk_partner_stempel on bk_partner;
+create trigger bk_partner_stempel before update on bk_partner for each row execute function bk_abgleich_stempel();
+
 -- Übe-Bühne: Ergebnisse
 create table if not exists bk_uebe_ergebnisse (
   id text primary key default gen_random_uuid()::text,
@@ -532,6 +682,9 @@ create table if not exists bk_projekte (
   plaetze integer,
   transport_inventar text[],
   transport_ausstattung text[],
+  gastfamilien boolean,
+  gaeste_anzahl integer,
+  partner_id text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -555,6 +708,9 @@ create table if not exists bk_programm (
   solisten text,
   dauer_min integer,
   notiz text,
+  dirigent_id text,
+  eigene_komposition boolean,
+  urauffuehrung boolean,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -1350,6 +1506,14 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebea
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_register_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_register_id_fk foreign key (register_id) references bk_register(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_gruppe_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_gruppe_id_fk foreign key (gruppe_id) references bk_gruppen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebeaufgaben_von_id_fk') then alter table bk_uebeaufgaben add constraint bk_uebeaufgaben_von_id_fk foreign key (von_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_gastgeber_projekt_id_fk') then alter table bk_gastgeber add constraint bk_gastgeber_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_gastgeber_person_id_fk') then alter table bk_gastgeber add constraint bk_gastgeber_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_gaeste_projekt_id_fk') then alter table bk_gaeste add constraint bk_gaeste_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_gaeste_gastgeber_id_fk') then alter table bk_gaeste add constraint bk_gaeste_gastgeber_id_fk foreign key (gastgeber_id) references bk_gastgeber(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_anfragen_termin_id_fk') then alter table bk_anfragen add constraint bk_anfragen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chronik_projekt_id_fk') then alter table bk_chronik add constraint bk_chronik_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chronik_aufnahme_id_fk') then alter table bk_chronik add constraint bk_chronik_aufnahme_id_fk foreign key (aufnahme_id) references bk_aufnahmen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chronik_partner_id_fk') then alter table bk_chronik add constraint bk_chronik_partner_id_fk foreign key (partner_id) references bk_partner(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_person_id_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_aufgabe_id_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_aufgabe_id_fk foreign key (aufgabe_id) references bk_uebeaufgaben(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_rueckmeldung_von_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_rueckmeldung_von_fk foreign key (rueckmeldung_von) references bk_personen(id) on delete restrict; end if; end $$;
@@ -1366,9 +1530,11 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_repar
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reparaturen_gemeldet_von_fk') then alter table bk_reparaturen add constraint bk_reparaturen_gemeldet_von_fk foreign key (gemeldet_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reparaturen_freigegeben_von_fk') then alter table bk_reparaturen add constraint bk_reparaturen_freigegeben_von_fk foreign key (freigegeben_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_einkaeufe_haendler_id_fk') then alter table bk_einkaeufe add constraint bk_einkaeufe_haendler_id_fk foreign key (haendler_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_projekte_partner_id_fk') then alter table bk_projekte add constraint bk_projekte_partner_id_fk foreign key (partner_id) references bk_partner(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_projekt_id_fk') then alter table bk_programm add constraint bk_programm_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_werk_id_fk') then alter table bk_programm add constraint bk_programm_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_gruppe_id_fk') then alter table bk_programm add constraint bk_programm_gruppe_id_fk foreign key (gruppe_id) references bk_gruppen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_dirigent_id_fk') then alter table bk_programm add constraint bk_programm_dirigent_id_fk foreign key (dirigent_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reise_anmeldungen_projekt_id_fk') then alter table bk_reise_anmeldungen add constraint bk_reise_anmeldungen_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reise_anmeldungen_person_id_fk') then alter table bk_reise_anmeldungen add constraint bk_reise_anmeldungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reise_anmeldungen_angemeldet_von_fk') then alter table bk_reise_anmeldungen add constraint bk_reise_anmeldungen_angemeldet_von_fk foreign key (angemeldet_von) references bk_personen(id) on delete restrict; end if; end $$;

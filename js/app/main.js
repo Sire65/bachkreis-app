@@ -18,6 +18,7 @@ import "./notenblatt.js";
 import "./schutz.js";
 import "./extras.js";
 import "./uebebuehne.js";
+import "./vereinsleben.js";
 import { uebenStart } from "./ueben.js";
 import { termineStart } from "./termine.js";
 import { onlineStart } from "./online.js";

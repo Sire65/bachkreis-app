@@ -26,7 +26,7 @@ async function alleZeilen(db, tab) {
 }
 async function kontextLaden(db, person) {
   // Alles, was die Regeln brauchen (regeln.js kontext): Begleitpersonen/Anmeldung (projekte, reise_anmeldungen), Textfassung (genehmigung_vorlagen)
-  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen"];
+  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   const ctx = kontext(person, alle);
@@ -216,6 +216,7 @@ async function dateiHolen(db, s, body, ablage) {
     if (!darf) darf = filtern("stimmen", (await db.q(`select to_jsonb(s) as z from bk_stimmen s where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
     // 🎭 Übe-Bühne: Noten/Vorspiel einer sichtbaren Aufgabe, Aufnahme eines eigenen (bzw. Kinder-)Ergebnisses
     if (!darf) darf = filtern("uebeaufgaben", (await db.q(`select to_jsonb(u) as z from bk_uebeaufgaben u where (datei = $1 or vorspiel = $1) and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
+    if (!darf) darf = filtern("dokumente", (await db.q(`select to_jsonb(d) as z from bk_dokumente d where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
     if (!darf) darf = filtern("uebe_ergebnisse", (await db.q(`select to_jsonb(e) as z from bk_uebe_ergebnisse e where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
   }
   if (!darf) return fehler(403, "KEIN_ZUGRIFF");

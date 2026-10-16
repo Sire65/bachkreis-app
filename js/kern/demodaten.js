@@ -592,10 +592,53 @@ export function erzeugeDemodaten(heute = new Date()) {
 
   // Privatsphäre (⚙️ Mehr): etwa die Hälfte der Schüler zeigt ihren Geburtstag
   d.personen.forEach((p, i) => { if (p.typ === "schueler" && i % 2 === 0) p.freigaben = { geburtstag: true }; });
+  // 🏫 Abgleich mit der Internetseite (0.27.0) – Fakten von gymnasium-bergkamen.de/bachkreis, sonst als „Beispiel“ gekennzeichnet
+  const WEB = "https://www.gymnasium-bergkamen.de/bachkreis/";
+  d.partner = [
+    { id: "pa-musikschule", name: "Musikschule Bergkamen", art: "musikschule", ort: "Bergkamen", land: "Deutschland", website: "https://www.musikschule-bergkamen.de/", notiz: "Kooperation Orchesterklasse; Einzel- und Gruppenunterricht für Bachkreis-Kinder." },
+    { id: "pa-npw", name: "Neue Philharmonie Westfalen", art: "orchester", ort: "Recklinghausen / Gelsenkirchen", land: "Deutschland", seit: 2017, notiz: "Landesorchester NRW – der Bachkreis ist seit 2017 Partnerorchester." },
+    { id: "pa-westerstede", name: "Austausch Westerstede", art: "austausch", ort: "Westerstede", land: "Deutschland", notiz: "Inlands-Austausch (laut Schul-Website)." },
+    { id: "pa-emden", name: "Austausch Emden", art: "austausch", ort: "Emden", land: "Deutschland", notiz: "Inlands-Austausch (laut Schul-Website)." },
+  ];
+  const fr = d.projekte.find((x) => x.id === "pr-fruehling");
+  if (fr) Object.assign(fr, { gastfamilien: true, gaeste_anzahl: 12, partner_id: "pa-westerstede" });
+  d.gastgeber = [elternA[2], elternA[5], elternA[8], demoEltern?.id].filter(Boolean).map((pid, i) => ({ id: `gg-${i + 1}`, projekt_id: "pr-fruehling", person_id: pid, plaetze: [2, 1, 3, 2][i], schlafplatz: ["Gästezimmer mit 2 Betten", "Schlafsofa im Arbeitszimmer", "Kinderzimmer + Gästebett", "eigenes Zimmer"][i], hinweise: ["Katze im Haus", "", "Wir holen am Bahnhof ab", "vegetarisch kein Problem"][i], status: i < 2 ? "bestaetigt" : "angeboten" }));
+  const GAST_VN = ["Lea", "Finn", "Mia", "Ole", "Emma", "Jonas", "Lina", "Tom", "Ida", "Ben", "Nele", "Paul"];
+  d.gaeste = GAST_VN.map((vn, i) => ({ id: `gast-${i + 1}`, projekt_id: "pr-fruehling", vorname: vn, nachname: "(Beispiel)", alter: 12 + (i % 6), herkunft: "Westerstede", instrument: ["Violine", "Cello", "Flöte", "Trompete", "Viola", "Klarinette"][i % 6],
+    gastgeber_id: i < 2 ? "gg-1" : i < 3 ? "gg-2" : null, essen: i === 1 ? "vegetarisch" : "", allergien: i === 0 ? "Heuschnupfen" : "", notfall_tel: "", notiz: "" }));
+  d.anfragen = [
+    { id: "an-1", anlass: "Gottesdienst zum Erntedank (Beispiel)", veranstalter: "Ev. Kirchengemeinde (Beispiel)", kontakt_name: "Gemeindebüro", datum: new Date(tag(jetzt, 28).setHours(10, 0, 0, 0)).toISOString(), dauer_min: 20, ort: "Kirche (Beispiel)", besetzung: "streicher", gruppen: ["g-a"], honorar: 150, status: "neu", eingegangen_am: isoTag(tag(jetzt, -2)) },
+    { id: "an-2", anlass: "Neujahrsempfang (Beispiel)", veranstalter: "Stadt Bergkamen (Beispiel)", kontakt_name: "Kulturbüro", datum: new Date(tag(jetzt, 80).setHours(18, 0, 0, 0)).toISOString(), dauer_min: 30, ort: "Ratssaal (Beispiel)", besetzung: "ensemble", gruppen: ["g-a"], honorar: 300, status: "pruefung", eingegangen_am: isoTag(tag(jetzt, -9)) },
+    { id: "an-3", anlass: "Sommerfest Seniorenheim (Beispiel)", veranstalter: "Seniorenzentrum (Beispiel)", datum: new Date(tag(jetzt, 120).setHours(15, 0, 0, 0)).toISOString(), dauer_min: 45, besetzung: "b", gruppen: ["g-b"], honorar: 0, status: "abgesagt", eingegangen_am: isoTag(tag(jetzt, -20)), notiz: "Termin fällt in die Ferien." },
+  ];
+  const quelle = "Schul-Website (Bachkreis)";
+  d.chronik = [
+    { id: "ch-1969", jahr: 1969, titel: "Gründung des Bachkreises", art: "gruendung", beschreibung: "Gegründet vom Musiklehrer Horst Römer – eines der ersten Jugendorchester, die nach 1945 in Deutschland entstanden.", quelle },
+    { id: "ch-1980", jahr: 1980, datum: "1980-05-20", titel: "Gründung des Fördervereins", art: "gruendung", beschreibung: "Mitglieder des Bachkreises, Eltern und Freunde gründen den Förderverein des Bachkreises Bergkamen e.V.", quelle },
+    { id: "ch-1985", jahr: 1985, titel: "Europäisches Musikfest der Jugend", art: "konzert", ort: "Olympiahalle München", quelle },
+    { id: "ch-1997", jahr: 1997, titel: "Uraufführung der „Umweltkantate“ (Prof. Bimberg)", art: "urauffuehrung", beschreibung: "April 1997.", quelle },
+    { id: "ch-2000", jahr: 2000, titel: "Auftritt auf der EXPO 2000", art: "konzert", ort: "Hannover", quelle },
+    { id: "ch-2009", jahr: 2009, titel: "10. Europäisches Jugendmusikfestival", art: "konzert", ort: "Linz (Kulturhauptstadt 2009)", quelle },
+    { id: "ch-2010", jahr: 2010, titel: "Eröffnung der Heldenausstellung (RUHR.2010)", art: "konzert", ort: "Hattingen", quelle },
+    { id: "ch-2011", jahr: 2011, titel: "Start der Orchesterklasse", art: "sonstiges", beschreibung: "Seit dem Schuljahr 2011/12 lernt jedes Kind der Erprobungsstufe im Klassenverband ein Orchesterinstrument – mit der Musikschule Bergkamen.", partner_id: "pa-musikschule", quelle },
+    { id: "ch-2017", jahr: 2017, titel: "Partnerorchester der Neuen Philharmonie Westfalen", art: "partner", partner_id: "pa-npw", quelle },
+  ];
+  d.dokumente = [
+    { id: "dok-1", titel: "Satzung des Fördervereins", art: "satzung", fassung: "2024", url: WEB, beschreibung: "PDF auf der Schul-Website (Abschnitt Förderverein)", sichtbar: "alle", sort: 1 },
+    { id: "dok-2", titel: "Flyer Förderverein Bachkreis", art: "flyer", fassung: "2026", url: WEB, beschreibung: "mit Beitrittserklärung", sichtbar: "alle", sort: 2 },
+    { id: "dok-3", titel: "Flyer Orchesterklasse", art: "flyer", url: "https://www.gymnasium-bergkamen.de/wp-content/uploads/2023/05/flyer_orchesterklasse-fin.pdf", beschreibung: "Für Eltern der Grundschulkinder", sichtbar: "alle", sort: 3 },
+    { id: "dok-4", titel: "Leihvertrag Instrumente", art: "vorlage", beschreibung: "Wird in der App als Genehmigung bestätigt (Genehmigungen › Leihvertrag)", sichtbar: "eltern", sort: 4 },
+    { id: "dok-5", titel: "Vorstandssitzung – Protokoll (Beispiel)", art: "protokoll", fassung: isoTag(tag(jetzt, -14)), sichtbar: "verwaltung", sort: 5 },
+  ];
+  // 🎓 Kompositions- und Dirigierversuche im Herbstkonzert
+  const zugabe = d.programm.find((x) => x.art === "zugabe"), dirig = mitglieder("g-a").find((id) => d.personen.find((x) => x.id === id)?.jahrgang >= 11);
+  if (zugabe && dirig) zugabe.dirigent_id = dirig;
+  d.programm.push({ id: `pg-${d.programm.length + 1}`, projekt_id: "pr-herbst", nr: d.programm.length + 1, art: "werk", werk_id: null, titel: "„Herbstwind“ – Komposition einer Schülerin (Beispiel)", gruppe_id: "g-b", dauer_min: 3, solisten: "", eigene_komposition: true, urauffuehrung: true });
   d.__konfig = {
     name: "Bachkreis Bergkamen",
     untertitel: "Jugendsinfonieorchester",
     webseite: "https://www.gymnasium-bergkamen.de/bachkreis/",
+    instagram: "",
     leitung_id: "p-leitung",
     demo_personen: { leitung: "p-leitung", lehrkraft: "p-lk1", vorstand: "p-fv2", schueler: demoSchueler?.id, eltern: demoEltern?.id },
     notrufe: [["🚑", "Notruf / Rettungsdienst", "112"], ["🚓", "Polizei", "110"], ["🩺", "Ärztlicher Bereitschaftsdienst", "116117"], ["☠️", "Giftnotruf NRW (Bonn)", "0228 19240"]],

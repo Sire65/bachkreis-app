@@ -13,6 +13,7 @@ import { gesundheitFuer, gesundheitVon } from "./schutz.js";
 import { mitfahrtZahlen } from "./extras.js";
 import { wochenStand } from "./ueben.js";
 import { offeneUebeAufgaben } from "./uebebuehne.js";
+import { austauschProjekte, anfragenOffen } from "./vereinsleben.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
 const registerSichtbar = () => REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung());
@@ -64,6 +65,11 @@ export const KACHELN = {
     { id: "anwesenheit", sym: "📋", t: "Anwesenheit", u: "Fehlzeiten je Kind · Orchester", v: "anwesenheit", nur: () => hatRolle("admin", "leitung", "lehrkraft", "terminplaner") },
     { id: "fotoliste", sym: "📷", t: "Foto-Liste", u: "Wer darf aufs Foto – App, Website, Presse, Social", v: "fotoliste", nur: () => istLehrkraft() },
     { id: "rundschreiben", sym: "📣", t: "Rundschreiben", u: "An Eltern, Schüler, Spender …", v: "rundschreiben", nur: () => istVerwalter() },
+    { id: "chronik", sym: "📜", t: "Chronik & Repertoire", u: "Seit 1969 · Was haben wir gespielt?", v: "chronik" },
+    { id: "dokumente", sym: "📂", t: "Dokumente", u: "Satzung · Flyer · Vorlagen", v: "dokumente" },
+    { id: "austausch", sym: "🏠", t: "Austausch & Gastfamilien", u: "Gäste aufnehmen · Zuordnung", v: "austausch", nur: () => austauschProjekte().length > 0 && (istEltern() || istLehrkraft()), zahl: () => (istLehrkraft() ? austauschProjekte().reduce((s, p) => s + liste("gaeste", (g) => g.projekt_id === p.id && !g.gastgeber_id).length, 0) : 0) },
+    { id: "anfragen", sym: "📨", t: "Auftrittsanfragen", u: "Gemeinden, Kirchen, Feste – zusagen", v: "anfragen", nur: () => istLehrkraft() || istVorstand(), zahl: () => anfragenOffen() },
+    { id: "partner", sym: "🤝", t: "Partner & Kontakte", u: "Musikschule · Partnerorchester · Austausch", v: "partner", nur: () => istLehrkraft() || istVorstand() },
     { id: "foerderverein", sym: "💛", t: "Förderverein", u: "Einkauf · Spenden · Freigaben", v: "foerderverein", nur: () => istVorstand() || istLeitung() },
   ],
   meins: [

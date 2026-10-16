@@ -1,16 +1,28 @@
 {
-  "version": "0.26.0",
+  "version": "0.27.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🎻 Übe-Bühne: Auf der Bühne üben – vorne sitzt dein eigener Avatar mit deinem Instrument, das Bachkreis-Orchester begleitet dich",
-    "🎼 Mitspielen mit Tempo (langsam bis schnell), Takt von–bis, Wiederholen, Einzählen und „Tempo steigern“ – der rote Notenkopf zeigt, wo ihr seid",
-    "✋ Noten & Griffe: Note antippen → Ton, Notenname und Griffbild (Streicher, Flöte, Klarinette, Blech, Posaune), auch für Tonleitern",
-    "🥁 Rhythmus-Trainer: anhören, mittippen, Auswertung genau/knapp/daneben mit Sternen · 🎯 Stimmgerät & „Ton halten“ (Mikrofon nur im Gerät) · 👂 Ohr-Spiele",
-    "👩‍🏫 Lehrkräfte geben Übe-Aufgaben mit Notenstelle, Rhythmus-Baukasten, Tonleiter, Ton halten, Ohr-Spiel oder eigenem PDF/Vorspiel – und sehen den Fortschritt je Kind mit Rückmeldung (App und PC)",
-    "🎙️ Vorspielen & an die Lehrkraft schicken – nur mit Einwilligung der Eltern, automatisch gelöscht nach 30 Tagen"
+    "📜 Chronik & Repertoire: Geschichte seit 1969 (laut Schul-Website), „Was haben wir schon gespielt?“ und „Über uns“ mit Link zur Internetseite",
+    "📂 Dokumente: Satzung, Flyer, Orchesterklassen-Flyer, Vorlagen – als geschützte Datei oder Link, sichtbar für alle, Eltern, Schüler oder nur die Verwaltung",
+    "🏠 Austausch & Gastfamilien: Eltern bieten Plätze an, die Leitung bestätigt und ordnet die Gäste zu – Gastfamilien sehen ihre Gäste mit Ankunft und wichtigen Hinweisen",
+    "📨 Auftrittsanfragen von Gemeinden, Kirchen und Festen: erfassen, prüfen, zusagen – die Zusage legt den Termin für das Orchester an",
+    "🤝 Partner & Kontakte (Musikschule, Neue Philharmonie Westfalen, Austausch-Orchester) · 🎓 im Konzertprogramm: Schüler dirigiert, eigene Komposition, Uraufführung",
+    "🌙 Bessere Lesbarkeit im Dunkelmodus"
   ],
   "verlauf": [
+    {
+      "version": "0.26.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "🎻 Übe-Bühne: Auf der Bühne üben – vorne sitzt dein eigener Avatar mit deinem Instrument, das Bachkreis-Orchester begleitet dich",
+        "🎼 Mitspielen mit Tempo (langsam bis schnell), Takt von–bis, Wiederholen, Einzählen und „Tempo steigern“ – der rote Notenkopf zeigt, wo ihr seid",
+        "✋ Noten & Griffe: Note antippen → Ton, Notenname und Griffbild (Streicher, Flöte, Klarinette, Blech, Posaune), auch für Tonleitern",
+        "🥁 Rhythmus-Trainer: anhören, mittippen, Auswertung genau/knapp/daneben mit Sternen · 🎯 Stimmgerät & „Ton halten“ (Mikrofon nur im Gerät) · 👂 Ohr-Spiele",
+        "👩‍🏫 Lehrkräfte geben Übe-Aufgaben mit Notenstelle, Rhythmus-Baukasten, Tonleiter, Ton halten, Ohr-Spiel oder eigenem PDF/Vorspiel – und sehen den Fortschritt je Kind mit Rückmeldung (App und PC)",
+        "🎙️ Vorspielen & an die Lehrkraft schicken – nur mit Einwilligung der Eltern, automatisch gelöscht nach 30 Tagen"
+      ]
+    },
     {
       "version": "0.25.0",
       "datum": "2026-10-16",

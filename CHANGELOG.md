@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.27.0 DEV – 16.10.2026
+- 🏫 Abgleich mit gymnasium-bergkamen.de/bachkreis (docs/KONZEPT-UEBEBUEHNE.md Teil A): neues Modul js/app/vereinsleben.js, css/vereinsleben.css
+- 📜 Tabelle `chronik` (für alle sichtbar; Demo nur mit Fakten der Schul-Website, Quelle angegeben), Repertoire aus `programm` + Chronik (`repertoire()` in logik.js, CSV), Tab „Über uns“
+- 📂 Tabelle `dokumente` mit Sichtbarkeit alle/Eltern/Schüler/Verwaltung; Dateien geschützt (Server prüft beim Abruf die Sichtbarkeit)
+- 🏠 `gastgeber` (Eltern nur eigenes Angebot, 1–6 Plätze, Status „bestätigt“ nur durch die Leitung) und `gaeste` (Gastfamilie sieht nur die eigenen Gäste, ohne interne Notiz); projekte.gastfamilien/gaeste_anzahl/partner_id
+- 📨 Tabelle `anfragen` (Leitung, Lehrkräfte, Vorstand), Zusage → Termin (`anfrageZuTermin()`), App-Ansicht und PC-Werkzeug „Anfragen, Austausch & Repertoire“
+- 🤝 Tabelle `partner`; programm.dirigent_id / eigene_komposition / urauffuehrung; Konfiguration `instagram`; Links in „Über die App“
+- 🌙 Dunkelmodus-Kontraste (Chat „neu“, Bühnen-Titel, Übe-Serie) – axe: 0 Verstöße
+- Migration 20261102000000_bk_abgleich.sql; Tests tests/abgleich.test.mjs; Rundgang und axe decken die neuen Ansichten ab
+
 ## 0.26.0 DEV – 16.10.2026
 - 🎭🎻 Übe-Bühne (js/app/uebebuehne.js, css/uebebuehne.css): Bühnen-Modus „🎻 Üben“ (`BUEHNE_MODI` in buehne.js) mit eigenem Avatar als Solist (`orchesterSvg({ solist })`), Kachel „Übe-Bühne“ (Zahl = offene Aufgaben), Knopf in „Üben“
 - 🎼 Mitspielen: Begleitung aus der Partitur (eigene Rolle ausgelassen), eigene Stimme laut/leise/aus, Takt von–bis (`stelleSt`), Tempo-Stufen, Einzählen, Schleife, Tempo steigern bis zum Zieltempo, Selbsteinschätzung ⭐

@@ -245,7 +245,21 @@ for (const w of ["1", "1", "0.5", "0.5", "1"]) await p.click(`[data-a="ubRmPlus"
 await p.fill('#ubForm input[name="titel"]', "Rundgang-Rhythmus"); await p.selectOption('#ubForm select[name="gruppe_id"]', "g-a"); await p.click('[data-a="ubAufgabeSpeichern"]'); await p.waitForTimeout(300);
 if (!(await p.evaluate(async () => (await import("/js/kern/daten.js")).liste("uebeaufgaben", (a) => a.titel === "Rundgang-Rhythmus" && a.muster === "1 1 .5 .5 1").length))) fehler.push("Übe-Aufgabe mit Rhythmus nicht gespeichert");
 await p.click('[data-a="ubFortschritt"]'); await p.waitForSelector(".ub-fort");
+// 🏫 Abgleich Internetseite (0.27.0): Chronik/Repertoire/Über uns, Dokumente, Austausch (Eltern bieten an, Leitung ordnet zu), Anfragen → Termin, Partner
+await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
+for (const tab of ["chronik", "repertoire", "ueber"]) { await p.evaluate(async (t) => (await import("/js/app/zustand.js")).zeige("chronik", { tab: t }), tab); await p.waitForTimeout(150); if (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth > 2)) fehler.push(`Chronik ${tab}: zu breit`); }
+if (!(await p.$(".vl-fakten"))) fehler.push("Über uns: Fakten fehlen");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("dokumente")); await p.waitForSelector(".karte .liste");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("austausch")); await p.waitForSelector(".vl-bedarf");
+await p.screenshot({ path: `${BILDER}austausch-eltern.png`, fullPage: true });
 await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(300);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("austausch")); await p.waitForSelector('select[data-c="gastZuordnen"]');
+await p.selectOption('select[data-c="gastZuordnen"] >> nth=5', "gg-3"); await p.waitForTimeout(200);
+if (!(await p.evaluate(async () => (await import("/js/kern/daten.js")).hole("gaeste", "gast-6")?.gastgeber_id === "gg-3"))) fehler.push("Austausch: Zuordnung nicht gespeichert");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("anfragen")); await p.click('[data-a="anZusagen"]'); await p.waitForTimeout(250);
+if (!(await p.evaluate(async () => (await import("/js/kern/daten.js")).liste("termine", (t) => /^🎺 Auftritt:/.test(t.titel)).length))) fehler.push("Anfrage: Termin nicht angelegt");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("partner")); await p.waitForSelector(".karte");
+await p.screenshot({ path: `${BILDER}anfragen-partner.png`, fullPage: true });
 // PC-Verwaltung: alle Tabellen und Sonderansichten
 await p.setViewportSize({ width: 1280, height: 860 });
 await p.goto(BASIS + "/verwaltung.html");
@@ -267,6 +281,8 @@ await p.click('.vw-seite [data-a="vwAnsicht"][data-x="projekteplanen"]'); await 
 await p.screenshot({ path: `${BILDER}verwaltung-projekte.png`, fullPage: true });
 await p.click('.vw-seite [data-a="vwAnsicht"][data-x="schutzlisten"]'); await p.waitForSelector(".vw-umbruch");
 await p.click('.vw-seite [data-a="vwAnsicht"][data-x="bescheinigung"]'); await p.waitForSelector(".vw-bescheinigung");
+await p.click('.vw-seite [data-a="vwAnsicht"][data-x="vereinsleben"]'); await p.waitForSelector(".vw-austausch");
+await p.screenshot({ path: `${BILDER}verwaltung-vereinsleben.png`, fullPage: true });
 await p.click('.vw-seite [data-a="vwAnsicht"][data-x="uebebuehne"]'); await p.waitForSelector('[data-a="ueRmSpeichern"]');
 await p.fill("[data-ue-rm]", "Rundgang: super!"); await p.click('[data-a="ueRmSpeichern"]'); await p.waitForTimeout(200);
 await p.screenshot({ path: `${BILDER}verwaltung-uebebuehne.png`, fullPage: true });

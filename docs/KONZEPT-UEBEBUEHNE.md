@@ -1,6 +1,6 @@
 # Konzept: Übe-Bühne + Abgleich mit der Internetseite (Stand 0.25.0, 16.10.2026)
 
-Status: **Teil B gebaut in 0.26.0** (Übe-Bühne komplett, alle Ausbaustufen). Teil A folgt in 0.27.0.
+Status: **Teil B gebaut in 0.26.0** (Übe-Bühne komplett, alle Ausbaustufen). Teil A (alle Lücken 1–7) gebaut in 0.27.0.
 
 ---
 

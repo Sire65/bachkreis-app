@@ -42,7 +42,15 @@ export const UEBE_STUECKE = { menuett: "Menuett G-Dur (Petzold)", kanon: "Kanon 
 export const UEBE_TONARTEN = { C: "C-Dur", G: "G-Dur", D: "D-Dur", A: "A-Dur", E: "E-Dur", F: "F-Dur", B: "B-Dur", Es: "Es-Dur", a: "a-Moll", e: "e-Moll", h: "h-Moll", d: "d-Moll", g: "g-Moll" };
 export const UEBE_SPIELE = { hoehe: "Höher oder tiefer?", durmoll: "Dur oder Moll?", nachklatschen: "Rhythmus nachklatschen" };
 export const UEBE_MODI = { mitspielen: "Mitspielen", griffe: "Noten & Griffe", rhythmus: "Rhythmus", stimmen: "Stimmgerät", gehoer: "Ohr-Spiele" };
-export const UEBE_AUFNAHME_TAGE = 30; // Übe-Aufnahmen der Kinder werden nach 30 Tagen gelöscht
+export const UEBE_AUFNAHME_TAGE = 30;
+// 🏫 Abgleich mit der Internetseite (0.27.0): Austausch & Gastfamilien, Auftrittsanfragen, Chronik, Dokumente, Partner
+export const GASTGEBER_STATUS = { angeboten: "angeboten", bestaetigt: "✅ bestätigt", abgesagt: "abgesagt" };
+export const ANFRAGE_STATUS = { neu: "🆕 neu", pruefung: "🔎 in Prüfung", zugesagt: "✅ zugesagt", abgesagt: "❌ abgesagt", erledigt: "🏁 erledigt" };
+export const ANFRAGE_BESETZUNG = { a: "A-Orchester", b: "B-Orchester", beide: "A- und B-Orchester", ensemble: "kleines Ensemble", streicher: "Streicher-Ensemble", blaeser: "Bläser-Ensemble", kammer: "Kammermusik" };
+export const CHRONIK_ARTEN = { gruendung: "🎉 Gründung", konzert: "🎼 Konzert", reise: "✈️ Reise / Tournee", austausch: "🤝 Austausch", cd: "💿 CD / Aufnahme", urauffuehrung: "🆕 Uraufführung", partner: "🏛️ Partnerschaft", auszeichnung: "🏆 Auszeichnung", sonstiges: "📌 Sonstiges" };
+export const DOKUMENT_ARTEN = { satzung: "📜 Satzung", flyer: "📰 Flyer", formular: "📝 Formular / Antrag", vorlage: "📄 Vorlage", info: "ℹ️ Information", protokoll: "🗒️ Protokoll" };
+export const DOKUMENT_SICHT = { alle: "alle", eltern: "nur Eltern", schueler: "nur Schüler", verwaltung: "nur Leitung & Verwaltung" };
+export const PARTNER_ARTEN = { musikschule: "🎓 Musikschule", orchester: "🎻 Orchester", austausch: "🤝 Austausch-Partner", schule: "🏫 Schule", kirche: "⛪ Kirche / Chor", stadt: "🏛️ Stadt / Kreis", presse: "📰 Presse", sonstige: "📌 Sonstige" }; // Übe-Aufnahmen der Kinder werden nach 30 Tagen gelöscht
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
@@ -432,6 +440,119 @@ export const TABELLEN = {
     liste: ["titel", "art", "person_id", "register_id", "gruppe_id", "bis"],
     anzeige: (z) => z.titel,
   },
+  // 🏠 Austausch & Gastfamilien (0.27.0): Eltern bieten Plätze an (eigene Zeile), die Leitung bestätigt und ordnet Gäste zu
+  gastgeber: {
+    titel: "Gastfamilien", sym: "🏠", gruppe: "Termine", lesen: LL, schreiben: LL,
+    felder: [
+      { k: "projekt_id", t: "Austausch / Projekt", typ: "ref", ref: "projekte", pflicht: true },
+      { k: "person_id", t: "Familie (Elternteil)", typ: "ref", ref: "personen", pflicht: true, filter: (p) => p.typ === "eltern" || p.typ === "leitung" || p.typ === "lehrkraft" },
+      { k: "plaetze", t: "Plätze", typ: "zahl", pflicht: true },
+      { k: "schlafplatz", t: "Schlafplatz (z. B. eigenes Zimmer, Gästebett)", typ: "text" },
+      { k: "hinweise", t: "Hinweise (Haustiere, Essen, Abholung …)", typ: "lang" },
+      { k: "status", t: "Status", typ: "wahl", werte: GASTGEBER_STATUS },
+      { k: "notiz", t: "Interne Notiz", typ: "lang", vermerk: true },
+    ],
+    liste: ["projekt_id", "person_id", "plaetze", "status"],
+    anzeige: (z) => `${z.plaetze || "?"} Plätze`,
+  },
+  gaeste: {
+    titel: "Gäste (Austausch)", sym: "🧳", gruppe: "Termine", lesen: LL, schreiben: LL,
+    felder: [
+      { k: "projekt_id", t: "Austausch / Projekt", typ: "ref", ref: "projekte", pflicht: true },
+      { k: "vorname", t: "Vorname", typ: "text", pflicht: true },
+      { k: "nachname", t: "Nachname", typ: "text" },
+      { k: "alter", t: "Alter", typ: "zahl" },
+      { k: "herkunft", t: "Kommt aus (Orchester / Ort)", typ: "text" },
+      { k: "instrument", t: "Instrument", typ: "text" },
+      { k: "gastgeber_id", t: "wohnt bei (Gastfamilie)", typ: "ref", ref: "gastgeber" },
+      { k: "ankunft", t: "Ankunft", typ: "zeit" },
+      { k: "abreise", t: "Abreise", typ: "zeit" },
+      { k: "essen", t: "Essen (vegetarisch, halal …)", typ: "text" },
+      { k: "allergien", t: "Allergien / Gesundheit (für die Gastfamilie)", typ: "lang" },
+      { k: "notfall_tel", t: "Notfall: Begleitung der Gäste (Telefon)", typ: "tel" },
+      { k: "notiz", t: "Interne Notiz", typ: "lang", vermerk: true },
+    ],
+    liste: ["projekt_id", "vorname", "nachname", "alter", "herkunft", "gastgeber_id"],
+    anzeige: (z) => `${z.vorname} ${z.nachname || ""}`.trim(),
+  },
+  // 📨 Auftrittsanfragen (0.27.0): das Orchester wird an Gemeinden, Kirchen, Veranstalter „ausgeliehen“ – Zusage legt den Termin an
+  anfragen: {
+    titel: "Auftrittsanfragen", sym: "📨", gruppe: "Termine", lesen: [...L, "vorstand", "lehrkraft"], schreiben: [...L, "vorstand", "lehrkraft"],
+    felder: [
+      { k: "anlass", t: "Anlass", typ: "text", pflicht: true },
+      { k: "veranstalter", t: "Veranstalter", typ: "text", pflicht: true },
+      { k: "kontakt_name", t: "Ansprechpartner/in", typ: "text" },
+      { k: "kontakt_tel", t: "Telefon", typ: "tel" },
+      { k: "kontakt_email", t: "E-Mail", typ: "email" },
+      { k: "datum", t: "Wann", typ: "zeit" },
+      { k: "dauer_min", t: "Dauer (Min.)", typ: "zahl" },
+      { k: "ort", t: "Ort", typ: "text" },
+      { k: "besetzung", t: "Gewünschte Besetzung", typ: "wahl", werte: ANFRAGE_BESETZUNG },
+      { k: "gruppen", t: "Es spielen", typ: "refs", ref: "gruppen" },
+      { k: "honorar", t: "Honorar / Spende (€)", typ: "geld" },
+      { k: "status", t: "Status", typ: "wahl", werte: ANFRAGE_STATUS },
+      { k: "termin_id", t: "Termin", typ: "ref", ref: "termine" },
+      { k: "eingegangen_am", t: "Eingegangen am", typ: "datum" },
+      { k: "notiz", t: "Notiz", typ: "lang" },
+    ],
+    liste: ["datum", "anlass", "veranstalter", "besetzung", "status"],
+    anzeige: (z) => z.anlass,
+  },
+  // 📜 Chronik & Konzertarchiv (0.27.0): Geschichte seit 1969 – sieht jedes Mitglied
+  chronik: {
+    titel: "Chronik", sym: "📜", gruppe: "Orchester", lesen: ALLE_VERWALTER, schreiben: [...LL, "vorstand"],
+    felder: [
+      { k: "jahr", t: "Jahr", typ: "zahl", pflicht: true },
+      { k: "datum", t: "Datum (wenn bekannt)", typ: "datum" },
+      { k: "titel", t: "Was", typ: "text", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: CHRONIK_ARTEN },
+      { k: "ort", t: "Ort", typ: "text" },
+      { k: "beschreibung", t: "Beschreibung", typ: "lang" },
+      { k: "programm", t: "Programm (ein Werk je Zeile: Komponist – Werk)", typ: "lang" },
+      { k: "projekt_id", t: "Projekt in der App", typ: "ref", ref: "projekte" },
+      { k: "aufnahme_id", t: "Aufnahme", typ: "ref", ref: "aufnahmen" },
+      { k: "partner_id", t: "Partner", typ: "ref", ref: "partner" },
+      { k: "quelle", t: "Quelle (z. B. Schul-Website)", typ: "text" },
+    ],
+    liste: ["jahr", "titel", "art", "ort"],
+    anzeige: (z) => `${z.jahr}: ${z.titel}`,
+  },
+  // 📂 Dokumente (0.27.0): Satzung, Flyer, Beitrittserklärung, Vorlagen – als Datei (geschützt) oder Link
+  dokumente: {
+    titel: "Dokumente", sym: "📂", gruppe: "Förderverein", lesen: ALLE_VERWALTER, schreiben: [...LL, "vorstand"],
+    felder: [
+      { k: "titel", t: "Titel", typ: "text", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: DOKUMENT_ARTEN },
+      { k: "beschreibung", t: "Kurzbeschreibung", typ: "text" },
+      { k: "datei", t: "Datei (hochgeladen)", typ: "text" },
+      { k: "url", t: "Link (z. B. PDF auf der Schul-Website)", typ: "text" },
+      { k: "fassung", t: "Fassung / Stand", typ: "text" },
+      { k: "sichtbar", t: "Sichtbar für", typ: "wahl", werte: DOKUMENT_SICHT },
+      { k: "sort", t: "Reihenfolge", typ: "zahl" },
+    ],
+    liste: ["titel", "art", "fassung", "sichtbar"],
+    anzeige: (z) => z.titel,
+  },
+  // 🤝 Partner (0.27.0): Musikschule, Partnerorchester, Austausch-Orchester, Kirchen, Presse
+  partner: {
+    titel: "Partner & Kontakte", sym: "🤝", gruppe: "Orchester", lesen: [...LL, "vorstand"], schreiben: [...LL, "vorstand"],
+    felder: [
+      { k: "name", t: "Name", typ: "text", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: PARTNER_ARTEN },
+      { k: "ort", t: "Ort", typ: "text" },
+      { k: "land", t: "Land", typ: "text" },
+      { k: "ansprechpartner", t: "Ansprechpartner/in", typ: "text" },
+      { k: "email", t: "E-Mail", typ: "email" },
+      { k: "telefon", t: "Telefon", typ: "tel" },
+      { k: "website", t: "Internetseite", typ: "text" },
+      { k: "seit", t: "Partner seit (Jahr)", typ: "zahl" },
+      { k: "letzte_begegnung", t: "Letzte Begegnung", typ: "datum" },
+      { k: "naechste_planung", t: "Nächste Planung", typ: "text" },
+      { k: "notiz", t: "Notiz", typ: "lang" },
+    ],
+    liste: ["name", "art", "ort", "seit", "letzte_begegnung"],
+    anzeige: (z) => z.name,
+  },
   // 🎭 Übe-Bühne (0.26.0): Ergebnisse – nur Zahlen (Minuten, Sterne, Tempo). Kinder schreiben eigene, Eltern sehen die der Kinder,
   // Leitung/Lehrkräfte alle und geben Rückmeldung. Aufnahme nur mit Einwilligung (Zweck „uebeaufnahmen“), Löschung nach 30 Tagen.
   uebe_ergebnisse: {
@@ -540,6 +661,10 @@ export const TABELLEN = {
       { k: "plaetze", t: "Plätze (leer = unbegrenzt)", typ: "zahl" },
       { k: "transport_inventar", t: "Transport: Instrumente", typ: "refs", ref: "inventar", vermerk: true },
       { k: "transport_ausstattung", t: "Transport: Ausstattung (Notenständer, Technik …)", typ: "refs", ref: "ausstattung", vermerk: true },
+      // 🏠 Austausch (0.27.0): wir bekommen Besuch – Gastfamilien gesucht
+      { k: "gastfamilien", t: "🏠 Gastfamilien gesucht (Besuch bei uns)", typ: "ja" },
+      { k: "gaeste_anzahl", t: "Erwartete Gäste", typ: "zahl" },
+      { k: "partner_id", t: "Partner (Austausch-Orchester)", typ: "ref", ref: "partner" },
     ],
     liste: ["titel", "art", "von", "bis", "ort"],
     anzeige: (z) => z.titel,
@@ -557,6 +682,10 @@ export const TABELLEN = {
       { k: "solisten", t: "Solisten", typ: "text" },
       { k: "dauer_min", t: "Dauer (Min., leer = vom Werk)", typ: "zahl" },
       { k: "notiz", t: "Notiz (Umbau, Stimmen …)", typ: "text" },
+      // 🎓 Dirigier- und Kompositionsversuche (0.27.0, laut Internetseite Ziel des Bachkreises)
+      { k: "dirigent_id", t: "🎓 Schüler/in dirigiert", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler" || p.typ === "ehemalig" },
+      { k: "eigene_komposition", t: "✍️ Eigene Komposition (Schüler/in)", typ: "ja" },
+      { k: "urauffuehrung", t: "🆕 Uraufführung", typ: "ja" },
     ],
     liste: ["projekt_id", "nr", "art", "werk_id", "titel", "gruppe_id", "dauer_min"],
   },

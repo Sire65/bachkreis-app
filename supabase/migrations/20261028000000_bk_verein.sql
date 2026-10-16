@@ -254,6 +254,9 @@ create table if not exists bk_projekte (
   plaetze integer,
   transport_inventar text[],
   transport_ausstattung text[],
+  gastfamilien boolean,
+  gaeste_anzahl integer,
+  partner_id text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -283,6 +286,10 @@ alter table bk_projekte add column if not exists kosten numeric(10,2);
 alter table bk_projekte add column if not exists plaetze integer;
 alter table bk_projekte add column if not exists transport_inventar text[];
 alter table bk_projekte add column if not exists transport_ausstattung text[];
+alter table bk_projekte add column if not exists gastfamilien boolean;
+alter table bk_projekte add column if not exists gaeste_anzahl integer;
+alter table bk_projekte add column if not exists partner_id text;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_projekte_partner_id_fk') then alter table bk_projekte add constraint bk_projekte_partner_id_fk foreign key (partner_id) references bk_partner(id) on delete restrict; end if; end $$;
 
 -- Konzertprogramm
 create table if not exists bk_programm (
@@ -296,6 +303,9 @@ create table if not exists bk_programm (
   solisten text,
   dauer_min integer,
   notiz text,
+  dirigent_id text,
+  eigene_komposition boolean,
+  urauffuehrung boolean,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -318,9 +328,13 @@ alter table bk_programm add column if not exists gruppe_id text;
 alter table bk_programm add column if not exists solisten text;
 alter table bk_programm add column if not exists dauer_min integer;
 alter table bk_programm add column if not exists notiz text;
+alter table bk_programm add column if not exists dirigent_id text;
+alter table bk_programm add column if not exists eigene_komposition boolean;
+alter table bk_programm add column if not exists urauffuehrung boolean;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_projekt_id_fk') then alter table bk_programm add constraint bk_programm_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_werk_id_fk') then alter table bk_programm add constraint bk_programm_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_gruppe_id_fk') then alter table bk_programm add constraint bk_programm_gruppe_id_fk foreign key (gruppe_id) references bk_gruppen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_programm_dirigent_id_fk') then alter table bk_programm add constraint bk_programm_dirigent_id_fk foreign key (dirigent_id) references bk_personen(id) on delete restrict; end if; end $$;
 
 -- Anmeldungen (Reisen & Freizeiten)
 create table if not exists bk_reise_anmeldungen (

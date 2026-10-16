@@ -715,7 +715,7 @@ ANSICHTEN.konfig = () => {
   const abschnitt = (titel, inhalt) => `<section class="vw-bereich"><h3>${titel}</h3>${inhalt}</section>`;
   return `<div class="vw-kopf"><h2>⚙️ Einstellungen</h2>${darfK ? `<button class="knopf haupt" data-a="konfSpeichern">💾 Speichern</button>` : '<span class="hinweis">Nur die Leitung kann die Einstellungen ändern.</span>'}</div>
     <div class="vw-raster3" id="konfForm">
-      ${abschnitt("🏫 Allgemein", f("name", "Name") + f("untertitel", "Untertitel") + f("webseite", "Internetseite (Logo oben links öffnet sie)", "url") + f("schule_telefon", "Telefon Schule (SOS)"))}
+      ${abschnitt("🏫 Allgemein", f("name", "Name") + f("untertitel", "Untertitel") + f("webseite", "Internetseite (Logo oben links öffnet sie)", "url") + f("instagram", "📸 Instagram (Link)", "url") + f("schule_telefon", "Telefon Schule (SOS)"))}
       ${abschnitt("💶 Geld & Leihinstrumente", f("freigabe_grenze_eur", "Freigabegrenze Leitung (€) – darüber der Förderverein", "number") + f("leih_kaution", "🤝 Standard-Kaution (€)", "number") + f("leih_gebuehr", "🤝 Standard-Leihgebühr je Jahr (€)", "number"))}
       ${abschnitt("🎓 Schuljahr & Datenschutz", f("abschluss_jahrgang", "Abschlussjahrgang (danach → Ehemalige)", "number") + f("loeschfrist_monate", "🧹 Löschfrist nach Austritt (Monate, leer = 24)", "number"))}
       ${abschnitt("📅 Termine & Nachrichten", f("nachfass_tage", "Nachfassen … Tage vor Antwortfrist", "number") + f("express_max_tag", "🏎️ Express je Person und Tag (leer = 5)", "number") + f("bearbeiten_minuten", "✏️ Bearbeiten bis … Min. nach dem Senden (leer = 15)", "number"))}

@@ -184,3 +184,4 @@ button.tag-trenner { border: none; background: none; font: inherit; cursor: poin
 .on-gross.klopft svg { animation: onKlopf 1s ease-in-out infinite; } @keyframes onKlopf { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-4deg); } }
 .on-uhr { text-align: center; font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .on-punkt, .on-gross.klopft svg { animation: none; } }
+:root.dunkel .chat-rechts .hinweis.neu { color: #7bd88f; }

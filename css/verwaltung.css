@@ -132,3 +132,4 @@ table.vw-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .vw-link:hover, .vw-kurzliste li.an .vw-link { background: var(--karte2); }
 .vw-kurzliste li.an .vw-link { box-shadow: inset 4px 0 0 var(--marke); }
 .vw-tabelle input[data-ue-rm] { width: 100%; min-width: 180px; border: 2px solid var(--linie); border-radius: 10px; padding: 5px 8px; background: var(--karte); color: var(--text); }
+.vw-austausch { display: grid; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--linie); }

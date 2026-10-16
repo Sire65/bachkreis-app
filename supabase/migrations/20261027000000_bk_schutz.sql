@@ -70,6 +70,9 @@ create table if not exists bk_projekte (
   plaetze integer,
   transport_inventar text[],
   transport_ausstattung text[],
+  gastfamilien boolean,
+  gaeste_anzahl integer,
+  partner_id text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -99,6 +102,10 @@ alter table bk_projekte add column if not exists kosten numeric(10,2);
 alter table bk_projekte add column if not exists plaetze integer;
 alter table bk_projekte add column if not exists transport_inventar text[];
 alter table bk_projekte add column if not exists transport_ausstattung text[];
+alter table bk_projekte add column if not exists gastfamilien boolean;
+alter table bk_projekte add column if not exists gaeste_anzahl integer;
+alter table bk_projekte add column if not exists partner_id text;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_projekte_partner_id_fk') then alter table bk_projekte add constraint bk_projekte_partner_id_fk foreign key (partner_id) references bk_partner(id) on delete restrict; end if; end $$;
 
 -- Genehmigungs-Vorlagen
 create table if not exists bk_genehmigung_vorlagen (

@@ -11,7 +11,7 @@ import { UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN,
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
-const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume"]);
+const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
 const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen"]);
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
@@ -52,6 +52,8 @@ export function kontext(person, alle) {
   for (const g of alle.genehmigungen || []) if (!g.geloescht_am && uaV.has(g.vorlage_id) && meine.has(g.kind_id) && g.status !== "ausstehend" && String(g.beantwortet_am || "") >= String(uaLetzte.get(g.kind_id)?.beantwortet_am || "")) uaLetzte.set(g.kind_id, g);
   ctx.uebeAufnahmeOk = new Set([...uaLetzte].filter(([, g]) => g.status === "erteilt").map(([k]) => k));
   ctx.uaMap = new Map((alle.uebeaufgaben || []).map((u) => [u.id, u]));
+  // 🏠 Austausch: eigene Gastfamilien-Angebote (für die Gäste-Zuordnung)
+  ctx.meineGastgeber = new Set((alle.gastgeber || []).filter((g) => !g.geloescht_am && g.person_id === ich && g.status !== "abgesagt").map((g) => g.id));
   ctx.prMap = new Map((alle.projekte || []).map((p) => [p.id, p]));
   ctx.reiseBelegt = new Map();
   for (const a of alle.reise_anmeldungen || []) if (!a.geloescht_am && a.status === "angemeldet") ctx.reiseBelegt.set(a.projekt_id, (ctx.reiseBelegt.get(a.projekt_id) || 0) + 1);
@@ -94,6 +96,9 @@ function zeileSichtbar(tab, z, ctx) {
     case "mitfahrten": return ctx.termine.has(z.termin_id); // 🚗 wer zum Termin eingeladen ist
     case "uebeaufgaben": return z.person_id ? ctx.meine.has(z.person_id) : (!z.register_id || ctx.register.has(z.register_id)) && (!z.gruppe_id || ctx.gruppen.has(z.gruppe_id)) && !!(z.register_id || z.gruppe_id);
     case "uebe_ergebnisse": return ctx.meine.has(z.person_id); // ⭐ eigene bzw. die der Kinder
+    case "gastgeber": return z.person_id === ctx.ich; // 🏠 eigenes Angebot
+    case "gaeste": return ctx.meineGastgeber.has(z.gastgeber_id); // 🧳 nur die eigenen Gäste
+    case "dokumente": return z.sichtbar === "alle" || !z.sichtbar || (z.sichtbar === "eltern" && ctx.person?.typ === "eltern") || (z.sichtbar === "schueler" && ctx.person?.typ === "schueler") || (z.sichtbar === "verwaltung" && ctx.istVerwalter);
     case "gesundheit": return ctx.meine.has(z.person_id) || (ctx.begleitKinder?.has(z.person_id) && !(z.loeschen_am && z.loeschen_am < new Date().toISOString().slice(0, 10)));
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
@@ -362,6 +367,18 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       const vorher = new Set(alt.erledigt || []), nachher = new Set(Array.isArray(neu.erledigt) ? neu.erledigt : []);
       const erledigt = [...vorher].filter((id) => !ctx.meine.has(id) || nachher.has(id)).concat([...nachher].filter((id) => ctx.meine.has(id) && !vorher.has(id)));
       return { ok: true, zeile: { ...alt, erledigt } };
+    }
+    case "gastgeber": {
+      // 🏠 Eltern bieten Plätze für einen Austausch an (nur im eigenen Namen, nur wo Gastfamilien gesucht werden);
+      // „bestätigt“ setzt die Leitung – die Familie kann nur selbst absagen
+      if (ctx.person?.typ !== "eltern" && !ctx.istVerwalter) return { ok: false, grund: "NUR_ERWACHSENE" };
+      if (neu.person_id !== ctx.ich || (alt && alt.person_id !== ctx.ich)) return { ok: false, grund: "NUR_EIGENES_ANGEBOT" };
+      const pr = ctx.prMap.get(neu.projekt_id);
+      if (!pr || pr.geloescht_am || !pr.gastfamilien || (alt && alt.projekt_id !== neu.projekt_id)) return { ok: false, grund: "KEIN_AUSTAUSCH" };
+      const pl = Number(neu.plaetze);
+      if (!Number.isInteger(pl) || pl < 1 || pl > 6) return { ok: false, grund: "PLAETZE_UNGUELTIG" };
+      const status = neu.status === "abgesagt" ? "abgesagt" : alt?.status === "bestaetigt" ? "bestaetigt" : "angeboten";
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "projekt_id", "person_id", "geloescht_am"]), plaetze: pl, schlafplatz: String(neu.schlafplatz || "").slice(0, 200), hinweise: String(neu.hinweise || "").slice(0, 1000), status, notiz: alt?.notiz || null } };
     }
     case "uebe_ergebnisse": {
       // ⭐ Übe-Bühne: nur Zahlen für sich bzw. die eigenen Kinder; Rückmeldung schreibt nur die Lehrkraft;

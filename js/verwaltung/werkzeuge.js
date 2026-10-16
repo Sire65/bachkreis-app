@@ -5,9 +5,9 @@
 // main.js übergibt seine Bausteine (registrieren); dieses Modul greift nicht selbst auf main.js zu.
 import { liste, hole, speichere, speichereViele, loesche, konfig } from "../kern/daten.js";
 import { esc, AKTIONEN, toast, frage, herunterladen, datumKurz, formWerte, vonLokal, zuLokal, $ } from "../kern/ui.js";
-import { TEILNAHME, GENEHMIGUNG_ZWECKE, FOTO_ZWECKE, UEBE_ARTEN } from "../kern/schema.js";
+import { TEILNAHME, GENEHMIGUNG_ZWECKE, FOTO_ZWECKE, UEBE_ARTEN, ANFRAGE_STATUS, ANFRAGE_BESETZUNG, GASTGEBER_STATUS } from "../kern/schema.js";
 import { tagIso, eingeladene, antwortVon, antwortZaehler, besetzung, gesamtAmpel, genehmigungsUebersicht, genehmigungStatus, verteilerListe, verteilerAufloesen,
-  elternVon, gruppenMitglieder, instrumenteVon, fehlzeiten, fotoErlaubnis, csvAus, uebeStand } from "../kern/logik.js";
+  elternVon, gruppenMitglieder, instrumenteVon, fehlzeiten, fotoErlaubnis, csvAus, uebeStand, anfrageZuTermin, auftrittsArt, repertoire } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 
 let A; // { ANSICHTEN, V, zeichne, darf, db, pn, sonder }
@@ -31,6 +31,7 @@ export function werkzeugeRegistrieren(api) {
     ["projekteplanen", "🎭", "Projekte & Konzerte", "Termine", leitung], ["kasse", "💶", "Kasse & Beiträge", "Förderverein", kasse], ["schutzlisten", "🛡️", "Notfall- & Foto-Listen", "Genehmigungen", leitung],
     ["mitfahrboerse", "🚗", "Mitfahrbörse", "Termine", planer], ["bescheinigung", "📜", "Teilnahmebescheinigungen", "Orchester", leitung], ["ferien", "🏖️", "Ferien & freie Tage", "Termine", planer],
     ["uebebuehne", "🎻", "Übe-Bühne: Aufgaben & Fortschritt", "Orchester", leitung],
+    ["vereinsleben", "🏫", "Anfragen, Austausch & Repertoire", "Termine", () => leitung() || kasse()],
   ];
   for (const [k, sym, t, b, recht] of W) A.sonder(k, sym, t, b, recht);
 }
@@ -349,6 +350,34 @@ AKTIONEN.ueCsv = () => {
   csv(`uebebuehne-${a.titel.replace(/[^\wäöüÄÖÜß-]+/g, "_")}`, uebeStand(db(), a).map((s) => ({ Kind: A.pn(s.pid), Ziel: s.ziel ? "ja" : "nein", Uebungen: s.anzahl, Sterne: s.sterne, Tempo: s.tempo || "", Rueckmeldung: s.rueckmeldung?.rueckmeldung || "" })));
 };
 
+// ---------- 🏫 Vereinsleben (0.27.0): Auftrittsanfragen · Austausch & Gastfamilien · Repertoire ----------
+function vereinslebenAnsicht() {
+  const anfr = liste("anfragen", (a) => ["neu", "pruefung"].includes(a.status || "neu")).sort((a, b) => String(a.datum || "").localeCompare(String(b.datum || "")));
+  const anfrHtml = `<ul class="liste vw-kurzliste">${anfr.map((a) => `<li><div class="fl"><b>${esc(a.anlass)}</b><small>${esc([a.veranstalter, a.datum ? datumKurz(a.datum) : "Datum offen", ANFRAGE_BESETZUNG[a.besetzung], ANFRAGE_STATUS[a.status || "neu"]].filter(Boolean).join(" · "))}</small></div>
+      <button class="knopf klein haupt" data-a="vlZusagen" data-x="${a.id}" title="Zusagen und Termin anlegen" aria-label="Zusagen und Termin anlegen">✅</button></li>`).join("") || '<li class="hinweis">Keine offenen Anfragen.</li>'}</ul>
+    <div class="vw-knoepfe"><button class="knopf" data-a="vwTabelle" data-x="anfragen">📨 Alle Anfragen</button></div>`;
+  const projekte = liste("projekte", (p) => p.gastfamilien && (!p.bis || p.bis >= tagIso(new Date())));
+  const austHtml = projekte.map((pr) => {
+    const gg = liste("gastgeber", (g) => g.projekt_id === pr.id && g.status !== "abgesagt"), gaeste = liste("gaeste", (g) => g.projekt_id === pr.id), plaetze = gg.reduce((x, g) => x + (Number(g.plaetze) || 0), 0);
+    return `<div class="vw-austausch"><b>${esc(pr.titel)}</b><small class="hinweis">${pr.von ? datumKurz(pr.von) : ""} · ${gaeste.length} Gäste · ${plaetze} Plätze angeboten · ${gaeste.filter((g) => !g.gastgeber_id).length} ohne Familie</small>
+      <ul class="liste vw-kurzliste">${gg.map((g) => `<li><div class="fl"><b>${esc(A.pn(g.person_id))}</b><small>${gaeste.filter((x) => x.gastgeber_id === g.id).length}/${g.plaetze} · ${esc(GASTGEBER_STATUS[g.status] || "")}</small></div></li>`).join("") || '<li class="hinweis">Noch keine Gastfamilien.</li>'}</ul></div>`;
+  }).join("") || '<p class="hinweis">Kein Austausch mit Gastfamilien geplant. Beim Projekt „🏠 Gastfamilien gesucht“ anhaken.</p>';
+  const rep = repertoire(db());
+  const repHtml = `<p><b>${rep.length}</b> Werke in Programmen und Chronik.</p><ul class="liste vw-kurzliste">${rep.slice().sort((a, b) => b.auftritte.length - a.auftritte.length).slice(0, 8).map((e) => `<li><div class="fl"><b>${esc(e.anzeige)}</b><small>${e.auftritte.length}× · zuletzt ${e.auftritte[0]?.jahr || "?"}</small></div></li>`).join("")}</ul>
+    <div class="vw-knoepfe"><button class="knopf" data-a="vlRepPcCsv">⬇️ Repertoire (CSV)</button><button class="knopf" data-a="vwTabelle" data-x="chronik">📜 Chronik</button></div>`;
+  return kopf("🏫 Anfragen, Austausch & Repertoire", "", "Abgleich mit der Internetseite: Orchester wird für Veranstaltungen angefragt, Austausche mit Gastfamilien, Konzertgeschichte seit 1969.")
+    + `<div class="vw-raster3">${bereich("📨 Offene Auftrittsanfragen", anfrHtml)}${bereich("🏠 Austausch & Gastfamilien", austHtml + '<div class="vw-knoepfe"><button class="knopf" data-a="vwTabelle" data-x="gastgeber">🏠 Gastfamilien</button><button class="knopf" data-a="vwTabelle" data-x="gaeste">🧳 Gäste</button></div>')}${bereich("🎼 Repertoire", repHtml)}</div>`;
+}
+AKTIONEN.vlZusagen = async (id) => {
+  const a = hole("anfragen", id);
+  if (!a.datum || !(a.gruppen || []).length) return toast("Bitte erst Datum und „Es spielen“ in der Anfrage eintragen");
+  if (!(await frage(`„${a.anlass}“ zusagen und Termin anlegen?`))) return;
+  const t = await speichere("termine", anfrageZuTermin(a, auftrittsArt(db())?.id));
+  await speichere("anfragen", { ...a, status: "zugesagt", termin_id: t.id });
+  toast("✅ Zugesagt – Termin angelegt"); A.zeichne();
+};
+AKTIONEN.vlRepPcCsv = () => csv("repertoire", repertoire(db()).map((e) => ({ Werk: e.anzeige, Auffuehrungen: e.auftritte.length, Wann: e.auftritte.map((x) => `${x.jahr || "?"} ${x.anlass}`).join("; ") })));
+
 // ---------- Anmelden der Ansichten ----------
 const db = () => A.db;
-export const WERKZEUG_ANSICHTEN = { termineplanen: terminAnsicht, genehmigungen: genehmigungAnsicht, rundschreiben: rundschreibenAnsicht, projekteplanen: projektAnsicht, kasse: kasseAnsicht, schutzlisten: schutzAnsicht, mitfahrboerse: mitfahrtAnsicht, bescheinigung: bescheinigungAnsicht, ferien: ferienAnsicht, uebebuehne: uebeAnsicht };
+export const WERKZEUG_ANSICHTEN = { termineplanen: terminAnsicht, genehmigungen: genehmigungAnsicht, rundschreiben: rundschreibenAnsicht, projekteplanen: projektAnsicht, kasse: kasseAnsicht, schutzlisten: schutzAnsicht, mitfahrboerse: mitfahrtAnsicht, bescheinigung: bescheinigungAnsicht, ferien: ferienAnsicht, uebebuehne: uebeAnsicht, vereinsleben: vereinslebenAnsicht };

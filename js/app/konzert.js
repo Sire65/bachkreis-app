@@ -24,7 +24,7 @@ export function programmHtml(p) {
     const w = x.werk_id ? hole("werke", x.werk_id) : null, d = dauerVon(x), ab = uhr ? `${String(uhr.getHours()).padStart(2, "0")}:${String(uhr.getMinutes()).padStart(2, "0")}` : "";
     if (uhr) uhr = new Date(uhr.getTime() + d * 60000);
     return `<li class="pg-${x.art}"><span class="pg-uhr">${ab}</span><span class="pg-sym">${SYM[x.art] || "•"}</span><div class="fl"><div class="zeile-titel">${w ? `${esc(w.komponist)}: ${esc(w.titel)}` : esc(x.titel || PROGRAMM_ARTEN[x.art] || "")}</div>
-      <div class="zeile-unter">${x.gruppe_id ? esc(hole("gruppen", x.gruppe_id)?.name || "") : ""}${x.solisten ? ` · Solo: ${esc(x.solisten)}` : ""}${d ? ` · ${d} Min.` : ""}${x.notiz && darfProgramm() ? ` · ${esc(x.notiz)}` : ""}</div></div>
+      <div class="zeile-unter">${x.gruppe_id ? esc(hole("gruppen", x.gruppe_id)?.name || "") : ""}${x.solisten ? ` · Solo: ${esc(x.solisten)}` : ""}${x.dirigent_id ? ` · 🎓 dirigiert: ${esc(name(x.dirigent_id))}` : ""}${x.eigene_komposition ? " · ✍️ eigene Komposition" : ""}${x.urauffuehrung ? " · 🆕 Uraufführung" : ""}${d ? ` · ${d} Min.` : ""}${x.notiz && darfProgramm() ? ` · ${esc(x.notiz)}` : ""}</div></div>
       ${darfProgramm() ? `<span class="pg-knoepfe"><button class="knopf klein" data-a="pgSchieben" data-x="${x.id}|-1" ${i === 0 ? "disabled" : ""} aria-label="nach oben">▲</button><button class="knopf klein" data-a="pgSchieben" data-x="${x.id}|1" ${i === l.length - 1 ? "disabled" : ""} aria-label="nach unten">▼</button><button class="knopf klein" data-a="pgLoeschen" data-x="${x.id}" aria-label="entfernen">✕</button></span>` : ""}</li>`;
   };
   const leer = !l.length && alt.length ? `<ol>${alt.map((w) => `<li><b>${esc(w.komponist)}</b>: ${esc(w.titel)}</li>`).join("")}</ol><p class="hinweis">Reihenfolge noch nicht festgelegt.</p>` : "";
@@ -39,13 +39,15 @@ AKTIONEN.pgNeu = (pid) => {
     <div class="feld"><label>oder Titel</label><input name="titel" placeholder="z. B. Pause mit Kuchenbuffet"></div>
     <div class="feld"><label>Es spielt</label><select name="gruppe_id"><option value="">–</option>${liste("gruppen").map((g) => `<option value="${g.id}">${esc(g.name)}</option>`).join("")}</select></div>
     <div class="gs-zwei"><div class="feld"><label>Solisten</label><input name="solisten"></div><div class="feld"><label>Dauer (Min.)</label><input type="number" min="0" name="dauer_min"></div></div>
+    <div class="feld"><label>🎓 Schüler/in dirigiert</label><select name="dirigent_id"><option value="">–</option>${liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten").sort((a, b) => name(a).localeCompare(name(b))).map((p) => `<option value="${p.id}">${esc(name(p))}</option>`).join("")}</select></div>
+    <label class="schalter"><span>✍️ Eigene Komposition</span><input type="checkbox" name="eigene_komposition"></label><label class="schalter"><span>🆕 Uraufführung</span><input type="checkbox" name="urauffuehrung"></label>
     <div class="feld"><label>Notiz (intern)</label><input name="notiz" placeholder="Umbau, Stimmen …"></div>
     <button class="knopf haupt breit" data-a="pgSpeichern" data-x="${pid}">💾 Hinzufügen</button></div>`);
 };
 AKTIONEN.pgSpeichern = async (pid) => {
   const f = formWerte(document.getElementById("pgForm")), l = programmVon(pid);
   if (f.art !== "pause" && !f.werk_id && !f.titel) return toast("Bitte ein Werk oder einen Titel angeben");
-  await speichere("programm", { projekt_id: pid, nr: (l.at(-1)?.nr || 0) + 1, art: f.art, werk_id: f.werk_id || null, titel: f.titel || (f.art === "pause" ? "Pause" : ""), gruppe_id: f.gruppe_id || null, solisten: f.solisten, dauer_min: Number(f.dauer_min) || null, notiz: f.notiz });
+  await speichere("programm", { projekt_id: pid, nr: (l.at(-1)?.nr || 0) + 1, art: f.art, werk_id: f.werk_id || null, titel: f.titel || (f.art === "pause" ? "Pause" : ""), gruppe_id: f.gruppe_id || null, solisten: f.solisten, dirigent_id: f.dirigent_id || null, eigene_komposition: !!f.eigene_komposition, urauffuehrung: !!f.urauffuehrung, dauer_min: Number(f.dauer_min) || null, notiz: f.notiz });
   blattZu(); zeichne();
 };
 AKTIONEN.pgUebernehmen = async (pid) => {

@@ -522,3 +522,23 @@ export function uebeStand(db, a) {
       ziel: (a.erledigt || []).includes(pid) || geuebt.some((e) => uebeZielErreicht(a, e)), letzte: l[0] || null, aufnahme: l.find((e) => e.aufnahme) || null, rueckmeldung: l.find((e) => e.rueckmeldung) || null };
   });
 }
+
+// ---------- 📨 Auftrittsanfrage → Termin (0.27.0, gemeinsam für App und PC) ----------
+export const anfrageZuTermin = (a, artId) => ({ titel: `🎺 Auftritt: ${a.anlass}`, art_id: artId || null, beginn: a.datum, ende: new Date(new Date(a.datum).getTime() + (Number(a.dauer_min) || 60) * 60000).toISOString(),
+  ort: a.ort || null, gruppen: a.gruppen || [], fuer_alle: false, teilnahme: "pflicht", beschreibung: `Für: ${a.veranstalter}${a.kontakt_name ? ` (${a.kontakt_name})` : ""}` });
+export const auftrittsArt = (db) => db.liste("terminarten").find((t) => /auftritt|konzert/i.test(t.name)) || db.liste("terminarten")[0];
+// 🎼 „Was haben wir schon gespielt?“ – aus den Konzertprogrammen und den Programmen der Chronik (0.27.0)
+export function repertoire(db) {
+  const m = new Map(), dazu = (schluessel, anzeige, jahr, anlass) => {
+    const e = m.get(schluessel) || { anzeige, auftritte: [] };
+    if (!e.auftritte.some((a) => a.jahr === jahr && a.anlass === anlass)) e.auftritte.push({ jahr, anlass });
+    m.set(schluessel, e);
+  };
+  for (const x of db.liste("programm", (p) => p.werk_id || (p.titel && p.art !== "pause" && p.art !== "ansage"))) {
+    const w = x.werk_id ? db.hole("werke", x.werk_id) : null, pr = db.hole("projekte", x.projekt_id);
+    const anzeige = w ? `${w.komponist} – ${w.titel}` : x.titel, jahr = Number(String(pr?.bis || pr?.von || "").slice(0, 4)) || null;
+    dazu(anzeige.toLowerCase(), anzeige, jahr, pr?.titel || "Konzert");
+  }
+  for (const c of db.liste("chronik", (x) => x.programm)) for (const z of String(c.programm).split("\n").map((s) => s.trim()).filter(Boolean)) dazu(z.toLowerCase(), z, c.jahr, c.titel);
+  return [...m.values()].map((e) => ({ ...e, auftritte: e.auftritte.sort((a, b) => (b.jahr || 0) - (a.jahr || 0)) })).sort((a, b) => a.anzeige.localeCompare(b.anzeige, "de"));
+}

@@ -73,3 +73,4 @@
   .mus.aktiv .koerper, .mus.aktiv .kopf, .mus.aktiv .bogen, .mus.aktiv .bogen-quer, .mus.aktiv .blas, .mus.aktiv .zug, .mus.aktiv .schlegel, .notenzeichen, .dreh-weg, .dreh-her { animation: none; }
   .vorhang { transition: none; }
 }
+:root.dunkel .bw-titel { color: var(--marke2); }

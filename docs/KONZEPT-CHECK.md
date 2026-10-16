@@ -1,4 +1,4 @@
-# Konzept-Check Bachkreis (Stand 0.25.0, 16.10.2026)
+# Konzept-Check Bachkreis (Stand 0.27.0, 16.10.2026)
 
 Gesamtprüfung: Was braucht ein Schul-/Jugendorchester mit Förderverein, was hat die App schon, was fehlt noch?
 Rechte werden auf dem Server durchgesetzt (`supabase/functions/_shared/regeln.js`); was die Oberfläche nur ausblendet, gilt hier als **nicht** geschützt.
@@ -40,6 +40,10 @@ Die Abläufe Termine → Zusage/Absage → Ampel → Erinnerung, Nachrichten/Pin
 - ✅ **db_monitor** (KC-System-Check): RLS auf jeder Tabelle, keine ungedeckten Rechte für anon/authenticated, keine RLS-umgehenden Views, Definer-Funktionen mit festem search_path – „healthy“
 - ✅ **ESLint** (Regeln des KICC): 0 Fehler; 67 Hinweise auf ungenutzte Importe/Variablen bleiben als Aufräum-Liste
 - ➖ Testlabor-Internettumgebung prüft die KC-Kommunikation (nicht den Bachkreis) – nicht anwendbar
+
+## In 0.26.0 / 0.27.0
+- ✅ **Übe-Bühne** (Mitspielen, Griffe, Rhythmus, Stimmgerät, Ohr-Spiele, Übe-Aufgaben mit Fortschritt) – siehe KONZEPT-UEBEBUEHNE.md Teil B
+- ✅ **Abgleich mit der Internetseite**: Chronik & Repertoire, Dokumente, Austausch & Gastfamilien, Auftrittsanfragen, Partner, Dirigier-/Kompositionsversuche – Teil A
 
 > Damit ist die Liste unten abgearbeitet. Bewusst nicht gebaut: Lastschrift/SEPA (Konzept: kein Zahlungsverkehr in der App) und eine Ausleihe von Ausstattung über die App (läuft über die PC-Verwaltung).
 

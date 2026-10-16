@@ -5,7 +5,7 @@
 import { chromium } from "playwright-core";
 import AxeBuilder from "@axe-core/playwright";
 const BASIS = process.env.BASIS || "http://localhost:8080";
-const VIEWS = "start termine nachrichten pinnwand instrumente noten orchester einstellungen meinedaten kinder kalender ueben cockpit genehmigungen meingesicht instrumentenkunde buehne mitfahrboerse projekte foerderverein einkauf meininstrument meinenoten meinegenehmigungen hilfe ueber sicherheit sos anwesenheit fotoliste gesundheit meinregister uebefortschritt".split(" ");
+const VIEWS = "start termine nachrichten pinnwand instrumente noten orchester einstellungen meinedaten kinder kalender ueben cockpit genehmigungen meingesicht instrumentenkunde buehne mitfahrboerse projekte foerderverein einkauf meininstrument meinenoten meinegenehmigungen hilfe ueber sicherheit sos anwesenheit fotoliste gesundheit meinregister uebefortschritt chronik dokumente austausch anfragen partner".split(" ");
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const ctx = await b.newContext({ viewport: { width: 400, height: 860 }, bypassCSP: true });
 const p = await ctx.newPage(); p.on("dialog", (d) => d.dismiss());

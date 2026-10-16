@@ -102,6 +102,9 @@ if (!(await p.$(".termin.eigen"))) fehler.push("Termine: eigener Termin fehlt");
 await p.click('[data-a="terminNeu"]'); await p.waitForSelector('#terminForm input[name="fuer_alle"]'); await p.evaluate(() => document.getElementById("blattHg")?.remove());
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("nachrichten")); await p.waitForTimeout(300);
 if (!(await p.$("#onLeiste"))) fehler.push("Online-Leiste fehlt (Leitung)");
+// 🏠 Startseite: drei Kacheln (Nachrichten · online · Termin), 🟢 Zahl in der Fußzeile
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start")); await p.waitForTimeout(600);
+if ((await p.$$eval(".kacheln3 .mini", (l) => l.length)) !== 3) fehler.push("Startseite: drei Kacheln fehlen");
 // 🎼 Orchester mit Gesichtern, 🎺 Instrumentenkunde, 🙂 Mein Gesicht
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("orchester")); await p.waitForSelector(".sitzplan .gesicht");
 for (const x of ["register", "besetzung", "sitzplan"]) { await p.click(`[data-a="orchAnsicht"][data-x="${x}"]`); await p.waitForTimeout(150); }

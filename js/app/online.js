@@ -31,6 +31,19 @@ async function melden() {
   aktualisieren();
 }
 const frisch = () => Date.now() - ONL.stand < 3 * 60000;
+// Für Startseite (Kachel), Fußzeile (Zahl) und Orchester (grüner Punkt): nur ein frischer Stand zählt – nie „online“ aus altem Stand
+export const onlineIds = () => new Set(ONL.erlaubt && frisch() ? ONL.liste.map((p) => p.id) : []);
+export const onlineZahl = () => onlineIds().size;
+export const onlineSichtbar = () => ONL.erlaubt && frisch();
+let letzteIds = "";
+function geaendert() { const k = [...onlineIds()].sort().join(","); if (k !== letzteIds) { letzteIds = k; document.dispatchEvent(new CustomEvent("bk-online")); } }
+// 🟢 Liste „Gerade online“ als Fenster (Startseite, Fußzeile): Anklopfen oder gleich schreiben
+AKTIONEN.onlineListe = () => {
+  if (!onlineSichtbar()) return toast("🟢 „Wer ist online“ ist für dich nicht freigeschaltet (Zahnrad › Wer ist online).", 4000);
+  blatt(`🟢 Gerade online (${ONL.liste.length})`, ONL.liste.length ? `<ul class="liste on-liste">${ONL.liste.map((p) => `<li><span class="on-bild">${gesicht(p.id)}<i></i></span><div class="fl"><b>${esc(p.name || p.vorname)}</b><div class="hinweis">gerade online</div></div>
+      <button class="knopf haupt klein" data-a="anklopfenFrage" data-x="${esc(p.id)}">👋 Anklopfen</button><button class="knopf klein" data-a="anklopfenSchreiben" data-x="${esc(p.id)}" aria-label="Nachricht schreiben">💬</button></li>`).join("")}</ul>`
+    : '<p class="hinweis">Gerade ist sonst niemand online. Sobald jemand die App öffnet, erscheint hier ein 🟢.</p>');
+};
 export function onlineLeisteHtml() {
   if (!ONL.erlaubt || !frisch()) return "";
   const l = ONL.liste;
@@ -38,6 +51,7 @@ export function onlineLeisteHtml() {
     ${l.length ? `<div class="on-knoepfe">${l.map((p) => `<button type="button" data-a="anklopfenFrage" data-x="${esc(p.id)}"><span class="on-bild">${gesicht(p.id)}<i></i></span>${esc(p.vorname || p.name)}</button>`).join("")}</div>` : '<div class="hinweis">Gerade ist sonst niemand online.</div>'}</div>`;
 }
 function aktualisieren() {
+  geaendert();
   const e = document.getElementById("onLeiste"), neu = onlineLeisteHtml();
   if (e) { if (!neu) e.remove(); else e.outerHTML = neu; }
   else if (neu && S.view === "nachrichten") document.querySelector("#inhalt .chat-suche")?.insertAdjacentHTML("beforebegin", neu);

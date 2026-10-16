@@ -82,3 +82,11 @@
 @keyframes tippen { from { transform: translateY(0); } to { transform: translateY(4px); } }
 @keyframes wippen { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(2deg); } }
 @media (prefers-reduced-motion: reduce) { .spielt * { animation-duration: 3s !important; } }
+/* 0.17.0 – 🟢 wer ist online: grüner Punkt am Gesicht, „x online“ in der Leiste, nur diese hervorheben */
+.og .on { top: -2px; left: -2px; width: 12px; height: 12px; border-radius: 50%; background: #2e9d5b; border: 2px solid var(--karte); box-shadow: 0 0 0 0 rgba(46, 157, 91, .5); animation: ogOn 2s ease-in-out infinite; }
+.og.klein .on { width: 10px; height: 10px; }
+@keyframes ogOn { 50% { box-shadow: 0 0 0 4px rgba(46, 157, 91, 0); } }
+.orch-online { display: inline-flex; align-items: center; gap: 6px; border: 2px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; }
+.orch-online.an { border-color: #2e9d5b; background: #e7f6ec; } :root.dunkel .orch-online.an { background: #1f3a2a; }
+.orch-inhalt.nur-online .og:not(.ist-on) { opacity: .22; filter: grayscale(.8); }
+@media (prefers-reduced-motion: reduce) { .og .on { animation: none; } }

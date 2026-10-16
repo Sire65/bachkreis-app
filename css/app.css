@@ -213,3 +213,6 @@ body.mit-fuss .jz-vorschau-aus { bottom: calc(84px + env(safe-area-inset-bottom)
 .et-zeit { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .t-nachfrage { margin: 8px 0; }
 #eigenForm .et-bis { display: none; } #eigenForm:has(input[name=woechentlich]:checked) .et-bis { display: grid; }
+/* 0.17.0 – 🟢 kleine grüne Zahl in der Fußzeile: so viele sind gerade online */
+.fuss-leiste button { position: relative; }
+.fuss-leiste .on-zahl { position: absolute; top: 2px; left: calc(50% + 6px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: #2e9d5b; color: #fff; font-style: normal; font-size: .66rem; font-weight: 900; line-height: 16px; text-align: center; box-shadow: 0 0 0 2px var(--karte); }

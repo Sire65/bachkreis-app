@@ -10,7 +10,8 @@
 import { S, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istEltern, istSchueler, istVorstand, vorname, name, ANSICHTEN } from "./zustand.js";
 import { esc, AKTIONEN, toast, datum, uhr, vorZeit, BACHKREIS_LOGO } from "../kern/ui.js";
 import { liste, hole, konfig, datenInfo, jetztAbgleichen } from "../kern/daten.js";
-import { termineFuer, antwortVon, kinderVon, cockpit, ausleihenVon } from "../kern/logik.js";
+import { termineFuer, antwortVon, kinderVon, cockpit, ausleihenVon, teilnahmeVon } from "../kern/logik.js";
+import { onlineSichtbar, onlineZahl } from "./online.js";
 import { communicatorZustand, versandStatistik } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { WET, WETTER_NEU_MIN, wetterLaden, infoWetter, wetterSzene, wetterTagDetails } from "./wetter.js";
@@ -182,18 +183,30 @@ AKTIONEN.webseite = () => {
 };
 export const infoKarten = () => INFO_ALLE.filter((f) => !f.nur || f.nur()).map((f) => [f.id, f.t]);
 
-// Karte 1: Nächster Termin mit Zu-/Absage direkt im Kopf
+// Karte 1: Nächster Termin – darunter drei Kacheln wie in der KC Club App: 💬 Nachrichten · 🟢 Wer ist online · ⏳ Nächster Termin
+function dreiKacheln(t, tage, a) {
+  const n = K.ungelesen(), on = onlineSichtbar(), z = onlineZahl();
+  const mitglieder = new Set(liste("gruppe_zuordnung").map((x) => x.person_id)).size;
+  const bis = !t ? "–" : tage <= 0 ? "Heute" : tage === 1 ? "Morgen" : `in ${tage} Tagen`;
+  const ameise = (k) => `<svg class="ameisen ${k}" aria-hidden="true"><rect width="100%" height="100%" rx="16"/></svg>`;
+  return `<div class="kacheln3">
+    <button type="button" class="mini${n ? " mini-neu" : ""}" data-a="kachel" data-x="nachrichten">${n ? ameise("neu") : ""}<b>${n}</b><span>${n === 1 ? "neue Nachricht" : "neue Nachr."}</span></button>
+    <button type="button" class="mini${on && z ? " mini-online" : ""}" data-a="${on ? "onlineListe" : "kachel"}" data-x="${on ? "" : "orchester"}">${on && z ? ameise("on") : ""}<b>${on ? `<span class="mini-on"></span>${z}` : mitglieder || "–"}</b><span>${on ? (z === 1 ? "ist online" : "sind online") : "Mitglieder"}</span></button>
+    <button type="button" class="mini${t && tage <= 1 ? " mini-bald" : ""}" data-a="${t ? "oeffne" : "kachel"}" data-x="${t ? "termin|" + t.id : "termine"}">${t && tage <= 1 ? ameise("bald") : ""}<b>${esc(bis)}</b><span>${t ? (a ? { ja: "✅ zugesagt", nein: "❌ abgesagt", vielleicht: "⏳ offen" }[a.antwort] : "❔ antworten") : "kein Termin"}</span></button>
+  </div>`;
+}
 function infoTermin() {
   const n = naechsterTermin();
-  if (!n) return `<h2>📅 Keine Termine</h2><div class="unter">Gerade steht kein Termin an. Neue Termine erscheinen hier.</div>`;
+  if (!n) return `<h2>📅 Keine Termine</h2><div class="unter">Gerade steht kein Termin an. Neue Termine erscheinen hier.</div>${dreiKacheln(null, 0, null)}`;
   const { t, p } = n, a = antwortVon(db, t.id, p), art = hole("terminarten", t.art_id);
   const tage = Math.round((new Date(t.beginn).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
   const wann = tage === 0 ? "Heute" : tage === 1 ? "Morgen" : tage < 7 ? `In ${tage} Tagen` : datum(t.beginn);
-  const ANTW = { ja: "✅ Zusage", vielleicht: "🤔 Vielleicht", nein: "❌ Absage" };
-  return `<h2>${art?.sym || "📅"} ${esc(t.titel)}</h2>
-    <div class="unter">${esc(wann)}${tage < 7 && tage > 1 ? ` (${esc(datum(t.beginn))})` : ""}, ${uhr(t.beginn)} Uhr${t.ort ? ` · 📍 ${esc(t.ort)}` : ""}${istEltern() ? ` · für ${esc(vorname(p))}` : ""}</div>
-    <div class="ifzliste" style="grid-template-columns:repeat(3,1fr);display:grid">${Object.entries(ANTW).map(([k, txt]) => `<button class="ifz${a?.antwort === k ? " an" : ""}" data-a="antworten" data-x="${t.id}|${p}|${k}" style="justify-content:center">${txt}</button>`).join("")}</div>
-    <button class="ifz" data-a="oeffne" data-x="termin|${t.id}" style="margin-top:6px"><span>🔎</span><span class="ifzt">${a ? `Deine Antwort: <b>${esc(ANTW[a.antwort])}</b>` : "<b>Noch keine Antwort</b> – bitte zu- oder absagen"}</span><span>›</span></button>`;
+  const info = teilnahmeVon(db, t) === "info";
+  const ANTW = { ja: "✅ Ich komme", nein: "❌ Kann nicht", vielleicht: "⏳ Weiß nicht" };
+  return `<div class="klick" data-a="oeffne" data-x="termin|${t.id}"><h2>${art?.sym || "📅"} ${esc(t.titel)}</h2>
+    <div class="unter">${esc(wann)}${tage < 7 && tage > 1 ? ` (${esc(datum(t.beginn))})` : ""}, ${uhr(t.beginn)} Uhr${t.ort ? ` · 📍 ${esc(t.ort)}` : ""}${istEltern() ? ` · für ${esc(vorname(p))}` : ""}</div></div>
+    ${!info && !a ? `<div class="ifzliste" style="grid-template-columns:repeat(3,1fr);display:grid">${Object.entries(ANTW).map(([k, txt]) => `<button class="ifz" data-a="antworten" data-x="${t.id}|${p}|${k}" style="justify-content:center">${txt}</button>`).join("")}</div>` : ""}
+    ${dreiKacheln(t, tage, a)}`;
 }
 
 // Karte 3: alles, was mich gerade betrifft – jede Zeile führt direkt hin
@@ -510,3 +523,6 @@ export const nachtJetzt = () => istNacht();
 
 // Vorschau-Knopf („✕ beenden“) nur auf der Startseite (wie KC-CLUB-VORSCHAU-ENDE)
 document.addEventListener("bk-ansicht", () => jzVorschauLeiste(S.view));
+
+// 🟢 Online-Stand geändert → Kacheln oben auffrischen (nur wenn sich der Inhalt ändert)
+document.addEventListener("bk-online", () => { if (S.view === "start") heroZeigen(); });

@@ -1,17 +1,27 @@
 {
-  "version": "0.16.0",
+  "version": "0.17.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "📅 Termine kinderleicht: große Knöpfe „✅ Ich komme · ❌ Ich kann nicht · ⏳ Weiß noch nicht“, sortiert nach Heute · Morgen · Diese Woche · Nächste Woche · Monat",
-    "❗ Teilnahme erforderlich (Absage nur mit Grund – einfach antippen: krank, Schule, Urlaub …) · 🙂 erwünscht · ℹ️ nur zur Info (ohne Antwort)",
-    "⏳ „Weiß noch nicht“: du wählst, wann wir nochmal fragen (morgen, in 3 Tagen …) – dann kommt beim Öffnen die Frage noch einmal",
-    "🌍 Termine für alle (z. B. Weihnachtsfeier) und 🎻 die Termine deines Orchesters – Filter: Noch antworten · Mein Orchester · Für alle · Eigene",
-    "🙋 Eigene Termine (Üben, Unterricht, Vorspiel) mit wenigen Tipps, auch jede Woche – privat, auch im Kalender-Abo",
-    "Neue Rolle „Terminplaner“: darf Termine eintragen (wie Leitung und Lehrkräfte)",
-    "🟢 Wer ist online und 👋 Anklopfen (wie KC) in 💬 Nachrichten – im Zahnrad stellt die Leitung ein, wer die Funktion bekommt (Leitung & Lehrkräfte · Schüler · Eltern); jeder kann sich unsichtbar schalten"
+    "🏠 Startseite wie in KC: unter dem nächsten Termin drei Kacheln – 💬 neue Nachrichten · 🟢 wer ist online · ⏳ wann ist der nächste Termin (mit deiner Antwort)",
+    "🟢 Kleine grüne Zahl unten in der Fußzeile (Orchester): so viele sind gerade online – antippen der Kachel zeigt sie mit 👋 Anklopfen",
+    "🎼 Orchester (Sitzplan, Register, Besetzung): grüner Punkt am Gesicht, wer gerade online ist, und „🟢 x online“ – antippen hebt nur diese hervor"
   ],
   "verlauf": [
+    {
+      "version": "0.16.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📅 Termine kinderleicht: große Knöpfe „✅ Ich komme · ❌ Ich kann nicht · ⏳ Weiß noch nicht“, sortiert nach Heute · Morgen · Diese Woche · Nächste Woche · Monat",
+        "❗ Teilnahme erforderlich (Absage nur mit Grund – einfach antippen: krank, Schule, Urlaub …) · 🙂 erwünscht · ℹ️ nur zur Info (ohne Antwort)",
+        "⏳ „Weiß noch nicht“: du wählst, wann wir nochmal fragen (morgen, in 3 Tagen …) – dann kommt beim Öffnen die Frage noch einmal",
+        "🌍 Termine für alle (z. B. Weihnachtsfeier) und 🎻 die Termine deines Orchesters – Filter: Noch antworten · Mein Orchester · Für alle · Eigene",
+        "🙋 Eigene Termine (Üben, Unterricht, Vorspiel) mit wenigen Tipps, auch jede Woche – privat, auch im Kalender-Abo",
+        "Neue Rolle „Terminplaner“: darf Termine eintragen (wie Leitung und Lehrkräfte)",
+        "🟢 Wer ist online und 👋 Anklopfen (wie KC) in 💬 Nachrichten – im Zahnrad stellt die Leitung ein, wer die Funktion bekommt (Leitung & Lehrkräfte · Schüler · Eltern); jeder kann sich unsichtbar schalten"
+      ]
+    },
     {
       "version": "0.15.0",
       "datum": "2026-10-16",

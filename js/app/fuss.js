@@ -5,6 +5,7 @@ import { S, zeige, istEltern } from "./zustand.js";
 import { AKTIONEN, esc } from "../kern/ui.js";
 import { ungelesen } from "./start.js";
 import { kopfVorne } from "./buehne.js";
+import { onlineZahl } from "./online.js";
 
 const KNOEPFE = () => [
   ["start", "🏠", "Start"],
@@ -21,8 +22,8 @@ export function fussZeichnen() {
   if (!S.ich) { f?.remove(); document.body.classList.remove("mit-fuss"); return; }
   if (!f) { f = document.createElement("nav"); f.className = "fuss-leiste"; f.id = "fuss"; f.setAttribute("aria-label", "Hauptnavigation"); document.body.appendChild(f); }
   document.body.classList.add("mit-fuss");
-  const aktiv = ZU[S.view] || S.view, n = (() => { try { return ungelesen(); } catch { return 0; } })();
-  f.innerHTML = KNOEPFE().map(([v, sym, t]) => `<button type="button" data-a="fuss" data-x="${v}" class="${v === aktiv ? "an" : ""}" ${v === aktiv ? 'aria-current="page"' : ""}><span>${sym}</span>${esc(t)}${v === "nachrichten" && n ? `<i class="zaehler">${n > 99 ? "99+" : n}</i>` : ""}</button>`).join("");
+  const aktiv = ZU[S.view] || S.view, n = (() => { try { return ungelesen(); } catch { return 0; } })(), on = onlineZahl(); // 🟢 kleine grüne Zahl: so viele gerade online
+  f.innerHTML = KNOEPFE().map(([v, sym, t]) => `<button type="button" data-a="fuss" data-x="${v}" class="${v === aktiv ? "an" : ""}" ${v === aktiv ? 'aria-current="page"' : ""}><span>${sym}</span>${esc(t)}${v === "nachrichten" && n ? `<i class="zaehler">${n > 99 ? "99+" : n}</i>` : ""}${["orchester", "kinder"].includes(v) && on ? `<i class="on-zahl" title="${on} gerade online">${on}</i>` : ""}</button>`).join("");
 }
 AKTIONEN.fuss = (v) => {
   if (v === "start") {
@@ -38,3 +39,4 @@ AKTIONEN.fuss = (v) => {
   zeige(v);
 };
 document.addEventListener("bk-ansicht", () => setTimeout(fussZeichnen, 0));
+document.addEventListener("bk-online", () => fussZeichnen());

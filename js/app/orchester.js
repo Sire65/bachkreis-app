@@ -5,6 +5,7 @@ import { esc, AKTIONEN, datumKurz, toast, blatt, blattZu, formWerte, frage } fro
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { gruppenMitglieder, stammgruppe, wirksameGruppen, temporaereZuordnungen, generellerWechselPlan, instrumenteVon, registerVon, elternVon, kinderVon, tagIso, ausleihenVon, antwortVon } from "../kern/logik.js";
 import { gesicht, gesichtSvg, merkmale, HAUT, HAARFARBE, FRISUREN, AUGEN, MUND, FARBEN } from "./gesichter.js";
+import { onlineIds, onlineSichtbar } from "./online.js";
 import { lehreZu } from "./instrumentenkunde.js";
 import { terminKarte } from "./termine.js";
 import { senden } from "../kern/versand.js";
@@ -13,7 +14,7 @@ import { senden } from "../kern/versand.js";
 // Sitzplan wie auf der Bühne (hinten Schlagwerk, dann Blech, Holz, vorne Streicher, unten die Leitung); je Register Ist/Soll.
 // „📅 Nächste Probe“ zeigt an den Gesichtern, wer zugesagt (✓), abgesagt (✗) oder noch nicht geantwortet hat (?).
 // Besetzung: Soll (Gruppe in der PC-Verwaltung oder nächste Probe) gegen Ist, wer ein Leihinstrument braucht und was frei ist.
-const OR = { ansicht: "sitzplan", probe: false };
+const OR = { ansicht: "sitzplan", probe: false, nurOnline: false };
 const REIHEN = [["schlag", "tasten"], ["blech"], ["holz"], ["streicher"]];
 const famVon = (r) => r?.familie || "sonstige";
 function naechsteProbe(gid) {
@@ -39,7 +40,8 @@ function antwortZeichen(probe, pid) {
 }
 const kopfBild = (pid, probe, klein = false) => {
   const p = hole("personen", pid), rf = (p?.rollen || []).includes("registerfuehrer"), lb = leihbedarf(pid);
-  return `<button type="button" class="og${klein ? " klein" : ""}" data-a="oeffne" data-x="person|${esc(pid)}" title="${esc(name(pid))}${rf ? " · Registerführung" : ""}${lb ? " · braucht ein Leihinstrument" : ""}">${gesicht(pid, name(pid))}${rf ? '<i class="rf">⭐</i>' : ""}${lb && istLehrkraft() ? '<i class="lb">🏷️</i>' : ""}${antwortZeichen(probe, pid)}</button>`;
+  const on = onlineIds().has(pid); // 🟢 gerade online
+  return `<button type="button" class="og${klein ? " klein" : ""}${on ? " ist-on" : ""}" data-a="oeffne" data-x="person|${esc(pid)}" title="${esc(name(pid))}${on ? " · 🟢 gerade online" : ""}${rf ? " · Registerführung" : ""}${lb ? " · braucht ein Leihinstrument" : ""}">${gesicht(pid, name(pid))}${on ? '<i class="on"></i>' : ""}${rf ? '<i class="rf">⭐</i>' : ""}${lb && istLehrkraft() ? '<i class="lb">🏷️</i>' : ""}${antwortZeichen(probe, pid)}</button>`;
 };
 const istSoll = (x) => `<span class="ist-soll ${x.soll ? (x.ps.length >= x.soll ? "ok" : "fehlt") : ""}">${x.ps.length}${x.soll ? `/${x.soll}` : ""}</span>`;
 VIEWS.orchester = {
@@ -49,7 +51,8 @@ VIEWS.orchester = {
     const ans = OR.ansicht;
     const kopfzeile = `<div class="orch-gruppen">${gruppen.map((x) => `<button type="button" class="${x.id === gid ? "an" : ""}" data-a="orchGruppe" data-x="${x.id}" style="--gf:${esc(x.farbe || "#888")}"><b>${esc(x.kuerzel)}</b><small>${gruppenMitglieder(db, x.id).length}</small></button>`).join("")}</div>
       <div class="orch-leiste"><div class="umschalter orch-tabs">${[["sitzplan", "🎼 Sitzplan"], ["register", "👥 Register"], ["besetzung", "📊 Besetzung"]].map(([k, t]) => `<button class="${ans === k ? "an" : ""}" data-a="orchAnsicht" data-x="${k}">${t}</button>`).join("")}</div>
-      ${probe ? `<label class="orch-probe"><input type="checkbox" data-c="orchProbe" ${OR.probe ? "checked" : ""}> 📅 Zusagen ${esc(datumKurz(probe.beginn))}</label>` : ""}</div>`;
+      ${probe ? `<label class="orch-probe"><input type="checkbox" data-c="orchProbe" ${OR.probe ? "checked" : ""}> 📅 Zusagen ${esc(datumKurz(probe.beginn))}</label>` : ""}
+      ${onlineSichtbar() ? `<button type="button" class="orch-online${OR.nurOnline ? " an" : ""}" data-a="orchNurOnline" title="Wer ist gerade online? Antippen: nur diese hervorheben"><span class="on-punkt"></span>${[...onlineIds()].filter((x) => d.mitglieder.includes(x)).length} online</button>` : ""}</div>`;
     let inhalt = "";
     if (ans === "sitzplan") {
       const reihen = REIHEN.map((fams) => d.jeReg.filter((x) => fams.includes(famVon(x.r)))).filter((r) => r.length);
@@ -76,12 +79,13 @@ VIEWS.orchester = {
         ${istLehrkraft() ? `<div class="karte"><h3>🏷️ Leihinstrumente koordinieren</h3>${bedarf.length ? `<ul class="liste">${bedarf.map(({ pid, inst }) => { const frei = freiVon(inst.typ_id);
             return `<li><span class="og-klein">${gesicht(pid, name(pid))}</span><div class="fl"><div class="zeile-titel">${esc(name(pid))}</div><div class="zeile-unter">braucht ${esc(hole("instrument_typen", inst.typ_id)?.name || "Instrument")} · ${frei.length ? `<b class="gruen">${frei.length} frei</b>` : '<b class="rot">keins frei</b>'}</div></div>${frei.length && istVerwalter() ? `<button class="knopf klein" data-a="oeffne" data-x="instrument|${esc(frei[0].id)}">🤝 ${esc(frei[0].inventar_nr)}</button>` : ""}</li>`; }).join("")}</ul>` : '<p class="hinweis">✓ Alle, die ein Leihinstrument brauchen, haben eins.</p>'}</div>` : ""}`;
     }
-    return kopf("🎼 Orchester") + kopfzeile + `<div class="orch-titel" style="--gf:${esc(g?.farbe || "#888")}"><b>${esc(g?.name || "")}</b> <span class="hinweis">${esc(g?.beschreibung || "")} · ${d.mitglieder.length} Mitglieder</span></div>` + inhalt;
+    return kopf("🎼 Orchester") + kopfzeile + `<div class="orch-titel" style="--gf:${esc(g?.farbe || "#888")}"><b>${esc(g?.name || "")}</b> <span class="hinweis">${esc(g?.beschreibung || "")} · ${d.mitglieder.length} Mitglieder</span></div>` + `<div class="orch-inhalt${OR.nurOnline && onlineSichtbar() ? " nur-online" : ""}">${inhalt}</div>`;
   },
 };
 const konfigLeitung = () => konfig().leitung_id;
 AKTIONEN.orchGruppe = (g) => zeige("orchester", { gruppe: g }, { ersetzen: true });
 AKTIONEN.orchAnsicht = (a) => { OR.ansicht = a; zeichne(); };
+AKTIONEN.orchNurOnline = () => { OR.nurOnline = !OR.nurOnline; zeichne(); };
 AKTIONEN.orchProbe = (_, el) => { OR.probe = el.checked; zeichne(); };
 AKTIONEN.lehreZu = (text) => { const id = lehreZu(text); zeige("instrumentenkunde", id ? { id } : {}); };
 
@@ -223,3 +227,6 @@ VIEWS.kinder = {
     }).join("");
   },
 };
+
+// 🟢 Online-Stand geändert → Orchester-Ansichten neu zeichnen (grüne Punkte an den Gesichtern)
+document.addEventListener("bk-online", () => { if (["orchester", "person"].includes(S.view) && !document.querySelector(".blatt-hg")) zeichne(); });

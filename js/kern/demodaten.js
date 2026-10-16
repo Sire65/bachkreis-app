@@ -449,6 +449,7 @@ export function erzeugeDemodaten(heute = new Date()) {
     bearbeiten_minuten: 15,
     chat_schueler_untereinander: true,
     pinnwand_pause_tage: 7,
+    online_fuer: ["leitung", "schueler"], // Vorführung: auch Schüler sehen „Wer ist online“ (im Echtbetrieb Standard nur Leitung & Lehrkräfte)
   };
   for (const t of Object.keys(d)) if (Array.isArray(d[t])) for (const z of d[t]) { z.version = 1; z.erstellt_am = z.erstellt_am || iso(jetzt); z.geaendert_am = z.geaendert_am || iso(jetzt); z.geaendert_von = "Demodaten"; }
   return d;

@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.17.0 DEV – 16.10.2026
+- 🏠 Startseite: drei Kacheln im Feld „Nächster Termin“ (wie KC kacheln3): Nachrichten, Wer ist online (Liste mit Anklopfen), Countdown zum Termin; Antwort-Knöpfe nur, solange noch nicht geantwortet
+- 🟢 Fußzeile: grüne Online-Zahl am Orchester-/Kinder-Knopf; Orchester: grüner Punkt an Gesichtern, „x online“-Knopf hebt nur diese hervor; Ereignis „bk-online“ frischt Startseite, Fußzeile und Orchester auf
+- Vorführdaten: online_fuer = Leitung & Schüler (Echtbetrieb weiter Standard nur Leitung & Lehrkräfte)
+
 ## 0.16.0 DEV – 16.10.2026
 - 📅 Termine kinderleicht: Abschnitte, große Antwort-Knöpfe, Antwort-Stand mit „ändern“, Absage-Gründe zum Antippen, „Weiß noch nicht“ mit Nachfrage-Tag (antworten.nachfragen_am) und Erinnerung beim Öffnen, Filter Noch antworten/Mein Orchester/Für alle/Eigene
 - termine.fuer_alle (🌍 ganzer Bachkreis) und termine.teilnahme (❗ erforderlich · 🙂 erwünscht · ℹ️ Info); Server: Info-Termine ohne Antwort, Absage bei erforderlicher Teilnahme nur mit Grund

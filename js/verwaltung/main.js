@@ -1,0 +1,772 @@
+// PC-Verwaltung für Leitung, Vorstand/Förderverein und Lehrkräfte: Stammdaten (Adressen, Instrumente, Gruppen …)
+// bequem am PC/Notebook pflegen. Formulare, Listen, CSV-Import/-Export entstehen aus der Tabellen-Registry (schema.js).
+// Zugänge (Codes/QR-Karten, Sperren, Verwaltungsrecht) werden HIER – außerhalb der App – gepflegt.
+import { werkzeugeRegistrieren, WERKZEUG_ANSICHTEN } from "./werkzeuge.js";
+import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
+import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN } from "../kern/schema.js";
+import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
+import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
+import { communicatorZustand, testAnMich, KOM_ZUSTAND, senden } from "../kern/versand.js";
+import { loeschKandidaten, ANONYM_LEEREN, ANONYM_LOESCHEN, schuljahrVorschlaege, einkaufInventar, eingeladene, personenDaten, cockpit, csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
+import { APP_VERSION, APP_STUFE } from "../kern/version.js";
+
+const db = { liste, hole, konfig };
+const V = { ich: null, ansicht: "uebersicht", tab: null, auswahl: null, suche: "", filter: "", sort: null };
+
+const darf = (tab, art) => { const r = V.ich?.rollen || []; return (TABELLEN[tab]?.[art] || []).some((x) => r.includes(x)); };
+const darfGeschuetzt = () => (V.ich?.rollen || []).some((r) => ["leitung", "admin", "lehrkraft"].includes(r));
+const name = (p) => (p ? `${p.vorname} ${p.nachname}` : "–");
+
+// ---------- Anmeldung ----------
+// Echtbetrieb: Anmeldung nur mit persönlichem Code (Recht „PC-Verwaltung“ prüft der Server)
+function anmeldungServer(meldung = "") {
+  $("#demoleiste")?.remove();
+  $("#vw").innerHTML = `<div class="vw-anmeldung karte"><div style="display:flex;gap:12px;align-items:center"><div style="width:60px">${BACHKREIS_LOGO}</div><div><h2 style="margin:0">PC-Verwaltung</h2><div class="hinweis">${esc(konfig().name || "Bachkreis Bergkamen")}</div></div></div>
+    ${meldung ? `<p class="badge b-rot">${esc(meldung)}</p>` : ""}
+    <div class="feld"><label>Persönlicher Zugangscode</label><input id="vwCode" placeholder="z. B. AB12CD34" autocomplete="one-time-code"></div><button class="knopf haupt breit" data-a="vwCodeServer">Anmelden</button>
+    <p class="hinweis">Nur für Leitung, Lehrkräfte und Vorstand mit dem Recht „PC-Verwaltung“.</p></div>`;
+}
+AKTIONEN.vwCodeServer = async () => {
+  const r = await serverAnmelden($("#vwCode").value.trim(), true).catch(() => ({ ok: false, fehler: "OFFLINE" }));
+  if (!r.ok) return anmeldungServer({ CODE_UNGUELTIG: "Code ungültig oder gesperrt.", KEIN_VERWALTUNGSRECHT: "Dieser Zugang darf die PC-Verwaltung nicht nutzen.", ZU_VIELE_VERSUCHE: "Zu viele Versuche – bitte später erneut." }[r.fehler] || "Anmeldung nicht möglich – Internetverbindung prüfen.");
+  location.reload();
+};
+function anmeldung() {
+  if (istEchtbetrieb()) return anmeldungServer();
+  const verwalter = liste("zugaenge", (z) => z.aktiv && z.verwaltung).map((z) => hole("personen", z.person_id)).filter(Boolean);
+  $("#vw").innerHTML = `<div class="vw-anmeldung karte"><div style="display:flex;gap:12px;align-items:center"><div style="width:60px">${BACHKREIS_LOGO}</div><div><h2 style="margin:0">PC-Verwaltung</h2><div class="hinweis">${esc(konfig().name || "Bachkreis")}</div></div></div>
+    <div class="feld"><label>Zugangscode</label><input id="vwCode" placeholder="z. B. AB12CD34" autocomplete="off"></div><button class="knopf haupt breit" data-a="vwCode">Anmelden</button>
+    <h4>Vorführversion – direkt anmelden als:</h4><ul class="liste">${verwalter.map((p) => `<li class="klick" data-a="vwAls" data-x="${p.id}"><div class="fl"><b>${esc(name(p))}</b><div class="zeile-unter">${esc((p.rollen || []).map((r) => ROLLEN[r] || r).join(", "))}</div></div>›</li>`).join("")}</ul>
+    <p class="hinweis">Zugang zur Verwaltung haben nur Personen mit dem Recht „darf PC-Verwaltung nutzen“ (Leitung, Lehrkräfte, Vorstand Förderverein).</p></div>`;
+}
+AKTIONEN.vwCode = () => {
+  const c = $("#vwCode").value.trim().toUpperCase();
+  const z = liste("zugaenge", (x) => x.code === c && x.aktiv && x.verwaltung)[0];
+  if (!z) { toast("Code ungültig oder ohne Verwaltungsrecht"); return; }
+  anmelden(z.person_id);
+};
+AKTIONEN.vwAls = (id) => anmelden(id);
+function anmelden(id) {
+  V.ich = hole("personen", id);
+  setzeWer(name(V.ich));
+  try { sessionStorage.setItem("bk_vw_ich", id); } catch {}
+  demoLeiste();
+  zeichne();
+}
+AKTIONEN.vwAbmelden = async () => { if (istEchtbetrieb()) { await serverAbmelden(); return location.reload(); } V.ich = null; try { sessionStorage.removeItem("bk_vw_ich"); } catch {} demoLeiste(); anmeldung(); };
+function demoLeiste() {
+  if (istEchtbetrieb()) { $("#demoleiste")?.remove(); return; }
+  $("#demoleiste").innerHTML = `🧪 VORFÜHRVERSION · PC-Verwaltung · Daten nur in diesem Browser – Änderungen erscheinen sofort in der App (gleicher Browser)${V.ich ? ` · angemeldet: ${esc(name(V.ich))}` : ""}`;
+}
+
+// ---------- Rahmen ----------
+const SONDER = [["uebersicht", "🏠", "Übersicht"], ["gruppenboard", "🧩", "Gruppen-Board"], ["schuljahr", "🎓", "Schuljahreswechsel"], ["inventarbericht", "📦", "Inventar & Abschreibung"], ["anwesenheit", "📋", "Anwesenheit & Fehlzeiten"], ["datenschutz", "🧹", "Datenschutz & Löschfristen"], ["zugaenge", "🔑", "Zugänge & QR-Karten"], ["import", "📥", "Import / Export"], ["communicator", "📡", "Communicator"], ["abgleich", "🔁", "Abgleich & Protokoll"], ["konfig", "⚙️", "Einstellungen"]];
+// Zu welchem Bereich gehört ein Werkzeug? (Übersicht: Bereiche mit allen Tabellen und Werkzeugen)
+const SONDER_BEREICH = { gruppenboard: "Orchester", schuljahr: "Orchester", inventarbericht: "Instrumente", anwesenheit: "Termine", datenschutz: "System", zugaenge: "System", import: "System", communicator: "Kommunikation", abgleich: "System", konfig: "System" };
+const SONDER_RECHT = {}; // Werkzeuge mit eigener Rechte-Prüfung (werkzeuge.js)
+const sonderSichtbar = ([k]) => (!SONDER_RECHT[k] || SONDER_RECHT[k]()) && (k !== "zugaenge" || darf("zugaenge", "lesen")) && (k !== "communicator" || darf("kom_einstellungen", "lesen")) && (!["schuljahr", "gruppenboard"].includes(k) || darf("gruppe_zuordnung", "schreiben"))
+  && (k !== "inventarbericht" || darf("ausstattung", "lesen")) && (k !== "anwesenheit" || darf("antworten", "lesen")) && (k !== "datenschutz" || darf("zugaenge", "schreiben"));
+function seitenleiste() {
+  const gruppen = {};
+  for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
+  const btn = (an, a, x, sym, t, anz = "") => `<button class="${an ? "an" : ""}" data-a="${a}" data-x="${x}" title="${esc(t)}"><span class="sym">${sym}</span><span class="txt">${esc(t)}</span><span class="anz">${anz}</span></button>`;
+  const sonder = SONDER.filter(sonderSichtbar);
+  return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;color:#b9b29c">v${APP_VERSION} ${APP_STUFE}</div></div></div>
+    ${btn(V.ansicht === "uebersicht", "vwAnsicht", "uebersicht", "🏠", "Übersicht")}
+    <h4>Werkzeuge</h4>${sonder.filter(([k]) => k !== "uebersicht").map(([k, sy, t]) => btn(V.ansicht === k, "vwAnsicht", k, sy, t)).join("")}
+    ${Object.entries(gruppen).map(([g, ts]) => `<h4>${esc(g)}</h4>${ts.map((t) => btn(V.ansicht === "tabelle" && V.tab === t, "vwTabelle", t, TABELLEN[t].sym, TABELLEN[t].titel, liste(t).length)).join("")}`).join("")}
+    <h4>Sitzung</h4>${btn(false, "vwApp", "", "📱", "App öffnen")}${btn(false, "vwAbmelden", "", "🚪", "Abmelden")}`;
+}
+function zeichne() {
+  if (!V.ich) return anmeldung();
+  let haupt = "";
+  try { haupt = ANSICHTEN[V.ansicht === "tabelle" ? "tabelle" : V.ansicht](); }
+  catch (e) { console.error(e); haupt = `<div class="karte">⚠️ ${esc(e.message)}</div>`; }
+  $("#vw").innerHTML = `<div class="vw-rahmen"><nav class="vw-seite">${seitenleiste()}</nav><section class="vw-haupt">${haupt}</section></div>`;
+  NACH[V.ansicht]?.();
+  beschriftungenVerknuepfen($("#vw"));
+}
+AKTIONEN.vwAnsicht = (k) => { V.ansicht = k; V.auswahl = null; zeichne(); };
+AKTIONEN.vwTabelle = (t) => { V.ansicht = "tabelle"; V.tab = t; V.auswahl = null; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
+AKTIONEN.vwApp = () => window.open("index.html", "_blank");
+
+// ---------- Namen statt IDs (0.24.0) ----------
+// Für Tabellen ohne eigenen Titel: lesbarer Name aus den verknüpften Datensätzen (Person, Werk, Termin …)
+const pn = (id) => { const p = hole("personen", id); return p ? `${p.vorname} ${p.nachname}`.trim() : "–"; };
+const gegenstandNr = (z) => (hole("inventar", z.inventar_id) || hole("ausstattung", z.ausstattung_id))?.inventar_nr || "";
+const ANZEIGE = {
+  gesundheit: (z) => `🩺 ${pn(z.person_id)}`, eltern_kind: (z) => `${pn(z.eltern_id)} ↔ ${pn(z.kind_id)}`,
+  gruppe_zuordnung: (z) => `${pn(z.person_id)} → ${hole("gruppen", z.gruppe_id)?.kuerzel || ""}`, person_instrument: (z) => `${pn(z.person_id)} · ${hole("instrument_typen", z.typ_id)?.name || ""}`,
+  schluessel: (z) => `🔑 ${z.nr} ${z.bezeichnung || ""}`.trim(), stimmen: (z) => `${hole("werke", z.werk_id)?.titel || ""} – ${z.bezeichnung}`,
+  notenexemplare: (z) => `${ANZEIGE.stimmen(hole("stimmen", z.stimme_id) || {})} #${z.nr}`, mitfahrten: (z) => `${z.art === "gesuch" ? "🙋" : "🚗"} ${pn(z.fahrer_id)} · ${hole("termine", z.termin_id)?.titel || ""}`,
+  ausleihen: (z) => `${gegenstandNr(z)} → ${pn(z.person_id)}`, reparaturen: (z) => `🔧 ${gegenstandNr(z)} ${String(z.meldung || "").slice(0, 40)}`,
+  reise_anmeldungen: (z) => `${pn(z.person_id)} · ${hole("projekte", z.projekt_id)?.titel || ""}`, antworten: (z) => `${pn(z.person_id)} · ${hole("termine", z.termin_id)?.titel || ""}`,
+  spenden: (z) => `💛 ${pn(z.person_id)} ${datumKurz(z.datum)}`, fv_mitglieder: (z) => `${pn(z.person_id)}${z.mitglied_nr ? ` (Nr. ${z.mitglied_nr})` : ""}`, zugaenge: (z) => `🔑 ${pn(z.person_id)}`,
+  genehmigungen: (z) => `${hole("genehmigung_vorlagen", z.vorlage_id)?.titel || ""} · ${pn(z.kind_id)}`, programm: (z) => `${z.nr}. ${z.werk_id ? hole("werke", z.werk_id)?.titel || "" : z.titel || ""}`,
+  nachrichten: (z) => `${pn(z.von)}: ${String(z.text || "").slice(0, 40)}`, pinnwand: (z) => `📌 ${String(z.text || "").slice(0, 40)}`, uebungen: (z) => `${pn(z.person_id)} ${datumKurz(z.datum)}`,
+  kom_zustand: (z) => hole("kom_anbieter", z.anbieter_id)?.name || z.anbieter_id, versand: (z) => `${KOM_KANAELE[z.kanal] || z.kanal} → ${pn(z.an_id)}`,
+};
+function nameVon(tab, z) { if (!z) return "–"; try { return ANZEIGE[tab] ? ANZEIGE[tab](z) : anzeigeName(tab, z); } catch { return anzeigeName(tab, z); } }
+
+// ---------- Feld-Darstellung ----------
+function zellWert(f, v) {
+  if (v == null || v === "") return "";
+  switch (f.typ) {
+    case "ref": return nameVon(f.ref, hole(f.ref, v));
+    case "refs": return (v || []).map((x) => nameVon(f.ref, hole(f.ref, x))).join(", ");
+    case "wahl": return f.werte?.[v] ?? v;
+    case "liste": return (v || []).map((x) => f.werte?.[x] || x).join(", ");
+    case "ja": return v ? "✔" : "";
+    case "datum": return datumKurz(v);
+    case "zeit": return `${datumKurz(v)} ${new Date(v).toTimeString().slice(0, 5)}`;
+    case "geld": return Number(v).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+    case "farbe": return `<span class="punkt" style="background:${esc(v)}"></span>${esc(v)}`;
+    case "json": return JSON.stringify(v);
+    default: return String(v);
+  }
+}
+function feldEingabe(f, z, nurLesen) {
+  const v = z[f.k];
+  const dis = nurLesen ? "disabled" : "";
+  const n = `name="${f.k}" ${dis}`;
+  const optRef = (sel) => liste(f.ref).filter((x) => !f.filter || f.filter(x)).sort((a, b) => nameVon(f.ref, a).localeCompare(nameVon(f.ref, b))).map((x) => `<option value="${x.id}" ${sel(x.id) ? "selected" : ""}>${esc(nameVon(f.ref, x))}</option>`).join("");
+  let e;
+  switch (f.typ) {
+    case "lang": e = `<textarea ${n}>${esc(v || "")}</textarea>`; break;
+    case "email": e = `<input type="email" ${n} value="${esc(v || "")}">`; break;
+    case "tel": e = `<input type="tel" ${n} value="${esc(v || "")}">`; break;
+    case "datum": e = `<input type="date" ${n} value="${esc(v || "")}">`; break;
+    case "zeit": e = `<input type="datetime-local" ${n} value="${zuLokal(v)}" data-zeit="1">`; break;
+    case "zahl": case "geld": e = `<input type="number" step="${f.typ === "geld" ? "0.01" : "1"}" ${n} value="${esc(v ?? "")}" data-zahl="1">`; break;
+    case "farbe": e = `<input type="color" ${n} value="${esc(v || "#1f4f8f")}">`; break;
+    case "ja": return `<label class="vw-schalter${f.geschuetzt ? " geschuetzt" : ""}"><input type="checkbox" ${n} ${v ? "checked" : ""}><span>${esc(f.t)}${f.geschuetzt ? " 🔒" : ""}</span></label>`;
+    case "wahl": e = `<select ${n}><option value="">–</option>${Object.entries(f.werte).map(([k, t]) => `<option value="${esc(k)}" ${k === v ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>`; break;
+    case "liste": if (!f.werte) { e = `<input ${n} value="${esc((v || []).join(", "))}" data-komma="1">`; break; } e = `<div class="wahlen">${Object.entries(f.werte).map(([k, t]) => `<label><input type="checkbox" name="${f.k}" data-mehr="1" value="${k}" ${(v || []).includes(k) ? "checked" : ""} ${dis}> ${esc(t)}</label>`).join("")}</div>`; break;
+    case "ref": e = `<select ${n}><option value="">–</option>${optRef((id) => id === v)}</select>`; break;
+    case "refs": {
+      const opts = liste(f.ref).filter((x) => !f.filter || f.filter(x));
+      e = opts.length <= 40 ? `<div class="wahlen">${opts.sort((a, b) => nameVon(f.ref, a).localeCompare(nameVon(f.ref, b))).map((x) => `<label><input type="checkbox" name="${f.k}" data-mehr="1" value="${x.id}" ${(v || []).includes(x.id) ? "checked" : ""} ${dis}> ${esc(nameVon(f.ref, x))}</label>`).join("")}</div>`
+        : `<select multiple ${n} size="8">${optRef((id) => (v || []).includes(id))}</select><div class="hinweis">Mehrere mit Strg/⌘ auswählen.</div>`;
+      break;
+    }
+    case "json": if (f.editor === "soll") { // 🎼 Soll-Besetzung: je Register ein Zahlenfeld statt JSON
+        e = `<div class="vw-soll">${liste("register").sort((a, b) => (a.sort ?? 99) - (b.sort ?? 99)).map((rg) => `<label><span>${esc(rg.kurz || rg.name)}</span><input type="number" min="0" name="${f.k}__${rg.id}" value="${esc(v?.[rg.id] ?? "")}" ${dis}></label>`).join("")}</div>`; break; }
+      e = `<textarea ${n} data-json="1" spellcheck="false" style="font-family:monospace;min-height:120px">${esc(v == null ? "" : JSON.stringify(v, null, 2))}</textarea>`; break;
+    default: e = `<input ${n} value="${esc(v ?? "")}">`;
+  }
+  return `<div class="feld ${f.geschuetzt ? "geschuetzt" : ""}"><label>${esc(f.t)}${f.pflicht ? " *" : ""}${f.geschuetzt ? " 🔒" : ""}</label>${e}</div>`;
+}
+function formLesen(tab, wurzel) {
+  const roh = formWerte(wurzel);
+  const o = {};
+  for (const f of TABELLEN[tab].felder) {
+    if (!(f.k in roh) && f.typ !== "liste" && f.typ !== "refs" && f.editor !== "soll") continue;
+    let v = roh[f.k];
+    if (f.typ === "zahl" || f.typ === "geld") v = v === "" || v == null ? null : Number(v);
+    else if (f.typ === "zeit") v = vonLokal(v);
+    else if (f.typ === "ref" || f.typ === "wahl" || f.typ === "datum") v = v || null;
+    else if (f.typ === "liste" && !f.werte) v = String(roh[f.k] || "").split(",").map((x) => x.trim()).filter(Boolean);
+    else if (f.typ === "liste" || f.typ === "refs") v = v || [];
+    else if (f.editor === "soll") { const o2 = {}; for (const [k2, w] of Object.entries(roh)) if (k2.startsWith(f.k + "__") && Number(w) > 0) o2[k2.slice(f.k.length + 2)] = Number(w); v = Object.keys(o2).length ? o2 : null; }
+    else if (f.typ === "json") { try { v = v ? JSON.parse(v) : null; } catch { throw new Error(`${f.t}: kein gültiges JSON`); } }
+    o[f.k] = v;
+  }
+  return o;
+}
+
+// ---------- Generische Tabelle ----------
+const ANSICHTEN = {};
+const NACH = {};
+ANSICHTEN.tabelle = () => {
+  const def = TABELLEN[V.tab];
+  const schreiben = darf(V.tab, "schreiben") && !def.nurLesen;
+  let zeilen = liste(V.tab);
+  const typFeld = def.felder.find((f) => f.k === "typ" || (V.tab !== "personen" && f.k === "status"));
+  if (V.filter && typFeld) zeilen = zeilen.filter((z) => z[typFeld.k] === V.filter);
+  if (V.suche) {
+    const q = V.suche.toLowerCase();
+    zeilen = zeilen.filter((z) => def.liste.some((k) => { const f = def.felder.find((x) => x.k === k); return String(f ? zellWert(f, z[k]) : z[k] ?? "").toLowerCase().includes(q); }));
+  }
+  const sortK = V.sort || def.liste[0];
+  const sf = def.felder.find((x) => x.k === sortK);
+  // Datum, Zeit und Zahlen nach ihrem Wert sortieren (nicht nach der Anzeige „01.10.“), alles andere alphabetisch
+  const roh = sf && ["datum", "zeit", "zahl", "geld"].includes(sf.typ);
+  const sw = (z) => (roh ? z[sortK] ?? "" : String(sf ? zellWert(sf, z[sortK]) : z[sortK] ?? ""));
+  zeilen.sort((a, b) => (roh && sf.typ !== "datum" && sf.typ !== "zeit" ? (Number(sw(a)) || 0) - (Number(sw(b)) || 0) : String(sw(a)).localeCompare(String(sw(b)), "de", { numeric: true })) * (V.absteigend ? -1 : 1));
+  const kopf = `<div class="vw-kopf"><h2>${def.sym} ${esc(def.titel)} <span class="hinweis">(${zeilen.length})</span></h2>
+    <input type="search" placeholder="Suchen …" value="${esc(V.suche)}" data-c="vwSuche">
+    ${typFeld ? `<select data-c="vwFilter"><option value="">alle ${esc(typFeld.t)}</option>${Object.entries(typFeld.werte).map(([k, t]) => `<option value="${k}" ${V.filter === k ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>` : ""}
+    ${schreiben ? `<button class="knopf haupt" data-a="vwNeu">＋ Neu</button>` : ""}<button class="knopf" data-a="vwCsv">📤 CSV</button></div>`;
+  const tabelle = `<div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr>${def.liste.map((k) => `<th data-a="vwSort" data-x="${k}">${esc(def.felder.find((f) => f.k === k)?.t || k)}${sortK === k ? (V.absteigend ? " ▴" : " ▾") : ""}</th>`).join("")}</tr></thead>
+    <tbody>${zeilen.slice(0, 1000).map((z) => `<tr class="${V.auswahl === z.id ? "gewaehlt" : ""}" data-a="vwWahl" data-x="${z.id}">${def.liste.map((k) => { const f = def.felder.find((x) => x.k === k); return `<td title="${esc(f ? String(zellWert(f, z[k])).replace(/<[^>]+>/g, "") : "")}">${f?.typ === "farbe" ? zellWert(f, z[k]) : esc(f ? zellWert(f, z[k]) : z[k] ?? "")}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const form = V.auswahl !== null ? formular(V.tab, V.auswahl === "neu" ? neuVorlage(V.tab) : hole(V.tab, V.auswahl), schreiben) : "";
+  return kopf + tabelle + (form ? `<div class="vw-modal-hg"><div class="vw-modal" role="dialog" aria-modal="true">${form}</div></div>` : "");
+};
+// Formular: normale Felder dreispaltig, Ja/Nein-Schalter in einer Reihe, lange Felder (Text, Listen, Mehrfachauswahl) über die volle Breite
+const BREIT = ["lang", "json", "refs", "liste"];
+function formular(tab, z, schreiben) {
+  if (!z) return "";
+  const def = TABELLEN[tab];
+  const felder = def.felder.filter((f) => (!f.nur || f.nur({ ...z, typ: z.typ || V.neuTyp })) && (!f.geschuetzt || darfGeschuetzt()));
+  const normal = felder.filter((f) => !BREIT.includes(f.typ) && f.typ !== "ja"), ja = felder.filter((f) => f.typ === "ja"), breit = felder.filter((f) => BREIT.includes(f.typ));
+  return `<div class="vw-form" id="vwForm"><div class="vw-form-kopf"><h3>${def.sym} ${z.id ? esc(nameVon(tab, z)) : "Neu: " + esc(def.titel)}</h3><button class="knopf klein" data-a="vwSchliessen" aria-label="Schließen">✕</button></div>
+    <div class="vw-form-inhalt"><div class="vw-raster3 vw-felder">${normal.map((f) => feldEingabe(f, z, !schreiben)).join("")}</div>
+    ${ja.length ? `<div class="vw-raster3 vw-ja">${ja.map((f) => feldEingabe(f, z, !schreiben)).join("")}</div>` : ""}
+    ${breit.map((f) => feldEingabe(f, z, !schreiben)).join("")}
+    ${z.id ? beziehungen(tab, z) : ""}
+    ${z.id ? `<div class="hinweis">Version ${z.version || 1} · geändert ${vorZeit(z.geaendert_am)} von ${esc(z.geaendert_von || "–")}</div>` : ""}</div>
+    <div class="vw-form-fuss">${schreiben ? `${z.id ? `<button class="knopf rot" data-a="vwLoeschen">🗑️ Löschen</button>` : ""}<span class="fl"></span><button class="knopf" data-a="vwSchliessen">Abbrechen</button><button class="knopf haupt" data-a="vwSpeichern">💾 Speichern</button>` : '<span class="hinweis fl">Nur Lesen – keine Schreibrechte.</span><button class="knopf" data-a="vwSchliessen">Schließen</button>'}</div></div>`;
+}
+// Neue Datensätze: Inventar bekommt gleich die nächste freie Nummer (über Instrumente und Ausstattung eindeutig)
+function neuVorlage(tab) {
+  if (tab === "ausstattung") return { inventar_nr: naechsteInventarNr(db, "A-"), anzahl: 1, status: "verfuegbar", zustand: "neu", eigentuemer: "foerderverein", anschaffung: tagIso(new Date()) };
+  if (tab === "inventar") return { inventar_nr: naechsteInventarNr(db, "BK-"), status: "verfuegbar", eigentuemer: "foerderverein", anschaffung: tagIso(new Date()) };
+  return {};
+}
+const geld = (v) => Number(v || 0).toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+// 📦 Abschreibung und Verbleib direkt im Formular eines Inventar-Datensatzes
+function afaKasten(tab, z) {
+  const a = abschreibung(tab, z), J = new Date().getFullYear();
+  const zeilen = a.ohneDaten ? '<div class="hinweis">Für die Abschreibung fehlen Anschaffungsdatum und/oder -preis.</div>'
+    : `<div><b>Abschreibung:</b> ${esc(AFA_ARTEN[a.art])}${a.art === "linear" ? ` · ${a.jahre} Jahre (bis ${a.endeJahr})` : ""}</div>
+      <div><b>AfA ${J}:</b> ${geld(a.afaJahr)} · <b>bisher gesamt:</b> ${geld(a.kumuliert)}</div>
+      <div><b>Restbuchwert heute:</b> ${geld(a.restwert)}${a.abgang ? ` · Abgang mit Buchwert ${geld(a.buchwertAbgang)}` : ""}</div>`;
+  const warn = [INVENTAR_PROBLEM.includes(z.status) && `⚠️ ${esc(INVENTAR_STATUS[z.status])}${z.status === "gestohlen" ? " – Anzeige erstatten, Versicherung informieren, „ausgeschieden am“ und Aktenzeichen eintragen" : z.status === "vermisst" ? " – bei der nächsten Inventur suchen; bleibt es weg: „gestohlen“ oder „verschrottet“ mit Datum" : ""}`,
+    z.garantie_bis && z.garantie_bis >= tagIso(new Date()) && `🛡️ Garantie bis ${datumKurz(z.garantie_bis)}`,
+    (!z.inventur_am || z.inventur_am < tagIso(new Date(Date.now() - 365 * 86400000))) && !INVENTAR_ABGANG.includes(z.status) && "🔍 seit über einem Jahr nicht inventarisiert"].filter(Boolean);
+  return `<div class="karte inv-afa">${zeilen}${warn.map((w) => `<div class="hinweis">${w}</div>`).join("")}</div>`;
+}
+function beziehungen(tab, z) {
+  if (tab === "inventar" || tab === "ausstattung") return afaKasten(tab, z);
+  if (tab !== "personen") return "";
+  const teile = [];
+  if (z.typ === "schueler") {
+    const g = stammgruppe(db, z.id);
+    teile.push(`<div><b>Stammgruppe:</b> ${esc(hole("gruppen", g)?.name || "–")}</div>`);
+    teile.push(`<div><b>Instrumente:</b> ${instrumenteVon(db, z.id).map((i) => esc(hole("instrument_typen", i.typ_id)?.name) + (i.haupt ? " ⭐" : "")).join(", ") || "–"}</div>`);
+    teile.push(`<div><b>Eltern:</b> ${elternVon(db, z.id).map((e) => esc(name(hole("personen", e)))).join(", ") || "–"}</div>`);
+  }
+  if (z.typ === "eltern") teile.push(`<div><b>Kinder:</b> ${kinderVon(db, z.id).map((k) => esc(name(hole("personen", k)))).join(", ") || "–"}</div>`);
+  const zug = liste("zugaenge", (x) => x.person_id === z.id)[0];
+  teile.push(`<div><b>Zugang:</b> ${zug ? (zug.aktiv ? "aktiv" : "gesperrt") + (zug.verwaltung ? " · Verwaltung" : "") : "keiner"}</div>`);
+  teile.push(`<div class="knopfreihe"><button class="knopf klein" data-a="vwAuskunft" data-x="${z.id}">🔐 Datenauskunft (Art. 15) exportieren</button></div>`);
+  return `<div class="karte" style="background:var(--karte2);box-shadow:none">${teile.join("")}<div class="hinweis">Verknüpfungen bearbeiten: Eltern ↔ Kind, Instrumente je Person, Gruppen-Zuordnung, Zugänge.</div></div>`;
+}
+AKTIONEN.vwAuskunft = (pid) => {
+  const ids = [pid, ...kinderVon(db, pid)];
+  herunterladen(`auskunft-${pn(pid).replace(/\s+/g, "-")}-${tagIso(new Date())}.json`, JSON.stringify({ stand: new Date().toISOString(), erstellt_von: pn(V.ich.id), personen: ids.map(pn), daten: personenDaten(db, ids) }, null, 2), "application/json");
+  toast("🔐 Auskunft als Datei gespeichert – bitte sicher übergeben");
+};
+AKTIONEN.vwSuche = (v) => { V.suche = v; zeichne(); };
+AKTIONEN.vwFilter = (v) => { V.filter = v; zeichne(); };
+AKTIONEN.vwSort = (k) => { V.absteigend = V.sort === k ? !V.absteigend : false; V.sort = k; zeichne(); };
+AKTIONEN.vwWahl = (id) => { V.auswahl = id; zeichne(); };
+AKTIONEN.vwNeu = () => { V.auswahl = "neu"; V.neuTyp = V.filter || ""; zeichne(); };
+AKTIONEN.vwSchliessen = () => { V.auswahl = null; zeichne(); };
+AKTIONEN.vwSpeichern = async () => {
+  const def = TABELLEN[V.tab];
+  let o; try { o = formLesen(V.tab, $("#vwForm")); } catch (e) { toast("⚠️ " + e.message, 4000); return; }
+  const fehlt = def.felder.filter((f) => f.pflicht && (o[f.k] == null || o[f.k] === "" || (Array.isArray(o[f.k]) && !o[f.k].length)));
+  if (fehlt.length) { toast("Pflichtfelder fehlen: " + fehlt.map((f) => f.t).join(", ")); return; }
+  const alt = V.auswahl !== "neu" ? hole(V.tab, V.auswahl) : {};
+  if (V.tab === "inventar" || V.tab === "ausstattung") { // Inventar-Nr. eindeutig über beide Tabellen; Abgang braucht ein Datum
+    const doppelt = [...liste("inventar"), ...liste("ausstattung")].find((x) => x.id !== alt.id && String(x.inventar_nr).trim().toLowerCase() === String(o.inventar_nr).trim().toLowerCase());
+    if (doppelt) { toast(`⚠️ Inventar-Nr. ${o.inventar_nr} ist schon vergeben (${nameVon(liste("inventar").includes(doppelt) ? "inventar" : "ausstattung", doppelt)})`, 4500); return; }
+    if (INVENTAR_ABGANG.includes(o.status) && !o.ausgeschieden_am) { o.ausgeschieden_am = tagIso(new Date()); toast("📅 „ausgeschieden am“ auf heute gesetzt", 3000); }
+  }
+  const z = await speichere(V.tab, { ...alt, ...o });
+  await folgeschritte(V.tab, alt, z);
+  if (V.tab === "personen" && !liste("zugaenge", (x) => x.person_id === z.id).length && ["schueler", "eltern", "lehrkraft", "leitung", "foerderverein"].includes(z.typ))
+    await zugangSpeichern({ person_id: z.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: ["leitung", "lehrkraft", "foerderverein"].includes(z.typ) });
+  V.auswahl = z.id; toast("💾 Gespeichert – in der App sofort sichtbar"); zeichne();
+};
+// ⚙️ Folgeschritte wie in der App (0.24.0): Inventar-Status bei Ausleihe/Reparatur, Einkauf → Inventar, Termin → Eingeladene benachrichtigen
+async function folgeschritte(tab, alt, z) {
+  const gegenstand = (x) => (x.inventar_id ? ["inventar", hole("inventar", x.inventar_id)] : x.ausstattung_id ? ["ausstattung", hole("ausstattung", x.ausstattung_id)] : [null, null]);
+  if (tab === "ausleihen" && z.status !== alt?.status) {
+    const [t, g] = gegenstand(z);
+    if (g && z.status === "aktiv") await speichere(t, { ...g, status: "verliehen" }, { still: true });
+    if (g && z.status === "zurueck") { await speichere(t, { ...g, status: "verfuegbar" }, { still: true }); if (z.kaution_status === "bezahlt") toast(`💶 Kaution ${z.kaution} € zurückzahlen (oder „einbehalten“ eintragen)`, 5000); }
+  }
+  if (tab === "reparaturen" && z.status !== alt?.status) {
+    const [t, g] = gegenstand(z);
+    if (g && z.status === "in_arbeit") await speichere(t, { ...g, status: "reparatur" }, { still: true });
+    if (g && ["erledigt", "abgelehnt"].includes(z.status)) await speichere(t, { ...g, status: t === "inventar" && liste("ausleihen", (a) => a.inventar_id === g.id && a.status === "aktiv").length ? "verliehen" : "verfuegbar" }, { still: true });
+  }
+  if (tab === "einkaeufe" && z.status === "inventarisiert" && alt?.status !== "inventarisiert") {
+    const neu = einkaufInventar(db, z);
+    await speichere(neu.tab, neu.zeile); toast(`🏷️ Als ${neu.zeile.inventar_nr} (${neu.tab === "inventar" ? "Instrument" : "Ausstattung"}) inventarisiert`, 4000);
+  }
+  if (tab === "termine" && (!alt?.id || (z.status === "abgesagt" && alt.status !== "abgesagt"))) {
+    const an = eingeladene(db, z);
+    if (an.length && (await frage(`${z.status === "abgesagt" ? "Absage" : "Neuer Termin"}: ${an.length} Eingeladene (und deren Eltern) jetzt benachrichtigen?`))) {
+      const s2 = await senden({ an, betreff: `${z.status === "abgesagt" ? "Abgesagt" : "Neuer Termin"}: ${z.titel}`, text: `${z.titel} am ${datumKurz(z.beginn)}${z.ort ? " · " + z.ort : ""}. Bitte in der App antworten.`, ereignis: z.status === "abgesagt" ? "termin_geaendert" : "termin_neu" });
+      toast(`📨 ${an.length} benachrichtigt (${s2.push} Push, ${s2.mail} Mail)`);
+    }
+  }
+}
+AKTIONEN.vwLoeschen = async () => {
+  if (!(await frage("Datensatz löschen? (wird als gelöscht markiert und an alle Geräte weitergegeben)"))) return;
+  await loesche(V.tab, V.auswahl); V.auswahl = null; toast("🗑️ Gelöscht"); zeichne();
+};
+AKTIONEN.vwCsv = () => {
+  const def = TABELLEN[V.tab];
+  const spalten = ["id", ...def.felder.filter((f) => !f.geschuetzt || darfGeschuetzt()).map((f) => f.k)];
+  herunterladen(`${V.tab}-${tagIso(new Date())}.csv`, "﻿" + csvAus(liste(V.tab), spalten), "text/csv");
+};
+
+// ---------- Übersicht ----------
+ANSICHTEN.uebersicht = () => {
+  const k = (t, f) => liste(t, f).length;
+  const kz = [["👥", "Schüler", k("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten")], ["👪", "Eltern", k("personen", (p) => p.typ === "eltern")], ["🎻", "Instrumente", k("inventar")], ["🤝", "verliehen", k("ausleihen", (a) => a.status === "aktiv")],
+    ["📅", "Termine", k("termine", (t) => new Date(t.beginn) > new Date())], ["✍️", "Genehmigungen offen", k("genehmigungen", (g) => g.status === "ausstehend")], ["🔑", "aktive Zugänge", k("zugaenge", (z) => z.aktiv)], ["🗂️", "offene Vorgänge", k("aufgaben", (a) => a.status !== "erledigt")]];
+  const gruppen = {};
+  for (const t of TABELLEN_NAMEN) if (darf(t, "lesen") && !t.startsWith("kom_") && t !== "versand") (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
+  for (const [k2] of SONDER.filter(sonderSichtbar)) if (SONDER_BEREICH[k2]) (gruppen[SONDER_BEREICH[k2]] ||= []);
+  const letzte = liste("aenderungen").slice(-6).reverse();
+  return `<div class="vw-kopf"><h2>🏠 Übersicht</h2><span class="hinweis">Alles an einem Ort: links die Werkzeuge und Tabellen, hier nach Bereichen.</span></div>
+    <div class="vw-kz4">${kz.map(([s2, t, n]) => `<div class="kennzahl"><b>${s2} ${n}</b><small>${t}</small></div>`).join("")}</div>
+    ${(() => { const c = cockpit(db, V.ich.id).sort((a, b) => b.dring - a.dring).slice(0, 9); return c.length ? `<section class="vw-bereich vw-todo"><h3>🧭 Was ist zu tun?</h3><div class="vw-raster3">${c.map((x) => `<div class="vw-todo-punkt d${x.dring}"><span>${x.sym}</span><div>${esc(x.text)}</div></div>`).join("")}</div></section>` : ""; })()}
+    <div class="vw-raster3">${Object.entries(gruppen).map(([g, ts]) => `<section class="vw-bereich"><h3>${esc(g)}</h3><div class="vw-knoepfe">
+      ${SONDER.filter(sonderSichtbar).filter(([k2]) => SONDER_BEREICH[k2] === g).map(([k2, sy, t]) => `<button class="knopf werkzeug" data-a="vwAnsicht" data-x="${k2}"><span>${sy}</span>${esc(t)}<i>›</i></button>`).join("")}
+      ${ts.map((t) => `<button class="knopf" data-a="vwTabelle" data-x="${t}"><span>${TABELLEN[t].sym}</span>${esc(TABELLEN[t].titel)}<i>${liste(t).length}</i></button>`).join("")}</div></section>`).join("")}</div>
+    <div class="vw-raster3 vw-unten"><section class="vw-bereich vw-breit2"><h3>Letzte Änderungen</h3><ul class="liste">${letzte.map((a) => `<li><div class="fl">${esc(TABELLEN[a.tabelle]?.titel || a.tabelle)} · ${esc(a.aktion)} <span class="hinweis">${esc(a.wer)} · ${esc(a.quelle)} · ${vorZeit(a.zeit)}</span></div></li>`).join("") || "<li class='hinweis'>noch keine</li>"}</ul></section>
+      <section class="vw-bereich"><h3>App & Verwaltung</h3><p class="hinweis">Die Verwaltung ist für die Arbeit am PC: Stammdaten, Listen, Auswertungen, Import/Export. Die App ist fürs Handy. Beide arbeiten auf denselben Daten.</p><button class="knopf haupt breit" data-a="vwApp">📱 App öffnen</button></section></div>`;
+};
+
+// ---------- Gruppen-Board (Drag & Drop = genereller Wechsel) ----------
+ANSICHTEN.gruppenboard = () => {
+  const gruppen = liste("gruppen").sort((a, b) => a.sort - b.sort);
+  const schueler = liste("personen", (p) => ["schueler", "ehemalig"].includes(p.typ) && p.status !== "ausgetreten");
+  const ohne = schueler.filter((p) => !stammgruppe(db, p.id));
+  const karte = (p) => `<div class="vw-karte" draggable="true" data-person="${p.id}"><span>${esc(name(p))}</span><small>${p.jahrgang ? "Jg " + p.jahrgang : ""} ${esc(hole("instrument_typen", instrumenteVon(db, p.id)[0]?.typ_id)?.name || "")}</small></div>`;
+  return `<div class="vw-kopf"><h2>🧩 Gruppen-Board</h2><span class="hinweis">Karte in eine andere Spalte ziehen = genereller Wechsel ab heute (Verlauf bleibt erhalten). Temporäre Zuordnungen: Tabelle „Gruppen-Zuordnung“.</span></div>
+    <div class="vw-board">${gruppen.map((g) => { const m = schueler.filter((p) => stammgruppe(db, p.id) === g.id).sort((a, b) => name(a).localeCompare(name(b))); return `<div class="vw-spalte" data-gruppe="${g.id}"><h3 style="border-left:6px solid ${esc(g.farbe)};padding-left:8px">${esc(g.kuerzel)} – ${esc(g.name)} <span class="hinweis">(${m.length})</span></h3>${m.map(karte).join("")}</div>`; }).join("")}
+    ${ohne.length ? `<div class="vw-spalte" data-gruppe=""><h3>ohne Gruppe (${ohne.length})</h3>${ohne.map(karte).join("")}</div>` : ""}</div>`;
+};
+NACH.gruppenboard = () => {
+  for (const k of $$(".vw-karte")) k.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", k.dataset.person));
+  for (const s of $$(".vw-spalte")) {
+    s.addEventListener("dragover", (e) => { e.preventDefault(); s.classList.add("ueber"); });
+    s.addEventListener("dragleave", () => s.classList.remove("ueber"));
+    s.addEventListener("drop", async (e) => {
+      e.preventDefault(); s.classList.remove("ueber");
+      const pid = e.dataTransfer.getData("text/plain"), gid = s.dataset.gruppe;
+      if (!gid || stammgruppe(db, pid) === gid) return;
+      const plan = generellerWechselPlan(db, pid, gid, new Date());
+      for (const z of plan.beenden) await speichere("gruppe_zuordnung", z, { still: true });
+      await speichere("gruppe_zuordnung", { ...plan.neu, grund: "Gruppen-Board" });
+      toast(`🔀 ${name(hole("personen", pid))} → ${hole("gruppen", gid)?.kuerzel}`); zeichne();
+    });
+  }
+};
+
+// ---------- Schuljahreswechsel-Assistent ----------
+ANSICHTEN.schuljahr = () => {
+  const vorschlaege = schuljahrVorschlaege(db, { abschluss: Number(konfig().abschluss_jahrgang) || 12 });
+  const wechsel = vorschlaege.filter((v) => v.ziel && v.ziel !== v.g);
+  const regeln = liste("gruppen", (g) => g.wechsel_nach || g.ehemalige).sort((a, b) => a.sort - b.sort);
+  return `<div class="vw-kopf"><h2>🎓 Schuljahreswechsel</h2></div><div class="karte"><p>Erhöht die Jahrgangsstufe aller Schüler um 1 und schlägt Gruppenwechsel nach den Regeln der Gruppen vor. Die Leitung bestätigt jeden Wechsel – nichts passiert automatisch.</p>
+    <p class="hinweis">Regeln (Tabelle „Gruppen“): ${regeln.map((g) => g.ehemalige ? `${esc(g.kuerzel)} = Ehemalige (nach Jahrgang ${Number(konfig().abschluss_jahrgang) || 12})` : `${esc(g.kuerzel)} → ${esc(hole("gruppen", g.wechsel_nach)?.kuerzel || "?")} ab Jg ${g.wechsel_ab_jg || "?"}`).join(" · ") || "noch keine – bei den Gruppen „weiter in Gruppe … ab Jahrgangsstufe …“ eintragen"}</p>
+    <div class="feld"><label>Stichtag</label><input type="date" id="sjStichtag" value="${new Date().getFullYear()}-08-01"></div>
+    <table class="vw-tabelle"><tr><th>übernehmen</th><th>Name</th><th>Jg neu</th><th>bisher</th><th>Vorschlag</th></tr>${wechsel.map((v) => `<tr><td><input type="checkbox" class="sjWahl" value="${v.p.id}|${v.ziel}" checked></td><td>${esc(name(v.p))}</td><td>${v.jg}</td><td>${esc(hole("gruppen", v.g)?.kuerzel || "–")}</td><td>${esc(v.grund)}${v.hinweise.length ? `<br><small class="hinweis">⚠️ ${v.hinweise.map(esc).join(" · ")}</small>` : ""}</td></tr>`).join("") || "<tr><td colspan=5>Keine Wechsel vorgeschlagen.</td></tr>"}</table>
+    <div class="knopfreihe"><button class="knopf haupt" data-a="sjAusfuehren">✔️ Jahrgänge +1 und ausgewählte Wechsel übernehmen</button></div>
+    <p class="hinweis">Kritische Aktion: Vor dem Ausführen wird automatisch ein Export als Sicherung angeboten (Recovery-Punkt).</p></div>`;
+};
+AKTIONEN.sjAusfuehren = async () => {
+  if (!(await frage("Schuljahreswechsel ausführen? Vorher wird eine Sicherung heruntergeladen."))) return;
+  sicherung();
+  const stichtag = $("#sjStichtag").value || tagIso(new Date());
+  const schueler = liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten");
+  await speichereViele("personen", schueler.map((p) => ({ ...p, jahrgang: Number(p.jahrgang || 0) + 1 })));
+  let n = 0;
+  for (const c of $$(".sjWahl:checked")) {
+    const [pid, gid] = c.value.split("|");
+    const plan = generellerWechselPlan(db, pid, gid, stichtag);
+    for (const z of plan.beenden) await speichere("gruppe_zuordnung", z, { still: true });
+    await speichere("gruppe_zuordnung", { ...plan.neu, grund: "Schuljahreswechsel" }, { still: true });
+    if (hole("gruppen", gid)?.ehemalige) await speichere("personen", { ...hole("personen", pid), typ: "ehemalig", rollen: [] }, { still: true });
+    n++;
+  }
+  toast(`🎓 Jahrgänge erhöht, ${n} Wechsel übernommen`); zeichne();
+};
+
+// ---------- Zugänge & QR-Karten ----------
+const ZEICHEN = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+// Codes liegen auf dem Server nur als Hash. Ein Code ist deshalb nur direkt nach dem Erzeugen bekannt (für Karte/Link).
+const FRISCH = new Map();
+const codeVon = (z) => z?.code || FRISCH.get(z?.id) || null;
+async function zugangSpeichern(obj) { const code = obj.code; const z = await speichere("zugaenge", obj); if (code) FRISCH.set(z.id, code); return z; }
+function neuerCode() { const a = new Uint32Array(8); crypto.getRandomValues(a); return [...a].map((x) => ZEICHEN[x % ZEICHEN.length]).join(""); }
+const appLink = (code) => new URL(`index.html?k=${code}`, location.href).href;
+ANSICHTEN.zugaenge = () => {
+  const typ = V.filter || "schueler";
+  const personen = liste("personen", (p) => p.typ === typ).sort((a, b) => name(a).localeCompare(name(b)));
+  const schreiben = darf("zugaenge", "schreiben");
+  return `<div class="vw-kopf"><h2>🔑 Zugänge & QR-Karten</h2><select data-c="vwZugTyp">${["schueler", "eltern", "lehrkraft", "foerderverein", "leitung", "ehemalig"].map((t) => `<option value="${t}" ${t === typ ? "selected" : ""}>${esc(TABELLEN.personen.felder.find((f) => f.k === "typ").werte[t])}</option>`).join("")}</select>
+    ${schreiben ? `<button class="knopf" data-a="zugAlleAnlegen">＋ fehlende Zugänge anlegen</button>` : ""}<button class="knopf haupt" data-a="zugKarten">🖨️ QR-Karten drucken</button></div>
+    <div class="karte"><p class="hinweis">Anmeldung ohne Passwort über einen persönlichen Link/QR-Code (wie in der Club-App). Codes werden nur hier gepflegt – sperren, neu erzeugen, Verwaltungsrecht vergeben. Im Echtbetrieb liegt nur ein Hash des Codes auf dem Server.</p></div>
+    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Verwaltung</th><th>zuletzt</th><th></th></tr></thead><tbody>${personen.map((p) => {
+      const z = liste("zugaenge", (x) => x.person_id === p.id)[0];
+      return `<tr><td>${esc(name(p))}</td><td><code>${esc(codeVon(z) || (z ? "•••• (verschlüsselt)" : "–"))}</code></td><td>${z ? (z.aktiv ? "✅ aktiv" : "⛔ gesperrt") : "–"}</td><td>${z?.verwaltung ? "💻" : ""}</td><td>${z?.zuletzt ? vorZeit(z.zuletzt) : "nie"}</td>
+        <td style="white-space:nowrap">${schreiben ? (z ? `<button class="knopf klein" data-a="zugNeu" data-x="${z.id}">🔄 neuer Code</button> <button class="knopf klein" data-a="zugAktiv" data-x="${z.id}">${z.aktiv ? "sperren" : "freigeben"}</button> <button class="knopf klein" data-a="zugVw" data-x="${z.id}">💻</button>` : `<button class="knopf klein" data-a="zugAnlegen" data-x="${p.id}">anlegen</button>`) : ""} ${codeVon(z) ? `<button class="knopf klein" data-a="zugLink" data-x="${esc(codeVon(z))}">🔗</button>` : ""}</td></tr>`;
+    }).join("")}</tbody></table></div><div id="qrBereich"></div>`;
+};
+AKTIONEN.vwZugTyp = (v) => { V.filter = v; zeichne(); };
+AKTIONEN.zugNeu = async (id) => { if (!(await frage("Neuen Code erzeugen? Der alte Link funktioniert dann nicht mehr."))) return; await zugangSpeichern({ ...hole("zugaenge", id), code: neuerCode() }); zeichne(); };
+AKTIONEN.zugAktiv = async (id) => { const z = hole("zugaenge", id); await speichere("zugaenge", { ...z, aktiv: !z.aktiv }); zeichne(); };
+AKTIONEN.zugVw = async (id) => { const z = hole("zugaenge", id); await speichere("zugaenge", { ...z, verwaltung: !z.verwaltung }); toast(z.verwaltung ? "Verwaltungsrecht entzogen" : "💻 darf jetzt die PC-Verwaltung nutzen"); zeichne(); };
+AKTIONEN.zugAnlegen = async (pid) => { await zugangSpeichern({ person_id: pid, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }); zeichne(); };
+AKTIONEN.zugAlleAnlegen = async () => {
+  const typ = V.filter || "schueler";
+  const ohne = liste("personen", (p) => p.typ === typ && !liste("zugaenge", (z) => z.person_id === p.id).length);
+  const neu = ohne.map((p) => ({ person_id: p.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }));
+  const gespeichert = await speichereViele("zugaenge", neu);
+  gespeichert.forEach((z, i) => FRISCH.set(z.id, neu[i].code));
+  toast(`${ohne.length} Zugänge angelegt`); zeichne();
+};
+AKTIONEN.zugLink = async (code) => { try { await navigator.clipboard.writeText(appLink(code)); toast("🔗 Link kopiert"); } catch { prompt("Link:", appLink(code)); } };
+function qrBild(text) {
+  if (typeof globalThis.qrcode !== "function") return "";
+  const q = globalThis.qrcode(0, "M"); q.addData(text); q.make();
+  return q.createDataURL(4, 2);
+}
+AKTIONEN.zugKarten = () => {
+  const typ = V.filter || "schueler";
+  const k = konfig();
+  const karten = liste("personen", (p) => p.typ === typ).sort((a, b) => name(a).localeCompare(name(b))).map((p) => ({ p, z: liste("zugaenge", (x) => x.person_id === p.id && x.aktiv)[0] })).filter((x) => x.z);
+  const ohneCode = karten.filter((x) => !codeVon(x.z)).length;
+  const druckbar = karten.filter((x) => codeVon(x.z));
+  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">Druckvorschau (${druckbar.length} Karten) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3>
+    ${ohneCode ? `<p class="hinweis vw-noprint">${ohneCode} Zugänge ohne druckbaren Code: Codes sind verschlüsselt gespeichert und nur direkt nach dem Erzeugen sichtbar. Für eine neue Karte „🔄 neuer Code“ wählen.</p>` : ""}
+    <div class="qr-karten">${druckbar.map(({ p, z }) => `<div class="qr-karte">${BACHKREIS_LOGO}<b>${esc(k.name || "Bachkreis")}-App</b><div>${esc(name(p))}</div><img alt="QR-Code" src="${qrBild(appLink(codeVon(z)))}"><div>Code: <code>${esc(codeVon(z))}</code></div><div class="hinweis">QR-Code mit dem Handy scannen – fertig. Karte nicht weitergeben.</div></div>`).join("")}</div>`;
+  $("#qrBereich").scrollIntoView({ behavior: "smooth" });
+};
+AKTIONEN.vwDrucken = () => window.print();
+
+// ---------- 📦 Inventar & Abschreibung (0.19.0): Instrumente + Ausstattung in einer Liste ----------
+// Kennzahlen (Bestand, Anschaffungswert, Restbuchwert, AfA im Jahr), Problemfälle, Anlagenverzeichnis (CSV), Inventur, QR-Etiketten.
+const IV = { bereich: "", kat: "", status: "bestand", eig: "", q: "", jahr: new Date().getFullYear(), modus: "liste" };
+const ST_FARBE = { verfuegbar: "b-gruen", im_einsatz: "b-blau", verliehen: "b-blau", reparatur: "b-gelb", defekt: "b-rot", vermisst: "b-rot", gestohlen: "b-rot", ausgemustert: "b-grau", verkauft: "b-grau", verschrottet: "b-grau" };
+const STATUS_WAHL = { bestand: "im Bestand", probleme: "⚠️ Problemfälle", abgang: "Abgänge", alle: "alle", ...INVENTAR_STATUS };
+const katName = (x) => (x.art === "instrument" ? "🎻 Instrument" : `${AUSSTATTUNG_KATEGORIEN[x.art]?.[0] || "📦"} ${AUSSTATTUNG_KATEGORIEN[x.art]?.[1] || x.art}`);
+function invGefiltert() {
+  const stichtag = IV.jahr < new Date().getFullYear() ? new Date(IV.jahr, 11, 31) : new Date();
+  const q = IV.q.trim().toLowerCase();
+  return inventarBestand(db, { stichtag, jahr: IV.jahr }).filter((x) => {
+    const st = x.z.status || "verfuegbar";
+    if (IV.bereich && x.tab !== IV.bereich) return false;
+    if (IV.kat && x.art !== IV.kat) return false;
+    if (IV.eig && (x.z.eigentuemer || "") !== IV.eig) return false;
+    if (IV.status === "bestand" && INVENTAR_ABGANG.includes(st)) return false;
+    if (IV.status === "probleme" && !INVENTAR_PROBLEM.includes(st)) return false;
+    if (IV.status === "abgang" && !INVENTAR_ABGANG.includes(st)) return false;
+    if (INVENTAR_STATUS[IV.status] && st !== IV.status) return false;
+    return !q || [x.nr, x.name, x.z.standort, x.z.seriennummer, x.z.hersteller, x.z.notiz, x.z.ausgeschieden_grund].some((v) => String(v || "").toLowerCase().includes(q));
+  });
+}
+ANSICHTEN.inventarbericht = () => {
+  const l = invGefiltert(), alle = inventarBestand(db, { jahr: IV.jahr }), heute = tagIso(new Date());
+  const bestand = alle.filter((x) => !INVENTAR_ABGANG.includes(x.z.status));
+  const summe = (arr, f) => arr.reduce((s, x) => s + f(x), 0);
+  const probleme = alle.filter((x) => INVENTAR_PROBLEM.includes(x.z.status));
+  const abgaengeJahr = alle.filter((x) => INVENTAR_ABGANG.includes(x.z.status) && String(x.z.ausgeschieden_am || "").startsWith(String(IV.jahr)));
+  const inventurAlt = bestand.filter((x) => !x.z.inventur_am || x.z.inventur_am < tagIso(new Date(Date.now() - 365 * 86400000)));
+  const kz = [["📦", bestand.length + " Positionen", `${summe(bestand, (x) => x.anzahl)} Stück im Bestand`], ["💶", geld(summe(bestand, (x) => x.afa.basis)), "Anschaffungswert (Bestand)"],
+    ["📉", geld(summe(alle, (x) => x.afa.afaJahr)), `Abschreibung ${IV.jahr}`], ["🧾", geld(summe(bestand, (x) => x.afa.restwert)), "Restbuchwert heute"],
+    ["⚠️", probleme.length, "Reparatur, defekt, vermisst, gestohlen"], ["🔍", inventurAlt.length, "seit über 1 Jahr nicht inventarisiert"]];
+  const sel = (c, o, w, leer) => `<select data-c="${c}">${leer ? `<option value="">${esc(leer)}</option>` : ""}${Object.entries(o).map(([k, t]) => `<option value="${esc(k)}" ${String(w) === k ? "selected" : ""}>${esc(t)}</option>`).join("")}</select>`;
+  const jahre = Object.fromEntries(Array.from({ length: 6 }, (_, i) => new Date().getFullYear() - 4 + i).map((j) => [String(j), "AfA " + j]));
+  const schreibA = darf("ausstattung", "schreiben"), schreibI = darf("inventar", "schreiben");
+  const zeile = (x) => {
+    const st = x.z.status || "verfuegbar", a = x.afa;
+    return `<tr data-a="invOeffnen" data-x="${x.tab}|${x.id}" class="${INVENTAR_PROBLEM.includes(st) ? "inv-problem" : INVENTAR_ABGANG.includes(st) ? "inv-abgang" : ""}">
+      <td><b>${esc(x.nr)}</b></td><td>${esc(x.name)}${x.z.seriennummer ? `<br><small class="hinweis">SN ${esc(x.z.seriennummer)}</small>` : ""}</td><td>${esc(katName(x))}</td><td class="r">${x.anzahl}</td>
+      <td><span class="badge ${ST_FARBE[st] || ""}">${esc(INVENTAR_STATUS[st] || st)}</span>${INVENTAR_ABGANG.includes(st) && x.z.ausgeschieden_am ? `<br><small class="hinweis">${datumKurz(x.z.ausgeschieden_am)}</small>` : ""}</td>
+      <td>${esc(x.z.standort || "")}</td><td>${x.z.anschaffung ? datumKurz(x.z.anschaffung) : "–"}</td><td class="r">${a.basis ? geld(a.basis) : "–"}</td>
+      <td>${a.ohneDaten ? "–" : a.art === "linear" ? `${a.jahre} J.` : a.art === "sofort" ? "GWG" : "keine"}</td><td class="r">${a.afaJahr ? geld(a.afaJahr) : "–"}</td><td class="r">${a.ohneDaten ? "–" : geld(a.restwert)}</td>
+      ${IV.modus === "inventur" ? `<td>${INVENTAR_ABGANG.includes(st) ? "" : x.z.inventur_am === heute ? "✅ heute" : `<button class="knopf klein" data-a="invGesehen" data-x="${x.tab}|${x.id}">✅ gesehen</button><br><small class="hinweis">${x.z.inventur_am ? datumKurz(x.z.inventur_am) : "nie"}</small>`}</td>` : ""}</tr>`;
+  };
+  return `<div class="vw-kopf"><h2>📦 Inventar & Abschreibung <span class="hinweis">(${l.length})</span></h2>
+      <input type="search" placeholder="Nr., Name, Standort, Seriennr. …" value="${esc(IV.q)}" data-c="invSuche">
+      ${sel("invFeld", { inventar: "🎻 Instrumente", ausstattung: "📦 Ausstattung" }, IV.bereich, "Instrumente + Ausstattung").replace('data-c="invFeld"', 'data-c="invFeld" data-x="bereich"')}
+      ${sel("invFeld", Object.fromEntries(Object.entries(AUSSTATTUNG_KATEGORIEN).map(([k, [sym, t]]) => [k, `${sym} ${t}`])), IV.kat, "alle Kategorien").replace('data-c="invFeld"', 'data-c="invFeld" data-x="kat"')}
+      ${sel("invFeld", STATUS_WAHL, IV.status).replace('data-c="invFeld"', 'data-c="invFeld" data-x="status"')}
+      ${sel("invFeld", EIGENTUEMER, IV.eig, "alle Eigentümer").replace('data-c="invFeld"', 'data-c="invFeld" data-x="eig"')}
+      ${sel("invFeld", jahre, IV.jahr).replace('data-c="invFeld"', 'data-c="invFeld" data-x="jahr"')}</div>
+    <div class="kennzahlen">${kz.map(([s, n, t]) => `<div class="kennzahl"><b>${s} ${n}</b><small>${esc(t)}</small></div>`).join("")}</div>
+    <div class="knopfreihe vw-noprint" style="margin:10px 0">${schreibA ? `<button class="knopf haupt" data-a="invNeu" data-x="ausstattung">＋ Ausstattung (Notenständer, Taktstock …)</button>` : ""}${schreibI ? `<button class="knopf" data-a="invNeu" data-x="inventar">＋ Instrument</button>` : ""}
+      <button class="knopf ${IV.modus === "inventur" ? "haupt" : ""}" data-a="invModus" data-x="inventur">✅ Inventur</button><button class="knopf" data-a="invEtiketten">🏷️ QR-Etiketten</button><button class="knopf" data-a="invCsv">📤 Anlagenverzeichnis ${IV.jahr} (CSV)</button></div>
+    ${probleme.length && IV.status !== "probleme" ? `<div class="karte inv-achtung"><b>⚠️ ${probleme.length} Problemfälle:</b> ${probleme.slice(0, 8).map((x) => `<button class="link" data-a="invOeffnen" data-x="${x.tab}|${x.id}">${esc(x.nr)} ${esc(x.name.split(" · ")[0])} (${esc(INVENTAR_STATUS[x.z.status])})</button>`).join(" · ")}${probleme.length > 8 ? " …" : ""} <button class="link" data-a="invFeldSetzen" data-x="status:probleme">alle zeigen ›</button></div>` : ""}
+    ${abgaengeJahr.length ? `<div class="hinweis">Abgänge ${IV.jahr}: ${abgaengeJahr.map((x) => `${esc(x.nr)} ${esc(INVENTAR_STATUS[x.z.status])} (Buchwert ${geld(x.afa.buchwertAbgang ?? x.afa.restwert)})`).join(" · ")}</div>` : ""}
+    ${IV.modus === "inventur" ? `<div class="karte inv-inventur"><b>✅ Inventur:</b> Gegenstand gefunden → „gesehen“ (Datum heute). Nicht gefunden → anklicken, Status „vermisst“. <button class="knopf klein" data-a="invAlleGesehen">alle angezeigten als gesehen</button> <button class="knopf klein" data-a="invModus" data-x="liste">fertig</button></div>` : ""}
+    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Nr.</th><th>Bezeichnung</th><th>Kategorie</th><th>Anz.</th><th>Status</th><th>Standort</th><th>Anschaffung</th><th>Preis</th><th>AfA</th><th>AfA ${IV.jahr}</th><th>Restwert</th>${IV.modus === "inventur" ? "<th>Inventur</th>" : ""}</tr></thead>
+      <tbody>${l.map(zeile).join("") || `<tr><td colspan="12" class="hinweis">Nichts gefunden.</td></tr>`}</tbody>
+      <tfoot><tr><td colspan="7"><b>Summe (${l.length} Positionen, ${summe(l, (x) => x.anzahl)} Stück)</b></td><td class="r"><b>${geld(summe(l, (x) => x.afa.basis))}</b></td><td></td><td class="r"><b>${geld(summe(l, (x) => x.afa.afaJahr))}</b></td><td class="r"><b>${geld(summe(l, (x) => x.afa.restwert))}</b></td>${IV.modus === "inventur" ? "<td></td>" : ""}</tr></tfoot></table></div>
+    <p class="hinweis">Abschreibung: linear monatsgenau ab Anschaffungsmonat, bis ${geld(800)} sofort (GWG) – Richtwerte je Kategorie (Instrumente 10 Jahre). Im Datensatz lässt sich Art und Nutzungsdauer ändern; maßgeblich sind die Vorgaben von Kassenprüfung bzw. Steuerberatung. Eigentum der Schule gehört meist nicht ins Anlagenverzeichnis des Fördervereins – dafür der Filter „Eigentümer“.</p>
+    <div id="qrBereich"></div>`;
+};
+AKTIONEN.invSuche = (v) => { IV.q = v; zeichne(); };
+AKTIONEN.invFeld = (_, el) => { IV[el.dataset.x] = el.dataset.x === "jahr" ? Number(el.value) : el.value; zeichne(); };
+AKTIONEN.invFeldSetzen = (x) => { const [k, v] = x.split(":"); IV[k] = v; zeichne(); };
+AKTIONEN.invModus = (m) => { IV.modus = IV.modus === m ? "liste" : m; zeichne(); };
+AKTIONEN.invOeffnen = (x) => { const [t, id] = x.split("|"); V.ansicht = "tabelle"; V.tab = t; V.auswahl = id; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
+AKTIONEN.invNeu = (t) => { V.ansicht = "tabelle"; V.tab = t; V.auswahl = "neu"; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
+AKTIONEN.invGesehen = async (x) => { const [t, id] = x.split("|"); await speichere(t, { ...hole(t, id), inventur_am: tagIso(new Date()) }); zeichne(); };
+AKTIONEN.invAlleGesehen = async () => {
+  const l = invGefiltert().filter((x) => !INVENTAR_ABGANG.includes(x.z.status) && x.z.inventur_am !== tagIso(new Date()));
+  if (!l.length || !(await frage(`${l.length} angezeigte Positionen als „heute gesehen“ markieren?`))) return;
+  for (const t of ["inventar", "ausstattung"]) { const z = l.filter((x) => x.tab === t).map((x) => ({ ...x.z, inventur_am: tagIso(new Date()) })); if (z.length) await speichereViele(t, z); }
+  toast(`✅ ${l.length} Positionen inventarisiert`); zeichne();
+};
+AKTIONEN.invCsv = () => {
+  const l = invGefiltert().map((x) => ({ nr: x.nr, bezeichnung: x.name, bereich: x.tab === "inventar" ? "Instrument" : "Ausstattung", kategorie: katName(x).replace(/^\S+ /, ""), anzahl: x.anzahl,
+    status: INVENTAR_STATUS[x.z.status || "verfuegbar"], eigentuemer: EIGENTUEMER[x.z.eigentuemer] || "", standort: x.z.standort || "", seriennummer: x.z.seriennummer || "", anschaffung: x.z.anschaffung || "",
+    anschaffungswert: x.afa.basis.toFixed(2).replace(".", ","), afa_art: AFA_ARTEN[x.afa.art], nutzungsdauer: x.afa.art === "linear" ? x.afa.jahre : "", ["afa_" + IV.jahr]: x.afa.afaJahr.toFixed(2).replace(".", ","),
+    afa_kumuliert: x.afa.kumuliert.toFixed(2).replace(".", ","), restbuchwert: x.afa.restwert.toFixed(2).replace(".", ","), abgang_am: x.z.ausgeschieden_am || "", abgang_grund: x.z.ausgeschieden_grund || "", beleg: x.z.beleg || "", inventur_am: x.z.inventur_am || "" }));
+  if (!l.length) return toast("Nichts zu exportieren");
+  herunterladen(`anlagenverzeichnis-${IV.jahr}-${tagIso(new Date())}.csv`, "\ufeff" + csvAus(l, Object.keys(l[0])), "text/csv");
+};
+AKTIONEN.invEtiketten = () => {
+  const l = invGefiltert().filter((x) => !INVENTAR_ABGANG.includes(x.z.status)), k = konfig();
+  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">🏷️ Etiketten (${l.length}) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3><p class="hinweis vw-noprint">Auf Etikettenpapier drucken und aufkleben. Der QR-Code enthält Inventar-Nr. und Bezeichnung – mit jeder Handy-Kamera lesbar (Inventur, Schadensmeldung).</p>
+    <div class="inv-etiketten">${l.map((x) => `<div class="inv-etikett"><img alt="QR ${esc(x.nr)}" src="${qrBild(`${k.name || "Bachkreis"} Inventar ${x.nr}: ${x.name}`)}"><div><b>${esc(x.nr)}</b><small>${esc(x.name)}</small><small>Eigentum ${esc(EIGENTUEMER[x.z.eigentuemer] || k.name || "Bachkreis")}</small></div></div>`).join("")}</div>`;
+  $("#qrBereich").scrollIntoView({ behavior: "smooth" });
+};
+
+// ---------- 📋 Anwesenheit & Fehlzeiten (0.20.0) ----------
+const AW = { gr: "", tage: 180 };
+const awZeilen = () => {
+  const personen = AW.gr ? gruppenMitglieder(db, AW.gr) : null;
+  return fehlzeiten(db, { von: new Date(Date.now() - AW.tage * 86400000), personen, gruppe: AW.gr || null }).filter((z) => hole("personen", z.person_id)?.typ === "schueler")
+    .map((z) => ({ ...z, name: name(hole("personen", z.person_id)), gruppe: hole("gruppen", stammgruppe(db, z.person_id))?.kuerzel || "" }));
+};
+ANSICHTEN.anwesenheit = () => {
+  const l = awZeilen(), gruppen = liste("gruppen").sort((a, b) => (a.sort ?? 99) - (b.sort ?? 99));
+  return `<div class="vw-kopf"><h2>📋 Anwesenheit & Fehlzeiten <span class="hinweis">(${l.length})</span></h2>
+      <select data-c="awFeld" data-x="gr"><option value="">alle Gruppen</option>${gruppen.map((g) => `<option value="${g.id}" ${AW.gr === g.id ? "selected" : ""}>${esc(g.kuerzel)} – ${esc(g.name)}</option>`).join("")}</select>
+      <select data-c="awFeld" data-x="tage">${[[30, "30 Tage"], [90, "3 Monate"], [180, "Halbjahr"], [365, "Schuljahr / 1 Jahr"]].map(([k, t]) => `<option value="${k}" ${AW.tage === k ? "selected" : ""}>${t}</option>`).join("")}</select>
+      <button class="knopf" data-a="awCsv">📤 CSV</button></div>
+    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle inv-tabelle"><thead><tr><th>Name</th><th>Gruppe</th><th class="r">✅ da</th><th class="r">⏰ verspätet</th><th class="r">🟡 entschuldigt</th><th class="r">❌ unentschuldigt</th><th class="r">erfasst</th><th class="r">Quote</th></tr></thead>
+      <tbody>${l.map((z) => `<tr class="${z.nein >= 2 || (z.quote ?? 100) < 70 ? "inv-problem" : ""}"><td>${esc(z.name)}</td><td>${esc(z.gruppe)}</td><td class="r">${z.ja}</td><td class="r">${z.spaet}</td><td class="r">${z.entschuldigt}</td><td class="r">${z.nein}</td><td class="r">${z.erfasst}</td><td class="r"><b>${z.quote == null ? "UNBEKANNT" : z.quote + " %"}</b></td></tr>`).join("") || '<tr><td colspan="8" class="hinweis">Keine Anwesenheit erfasst.</td></tr>'}</tbody></table></div>
+    <p class="hinweis">Quote = (da + verspätet) ÷ erfasste Termine. Rot: 2× unentschuldigt oder unter 70 %. Erfasst wird in der App im Termin unter „Teilnehmer“.</p>`;
+};
+AKTIONEN.awFeld = (_, el) => { AW[el.dataset.x] = el.dataset.x === "tage" ? Number(el.value) : el.value; zeichne(); };
+AKTIONEN.awCsv = () => {
+  const l = awZeilen().map((z) => ({ name: z.name, gruppe: z.gruppe, da: z.ja, verspaetet: z.spaet, entschuldigt: z.entschuldigt, unentschuldigt: z.nein, erfasst: z.erfasst, quote: z.quote ?? "" }));
+  if (!l.length) return toast("Nichts zu exportieren");
+  herunterladen(`anwesenheit-${tagIso(new Date())}.csv`, "\ufeff" + csvAus(l, Object.keys(l[0])), "text/csv");
+};
+
+// ---------- 🧹 Datenschutz & Löschfristen (0.21.0) ----------
+// Nach Austritt + Löschfrist: anonymisieren (Name „Ehemals …“, Kontakt/Gesundheit/Übe-Tagebuch weg, Statistik bleibt). Vorher Sicherung.
+ANSICHTEN.datenschutz = () => {
+  const monate = Number(konfig().loeschfrist_monate) || 24, k = loeschKandidaten(db, { monate });
+  const ohneDatum = liste("personen", (p) => p.status === "ausgetreten" && !p.ausgetreten_am && !p.anonymisiert);
+  return `<div class="vw-kopf"><h2>🧹 Datenschutz & Löschfristen</h2></div>
+    <div class="karte"><h3>Ausgetreten, Löschfrist (${monate} Monate) abgelaufen: ${k.personen.length}</h3>
+      ${k.personen.length ? `<ul class="liste">${k.personen.map((p) => `<li><div class="fl">${esc(name(p))} <span class="hinweis">ausgetreten ${datumKurz(p.ausgetreten_am)}</span></div><button class="knopf klein" data-a="dsAnonym" data-x="${p.id}">🧹 anonymisieren</button></li>`).join("")}</ul><button class="knopf haupt" data-a="dsAnonymAlle">🧹 Alle ${k.personen.length} anonymisieren</button>` : '<p class="hinweis">Niemand – alles in Ordnung.</p>'}
+      ${ohneDatum.length ? `<p class="hinweis">⚠️ ${ohneDatum.length} Ausgetretene ohne Austrittsdatum (die Frist läuft erst mit Datum): ${ohneDatum.slice(0, 8).map((p) => esc(name(p))).join(", ")}${ohneDatum.length > 8 ? " …" : ""}</p>` : ""}</div>
+    <div class="karte"><h3>🩺 Abgelaufene Gesundheitsangaben: ${k.gesundheit.length}</h3><p class="hinweis">Nicht innerhalb von 13 Monaten bestätigt.</p>${k.gesundheit.length ? `<button class="knopf" data-a="dsGesundheit">🗑️ ${k.gesundheit.length} löschen</button>` : ""}</div>
+    <p class="hinweis">Anonymisieren entfernt: Kontakt, Adresse, Geburtsdatum, Notizen, Gesicht, Gesundheit, Übe-Tagebuch, eigene Termine, Eltern-Verknüpfung, Anmeldungen. Erhalten bleiben (ohne Namen) Anwesenheiten und der Ausleih-Verlauf der Instrumente. Vor jedem Lauf wird eine Sicherung heruntergeladen.</p>`;
+};
+async function anonymisieren(pid) {
+  const p = hole("personen", pid); if (!p) return;
+  await speichere("personen", { ...p, ...Object.fromEntries(ANONYM_LEEREN.map((k) => [k, null])), vorname: "Ehemals", nachname: `#${String(pid).slice(-4)}`, rollen: [], anonymisiert: true }, { still: true });
+  for (const t of ANONYM_LOESCHEN) for (const z of liste(t, (x) => [x.person_id, x.kind_id, x.eltern_id, x.von, x.an].includes(pid))) await loesche(t, z.id);
+  for (const z of liste("zugaenge", (x) => x.person_id === pid && x.aktiv)) await speichere("zugaenge", { ...z, aktiv: false }, { still: true });
+}
+AKTIONEN.dsAnonym = async (pid) => { if (!(await frage(`${name(hole("personen", pid))} anonymisieren? Das lässt sich nicht rückgängig machen (Sicherung wird heruntergeladen).`))) return; sicherung(); await anonymisieren(pid); toast("🧹 Anonymisiert"); zeichne(); };
+AKTIONEN.dsAnonymAlle = async () => {
+  const l = loeschKandidaten(db, { monate: Number(konfig().loeschfrist_monate) || 24 }).personen;
+  if (!(await frage(`${l.length} Personen anonymisieren? Vorher wird eine Sicherung heruntergeladen.`))) return;
+  sicherung(); for (const p of l) await anonymisieren(p.id); toast(`🧹 ${l.length} anonymisiert`); zeichne();
+};
+AKTIONEN.dsGesundheit = async () => {
+  const l = loeschKandidaten(db).gesundheit;
+  if (!(await frage(`${l.length} abgelaufene Gesundheitsangaben löschen?`))) return;
+  for (const g of l) await loesche("gesundheit", g.id); toast(`🗑️ ${l.length} gelöscht`); zeichne();
+};
+
+// ---------- Import / Export ----------
+ANSICHTEN.import = () => {
+  const schreibbar = TABELLEN_NAMEN.filter((t) => darf(t, "schreiben") && !TABELLEN[t].nurLesen);
+  return `<div class="vw-kopf"><h2>📥 Import / Export</h2></div>
+    <div class="karte"><h3>Export</h3><div class="knopfreihe"><button class="knopf haupt" data-a="exportJson">💾 Gesamtsicherung (JSON)</button></div><p class="hinweis">Einzelne Tabellen als CSV (Excel): in der jeweiligen Tabelle „📤 CSV“.</p></div>
+    <div class="karte"><h3>Import aus CSV (z. B. Schülerliste aus Excel)</h3>
+      <div class="feld"><label>Ziel-Tabelle</label><select id="impTab">${schreibbar.map((t) => `<option value="${t}">${TABELLEN[t].sym} ${esc(TABELLEN[t].titel)}</option>`).join("")}</select></div>
+      <div class="feld"><label>Datei (.csv, Trenner ; oder ,)</label><input type="file" id="impDatei" accept=".csv,text/csv"></div>
+      <button class="knopf" data-a="impVorschau">🔍 Vorschau</button><div id="impErgebnis"></div>
+      <p class="hinweis">Spaltenüberschriften dürfen Feldnamen (z. B. <code>vorname</code>) oder Bezeichnungen (z. B. „Vorname“) sein. Mit Spalte <code>id</code> werden vorhandene Datensätze aktualisiert, sonst neu angelegt. Verweise (z. B. Instrumententyp) können per Name angegeben werden.</p></div>`;
+};
+let IMPORT = null;
+AKTIONEN.impVorschau = async () => {
+  const tab = $("#impTab").value, datei = $("#impDatei").files[0];
+  if (!datei) { toast("Bitte Datei wählen"); return; }
+  const roh = csvEin(await datei.text());
+  const def = TABELLEN[tab];
+  const zuord = (kopf) => { const k = kopf.trim().toLowerCase(); return k === "id" ? { k: "id" } : def.felder.find((f) => f.k.toLowerCase() === k || f.t.toLowerCase() === k); };
+  const fehler = [];
+  const zeilen = roh.map((r, i) => {
+    const o = {};
+    for (const [kopf, wert] of Object.entries(r)) {
+      const f = zuord(kopf); if (!f) continue;
+      let v = wert.trim();
+      if (f.k === "id") { if (v) o.id = v; continue; }
+      if (f.typ === "ja") v = /^(1|ja|x|true|wahr)$/i.test(v);
+      else if (f.typ === "zahl" || f.typ === "geld") v = v === "" ? null : Number(v.replace(",", "."));
+      else if (f.typ === "liste" || f.typ === "refs") v = v ? v.split("|").map((x) => x.trim()) : [];
+      else if (f.typ === "ref" && v && !hole(f.ref, v)) { const t = liste(f.ref).find((x) => nameVon(f.ref, x).toLowerCase() === v.toLowerCase()); if (t) v = t.id; else fehler.push(`Zeile ${i + 2}: „${v}“ nicht in ${TABELLEN[f.ref].titel} gefunden`); }
+      else if (f.typ === "wahl" && v && !f.werte[v]) { const k = Object.entries(f.werte).find(([, t]) => t.toLowerCase() === v.toLowerCase())?.[0]; if (k) v = k; else fehler.push(`Zeile ${i + 2}: „${v}“ ist kein gültiger Wert für ${f.t}`); }
+      else if (f.typ === "datum" && /^\d{1,2}\.\d{1,2}\.\d{4}$/.test(v)) { const [d, m, y] = v.split("."); v = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`; }
+      o[f.k] = v;
+    }
+    for (const f of def.felder) if (f.pflicht && (o[f.k] == null || o[f.k] === "") && !o.id) fehler.push(`Zeile ${i + 2}: Pflichtfeld „${f.t}“ fehlt`);
+    return o;
+  });
+  IMPORT = { tab, zeilen };
+  $("#impErgebnis").innerHTML = `<p><b>${zeilen.length}</b> Zeilen erkannt · ${zeilen.filter((z) => z.id && hole(tab, z.id)).length} Aktualisierungen · ${zeilen.filter((z) => !z.id || !hole(tab, z.id)).length} neu</p>${fehler.length ? `<div class="badge b-rot">${fehler.length} Hinweise</div><ul>${fehler.slice(0, 20).map((f) => `<li>${esc(f)}</li>`).join("")}</ul>` : '<div class="badge b-gruen">keine Fehler</div>'}<button class="knopf haupt" data-a="impAusfuehren" ${fehler.length ? "" : ""}>📥 Importieren</button>`;
+};
+AKTIONEN.impAusfuehren = async () => {
+  if (!IMPORT) return;
+  sicherung();
+  const { tab, zeilen } = IMPORT;
+  await speichereViele(tab, zeilen.map((z) => (z.id && hole(tab, z.id) ? { ...hole(tab, z.id), ...z } : z)));
+  toast(`📥 ${zeilen.length} Datensätze importiert (Sicherung wurde vorher heruntergeladen)`); IMPORT = null; zeichne();
+};
+function sicherung() {
+  const d = Object.fromEntries(TABELLEN_NAMEN.map((t) => [t, liste(t)]));
+  herunterladen(`bachkreis-sicherung-${new Date().toISOString().replace(/[:.]/g, "-")}.json`, JSON.stringify({ version: APP_VERSION, zeit: new Date().toISOString(), konfig: konfig(), daten: d }), "application/json");
+}
+AKTIONEN.exportJson = () => sicherung();
+
+// ---------- Abgleich & Protokoll ----------
+ANSICHTEN.abgleich = () => {
+  const info = datenInfo();
+  const prot = liste("aenderungen").slice(-200).reverse();
+  return `<div class="vw-kopf"><h2>🔁 Abgleich & Protokoll</h2></div>
+    <div class="karte"><p>Datenquelle: <b>${esc(info.art)}</b> · ${esc(info.hinweis || "")}</p><p class="hinweis">Jede Tabelle hat die Abgleich-Spalten <code>version</code>, <code>geaendert_am</code>, <code>geaendert_von</code> und <code>geloescht_am</code> (weiches Löschen). Im Echtbetrieb übernimmt Supabase den Abgleich zwischen App und Verwaltung; ein Spiegel-Job kopiert nach Neon, Backups gehen nach B2.</p></div>
+    <div class="vw-geteilt"><div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Tabelle</th><th>Datensätze</th><th>gelöscht</th><th>letzte Änderung</th></tr></thead><tbody>${TABELLEN_NAMEN.map((t) => { const alle = liste(t); const letzte = alle.reduce((m, z) => (z.geaendert_am > m ? z.geaendert_am : m), ""); return `<tr><td>${TABELLEN[t].sym} bk_${t}</td><td>${alle.length}</td><td>${listeMitGeloeschten(t).length - alle.length}</td><td>${letzte ? vorZeit(letzte) : "–"}</td></tr>`; }).join("")}</tbody></table></div>
+    <div class="vw-form" tabindex="0" role="region" aria-label="Änderungsprotokoll"><h3>Änderungsprotokoll</h3><ul class="liste">${prot.map((a) => `<li><div class="fl"><b>${esc(TABELLEN[a.tabelle]?.titel || a.tabelle)}</b> · ${esc(a.aktion)}<div class="zeile-unter">${esc(a.wer)} · ${esc(a.quelle)} · ${vorZeit(a.zeit)}</div></div></li>`).join("") || "<li>leer</li>"}</ul></div></div>`;
+};
+
+
+// ---------- BK Communicator: Konsole (Lämpchen, Not-Aus, Test, Aufträge mit Ereignissen) ----------
+const KOM_TABS = ["kom_einstellungen", "kom_regeln", "kom_vorlagen", "kom_anbieter", "kom_routen", "kom_eskalationen", "kom_programme", "kom_zustand", "kom_ereignisse", "versand"];
+const stFarbe = (st) => (["fehler", "tot"].includes(st) ? "b-rot" : ["wartend", "erneut", "in_arbeit"].includes(st) ? "b-gelb" : ["simuliert", "unterdrueckt", "uebergeben", "vorgemerkt"].includes(st) ? "b-grau" : "b-gruen");
+const zFarbe = { ok: "gruen", gestoert: "gelb", ausgefallen: "rot", nicht_eingerichtet: "gelb", unbekannt: "grau" };
+ANSICHTEN.communicator = () => {
+  const cz = communicatorZustand();
+  const e = hole("kom_einstellungen", "global") || {};
+  const darfK = darf("kom_einstellungen", "schreiben");
+  const tag = Date.now() - 86400000;
+  const v = liste("versand").sort((a, b) => String(b.zeit).localeCompare(String(a.zeit)));
+  const v24 = v.filter((x) => new Date(x.zeit).getTime() > tag);
+  const zaehl = {}; for (const x of v24) zaehl[x.status] = (zaehl[x.status] || 0) + 1;
+  const anbieter = liste("kom_anbieter").map((a) => ({ a, z: liste("kom_zustand", (x) => x.anbieter_id === a.id)[0], routen: liste("kom_routen", (r) => r.anbieter_id === a.id && r.aktiv !== false) }));
+  const gewaehlt = V.komAuftrag ? hole("versand", V.komAuftrag) : null;
+  const imVorgang = new Set(gewaehlt ? [gewaehlt.id, ...v.filter((y) => gewaehlt.korrelation && y.korrelation === gewaehlt.korrelation).map((y) => y.id)] : []);
+  const ev = liste("kom_ereignisse", (x) => imVorgang.has(x.auftrag_id)).sort((a, b) => String(a.zeit).localeCompare(String(b.zeit)));
+  const nameP = (id) => esc(name(hole("personen", id)));
+  return `<div class="vw-kopf"><h2>📡 BK Communicator</h2><span class="hinweis">Versand-Kern wie der KC Communicator: Regeln → Aufträge → Anbieter</span></div>
+    <div class="karte"><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><i class="led ${cz.farbe}" style="width:18px;height:18px"></i><div class="fl"><b>${istEchtbetrieb() ? "Echtbetrieb" : "Vorführversion (simuliert, nichts wird verschickt)"}</b><div class="hinweis">${esc(cz.text)}</div></div>
+      ${darfK ? `<label class="schalter" style="margin:0"><span><b>Versand ${e.versand_aktiv === false ? "AUS" : "an"}</b><div class="hinweis">aus = Not-Aus (Notfälle gehen trotzdem)</div></span><input type="checkbox" data-c="komSchalter" ${e.versand_aktiv === false ? "" : "checked"}></label>` : ""}</div>
+      <div class="knopfreihe" style="margin-top:10px"><button class="knopf" data-a="komTest" data-x="push">🧪 Test-Push an mich</button><button class="knopf" data-a="komTest" data-x="mail">🧪 Test-Mail an mich</button>${istEchtbetrieb() && darfK ? `<button class="knopf" data-a="komJetzt">▶️ Jetzt zustellen & warten</button>` : ""}<button class="knopf" data-a="komNeu">↻ Aktualisieren</button></div>
+      <p class="hinweis">Zero-Cost-Sperre: <b>${e.nur_kostenlos === false ? "aus" : "an"}</b> · Ruhezeit ${esc(e.ruhe_von || "–")}–${esc(e.ruhe_bis || "–")} · höchstens ${esc(e.max_pro_minute ?? "–")}/Min. · ${esc(e.max_versuche ?? "–")} Versuche</p></div>
+    <div class="kennzahlen">${["wartend", "erneut", "gesendet", "zugestellt", "angezeigt", "geoeffnet", "quittiert", "fehler", "tot", "unterdrueckt", "simuliert"].map((k) => `<div class="kennzahl"><b>${zaehl[k] || 0}</b><small>${esc(KOM_STATUS[k])} (24 Std.)</small></div>`).join("")}</div>
+    <div class="karte"><h3>Anbieter</h3><ul class="liste">${anbieter.map(({ a, z, routen }) => `<li><i class="led ${a.aktiv === false ? "grau" : zFarbe[z?.status || "unbekannt"]}"></i><div class="fl"><b>${esc(a.name)}</b> <span class="hinweis">${esc(a.kanal)} · ${esc(a.art)}${a.kostenlos ? " · kostenlos" : " · kostenpflichtig"}${routen.length ? " · Route " + routen.map((r) => "#" + r.rang).join(", ") : " · keine Route"}${a.aktiv === false ? " · inaktiv" : ""}</span>
+      <div class="zeile-unter">${esc(KOM_ZUSTAND[z?.status] || "unbekannt")}${z?.fehler_folge ? ` · ${z.fehler_folge} Fehler in Folge` : ""}${z?.gesendet_24h ? ` · ${z.gesendet_24h} gesendet (24 Std.)` : ""}${z?.letzter_erfolg ? ` · zuletzt ok ${vorZeit(z.letzter_erfolg)}` : ""}${z?.fehler_text ? ` · ${esc(z.fehler_text)}` : ""}${a.geheimnis ? ` · Secret: <code>${esc(a.geheimnis)}</code>` : ""}</div></div></li>`).join("")}</ul></div>
+    <div class="karte"><h3>Einstellen</h3><div class="knopfreihe">${KOM_TABS.filter((t) => darf(t, "lesen")).map((t) => `<button class="knopf" data-a="vwTabelle" data-x="${t}">${TABELLEN[t].sym} ${esc(TABELLEN[t].titel.replace("Communicator: ", ""))}</button>`).join("")}</div></div>
+    <div class="vw-geteilt"><div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Zeit</th><th>Kanal</th><th>an</th><th>Betreff</th><th>Status</th><th>Anbieter</th><th>Vers.</th><th>Fehler</th></tr></thead><tbody>
+      ${v.slice(0, 300).map((x) => `<tr class="${V.komAuftrag === x.id ? "gewaehlt" : ""}" data-a="komWahl" data-x="${x.id}"><td>${vorZeit(x.zeit)}</td><td>${esc(KOM_KANAELE[x.kanal] || x.kanal)}</td><td>${nameP(x.an_id)}</td><td>${esc(x.betreff || "")}</td><td><span class="badge ${stFarbe(x.status)}">${esc(KOM_STATUS[x.status] || x.status)}</span></td><td>${esc(hole("kom_anbieter", x.anbieter_id)?.name || "")}</td><td>${x.versuche ?? ""}</td><td>${esc(x.fehler_code || "")}</td></tr>`).join("") || `<tr><td colspan="8" class="hinweis">noch keine Aufträge</td></tr>`}</tbody></table></div>
+    ${gewaehlt ? `<div class="vw-form"><h3>${esc(gewaehlt.betreff || "Auftrag")}</h3><p>${esc(KOM_KANAELE[gewaehlt.kanal] || gewaehlt.kanal)} → <b>${nameP(gewaehlt.an_id)}</b> · <span class="badge ${stFarbe(gewaehlt.status)}">${esc(KOM_STATUS[gewaehlt.status] || gewaehlt.status)}</span></p>
+      <p class="hinweis">Ereignis ${esc(gewaehlt.ereignis || "–")} · Programm ${esc(gewaehlt.programm || "–")} · Priorität ${esc(gewaehlt.prioritaet || "–")}${gewaehlt.naechster_versuch ? ` · nächster Versuch ${datumKurz(gewaehlt.naechster_versuch)} ${new Date(gewaehlt.naechster_versuch).toTimeString().slice(0, 5)}` : ""}${gewaehlt.fehler_text ? `<br>Fehler: ${esc(gewaehlt.fehler_text)}` : ""}</p>
+      <p style="white-space:pre-wrap">${esc(gewaehlt.info || "")}</p>
+      <h4>Verlauf des Vorgangs</h4><ul class="liste">${ev.map((x) => `<li><div class="fl"><b>${esc(x.art)}</b> ${esc(x.kanal || "")} ${x.code ? `<code>${esc(x.code)}</code>` : ""}<div class="zeile-unter">${vorZeit(x.zeit)} ${esc(hole("kom_anbieter", x.anbieter_id)?.name || "")} ${esc(x.text || "")}</div></div></li>`).join("") || "<li class='hinweis'>keine Ereignisse</li>"}</ul>
+      <div class="knopfreihe"><button class="knopf" data-a="komWahl" data-x="">Schließen</button></div></div>` : ""}</div>`;
+};
+AKTIONEN.komWahl = (id) => { V.komAuftrag = id || null; zeichne(); };
+AKTIONEN.komNeu = async () => { await jetztAbgleichen(); zeichne(); };
+AKTIONEN.komSchalter = async (_, el) => {
+  const e = hole("kom_einstellungen", "global");
+  if (!e) { toast("Grundeinstellungen fehlen"); return; }
+  if (!el.checked && !(await frage("Versand wirklich abschalten (Not-Aus)? Nur Notfälle gehen dann noch raus."))) { el.checked = true; return; }
+  await speichere("kom_einstellungen", { ...e, versand_aktiv: el.checked });
+  toast(el.checked ? "▶️ Versand eingeschaltet" : "⛔ Versand ausgeschaltet"); zeichne();
+};
+AKTIONEN.komTest = async (kanal) => {
+  const r = await testAnMich(V.ich, [kanal]).catch((e) => ({ fehler: 1, text: e.message }));
+  toast(r.echt ? `🧪 ${r.auftraege} Auftrag · ${r.gesendet} zugestellt · ${r.fehler} Fehler${r.unterdrueckt ? " · unterdrückt (kein Push-Abo bzw. keine E-Mail-Adresse?)" : ""}` : r.text ? "⚠️ " + r.text : "🧪 Vorführversion: Auftrag simuliert – siehe Liste", 4500);
+  await jetztAbgleichen(); zeichne();
+};
+AKTIONEN.komJetzt = async () => {
+  const r = await serverAktion("kom_wartung", {}).catch((e) => ({ ok: false, fehler: e.message }));
+  const z = r?.bericht?.zustellung;
+  toast(r?.ok ? `▶️ ${z?.gesendet || 0} gesendet · ${z?.wiederholung || 0} Wiederholung · ${r.bericht.eskaliert} eskaliert` : "⚠️ " + (r?.fehler || "nicht möglich"), 4500);
+  await jetztAbgleichen(); zeichne();
+};
+
+// ---------- Einstellungen (Konfiguration) ----------
+ANSICHTEN.konfig = () => {
+  const k = konfig();
+  const darfK = (V.ich?.rollen || []).some((r) => ["leitung", "admin"].includes(r));
+  const f = (key, t, typ = "text") => `<div class="feld"><label>${t}</label><input type="${typ}" data-konfig="${key}" value="${esc(k[key] ?? "")}" ${darfK ? "" : "disabled"}></div>`;
+  const ja = (key, t, jaT, neinT, hilfe = "") => `<div class="feld"><label>${t}</label><select data-konfig="${key}" ${darfK ? "" : "disabled"}><option value="ja" ${k[key] !== false ? "selected" : ""}>${jaT}</option><option value="nein" ${k[key] === false ? "selected" : ""}>${neinT}</option></select>${hilfe ? `<div class="hinweis">${hilfe}</div>` : ""}</div>`;
+  const abschnitt = (titel, inhalt) => `<section class="vw-bereich"><h3>${titel}</h3>${inhalt}</section>`;
+  return `<div class="vw-kopf"><h2>⚙️ Einstellungen</h2>${darfK ? `<button class="knopf haupt" data-a="konfSpeichern">💾 Speichern</button>` : '<span class="hinweis">Nur die Leitung kann die Einstellungen ändern.</span>'}</div>
+    <div class="vw-raster3" id="konfForm">
+      ${abschnitt("🏫 Allgemein", f("name", "Name") + f("untertitel", "Untertitel") + f("webseite", "Internetseite (Logo oben links öffnet sie)", "url") + f("instagram", "📸 Instagram (Link)", "url") + f("schule_telefon", "Telefon Schule (SOS)"))}
+      ${abschnitt("💶 Geld & Leihinstrumente", f("freigabe_grenze_eur", "Freigabegrenze Leitung (€) – darüber der Förderverein", "number") + f("leih_kaution", "🤝 Standard-Kaution (€)", "number") + f("leih_gebuehr", "🤝 Standard-Leihgebühr je Jahr (€)", "number"))}
+      ${abschnitt("🎓 Schuljahr & Datenschutz", f("abschluss_jahrgang", "Abschlussjahrgang (danach → Ehemalige)", "number") + f("loeschfrist_monate", "🧹 Löschfrist nach Austritt (Monate, leer = 24)", "number"))}
+      ${abschnitt("📅 Termine & Nachrichten", f("nachfass_tage", "Nachfassen … Tage vor Antwortfrist", "number") + f("express_max_tag", "🏎️ Express je Person und Tag (leer = 5)", "number") + f("bearbeiten_minuten", "✏️ Bearbeiten bis … Min. nach dem Senden (leer = 15)", "number"))}
+      ${abschnitt("🛡️ Kinderschutz im Chat", ja("chat_schueler_untereinander", "💬 Schüler schreiben sich privat", "Ja", "Nein – nur Leitung, Lehrkräfte, eigene Eltern") + ja("chat_eltern_kopie", "👪 Eltern lesen bei Erwachsenen-Chats mit", "Ja – Eltern automatisch in Kopie (empfohlen)", "Nein", "Kindern privat schreiben dürfen ohnehin nur Leitung und Lehrkräfte."))}
+      ${abschnitt("🆘 Notrufnummern", `<div class="feld"><label>eine je Zeile: Symbol;Bezeichnung;Nummer</label><textarea data-konfig="notrufe" rows="5" ${darfK ? "" : "disabled"}>${esc((k.notrufe || []).map((x) => x.join(";")).join("\n"))}</textarea></div>`)}
+    </div>
+    <p class="hinweis">Register, Terminarten, Gruppen, Genehmigungsvorlagen und Räume sind eigene Tabellen (links) – nichts ist fest eingebaut. „Wer ist online“ stellt die Leitung in der App im Zahnrad ein.</p>`;
+};
+AKTIONEN.konfSpeichern = async () => {
+  for (const el of $$("[data-konfig]")) {
+    let v = el.value;
+    if (el.dataset.konfig === "notrufe") v = v.split("\n").map((z) => z.split(";").map((x) => x.trim())).filter((z) => z.length === 3);
+    else if (el.type === "number") v = Number(v);
+    else if (el.dataset.konfig === "chat_schueler_untereinander" || el.dataset.konfig === "chat_eltern_kopie") v = v !== "nein";
+    await konfigSetzen(el.dataset.konfig, v);
+  }
+  toast("💾 Einstellungen gespeichert");
+};
+
+// ---------- 🧰 Werkzeuge (werkzeuge.js) einhängen ----------
+werkzeugeRegistrieren({
+  ANSICHTEN, V, zeichne, darf, db, pn,
+  sonder: (k, sym, t, bereich, recht) => { SONDER.splice(SONDER.length - 3, 0, [k, sym, t]); SONDER_BEREICH[k] = bereich; SONDER_RECHT[k] = recht; ANSICHTEN[k] = WERKZEUG_ANSICHTEN[k]; },
+  oeffne: (tab, id) => { V.ansicht = "tabelle"; V.tab = tab; V.auswahl = id; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); },
+  ansicht: (k) => { V.ansicht = k; V.auswahl = null; zeichne(); },
+});
+
+// ---------- Start ----------
+async function starten() {
+  const e = (() => { try { return JSON.parse(localStorage.getItem("bk_einstellungen") || "{}"); } catch { return {}; } })();
+  const dunkel = e.thema === "dunkel" || ((!e.thema || e.thema === "auto") && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.classList.toggle("dunkel", dunkel);
+  aktionenStarten();
+  // Esc schließt das Bearbeiten-Fenster
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && V.auswahl !== null && document.querySelector(".vw-modal")) { V.auswahl = null; zeichne(); } });
+  try { await datenStarten({ quelle: "verwaltung" }); }
+  catch (e) { if (e.code === "ANMELDUNG") return anmeldungServer(); throw e; }
+  demoLeiste();
+  if (istEchtbetrieb()) {
+    beiHinweis((t) => toast("ℹ️ " + t, 4000));
+    const ich = datenInfo().ich;
+    if (!hole("personen", ich)) return anmeldungServer("Zugang nicht mehr aktiv.");
+    anmelden(ich);
+  } else {
+    let id = null; try { id = sessionStorage.getItem("bk_vw_ich"); } catch {}
+    if (id && hole("personen", id)) anmelden(id); else anmeldung();
+  }
+  abonnieren(() => {
+    const f = document.activeElement;
+    if (f && /INPUT|TEXTAREA|SELECT/.test(f.tagName) && $("#vw").contains(f)) return;
+    if (V.ich) zeichne();
+  });
+}
+starten().catch((e) => { console.error(e); $("#vw").innerHTML = `<div class="karte">⚠️ Start fehlgeschlagen: ${esc(e.message)}</div>`; });

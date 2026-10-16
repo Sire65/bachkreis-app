@@ -33,3 +33,42 @@
 .inst-panel select { width: 100%; min-width: 0; } .inst-panel label { min-width: 0; }
 li.na-zeile:has(.na-zeile-unten) { flex-wrap: wrap; } .na-zeile-unten { display: flex; align-items: center; gap: 8px; width: 100%; }
 .na-zeile-unten .na-pdfwrap { display: flex; align-items: center; gap: 6px; margin-left: auto; } .na-zeile-unten .na-pdf { width: 70px; margin: 0; }
+
+/* 🗂️ Explorer (0.18.0): Stück › Instrument › Noten als Baum mit ▸/▾ und Einrückung wie im Windows-Explorer */
+.na-baum-karte { padding: 6px 4px; }
+.na-baum, .na-baum ul { list-style: none; margin: 0; padding: 0; }
+.na-baum ul { margin-left: 13px; padding-left: 10px; border-left: 1px dotted color-mix(in srgb, var(--text) 30%, transparent); }
+.na-bk { display: flex; align-items: center; gap: 2px; min-height: 36px; border-radius: 8px; flex-wrap: wrap; }
+.na-bk:hover { background: color-mix(in srgb, var(--haupt) 7%, transparent); }
+.na-bk > small { color: var(--grau); font-size: .74rem; margin-left: 4px; flex: 1 1 auto; min-width: 0; }
+.na-bk-werk { padding: 2px 0; }
+.na-pfeil, .na-pfeil-platz { flex: 0 0 26px; width: 26px; height: 30px; }
+.na-pfeil { border: none; background: none; font-size: 1rem; color: var(--grau); cursor: pointer; border-radius: 6px; padding: 0; }
+.na-pfeil:hover, .na-pfeil:focus-visible { color: var(--haupt); background: color-mix(in srgb, var(--haupt) 12%, transparent); }
+.na-name { border: none; background: none; font: inherit; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: 6px; text-align: left; max-width: 100%; }
+.na-name b { font-weight: 800; }
+.na-name:focus-visible { outline: 2px solid var(--haupt); }
+.na-ico { flex: 0 0 auto; width: 1.3em; text-align: center; }
+.na-datei .na-name { color: var(--haupt); font-weight: 700; }
+:root.dunkel .na-datei .na-name { color: var(--gold); }
+.na-datei.leer .na-name { color: var(--grau); font-weight: 400; }
+.na-mehr { border: none; background: none; font-size: 1.3rem; color: var(--grau); cursor: pointer; padding: 0 8px; margin-left: auto; }
+.na-bk .badge { font-size: .66rem; padding: 0 5px; }
+
+/* 🎼 Notenblatt: Demo-Probenoten auf „Papier“ (auch im Dunkelmodus hell, wie ein echtes Blatt) */
+.nb-kopf { display: grid; gap: 8px; }
+.nb-titel b { display: block; font-size: 1.05rem; } .nb-titel small { color: var(--grau); }
+.nb-info { display: flex; flex-wrap: wrap; gap: 6px; }
+.nb-knoepfe { flex-wrap: wrap; gap: 6px; align-items: center; }
+.nb-zoom { display: inline-flex; gap: 4px; }
+.nb-blatt { background: #fffdf7; color: #151515; border-radius: 10px; padding: 14px 10px 8px; margin: 0 0 12px; box-shadow: 0 2px 10px #0002; border: 1px solid #e8e1cc; }
+.nb-druckkopf { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: .86rem; margin: 0 4px 6px; }
+.nb-druckkopf span { font-weight: 700; }
+.nb-svg { width: 100%; height: auto; display: block; }
+.nb-svg .an { fill: #d0312d; stroke: #d0312d; }
+.nb-fuss { font-size: .7rem; color: #6b6b6b; text-align: right; margin: 4px 4px 0; }
+@media print {
+  body * { visibility: hidden !important; }
+  .nb-blatt, .nb-blatt * { visibility: visible !important; }
+  .nb-blatt { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none; border: none; background: #fff; padding: 0; }
+}

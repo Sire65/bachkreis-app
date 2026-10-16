@@ -24,7 +24,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F13 | Auswertungen + Export | ✅ Kennzahlen, CSV · ⏳ Berichte | logik: CSV |
 | BK-F14 | Terminfindung (Doodle) | ⏳ | – |
 | BK-F15 | Mitfahrgelegenheiten | ⏳ | – |
-| BK-F16 | Notenarchiv, „Meine Noten“ | ✅ Metadaten · ⏳ PDF-Speicher | Rundgang |
+| BK-F16 | Notenarchiv, „Meine Noten“ | ✅ Metadaten · ⏳ PDF-Speicher | Rundgang, notensatz.test (Demo-Probenoten, Explorer 0.18.0) |
 | BK-F17 | Offline-/Notbetrieb | 🟡 App startet offline (SW) · ⏳ signierte Vorab-Antworten | – |
 | BK-F18 | Mandantenfähigkeit | ⏳ optional | – |
 | BK-F19 | Gruppen A–D, Wechsel generell/temporär, Wechselwunsch | ✅ | logik: temporär/generell |
@@ -94,6 +94,12 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 - **Stücke:** Suche (Titel, Komponist, Werkverzeichnis, Ausgabe, Stimme), Chips „📄 PDF fehlt“ / „📕 vollständig“, ⚙️ Filter Instrument · Projekt · Schwierigkeit · Rechte, Sortieren. Mit Instrument-Filter steht die passende Stimme direkt auf der Karte.
 - **Noten eines Stücks:** nach Instrumentengruppen (Partitur, Streicher, Holz, Blech, Schlagwerk, Tasten & Harfe, Solo/Sonderstimmen) mit Chips zum Filtern, 👥 Spieler je Instrument im gewählten Orchester, PDF öffnen und 📤 hochladen (Leitung, Lehrkräfte, Notenwart).
 - **Zuordnung:** werke.gruppen („für Orchester / Klasse“, PC-Verwaltung); ohne Angabe zählen die Gruppen der Stimmen. Stimmen mit „nur Gruppe“ erscheinen nur in diesem Orchester.
+
+## 🎼 Demo-Probenoten · 🗂️ Explorer (0.18.0)
+- **Explorer:** dritte Ansicht im Notenarchiv (🗂️) – ein Baum wie im Windows-Explorer: 📁 Stück › 🎻 Instrument › 📄 Noten, ▸/▾ zum Auf- und Zuklappen, eingerückt mit Hilfslinien; Orchester-Chips, Suche (Treffer klappen auf), ⊞/⊟ alles auf/zu, › öffnet die Stück-Seite.
+- **Probenoten:** gemeinfreie Stücke (Petzold-Menuett, Pachelbel-Kanon, Beethoven „Ode an die Freude“, Mozart „Kleine Nachtmusik“, Dvořák Largo) und die eigene Bachkreis-Fanfare, in der App selbst gesetzt (keine Fremd-Dateien, keine Kosten, offline). Je Instrument eine eigene Stimme: Melodie, Mittelstimme oder Bass – vereinfacht, zum Üben, keine Originalausgabe.
+- **Richtig notiert:** Violin-, Alt- und Bassschlüssel; Klarinette/Trompete in B und Horn in F transponiert mit passender Tonart; Kontrabass klingt eine Oktave tiefer. Lage innerhalb des Instrumentenumfangs.
+- **Notenblatt:** ▶ Anhören (Klang des Instruments, die Note leuchtet mit), 🔍 Takte je Zeile, 🖨️ Drucken (nur das Blatt), ⬇️ SVG speichern, Link zu IMSLP für Originalausgaben. Echte PDFs (📤) bleiben wie gehabt.
 
 ## 🎻 Üben und 📆 Kalender (0.14.0)
 - **Übe-Tagebuch:** ⏱ Stoppuhr (läuft beim Seitenwechsel weiter), Eintrag mit Datum, Minuten, Stück, Inhalt (Tonleitern, Etüden, Stück, Vom Blatt, Rhythmus, Technik, Gehör), Gefühl 😖–🤩 und Notiz. Woche als Balken Mo–So, Wochenziel, 🔥 Tage in Folge.

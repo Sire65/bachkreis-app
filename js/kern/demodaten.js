@@ -289,15 +289,24 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "w-4", komponist: "Verschiedene", titel: "Filmmusik-Medley", werkverzeichnis: "", ausgabe: "Verlagsausgabe (lizenziert, Beispiel)", rechte: "lizenziert", projekte: ["pr-herbst", "pr-fruehling"], gruppen: ["g-a", "g-b", "g-c"], schwierigkeit: "mittel", dauer_min: 8 },
     { id: "w-5", komponist: "Georg Friedrich Händel", titel: "Wassermusik – Hornpipe", werkverzeichnis: "HWV 349", ausgabe: "gemeinfreie Ausgabe (Beispiel)", rechte: "gemeinfrei", projekte: ["pr-fruehling"], gruppen: ["g-b", "g-c"], schwierigkeit: "leicht", dauer_min: 3 },
     { id: "w-6", komponist: "Johann Pachelbel", titel: "Kanon in D", werkverzeichnis: "P. 37", ausgabe: "Bearbeitung für Orchesterklasse (Beispiel)", rechte: "gemeinfrei", projekte: ["pr-fruehling"], gruppen: ["g-c"], schwierigkeit: "leicht", dauer_min: 5 },
-    { id: "w-7", komponist: "Wolfgang Amadeus Mozart", titel: "Eine kleine Nachtmusik – 1. Satz", werkverzeichnis: "KV 525", ausgabe: "gemeinfreie Ausgabe (Beispiel)", rechte: "gemeinfrei", projekte: [], gruppen: ["g-d"], schwierigkeit: "mittel", dauer_min: 6 },
+    { id: "w-7", komponist: "Wolfgang Amadeus Mozart", titel: "Eine kleine Nachtmusik – 1. Satz", werkverzeichnis: "KV 525", ausgabe: "gemeinfreie Ausgabe (Beispiel) · 🎼 Demo-Probenoten", rechte: "gemeinfrei", projekte: [], gruppen: ["g-d"], schwierigkeit: "mittel", dauer_min: 6 },
+    // 🎼 Demo-Probenoten (0.18.0): gemeinfreie Melodien, in der App selbst gesetzt – je Instrument eine eigene Stimme
+    { id: "w-8", komponist: "Christian Petzold", titel: "Menuett G-Dur (Notenbüchlein für Anna Magdalena Bach)", werkverzeichnis: "BWV Anh. 114", ausgabe: "🎼 Demo-Probenoten, selbst gesetzt (gemeinfrei)", rechte: "gemeinfrei", projekte: ["pr-fruehling"], gruppen: ["g-b", "g-c"], schwierigkeit: "leicht", dauer_min: 2 },
+    { id: "w-9", komponist: "Ludwig van Beethoven", titel: "Ode an die Freude (9. Sinfonie)", werkverzeichnis: "op. 125", ausgabe: "🎼 Demo-Probenoten, selbst gesetzt (gemeinfrei)", rechte: "gemeinfrei", projekte: [], gruppen: ["g-b", "g-c", "g-d"], schwierigkeit: "leicht", dauer_min: 2 },
+    { id: "w-10", komponist: "Antonín Dvořák", titel: "Largo „Aus der Neuen Welt“ – Thema", werkverzeichnis: "op. 95", ausgabe: "🎼 Demo-Probenoten, selbst gesetzt (gemeinfrei)", rechte: "gemeinfrei", projekte: [], gruppen: ["g-a", "g-d"], schwierigkeit: "mittel", dauer_min: 3 },
+    { id: "w-11", komponist: "Bachkreis (eigene Komposition)", titel: "Bachkreis-Fanfare", werkverzeichnis: "", ausgabe: "🎼 Demo-Probenoten, eigene Komposition", rechte: "intern", projekte: ["pr-herbst"], gruppen: ["g-a", "g-b"], schwierigkeit: "leicht", dauer_min: 1 },
   ];
+  // Werk → Stück der Musik-Engine (für die Demo-Probenoten); welche Register Stimmen bekommen
+  const DEMO_NOTEN = { "w-6": "kanon", "w-7": "nachtmusik", "w-8": "menuett", "w-9": "freude", "w-10": "largo", "w-11": "fanfare" };
+  const BESETZT = { "w-8": ["streicher", "holz", "tasten"], "w-11": ["blech", "schlag", "streicher"] };
   d.stimmen = [];
   for (const w of d.werke) {
-    d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: "Partitur", register_id: null, gruppe_id: null, datei: "" });
+    d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: "Partitur", register_id: null, gruppe_id: null, datei: DEMO_NOTEN[w.id] ? "demo:" + DEMO_NOTEN[w.id] : "" });
     for (const reg of d.register) {
       if (w.id === "w-1" && !["streicher", "tasten"].includes(reg.familie)) continue;
       if (["w-6", "w-7"].includes(w.id) && reg.familie !== "streicher" && !(w.id === "w-6" && reg.familie === "holz")) continue;
-      d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: reg.name, register_id: reg.id, gruppe_id: w.id === "w-3" && reg.id === "r-v1" ? null : null, datei: "" });
+      if (BESETZT[w.id] && !BESETZT[w.id].includes(reg.familie)) continue;
+      d.stimmen.push({ id: `st-${d.stimmen.length + 1}`, werk_id: w.id, bezeichnung: reg.name, register_id: reg.id, gruppe_id: null, datei: DEMO_NOTEN[w.id] ? "demo:" + DEMO_NOTEN[w.id] : "" });
     }
   }
   // 🙋 eigene Termine des Demo-Schülers: Geigenunterricht jede Woche, Vorspiel; 👋 Anklopfen der Leitung (beantwortet)

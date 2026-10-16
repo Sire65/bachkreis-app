@@ -1,13 +1,24 @@
 {
-  "version": "0.17.0",
+  "version": "0.18.0",
   "datum": "2026-10-16",
   "stufe": "DEV",
   "neu": [
-    "🏠 Startseite wie in KC: unter dem nächsten Termin drei Kacheln – 💬 neue Nachrichten · 🟢 wer ist online · ⏳ wann ist der nächste Termin (mit deiner Antwort)",
-    "🟢 Kleine grüne Zahl unten in der Fußzeile (Orchester): so viele sind gerade online – antippen der Kachel zeigt sie mit 👋 Anklopfen",
-    "🎼 Orchester (Sitzplan, Register, Besetzung): grüner Punkt am Gesicht, wer gerade online ist, und „🟢 x online“ – antippen hebt nur diese hervor"
+    "🎼 Probenoten zum Ausprobieren: 6 gemeinfreie Stücke (Menuett G-Dur, Kanon in D, Ode an die Freude, Kleine Nachtmusik, Largo, Bachkreis-Fanfare) – für jedes Instrument eine eigene Stimme",
+    "🎻 Jede Stimme richtig notiert: Violin-, Bratschen- und Bassschlüssel, Klarinette/Trompete in B und Horn in F transponiert, Kontrabass eine Oktave höher notiert",
+    "▶ Anhören mit der Klangfarbe des Instruments (die gespielte Note leuchtet rot), 🔍 größer/kleiner, 🖨️ Drucken, ⬇️ Speichern",
+    "🗂️ Notenarchiv als Explorer wie bei Windows: 📁 Stück › 🎻 Instrument › 📄 Noten – mit ▸ aufklappen und Einrückung, Orchester-Auswahl und Suche"
   ],
   "verlauf": [
+    {
+      "version": "0.17.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🏠 Startseite wie in KC: unter dem nächsten Termin drei Kacheln – 💬 neue Nachrichten · 🟢 wer ist online · ⏳ wann ist der nächste Termin (mit deiner Antwort)",
+        "🟢 Kleine grüne Zahl unten in der Fußzeile (Orchester): so viele sind gerade online – antippen der Kachel zeigt sie mit 👋 Anklopfen",
+        "🎼 Orchester (Sitzplan, Register, Besetzung): grüner Punkt am Gesicht, wer gerade online ist, und „🟢 x online“ – antippen hebt nur diese hervor"
+      ]
+    },
     {
       "version": "0.16.0",
       "datum": "2026-10-16",

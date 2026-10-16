@@ -85,6 +85,18 @@ await p.click(".na-stueck-knopf"); await p.waitForSelector(".na-stimme");
 if (!(await p.$('[data-a="notenFamilie"][data-x="streicher"]'))) fehler.push("Notenarchiv: Streicher-Filter fehlt");
 await p.click('[data-a="notenFamilie"][data-x="streicher"]'); if ((await p.$$eval("details.ig", (l) => l.length)) !== 1) fehler.push("Notenarchiv: Instrument-Filter greift nicht");
 await p.click('[data-a="notenFamilie"][data-x=""]');
+// 🗂️ Explorer: Stück › Instrument › Noten aufklappen, 🎼 Demo-Probenoten öffnen (Klarinette transponiert), Größe ändern, zurück
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("noten")); await p.click('[data-a="notenAnsicht"][data-x="baum"]'); await p.waitForSelector(".na-baum");
+await p.fill("#notenSuche", "Kanon"); await p.waitForSelector('.na-baum [data-a="baumAuf"][data-x^="i:w-6|"]');
+const klOrdner = await p.$('.na-baum button.na-name[data-x="i:w-6|r-kl"]'); if (!klOrdner) fehler.push("Explorer: Klarinetten-Ordner fehlt"); else await klOrdner.click();
+await p.waitForSelector('.na-datei [data-a="notenDatei"]'); await p.screenshot({ path: `${BILDER}noten-explorer.png` });
+await p.click('.na-datei [data-a="notenDatei"]'); await p.waitForSelector(".nb-svg");
+if (!/E-Dur/.test(await p.textContent(".nb-info"))) fehler.push("Notenblatt: Klarinette in B nicht nach E-Dur transponiert");
+if ((await p.$$eval(".nb-svg [data-k]", (l) => l.length)) < 20) fehler.push("Notenblatt: zu wenige Noten");
+await p.screenshot({ path: `${BILDER}notenblatt.png`, fullPage: true });
+await p.click('[data-a="nbZoom"][data-x="1"]'); await p.waitForSelector(".nb-svg");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("noten")); await p.fill("#notenSuche", ""); await p.click('[data-a="baumAlle"][data-x="zu"]');
+await p.click('[data-a="notenAnsicht"][data-x="kachel"]');
 // 🎻 Üben + 📆 Kalender: Stoppuhr, eintragen, Übezeiten, Kalenderdatei, Google-Link je Termin
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("ueben")); await p.waitForSelector(".ue-woche");
 await p.click('[data-a="uebenUhr"][data-x="start"]'); await p.waitForTimeout(300); await p.click('[data-a="uebenUhr"][data-x="stopp"]');

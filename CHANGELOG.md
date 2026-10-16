@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.18.0 DEV – 16.10.2026
+- 🎼 Demo-Probenoten: js/kern/notensatz.js setzt die gemeinfreien Stücke der Musik-Engine als SVG (ohne Bibliothek/Schriftart) – je Instrument Melodie, Mittelstimme (Akkordtöne mit kurzen Wegen) oder Bass aus der Harmonie, Pauken auf Grundton/Dominante, Klavier zweizeilig, Partitur dreizeilig
+- Schlüssel, Tonart, Transposition (Kl/Tr in B, Hr in F, Kb 8va), Vorzeichen-Rechtschreibung je Takt, Haltebögen über Taktstriche, Balken, Pausen, Ganztaktpausen
+- js/app/notenblatt.js: Ansicht „notenblatt“ (▶ Anhören mit mitlaufender Note, Größe, Drucken, SVG speichern, IMSLP-Hinweis); stimmen.datei „demo:<stück>“ öffnet sie über notenDatei
+- 🗂️ Notenarchiv-Ansicht „Explorer“: Baum Stück › Instrument › Noten mit ▸/▾, Einrückung, Alle auf-/zuklappen, Orchester-Chips, Suche klappt Treffer auf
+- Vorführdaten: Werke w-8…w-11 (Menuett, Ode an die Freude, Largo, Fanfare); Kanon und Nachtmusik mit Demo-Noten; lizenzierte Werke bekommen keine
+- Tests: tests/notensatz.test.mjs; Rundgang prüft Explorer und transponiertes Notenblatt
+
 ## 0.17.0 DEV – 16.10.2026
 - 🏠 Startseite: drei Kacheln im Feld „Nächster Termin“ (wie KC kacheln3): Nachrichten, Wer ist online (Liste mit Anklopfen), Countdown zum Termin; Antwort-Knöpfe nur, solange noch nicht geantwortet
 - 🟢 Fußzeile: grüne Online-Zahl am Orchester-/Kinder-Knopf; Orchester: grüner Punkt an Gesichtern, „x online“-Knopf hebt nur diese hervor; Ereignis „bk-online“ frischt Startseite, Fußzeile und Orchester auf

@@ -1,4 +1,5 @@
 // Leitungs-Cockpit, Vorgänge/Aufgaben, Genehmigungen (Leitung & Eltern), Notenarchiv & „Meine Noten“.
+import { istDemoNoten, notenblattZeigen } from "./notenblatt.js";
 import { S, VIEWS, db, zeige, zurueck, zeichne, kopf, name, vorname, hatRolle, istLehrkraft, istLeitung, istVorstand, istEltern, istSchueler } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, uhr, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele } from "../kern/daten.js";
@@ -135,6 +136,7 @@ AKTIONEN.genAntwort = async (x) => {
 // 🎼 Noten-PDF einer Stimme: öffnen (alle, die die Stimme sehen) und hochladen (Leitung, Lehrkräfte, Notenwart) – gleiche Ablage wie Chat-Anhänge
 AKTIONEN.notenDatei = async (sid) => {
   const s = hole("stimmen", sid);
+  if (istDemoNoten(s)) return notenblattZeigen(sid); // 🎼 Demo-Probenoten: selbst gesetzt, im Notenblatt
   if (!s?.datei?.startsWith("datei:")) return toast(darfNoten() ? "📄 Für diese Stimme ist noch kein PDF hinterlegt – im Notenarchiv mit „📤 PDF“ anhängen." : "📄 Für diese Stimme ist noch kein PDF hinterlegt.");
   try { await dateiOeffnen(s.datei.slice(6), `${hole("werke", s.werk_id)?.titel || "Noten"} – ${s.bezeichnung}.pdf`, "application/pdf"); } catch (e) { toast("⚠️ " + e.message); }
 };
@@ -159,7 +161,7 @@ VIEWS.meinenoten = {
       const werke = liste("werke", (w) => (w.projekte || []).some((p) => projekte.has(p)));
       const passend = werke.map((w) => ({ w, st: liste("stimmen", (s) => s.werk_id === w.id && (s.person_id === pid || (!s.person_id && s.register_id && regs.includes(s.register_id) && (!s.gruppe_id || gr.includes(s.gruppe_id))))) })).filter((x) => x.st.length);
       html += `${istEltern() ? `<h3>${esc(vorname(pid))}</h3>` : ""}` + (passend.map(({ w, st }) => `<div class="karte"><div class="zeile-titel">${esc(w.titel)}</div><div class="hinweis">${esc(w.komponist)} · ${(w.projekte || []).filter((p) => projekte.has(p)).map((p) => esc(hole("projekte", p)?.titel)).join(", ")}</div>
-        <div class="knopfreihe">${st.map((s) => `<button class="knopf klein" data-a="notenDatei" data-x="${s.id}">${s.datei?.startsWith("datei:") ? "📕" : "📄"} ${esc(s.bezeichnung)}</button>`).join("")}</div></div>`).join("") || '<div class="leer">Für deine Projekte sind noch keine Stimmen hinterlegt.</div>');
+        <div class="knopfreihe">${st.map((s) => `<button class="knopf klein" data-a="notenDatei" data-x="${s.id}">${s.datei?.startsWith("datei:") ? "📕" : istDemoNoten(s) ? "🎼" : "📄"} ${esc(s.bezeichnung)}</button>`).join("")}</div></div>`).join("") || '<div class="leer">Für deine Projekte sind noch keine Stimmen hinterlegt.</div>');
     }
     return html + '<p class="hinweis">Du siehst automatisch die Stimmen für deine Instrumente, deine Gruppe und deine Projekte – auch bei einem temporären Gruppenwechsel.</p>';
   },

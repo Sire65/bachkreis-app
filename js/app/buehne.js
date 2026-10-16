@@ -5,51 +5,115 @@ import { S, VIEWS, kopf, istLehrkraft } from "./zustand.js";
 import { esc, AKTIONEN, toast, datumKurz, herunterladen } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
 import { STUECKE, spielen, baender } from "../kern/musik.js";
+import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
 
 const B = { ctx: null, lauf: null, audio: null, quelle: null, analyser: null, raf: 0, modus: "melodien", stueck: STUECKE[0].id, tempo: 1, laut: 0.8, applaus: true, mitschnitt: null, blobUrl: null, tipp: 0 };
 const ALLE_SEK = ["v1", "v2", "va", "vc", "kb", "fl", "ob", "kl", "fg", "hr", "tr", "pos", "pk"];
 
 // ---------- Zeichnung ----------
-const HAUT = ["#f1c9a5", "#e0ac83", "#c68863", "#8d5a3b", "#f5d6bc"];
-const HAAR = ["#2b1b10", "#6b3e1f", "#c9a15a", "#111", "#8a5a2b", "#d8c08a"];
-function figur(x, y, s, sek, inst, nr) {
-  const haut = HAUT[nr % HAUT.length], haar = HAAR[(nr * 7) % HAAR.length], kleid = nr % 3 === 0 ? "#1d1d24" : "#111";
-  const sitzt = !["kb"].includes(sek);
+// 0.15.0: Die Musiker tragen die Gesichter der echten Bachkreis-Mitglieder (gezeichnet, aus „Mein Gesicht“), sitzen auf ihrem
+// Register-Platz und halten ihr Instrument wie in echt. Wer gerade spielt, hebt das Instrument (Bläser), streicht mit dem Bogen,
+// wiegt sich und nickt; wer Pause hat, lässt das Instrument sinken. Konzertkleidung schwarz.
+const SEK_REGISTER = { "r-v1": "v1", "r-v2": "v2", "r-va": "va", "r-vc": "vc", "r-kb": "kb", "r-fl": "fl", "r-ob": "ob", "r-kl": "kl", "r-fg": "fg", "r-hr": "hr", "r-tr": "tr", "r-pos": "pos", "r-tb": "pos", "r-sw": "pk" };
+const INST_NAME = { v1: "Violine 1", v2: "Violine 2", va: "Bratsche", vc: "Cello", kb: "Kontrabass", fl: "Flöte", ob: "Oboe", kl: "Klarinette", fg: "Fagott", hr: "Horn", tr: "Trompete", pos: "Posaune", pk: "Pauke" };
+// Wer sitzt wo? Mitglieder des ersten (größten) Orchesters nach Register – fehlt jemand, ein Gast-Gesicht
+function besetzungFuerBuehne() {
+  const g = liste("gruppen", (x) => x.aktiv !== false).sort((a, b) => (a.sort ?? 99) - (b.sort ?? 99))[0];
+  const drin = new Set(liste("gruppe_zuordnung", (z) => z.gruppe_id === g?.id).map((z) => z.person_id));
+  const m = {};
+  for (const pi of liste("person_instrument").sort((a, b) => (b.haupt ? 1 : 0) - (a.haupt ? 1 : 0))) {
+    const sek = SEK_REGISTER[pi.register_id]; if (!sek || !drin.has(pi.person_id)) continue;
+    (m[sek] ||= []); if (!m[sek].includes(pi.person_id)) m[sek].push(pi.person_id);
+  }
+  return m;
+}
+const ARM = (d, farbe) => `<path d="${d}" fill="none" stroke="${farbe}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
+const HAND = (x, y, haut) => `<circle cx="${x}" cy="${y}" r="1.25" fill="${haut}"/>`;
+function figur(x, y, s, sek, inst, pid, nr) {
+  const mm = merkmale(pid || `gast-${sek}-${nr}`), haut = HAUT[mm.haut % HAUT.length];
+  const kleid = "#121216", lang = [1, 2, 4, 8].includes(mm.frisur % 9);
+  const steht = inst === "bass", nm = pid ? (hole("personen", pid)?.vorname || "") : "";
+  const kopf = `<g class="kopf"><rect x="-1.6" y="-19.6" width="3.2" height="2.6" fill="${haut}"/><g transform="translate(-9.6 -33.6) scale(.3)">${gesichtSvg(mm, { rund: false })}</g></g>`;
+  const rumpf = `<path d="M-7 ${steht ? 2 : 0} L-7.6 -13.5 Q-7.2 -17.6 -2.6 -18.2 L2.6 -18.2 Q7.2 -17.6 7.6 -13.5 L7 ${steht ? 2 : 0} Z" fill="${kleid}"/>`
+    + (lang ? `<path d="M-2.6 -18.2 Q0 -15.6 2.6 -18.2" fill="none" stroke="${haut}" stroke-width="1.1"/>` : `<path d="M-2 -18.2 L0 -13 L2 -18.2 Z" fill="#f4f4f4"/><path d="M-1.6 -17.2 L0 -16.4 L1.6 -17.2 L1.6 -15.6 L0 -16.4 L-1.6 -15.6 Z" fill="#111"/>`);
+  const beine = steht ? `<path d="M-5 2 L-5.5 14 M4 2 L4.5 14" stroke="#0c0c0f" stroke-width="3.2" stroke-linecap="round"/>`
+    : `<path d="M-5.6 -0.5 L-6 3 L-6.4 8 M4.6 -0.5 L5 3 L5.4 8" stroke="#0c0c0f" stroke-width="3" stroke-linecap="round"/>`;
   let i = "";
   switch (inst) {
-    case "geige": i = `<ellipse cx="-4" cy="-16" rx="4" ry="2.3" fill="#9b4f1c" transform="rotate(-25 -4 -16)"/><g class="bogen" style="transform-origin:3px -13px"><line x1="3" y1="-13" x2="15" y2="-21" stroke="#e9dfc8" stroke-width=".9"/><line x1="3" y1="-13" x2="6" y2="-8" stroke="${kleid}" stroke-width="2.6" stroke-linecap="round"/></g>`; break;
-    case "bratsche": i = `<ellipse cx="-4" cy="-15.5" rx="4.8" ry="2.7" fill="#7f3d14" transform="rotate(-25 -4 -15.5)"/><g class="bogen" style="transform-origin:3px -13px"><line x1="3" y1="-13" x2="15" y2="-20" stroke="#e9dfc8" stroke-width=".9"/><line x1="3" y1="-13" x2="6" y2="-8" stroke="${kleid}" stroke-width="2.6" stroke-linecap="round"/></g>`; break;
-    case "cello": i = `<line x1="0" y1="-4" x2="0" y2="-26" stroke="#3a1f0c" stroke-width="1.4"/><ellipse cx="0" cy="-5" rx="5.2" ry="8.5" fill="#8b4513"/><path d="M-2 -7 q2 2 0 4 M2 -7 q-2 2 0 4" stroke="#3a1f0c" stroke-width=".6" fill="none"/><g class="bogen-quer"><line x1="-10" y1="-6" x2="9" y2="-4" stroke="#e9dfc8" stroke-width=".9"/></g>`; break;
-    case "bass": i = `<line x1="6" y1="0" x2="6" y2="-36" stroke="#3a1f0c" stroke-width="1.6"/><ellipse cx="6" cy="-9" rx="6.5" ry="11" fill="#6e3510"/><g class="bogen-quer"><line x1="-4" y1="-10" x2="16" y2="-8" stroke="#e9dfc8" stroke-width="1"/></g>`; break;
-    case "floete": i = `<g class="blas"><line x1="-2" y1="-21" x2="15" y2="-23" stroke="#d9dde3" stroke-width="1.3"/></g>`; break;
-    case "oboe": case "klarinette": i = `<g class="blas"><line x1="0" y1="-19" x2="2.5" y2="-6" stroke="#151515" stroke-width="1.8"/><circle cx="2.6" cy="-5.6" r="1.2" fill="${inst === "oboe" ? "#2a2a2a" : "#151515"}"/></g>`; break;
-    case "fagott": i = `<g class="blas"><line x1="-3" y1="-2" x2="4" y2="-30" stroke="#5a2d0c" stroke-width="2.6"/><path d="M0 -19 q-6 -1 -2 -3" stroke="#c9b07a" stroke-width=".7" fill="none"/></g>`; break;
-    case "horn": i = `<g class="blas"><circle cx="7" cy="-11" r="5" fill="none" stroke="#e0b23a" stroke-width="1.6"/><circle cx="7" cy="-11" r="2.2" fill="#e0b23a"/></g>`; break;
-    case "trompete": i = `<g class="blas"><line x1="1" y1="-20" x2="13" y2="-20" stroke="#e8be44" stroke-width="1.6"/><path d="M13 -20 l4 -3 v6 z" fill="#e8be44"/></g>`; break;
-    case "posaune": i = `<g class="blas"><line x1="1" y1="-20" x2="18" y2="-18" stroke="#d9ac36" stroke-width="1.4"/><line x1="8" y1="-17" x2="18" y2="-16" stroke="#d9ac36" stroke-width="1"/><path d="M18 -18 l3 -3 v6 z" fill="#d9ac36"/></g>`; break;
-    case "pauke": i = `<path d="M-17 -3 a8 6 0 0 0 16 0 z M1 -3 a8 6 0 0 0 16 0 z" fill="#b8652c"/><ellipse cx="-9" cy="-3" rx="8" ry="2" fill="#efe3c8"/><ellipse cx="9" cy="-3" rx="8" ry="2" fill="#efe3c8"/><g class="schlegel"><line x1="-4" y1="-13" x2="-9" y2="-5" stroke="#3b2a1a" stroke-width="1"/><circle cx="-9" cy="-5" r="1.4" fill="#eee"/></g><g class="schlegel s2"><line x1="4" y1="-13" x2="9" y2="-5" stroke="#3b2a1a" stroke-width="1"/><circle cx="9" cy="-5" r="1.4" fill="#eee"/></g>`; break;
+    case "geige": case "bratsche": {
+      const g = inst === "bratsche" ? 1.12 : 1;
+      i = `<g transform="scale(${g})"><g class="geige"><ellipse cx="-9" cy="-17" rx="4.7" ry="2.7" fill="#a4561f" stroke="#5e2c0b" stroke-width=".4" transform="rotate(-24 -9 -17)"/>
+          <path d="M-10.6 -16.4 l-.4 .9 M-7.6 -17.8 l-.4 .9" stroke="#2b1506" stroke-width=".35"/><line x1="-5.6" y1="-18.4" x2="-19.4" y2="-23.4" stroke="#151515" stroke-width=".9"/><circle cx="-19.9" cy="-23.6" r=".95" fill="#6b3410"/></g>
+        ${ARM("M-5.6 -16.6 Q-11 -11.5 -15.6 -20.4", kleid)}${HAND(-16, -21.2, haut)}
+        ${ARM("M5.6 -16.6 Q9 -12 8.4 -10.2", kleid)}
+        <g class="bogen">${ARM("M8.4 -10.2 L3 -10.6", kleid)}${HAND(2.6, -10.8, haut)}<line x1="3" y1="-10.4" x2="-12.4" y2="-27.2" stroke="#d9c49a" stroke-width=".7"/><line x1="2.4" y1="-11.2" x2="-12.8" y2="-27.8" stroke="#3a2412" stroke-width=".55"/></g></g>`; break;
+    }
+    case "cello":
+      i = `<line x1="0" y1="4" x2="0.4" y2="8" stroke="#888" stroke-width=".6"/><ellipse cx="0" cy="-3.5" rx="5.8" ry="8.8" fill="#8f4716" stroke="#4e2307" stroke-width=".5"/><path d="M-3 -6 q1 2 0 4 M3 -6 q-1 2 0 4" stroke="#2b1506" stroke-width=".45" fill="none"/>
+        <line x1="0" y1="-11.5" x2="-3.2" y2="-27.5" stroke="#151515" stroke-width="1.1"/><circle cx="-3.4" cy="-28.4" r="1.1" fill="#5e2c0b"/><line x1="-1.8" y1="0" x2="1.8" y2="0" stroke="#e8d6a8" stroke-width=".6"/>
+        ${ARM("M-5.6 -16.6 Q-10.5 -14 -2.8 -21", kleid)}${HAND(-2.6, -21.4, haut)}${ARM("M5.6 -16.6 Q11 -12.5 10.6 -7", kleid)}
+        <g class="bogen-quer">${ARM("M10.6 -7 L11.4 -2.8", kleid)}${HAND(11.4, -2.6, haut)}<line x1="12" y1="-2.4" x2="-11" y2="-3.6" stroke="#d9c49a" stroke-width=".8"/></g>`; break;
+    case "bass":
+      i = `<line x1="5" y1="13" x2="5" y2="16" stroke="#888" stroke-width=".7"/><ellipse cx="5" cy="1" rx="7.6" ry="12" fill="#7a3a10" stroke="#3e1a05" stroke-width=".6"/><path d="M1.6 -2 q1.4 3 0 6 M8.4 -2 q-1.4 3 0 6" stroke="#2b1506" stroke-width=".5" fill="none"/>
+        <line x1="4.6" y1="-11" x2="1.4" y2="-37" stroke="#151515" stroke-width="1.4"/><circle cx="1.2" cy="-38" r="1.4" fill="#4e2307"/>
+        ${ARM("M-5.6 -16.6 Q-8 -24 1.6 -27", kleid)}${HAND(1.8, -27.4, haut)}${ARM("M5.6 -16.6 Q13 -10 13 -2", kleid)}
+        <g class="bogen-quer">${HAND(13.2, 1.6, haut)}<line x1="15" y1="2.2" x2="-6" y2="1" stroke="#d9c49a" stroke-width=".9"/></g>`; break;
+    case "floete":
+      i = `<g class="blas">${ARM("M-5.6 -16.6 Q-3 -13 1.4 -20.6", kleid)}${ARM("M5.6 -16.6 Q12 -14 11.6 -22.8", kleid)}
+        <line x1="-2" y1="-21.4" x2="18" y2="-25.2" stroke="#dfe3ea" stroke-width="1.15"/><circle cx="6" cy="-22.6" r=".35" fill="#888"/><circle cx="9" cy="-23.2" r=".35" fill="#888"/><circle cx="13" cy="-24" r=".35" fill="#888"/>
+        ${HAND(1.6, -21.4, haut)}${HAND(11.6, -23.6, haut)}</g>`; break;
+    case "oboe": case "klarinette": {
+      const k = inst === "klarinette";
+      i = `<g class="blas">${ARM("M-5.6 -16.6 Q-5 -11 1.6 -15.6", kleid)}${ARM("M5.6 -16.6 Q7 -11 2.6 -9.6", kleid)}
+        <line x1="0.8" y1="-19.6" x2="${k ? 3.6 : 3.2}" y2="${k ? -3.6 : -4.8}" stroke="${k ? "#101010" : "#2a1a12"}" stroke-width="1.5"/><path d="M${k ? 2.2 : 2} ${k ? -4.6 : -5.6} l${k ? 2.8 : 2.2} 0 l.6 ${k ? 2 : 1.6} l-4 0 z" fill="${k ? "#101010" : "#2a1a12"}"/>
+        ${k ? `<circle cx="1.6" cy="-14" r=".35" fill="#c9ccd3"/><circle cx="2.2" cy="-10" r=".35" fill="#c9ccd3"/>` : ""}${HAND(1.6, -15.6, haut)}${HAND(2.6, -9.8, haut)}</g>`; break;
+    }
+    case "fagott":
+      i = `<g class="blas">${ARM("M-5.6 -16.6 Q-7 -10 -1.4 -12.6", kleid)}${ARM("M5.6 -16.6 Q8 -8 1.6 -5", kleid)}
+        <line x1="-3.6" y1="5" x2="4.6" y2="-32" stroke="#6a3410" stroke-width="2.8" stroke-linecap="round"/><path d="M-1 -15 Q-3 -18 0.4 -20.4" stroke="#c9b07a" stroke-width=".6" fill="none"/>
+        ${HAND(-1.2, -12.6, haut)}${HAND(1.4, -5.2, haut)}</g>`; break;
+    case "horn":
+      i = `<g class="blas">${ARM("M-5.6 -16.6 Q-4 -12 3.6 -13.6", kleid)}${ARM("M5.6 -16.6 Q14 -12 13 -6.6", kleid)}
+        <circle cx="8" cy="-11.6" r="5.2" fill="none" stroke="#e0b23a" stroke-width="1.6"/><circle cx="8" cy="-11.6" r="2.6" fill="none" stroke="#c99a25" stroke-width=".8"/>
+        <path d="M1 -20 Q3 -17 4.6 -14.6" stroke="#e0b23a" stroke-width=".9" fill="none"/><ellipse cx="13.4" cy="-6" rx="3.6" ry="2.4" fill="#e8be44" transform="rotate(30 13.4 -6)"/>${HAND(3.6, -13.4, haut)}${HAND(12.8, -6.4, haut)}</g>`; break;
+    case "trompete":
+      i = `<g class="blas">${ARM("M-5.6 -16.6 Q-1 -15 5 -20.4", kleid)}${ARM("M5.6 -16.6 Q9 -15 9 -20.4", kleid)}
+        <line x1="0.8" y1="-21" x2="15" y2="-21.6" stroke="#e8be44" stroke-width="1.4"/><line x1="5" y1="-19.4" x2="12" y2="-19.8" stroke="#e8be44" stroke-width="1"/>
+        <path d="M15 -21.6 L20 -25 L20 -18.2 Z" fill="#f0c84c"/><rect x="7.6" y="-23.6" width="2.6" height="2.4" fill="#c99a25"/>${HAND(5.2, -20.6, haut)}${HAND(8.8, -22.8, haut)}</g>`; break;
+    case "posaune":
+      i = `<g class="blas">${ARM("M-5.6 -16.6 Q-1 -15 4.4 -20.4", kleid)}<line x1="0.8" y1="-20.6" x2="14" y2="-21.4" stroke="#d9ac36" stroke-width="1.2"/>
+        <path d="M14 -21.4 L19.6 -25.4 L19.6 -17.4 Z" fill="#e8be44"/><line x1="1.6" y1="-19" x2="9" y2="-18.6" stroke="#d9ac36" stroke-width="1"/>${HAND(4.4, -20.6, haut)}
+        <g class="zug">${ARM("M5.6 -16.6 Q10 -14 14 -17", kleid)}<path d="M9 -19.4 H24 V-17.2 H9" fill="none" stroke="#d9ac36" stroke-width=".9"/>${HAND(14, -17.6, haut)}</g></g>`; break;
+    case "pauke":
+      i = `<path d="M-19 -3 a9 6.5 0 0 0 18 0 z M1 -3 a9 6.5 0 0 0 18 0 z" fill="#b8652c" stroke="#6e3510" stroke-width=".5"/><ellipse cx="-10" cy="-3" rx="9" ry="2.2" fill="#efe3c8"/><ellipse cx="10" cy="-3" rx="9" ry="2.2" fill="#efe3c8"/>
+        <g class="schlegel">${ARM("M-5.6 -16.6 Q-11 -12 -9 -8", kleid)}${HAND(-9, -7.8, haut)}<line x1="-9" y1="-8" x2="-11" y2="-3.6" stroke="#5e3a19" stroke-width=".7"/><circle cx="-11.2" cy="-3.4" r="1.2" fill="#f2efe6"/></g>
+        <g class="schlegel s2">${ARM("M5.6 -16.6 Q11 -12 9 -8", kleid)}${HAND(9, -7.8, haut)}<line x1="9" y1="-8" x2="11" y2="-3.6" stroke="#5e3a19" stroke-width=".7"/><circle cx="11.2" cy="-3.4" r="1.2" fill="#f2efe6"/></g>`; break;
   }
-  const stuhl = sitzt ? `<rect x="-6" y="-1" width="12" height="2.4" rx="1" fill="#3b2a1a"/><line x1="-5" y1="1" x2="-5" y2="5" stroke="#3b2a1a"/><line x1="5" y1="1" x2="5" y2="5" stroke="#3b2a1a"/>` : "";
-  const notenpult = !["pauke", "bass"].includes(inst) ? `<line x1="-12" y1="2" x2="-12" y2="-12" stroke="#222" stroke-width=".8"/><rect x="-17" y="-17" width="10" height="6" fill="#f3efe3" stroke="#222" stroke-width=".5" transform="rotate(-8 -12 -14)"/>` : "";
-  return `<g class="mus sek-${sek}" transform="translate(${x} ${y}) scale(${s})"><ellipse class="licht" cx="0" cy="3" rx="16" ry="5"/>${stuhl}${notenpult}
-    <g class="koerper"><path d="M-7 ${sitzt ? 0 : 4} L-6 -16 Q0 -19 6 -16 L7 ${sitzt ? 0 : 4} Z" fill="${kleid}"/><circle cx="0" cy="-22" r="5" fill="${haut}"/><path d="M-5.2 -23 q0 -6.5 5.2 -6.5 q5.2 0 5.2 6.5 q-2 -3 -5.2 -3 q-3 0 -5.2 3z" fill="${haar}"/>${i}</g></g>`;
+  const stuhl = steht ? "" : `<path d="M-7 1 H7 L6 2.6 H-6 Z" fill="#2a1d12"/><path d="M-5.6 2.6 V8.4 M5.6 2.6 V8.4" stroke="#2a1d12" stroke-width=".9"/>`;
+  const pult = ["pauke", "bass", "cello"].includes(inst) ? "" : `<line x1="-14" y1="8" x2="-14" y2="-10" stroke="#1d1d1d" stroke-width=".8"/><g transform="rotate(-10 -14 -13)"><rect x="-19.5" y="-16" width="11" height="6.6" fill="#22201c"/><rect x="-19" y="-15.6" width="10" height="5.8" fill="#f6f1e2"/><path d="M-18 -14.4 h8 M-18 -13 h8 M-18 -11.6 h8" stroke="#9a9182" stroke-width=".25"/></g>`;
+  return `<g class="mus sek-${sek}" transform="translate(${x} ${y}) scale(${s})"><title>${esc(nm ? `${nm} – ${INST_NAME[sek] || ""}` : INST_NAME[sek] || "")}</title><ellipse class="licht" cx="0" cy="7" rx="17" ry="5"/>${stuhl}${beine}
+    <g class="koerper">${rumpf}${kopf}${i}</g>${pult}</g>`;
 }
 function dirigent() {
-  return `<g class="dirigent" transform="translate(200 250) scale(1.95)"><rect x="-13" y="-1" width="26" height="6" rx="1.5" fill="#3b2a1a"/><rect x="-11" y="-3" width="22" height="2.5" fill="#5e3a19"/>
-    <g class="koerper"><path d="M-7 -1 L-7 -20 Q0 -24 7 -20 L7 -1 Z" fill="#0d0d0d"/><path d="M-4 -1 L-5 6 M4 -1 L5 6" stroke="#0d0d0d" stroke-width="3"/>
-    <circle cx="0" cy="-27" r="5.5" fill="#f1c9a5"/><path d="M-5.6 -27 q0 -7 5.6 -7 q5.6 0 5.6 7 q0 3 -2 4 q-3.6 1.5 -7.2 0 q-2 -1 -2 -4z" fill="#6b3e1f"/>
-    <path d="M-6 -19 L-14 -27" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/>
-    <g class="taktstock" id="taktstock" style="transform-origin:6px -19px"><path d="M6 -19 L14 -28" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/><line x1="14" y1="-28" x2="24" y2="-36" stroke="#f5f5f5" stroke-width=".9"/></g></g></g>`;
+  // Die Dirigentin steht mit dem Rücken zum Publikum: Haare von hinten, schwarzer Frack, Taktstock in der rechten Hand
+  const lp = liste("personen", (p) => (p.rollen || []).includes("leitung"))[0], mm = merkmale(lp || "leitung"), haar = HAARFARBE[mm.haar % HAARFARBE.length], haut = HAUT[mm.haut % HAUT.length];
+  const lang = [1, 2, 4, 8].includes(mm.frisur % 9);
+  return `<g class="dirigent" transform="translate(200 250) scale(1.95)"><title>${esc(lp ? `${lp.vorname} ${lp.nachname} – Dirigentin` : "Dirigent")}</title><rect x="-13" y="-1" width="26" height="6" rx="1.5" fill="#3b2a1a"/><rect x="-11" y="-3" width="22" height="2.5" fill="#5e3a19"/>
+    <g class="koerper"><path d="M-7 -1 L-7.4 -19 Q0 -23 7.4 -19 L7 -1 Z" fill="#0d0d0d"/><path d="M-4 -1 L-5 6 M4 -1 L5 6" stroke="#0d0d0d" stroke-width="3"/>
+    <rect x="-1.8" y="-22.6" width="3.6" height="3" fill="${haut}"/><circle cx="0" cy="-27" r="5.6" fill="${haar}"/>${lang ? `<path d="M-5.4 -26 Q-6 -18 -2 -19 L2 -19 Q6 -18 5.4 -26 Z" fill="${haar}"/>` : ""}
+    <circle cx="-5.5" cy="-26.6" r="1" fill="${haut}"/><circle cx="5.5" cy="-26.6" r="1" fill="${haut}"/>
+    <path d="M-6 -19 L-14 -27" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/><circle cx="-14.4" cy="-27.4" r="1.4" fill="${haut}"/>
+    <g class="taktstock" id="taktstock" style="transform-origin:6px -19px"><path d="M6 -19 L14 -28" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/><circle cx="14.4" cy="-28.4" r="1.4" fill="${haut}"/><line x1="14" y1="-28" x2="24" y2="-36" stroke="#f5f5f5" stroke-width=".9"/></g></g></g>`;
 }
 function orchesterSvg() {
-  const m = [];
+  const m = [], bes = besetzungFuerBuehne();
   let nr = 0;
-  const reihe = (sek, inst, xs, y, s) => { for (const x of xs) m.push(figur(x, y, s, sek, inst, nr++)); };
+  const reihe = (sek, inst, xs, y, s) => { xs.forEach((x, k) => m.push(figur(x, y, s, sek, inst, bes[sek]?.[k], nr++))); };
   // Sitzordnung aus Sicht des Publikums: vorne Violine 1 (links) und Celli (rechts), dahinter Violine 2 und Bratschen,
   // dann Holzbläser, ganz hinten Hörner, Pauke, Trompete, Posaune; Kontrabässe stehen rechts.
   reihe("hr", "horn", [92, 120], 150, 1.0); reihe("pk", "pauke", [200], 150, 1.05); reihe("tr", "trompete", [262], 150, 1.0); reihe("pos", "posaune", [290, 318], 150, 1.0);
   reihe("fl", "floete", [138], 172, 1.12); reihe("ob", "oboe", [172], 172, 1.12); reihe("kl", "klarinette", [228], 172, 1.12); reihe("fg", "fagott", [262], 172, 1.12);
-  reihe("kb", "bass", [338, 360], 178, 1.2);
+  reihe("kb", "bass", [330, 354], 178, 1.15);
   reihe("v2", "geige", [52, 86, 120, 154], 200, 1.27); reihe("va", "bratsche", [256, 290, 324], 200, 1.27);
   reihe("v1", "geige", [50, 90, 130, 168], 236, 1.42); reihe("vc", "cello", [236, 274, 312, 350], 236, 1.42);
   const falten = (x0, b) => Array.from({ length: 7 }, (_, i) => `<rect x="${x0 + i * b / 7}" y="0" width="${b / 14}" height="250" fill="rgba(0,0,0,.18)"/>`).join("");
@@ -60,7 +124,9 @@ function orchesterSvg() {
       <radialGradient id="bwSpot" cx=".5" cy=".2" r=".7"><stop offset="0" stop-color="rgba(255,236,170,.28)"/><stop offset="1" stop-color="rgba(255,236,170,0)"/></radialGradient></defs>
     <rect width="400" height="250" fill="url(#bwWand)"/><polygon points="0,250 400,250 378,140 22,140" fill="url(#bwBoden)"/>
     ${Array.from({ length: 9 }, (_, i) => `<line x1="${22 + i * 44.5}" y1="140" x2="${i * 50}" y2="250" stroke="rgba(0,0,0,.15)"/>`).join("")}
-    <polygon points="60,150 340,150 350,160 50,160" fill="rgba(0,0,0,.18)"/><polygon points="40,168 360,168 368,178 32,178" fill="rgba(0,0,0,.12)"/>
+    <path d="M70 132 H330 V150 H70 Z" fill="#5a3a1c"/><path d="M70 150 H330 L336 156 H64 Z" fill="#3a2410"/>
+    <path d="M52 156 H348 V172 H52 Z" fill="#6a4421"/><path d="M52 172 H348 L356 178 H44 Z" fill="#3e2712"/>
+    ${Array.from({ length: 8 }, (_, i) => `<ellipse cx="${30 + i * 48}" cy="248" rx="9" ry="2.6" fill="rgba(255,214,140,.55)" class="rampe"/>`).join("")}
     <rect width="400" height="250" fill="url(#bwSpot)" class="spot"/>
     <g class="orchester">${m.join("")}</g><g id="bwNoten"></g>${dirigent()}
     <g class="vorhang vorhang-l"><rect x="-10" y="0" width="215" height="250" fill="url(#bwVorhang)"/>${falten(-10, 215)}</g>

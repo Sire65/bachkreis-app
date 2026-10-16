@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.15.0 DEV – 16.10.2026
+- 🎭 Bühne: Gesichter der Mitglieder (erstes Orchester, nach Register), neue Instrumenten-Zeichnungen mit Armen und Händen, Spielhaltung/Pausenhaltung, Kopfnicken, Posaunenzug, Podeste, Rampenlicht, Dirigentin von hinten
+
 ## 0.14.0 DEV – 16.10.2026
 - 🎻 Üben (js/app/ueben.js): Tagebuch (Tabelle uebungen, privat: Person, Eltern, geteilt → Leitung/Lehrkräfte), Stoppuhr, Woche/Ziel/Serie, Übezeiten (personen.uebe_plan), Hinweis beim Öffnen, Übe-Übersicht
 - 📆 Kalender (js/app/kalender.js): Abo-Link je Person (HMAC aus Person + Zählnummer, Geheimnis BK_KALENDER_GEHEIMNIS, Tabelle bk_kalender_abos), GET bk-api?kalender=… liefert .ics mit Erinnerung (personen.kalender_alarm) und Übezeiten (RRULE); neuer Link macht den alten ungültig

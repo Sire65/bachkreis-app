@@ -10,18 +10,28 @@
 .spot { opacity: .4; transition: opacity 1s; } .offen .spot { opacity: 1; }
 
 .mus .licht { fill: rgba(255, 220, 120, 0); transition: fill .25s; }
-.mus.aktiv .licht { fill: rgba(255, 220, 120, .35); }
-.mus .koerper, .mus .bogen, .mus .bogen-quer, .mus .blas, .mus .schlegel { transform-box: fill-box; }
+.mus.aktiv .licht { fill: rgba(255, 220, 120, .38); }
+/* 0.15.0: Spielhaltung – Instrument hoch, Bogen streicht, Kopf nickt; in der Pause sinken Instrument und Bogen */
+.mus .blas, .mus .bogen, .mus .bogen-quer, .mus .zug, .mus .kopf { transform-box: view-box; transition: transform .5s ease; }
+.mus .blas { transform-origin: 0px -18px; } .mus .bogen { transform-origin: 2.6px -10.8px; } .mus .kopf { transform-origin: 0px -19px; }
+.mus:not(.aktiv) .blas { transform: rotate(24deg) translate(1px, 5px); }
+.mus:not(.aktiv) .bogen { transform: translate(2px, 4px) rotate(14deg); }
+.mus:not(.aktiv) .bogen-quer { transform: translate(1px, 2.5px); }
+.mus .koerper, .mus .schlegel { transform-box: fill-box; }
 .mus.aktiv .koerper { animation: bwWiegen 1.3s ease-in-out infinite alternate; transform-origin: 50% 100%; }
-.mus.aktiv .bogen { animation: bwBogen .55s ease-in-out infinite alternate; transform-box: view-box; }
+.mus.aktiv .kopf { animation: bwNicken .65s ease-in-out infinite alternate; }
+.mus.aktiv .bogen { animation: bwBogen .55s ease-in-out infinite alternate; }
 .mus.aktiv .bogen-quer { animation: bwQuer .6s ease-in-out infinite alternate; }
-.mus.aktiv .blas { animation: bwBlas .5s ease-in-out infinite alternate; transform-origin: 0 0; }
+.mus.aktiv .blas { animation: bwBlas 1.2s ease-in-out infinite alternate; }
+.mus.aktiv .zug { animation: bwZug .5s ease-in-out infinite alternate; }
 .mus.aktiv .schlegel { animation: bwSchlag .35s ease-in-out infinite alternate; transform-origin: 50% 0; }
 .mus.aktiv .schlegel.s2 { animation-delay: .17s; }
 @keyframes bwWiegen { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
-@keyframes bwBogen { from { transform: rotate(-14deg); } to { transform: rotate(12deg); } }
-@keyframes bwQuer { from { transform: translateX(-4px); } to { transform: translateX(4px); } }
-@keyframes bwBlas { from { transform: translateY(0); } to { transform: translateY(-1px) rotate(-3deg); } }
+@keyframes bwNicken { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes bwBogen { from { transform: translate(2.6px, 3px); } to { transform: translate(-2.6px, -3px); } }
+@keyframes bwQuer { from { transform: translateX(-4.5px); } to { transform: translateX(4.5px); } }
+@keyframes bwBlas { from { transform: rotate(-2deg); } to { transform: rotate(2.5deg) translateY(-.6px); } }
+@keyframes bwZug { from { transform: translateX(0); } to { transform: translateX(6px); } }
 @keyframes bwSchlag { from { transform: rotate(-18deg); } to { transform: rotate(8deg); } }
 .taktstock { transition: transform .22s ease-out; transform-box: view-box; }
 .dirigent .koerper { transition: transform .3s; }
@@ -60,6 +70,6 @@
 @keyframes drehWeg { to { transform: perspective(900px) rotateY(80deg); opacity: .2; } }
 @keyframes drehHer { from { transform: perspective(900px) rotateY(-80deg); opacity: .2; } }
 @media (prefers-reduced-motion: reduce) {
-  .mus.aktiv .koerper, .mus.aktiv .bogen, .mus.aktiv .bogen-quer, .mus.aktiv .blas, .mus.aktiv .schlegel, .notenzeichen, .dreh-weg, .dreh-her { animation: none; }
+  .mus.aktiv .koerper, .mus.aktiv .kopf, .mus.aktiv .bogen, .mus.aktiv .bogen-quer, .mus.aktiv .blas, .mus.aktiv .zug, .mus.aktiv .schlegel, .notenzeichen, .dreh-weg, .dreh-her { animation: none; }
   .vorhang { transition: none; }
 }

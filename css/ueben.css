@@ -1,0 +1,35 @@
+/* 🎻 Üben (0.14.0): Woche, Stoppuhr, Eintragen, Übezeiten · 📆 Kalender */
+.ue-woche .ue-kopf { display: flex; align-items: baseline; gap: 10px; } .ue-woche .ue-kopf span { color: var(--grau); font-weight: 700; font-size: .9rem; }
+.ue-serie { margin-left: auto; color: #b84000 !important; font-weight: 900 !important; }
+.ue-ziel { height: 8px; border-radius: 4px; background: var(--karte2); overflow: hidden; margin: 6px 0 8px; } .ue-ziel i { display: block; height: 100%; background: linear-gradient(90deg, #d9a21b, #2e9d5b); border-radius: 4px; }
+.ue-balken { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; height: 120px; align-items: end; }
+.ue-tag { display: grid; grid-template-rows: 1fr auto auto; height: 100%; text-align: center; gap: 2px; }
+.ue-tag span { align-self: end; justify-self: center; width: 70%; min-height: 3px; background: var(--haupt); border-radius: 5px 5px 2px 2px; opacity: .85; }
+.ue-tag small { font-size: .68rem; color: var(--grau); font-weight: 700; min-height: 1em; } .ue-tag b { font-size: .75rem; }
+.ue-tag.plan b { color: var(--haupt); text-decoration: underline dotted; } .ue-tag.heute b { background: var(--haupt); color: var(--haupt-text); border-radius: 6px; }
+:root.dunkel .ue-tag.plan b { color: var(--gold); }
+.ue-uhr { text-align: center; } .ue-zeit { font-size: 2.6rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .02em; margin: 2px 0 8px; }
+.ue-uhr .knopfreihe { justify-content: center; }
+.ue-form, .ue-plan { display: grid; gap: 10px; } .ue-form h3, .ue-plan h3 { margin: 0; }
+.ue-form label, .ue-planfelder label { display: grid; gap: 3px; font-size: .78rem; font-weight: 800; color: var(--grau); }
+.ue-form input:not([type=checkbox]), .ue-form select, .ue-planfelder input, .ue-planfelder select { border: 1px solid var(--linie); border-radius: 10px; padding: 8px 10px; background: var(--karte); color: var(--text); font: inherit; font-size: .95rem; width: 100%; min-width: 0; }
+.ue-zeile { display: grid; gap: 4px; } .ue-zeile > span { font-size: .78rem; font-weight: 800; color: var(--grau); }
+.ue-min { width: 70px !important; flex: none; padding: 4px 8px !important; }
+.ue-inhalt, .ue-wt { display: flex; flex-wrap: wrap; gap: 6px; }
+.ue-inhalt button, .ue-wt button { border: 1px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 999px; padding: 5px 10px; font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; }
+.ue-inhalt button.an, .ue-wt button.an { background: var(--haupt); border-color: var(--haupt); color: var(--haupt-text); }
+.ue-wt button { width: 44px; padding: 6px 0; }
+.ue-gefuehl { display: flex; gap: 6px; } .ue-gefuehl button { font-size: 1.6rem; border: 2px solid transparent; background: var(--karte2); border-radius: 12px; width: 48px; height: 46px; cursor: pointer; opacity: .55; }
+.ue-gefuehl button.an { border-color: var(--haupt); opacity: 1; background: var(--karte); }
+.ue-planfelder { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.ue-liste li { align-items: center; }
+.ue-mini { display: flex; align-items: flex-end; gap: 2px; height: 26px; flex: none; } .ue-mini i { width: 5px; min-height: 2px; background: var(--haupt); border-radius: 2px; }
+/* 📆 Kalender */
+.kal-knoepfe { display: grid; gap: 8px; margin: 8px 0; } .kal-knoepfe .knopf { text-align: center; text-decoration: none; }
+.kal-google { background: #1a73e8 !important; border-color: #1a73e8 !important; color: #fff !important; }
+.kal-hilfe summary { cursor: pointer; font-weight: 800; } .kal-hilfe ul { margin: 6px 0; padding-left: 18px; font-size: .88rem; } .kal-hilfe li { margin: 4px 0; }
+.kal-wahl a.knopf { text-decoration: none; }
+button.link { border: none; background: none; padding: 0; font: inherit; color: var(--haupt); font-weight: 800; cursor: pointer; text-decoration: underline; }
+:root.dunkel button.link { color: var(--gold); }
+.kal-feld { display: grid; gap: 3px; font-size: .78rem; font-weight: 800; color: var(--grau); } .kal-feld select { border: 1px solid var(--linie); border-radius: 10px; padding: 8px 10px; background: var(--karte); color: var(--text); font: inherit; font-size: .95rem; }
+:root.dunkel .ue-serie { color: #ffb37a !important; }

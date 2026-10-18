@@ -12,11 +12,15 @@ import { pwOffenZahl } from "./pinnwand.js";
 import { gesundheitFuer, gesundheitVon } from "./schutz.js";
 import { mitfahrtZahlen } from "./extras.js";
 import { wochenStand } from "./ueben.js";
+import { startseiteVerbinden, ANO, anordnenHtml, anordnenLeiste, nachDemZeichnen, laufbandHtml, laufbandStarten, countdownHtml, schnellstartHtml, schnellstartAn, vorschlagPruefen, nuTagZaehlen, ansichtFrage, tagesinfoBeimStart, kachelOffenHinten } from "./startseite.js";
+import { onlineZahl, onlineSichtbar } from "./online.js";
 import { offeneUebeAufgaben } from "./uebebuehne.js";
 import { austauschProjekte, anfragenOffen } from "./vereinsleben.js";
 
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
-const registerSichtbar = () => REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung());
+// eigene Reihenfolge der Register (festhalten und ziehen, KC-CLUB-REGISTER-ZIEHEN)
+const registerSichtbar = () => { const o = einst().registerReihe || [], pos = (r) => { const i = o.indexOf(r[0]); return i < 0 ? 100 + REGISTER_ALLE.indexOf(r) : i; };
+  return REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung()).sort((a, b) => pos(a) - pos(b)); };
 
 // Zahlen für Kacheln
 function offeneAntworten() {
@@ -130,14 +134,17 @@ export function adminZustaende() {
 const AD_KACHELN = [["daten", "🗄️", "Datenquelle"], ["abgleich", "🔁", "Abgleich"], ["versand", "📡", "Communicator"], ["push", "🔔", "Push"], ["zugaenge", "🔑", "Zugänge"], ["fehler", "🩺", "Fehler"], ["speicher", "💾", "Speicher"], ["version", "📱", "Versionen"], ["backup", "🛟", "Backup / Export"]];
 KACHELN.admin = AD_KACHELN.map(([id, sym, t]) => ({ id: "ad-" + id, sym, t, v: "admin", p: { blatt: id }, u: () => adminZustaende()[id][1], klasse: () => `ad l-${adminZustaende()[id][0]}`, nur: () => istLeitung() }));
 
-const EINFACH = ["termine", "nachrichten", "sos", "meinetermine", "meinegenehmigungen", "meinenoten", "ueben", "pinnwand", "cockpit"];
+// 🟢 Einfache Ansicht (wie KC): wenige große Kacheln je nach Rolle – Reihenfolge änderbar (▲▼), es wird nichts gelöscht
+const EINFACH = ["cockpit", "termine", "meinetermine", "nachrichten", "kinder", "meinegenehmigungen", "uebebuehne", "ueben", "meinenoten", "pinnwand", "sos"];
 const wert = (x) => (typeof x === "function" ? x() : x);
-export function kachelnFuer(reg) {
-  const e = einst();
-  const k = KACHELN[reg].filter((x) => (!x.nur || x.nur()) && !e.kachelnAus.includes(x.id));
-  const reihe = e.reihenfolge[reg];
-  if (reihe) k.sort((a, b) => (reihe.indexOf(a.id) + 1 || 999) - (reihe.indexOf(b.id) + 1 || 999));
-  return k;
+const sortiert = (k, reihe) => (reihe ? [...k].sort((a, b) => (reihe.indexOf(a.id) + 1 || 999) - (reihe.indexOf(b.id) + 1 || 999)) : k);
+// alle Kacheln, die man sehen darf (auch ausgeblendete) – in eigener Reihenfolge
+export const kachelnAlle = (reg) => sortiert(KACHELN[reg].filter((x) => !x.nur || x.nur()), einst().reihenfolge[reg]);
+export const kachelnFuer = (reg) => kachelnAlle(reg).filter((x) => !einst().kachelnAus.includes(x.id));
+export function einfachKacheln() {
+  const alle = [...KACHELN.bachkreis, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()));
+  const l = EINFACH.map((id) => alle.find((x) => x.id === id)).filter(Boolean).filter((x) => !(x.id === "termine" && alle.some((y) => y.id === "meinetermine") && !istLehrkraft()));
+  return sortiert(l, einst().reihenfolge.einfach);
 }
 function kachelHtml(k) {
   const z = k.zahl ? wert(k.zahl) : 0;
@@ -163,31 +170,40 @@ function heuteWichtig() {
   return zeilen.length ? `<ul class="liste">${zeilen.join("")}</ul>` : `<p class="hinweis">Heute steht nichts Dringendes an. 🎶</p>`;
 }
 
+const groesse = () => ({ klein: " klein3", mini: " klein4" }[einst().kachelGroesse] || "");
+function rasterBlock() {
+  const e = einst();
+  if (e.einfach) return `${ANO.an ? anordnenLeiste() : ""}<div class="raster einfach${ANO.an ? " anordnen" : ""}" id="raster">${ANO.an ? anordnenHtml(einfachKacheln()) : einfachKacheln().map(kachelHtml).join("")}</div>`;
+  const ausN = kachelnAlle(S.register).length - kachelnFuer(S.register).length;
+  if (!ausN) ANO.nurAus = false;
+  const inhalt = ANO.an ? anordnenHtml(kachelnAlle(S.register)) : ANO.nurAus ? kachelnAlle(S.register).filter((k) => e.kachelnAus.includes(k.id)).map(kachelHtml).join("") : rasterHtml();
+  const hinweis = ANO.an ? "" : ANO.nurAus ? `<p class="hinweis ka-nuraus-text">🙈 Du siehst gerade nur die <b>ausgeblendeten</b> Kacheln.</p><button type="button" class="knopf breit" data-a="kaNurAus" data-x="0">🙈 Ausgeblendete wieder verbergen</button>`
+    : ausN ? `<div class="ka-aus-zeile"><button type="button" class="ka-ausgeblendet" data-a="kaNurAus" data-x="1">👀 ${ausN} ausgeblendete Kachel${ausN > 1 ? "n" : ""} zeigen</button></div>` : "";
+  return `<div class="register" id="register">${registerHtml()}</div>${ANO.an ? anordnenLeiste() : ""}<div class="raster${groesse()}${ANO.an ? " anordnen" : ""}${ANO.nurAus ? " nur-aus" : ""}" id="raster">${inhalt}</div>${hinweis}`;
+}
 VIEWS.start = {
   render() {
     const e = einst();
-    if (!registerSichtbar().find(([r]) => r === S.register)) S.register = "bachkreis";
-    let raster;
-    if (e.einfach) {
-      const alle = [...KACHELN.bachkreis, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()));
-      raster = `<div class="raster einfach" id="raster">${alle.map(kachelHtml).join("")}</div>`;
-    } else raster = `<div class="register" id="register">${registerHtml()}</div><div class="raster" id="raster">${rasterHtml()}</div>`;
+    if (!registerSichtbar().find(([r]) => r === S.register)) S.register = registerSichtbar()[0][0];
     // Der Kopf (kopf.js) ist ein dauerhaftes Element – hier nur sein Platz
-    return `<section id="v-start">
+    return `<section id="v-start" class="${e.einfach ? "ansicht-einfach" : "ansicht-erweitert"}">
       <div id="kopfPlatz"></div>
       <div id="updateHinweis"></div>
-      <div class="abschnitt"><h3>${e.einfach ? "Einfache Ansicht" : "Schnellzugriff"}</h3></div>
-      ${raster}
-      ${e.einfach ? "" : `<div class="wischhinweis">‹ wischen für weitere Bereiche ›</div>`}
-      <div class="karte"><h3>Heute wichtig</h3>${heuteWichtig()}</div>
-      <button class="knopf breit" data-a="ansichtWechseln">${e.einfach ? "🔧 Erweiterte Ansicht" : "🙂 Einfache Ansicht"}</button>
+      <div class="abschnitt"><h3>${e.einfach ? "🟢 Einfache Ansicht" : "Schnellzugriff"}</h3>${ANO.an ? "" : `<button type="button" class="knopf klein" data-a="kaAnordnen" title="Kacheln verschieben${e.einfach ? "" : " oder ausblenden"}">✥ Anordnen</button>`}</div>
+      <div id="rasterBlock">${rasterBlock()}</div>
+      ${e.einfach || ANO.an ? "" : `<div class="wischhinweis">‹ wischen für weitere Bereiche · doppelt tippen dreht eine Kachel um · lange drücken ordnet an ›</div>`}
+      <div class="karte"><h3>Heute wichtig${istLehrkraft() || istVorstand() ? ' <button type="button" class="knopf klein" data-a="tagesinfo">📋 Übersicht</button>' : ""}</h3>${heuteWichtig()}</div>
+      <button class="knopf breit ansicht-knopf" data-a="ansichtWechseln">${e.einfach ? "🔧 Erweiterte Ansicht" : "🟢 Einfache Ansicht"}</button>
       <div class="fusszeile">Bachkreis-App v${APP_VERSION} ${APP_STUFE} · ${esc(datenInfo().hinweis || "")}</div></section>`;
   },
   nach() {
     kopfEinsetzen(document.getElementById("kopfPlatz"));
+    nachDemZeichnen(); nuTagZaehlen();
+    clearTimeout(START_FRAGEN); START_FRAGEN = setTimeout(() => { if (S.view === "start" && !ansichtFrage()) tagesinfoBeimStart(); }, 1200);
+    clearTimeout(START_VORSCHLAG); START_VORSCHLAG = setTimeout(vorschlagPruefen, 25000);
     if (einst().einfach) return;
     // Wischen links/rechts über Kacheln oder Register wechselt das Register (wie Club-App)
-    for (const el of [document.getElementById("raster"), document.getElementById("register")]) {
+    for (const el of [document.getElementById("rasterBlock")]) {
       let x0 = null, y0 = 0;
       el?.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
       el?.addEventListener("touchend", (e) => {
@@ -198,20 +214,33 @@ VIEWS.start = {
     }
   },
 };
+let START_FRAGEN = 0, START_VORSCHLAG = 0;
+// Startseite neu zeichnen ohne den Kopf anzufassen (Anordnen, Rückseite zurück, Ausblenden)
+function startNeu() {
+  const b = document.getElementById("rasterBlock");
+  if (S.view !== "start" || !b) return zeige("start", {}, { ersetzen: true });
+  if (kachelOffenHinten() && !ANO.an) document.querySelector("#raster > .kachel.kr-hinten")?.classList.remove("kr-hinten");
+  b.innerHTML = rasterBlock(); nachDemZeichnen();
+  const knopf = document.querySelector('#v-start .abschnitt [data-a="kaAnordnen"]'); if (knopf) knopf.hidden = ANO.an;
+}
+startseiteVerbinden({ KACHELN, kachelnFuer, kachelnAlle, neuZeichnen: startNeu, ungelesen: () => ungelesen(), offeneAntworten: () => offeneAntworten(), offeneGenehmigungen: () => offeneGenehmigungen(),
+  onlineZahl: () => (onlineSichtbar() ? onlineZahl() : 0), pwOffen: () => pwOffenZahl(), kopfNeu: () => document.dispatchEvent(new CustomEvent("bk-kopf-neu")) });
 const registerHtml = () => registerSichtbar().map(([r, n]) => `<button class="${r === S.register ? "an reg-lauf" : ""}" data-a="register" data-x="${r}" data-r="${r}">${n}<span class="anz">${kachelnFuer(r).length}</span></button>`).join("");
 const rasterHtml = () => kachelnFuer(S.register).map(kachelHtml).join("");
 function registerWechseln(r, richtung) {
   const neu = r !== S.register; S.register = r;
-  const reg = document.getElementById("register"), ra = document.getElementById("raster");
-  if (S.view !== "start" || !reg || !ra) return zeige("start", {}, { ersetzen: true });
-  reg.innerHTML = registerHtml(); ra.innerHTML = rasterHtml();
-  if (neu && !regEffekt(richtung || 1) && richtung) { ra.classList.remove("rein-links", "rein-rechts"); void ra.offsetWidth; ra.classList.add(richtung > 0 ? "rein-links" : "rein-rechts"); }
+  const b = document.getElementById("rasterBlock");
+  if (S.view !== "start" || !b) return zeige("start", {}, { ersetzen: true });
+  ANO.nurAus = false; b.innerHTML = rasterBlock(); nachDemZeichnen();
+  const ra = document.getElementById("raster");
+  if (neu && !regEffekt(richtung || 1) && richtung && ra) { ra.classList.remove("rein-links", "rein-rechts"); void ra.offsetWidth; ra.classList.add(richtung > 0 ? "rein-links" : "rein-rechts"); }
 }
 function registerWischen(schritt) {
+  if (ANO.an) return;
   const regs = registerSichtbar().map(([x]) => x), i = regs.indexOf(S.register), n = regs[i + schritt];
   if (n) registerWechseln(n, schritt);
 }
-kopfVerbinden({ adminZustaende, ungelesen, meineUnterhaltungen, offeneGenehmigungen });
+kopfVerbinden({ adminZustaende, ungelesen, meineUnterhaltungen, offeneGenehmigungen, laufband: laufbandHtml, laufbandStart: laufbandStarten, countdown: countdownHtml, schnellstart: schnellstartHtml, schnellstartAn });
 
 AKTIONEN.register = (r) => {
   if (S.view !== "start") { S.register = r; return zeige("start", {}, { ersetzen: true }); }
@@ -224,7 +253,7 @@ AKTIONEN.kachel = (id) => {
   if (k.aktion) return AKTIONEN[k.aktion]();
   zeige(k.v, k.p || {});
 };
-AKTIONEN.ansichtWechseln = () => { einstSetzen("einfach", !einst().einfach); zeige("start", {}, { ersetzen: true }); };
+AKTIONEN.ansichtWechseln = () => AKTIONEN.ansichtSetzen(einst().einfach ? "erweitert" : "einfach");
 AKTIONEN.themaUmschalten = () => dunkelUmschalten(); // reihum A → T → N wie in der KC Club App
 AKTIONEN.ledBlatt = () => {
   const az = adminZustaende();

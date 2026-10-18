@@ -83,6 +83,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F73 | ♿ Barrierefreiheit (axe, WCAG 2.1 AA) in allen Rollen + PC, 🩺 db_monitor-Prüfung, 🧹 ESLint | ✅ | tests/e2e/barrierefrei.mjs, tests/dbmonitor.test.mjs, npm run lint |
 | BK-F74 | 🎭🎻 Übe-Bühne: Mitspielen, Noten & Griffe, Rhythmus, Stimmgerät, Ohr-Spiele, Übe-Aufgaben mit Fortschritt & Rückmeldung, Vorspiel-Aufnahme mit Einwilligung | ✅ | tests/uebebuehne.test.mjs, e2e rundgang, axe |
 | BK-F75 | 🏫 Abgleich Internetseite: Chronik & Repertoire, Dokumente, Austausch & Gastfamilien, Auftrittsanfragen → Termin, Partner, Dirigier-/Kompositionsversuche | ✅ | tests/abgleich.test.mjs, e2e rundgang, axe |
+| BK-F76 | 🏠 Startseite wie KC: einfache/erweiterte Ansicht, Kacheln umdrehen, Anordnen/Ziehen, Register verschieben, Laufband, Schnellstart, Fallblatt, Kachelgröße, Vorschläge, Tagesübersicht | ✅ | e2e rundgang, echtbetrieb, axe |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

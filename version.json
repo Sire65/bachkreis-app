@@ -1,16 +1,28 @@
 {
-  "version": "0.27.0",
-  "datum": "2026-10-16",
+  "version": "0.28.0",
+  "datum": "2026-10-18",
   "stufe": "DEV",
   "neu": [
-    "📜 Chronik & Repertoire: Geschichte seit 1969 (laut Schul-Website), „Was haben wir schon gespielt?“ und „Über uns“ mit Link zur Internetseite",
-    "📂 Dokumente: Satzung, Flyer, Orchesterklassen-Flyer, Vorlagen – als geschützte Datei oder Link, sichtbar für alle, Eltern, Schüler oder nur die Verwaltung",
-    "🏠 Austausch & Gastfamilien: Eltern bieten Plätze an, die Leitung bestätigt und ordnet die Gäste zu – Gastfamilien sehen ihre Gäste mit Ankunft und wichtigen Hinweisen",
-    "📨 Auftrittsanfragen von Gemeinden, Kirchen und Festen: erfassen, prüfen, zusagen – die Zusage legt den Termin für das Orchester an",
-    "🤝 Partner & Kontakte (Musikschule, Neue Philharmonie Westfalen, Austausch-Orchester) · 🎓 im Konzertprogramm: Schüler dirigiert, eigene Komposition, Uraufführung",
-    "🌙 Bessere Lesbarkeit im Dunkelmodus"
+    "🟢 Einfache Ansicht neu: große Kacheln passend zur Rolle (Schüler, Eltern, Leitung), Reihenfolge änderbar – beim ersten Start fragt die App, wie du starten möchtest",
+    "🔄 Kacheln umdrehen: doppelt auf eine Kachel tippen – hinten warten Schnellaktionen (z. B. Neuer Zettel, Mitspielen, Stimmgerät, 112 anrufen)",
+    "✥ Anordnen wie in der KC App: lange auf eine Kachel drücken, dann ziehen oder Pfeile – ✕ blendet aus, 👀 zeigt Ausgeblendete; auch die Register lassen sich verschieben",
+    "📰 Info-Laufband über den drei Feldern: was zu erledigen ist (mit ✔ Zusagen direkt), Hinweise und schöne Infos – ✕ blendet für heute aus",
+    "⚡ Schnellstart-Karte im Info-Feld (bis zu 8 Symbole) · 🔢 Countdown als Fallblatt · 🔲 Kachelgröße normal, klein oder mini · ⭐ zuletzt gewählte Kachel",
+    "💡 Vorschläge zur Startseite (nur auf diesem Gerät gezählt) · 📋 Tagesübersicht für Leitung, Lehrkräfte und Vorstand"
   ],
   "verlauf": [
+    {
+      "version": "0.27.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "📜 Chronik & Repertoire: Geschichte seit 1969 (laut Schul-Website), „Was haben wir schon gespielt?“ und „Über uns“ mit Link zur Internetseite",
+        "📂 Dokumente: Satzung, Flyer, Orchesterklassen-Flyer, Vorlagen – als geschützte Datei oder Link, sichtbar für alle, Eltern, Schüler oder nur die Verwaltung",
+        "🏠 Austausch & Gastfamilien: Eltern bieten Plätze an, die Leitung bestätigt und ordnet die Gäste zu – Gastfamilien sehen ihre Gäste mit Ankunft und wichtigen Hinweisen",
+        "📨 Auftrittsanfragen von Gemeinden, Kirchen und Festen: erfassen, prüfen, zusagen – die Zusage legt den Termin für das Orchester an",
+        "🤝 Partner & Kontakte (Musikschule, Neue Philharmonie Westfalen, Austausch-Orchester) · 🎓 im Konzertprogramm: Schüler dirigiert, eigene Komposition, Uraufführung",
+        "🌙 Bessere Lesbarkeit im Dunkelmodus"
+      ]
+    },
     {
       "version": "0.26.0",
       "datum": "2026-10-16",

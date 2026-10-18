@@ -1,5 +1,16 @@
 # Änderungen
 
+## 0.28.0 DEV – 18.10.2026
+- 🏠 Startseite wie die KC Club App – neues Modul js/app/startseite.js, css/startseite.css (alles nur Geräte-Einstellungen, nichts geht an den Server)
+- 🟢 Einfache Ansicht: Kacheln je Rolle (`einfachKacheln()`), eigene Reihenfolge (▲▼), erste Frage „Wie möchtest du starten?“ (nur Echtbetrieb), Umschalten unten mit Hinweis
+- 🔄 Kachel-Rückseite (`KACHEL_RUECK`): Doppeltipp dreht um, ↩ oder 8 s zurück, Einzeltipp öffnet wie bisher; abschaltbar
+- ✥ Anordnen: lange drücken (0,6 s) → ziehen mit Mitlaufen am Rand, ◀▲▼▶, ✕ / 👁️, „nur ausgeblendete zeigen“, ↺ Standard; Register festhalten und verschieben (`registerReihe`)
+- 📰 Info-Laufband (rot/orange/gold/weiß, 6 s, Wischen, Berühren hält an, ✕ für heute), 🔢 Fallblatt-Countdown, ⚡ Schnellstart-Karte (Auswahl bis 8), 🔲 Kachelgröße normal/klein/mini, ⭐ zuletzt gewählt, 🔢 Zahlen zählen hoch
+- 💡 Vorschläge (frühestens nach 21 Tagen/8 Nutzungstagen, alle 7 Tage höchstens einer), 📋 Tagesübersicht für Leitung/Lehrkräfte/Vorstand (einmal am Tag, „🌙 heute nicht mehr“)
+- ⚙️ Startseite & Ansicht: neue Schalter, Kachel-Auswahl kompakt in aufklappbaren Blöcken („x von y“, „✅ Alle anzeigen“)
+- 🐞 Start-Fenster sind „leise“: eine 🏎️ Express-Nachricht verdrängt sie (sonst hätte die Start-Frage Express blockiert)
+- Rundgang prüft Laufband, Umdrehen, Anordnen/Ziehen/Ausblenden, Schnellstart und einfache Ansicht
+
 ## 0.27.0 DEV – 16.10.2026
 - 🏫 Abgleich mit gymnasium-bergkamen.de/bachkreis (docs/KONZEPT-UEBEBUEHNE.md Teil A): neues Modul js/app/vereinsleben.js, css/vereinsleben.css
 - 📜 Tabelle `chronik` (für alle sichtbar; Demo nur mit Fakten der Schul-Website, Quelle angegeben), Repertoire aus `programm` + Chronik (`repertoire()` in logik.js, CSV), Tab „Über uns“

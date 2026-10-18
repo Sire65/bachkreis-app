@@ -40,6 +40,31 @@ if (!(await p.$("#pwNeuKnopf .pwStand.voll"))) fehler.push("Pinnwand: 4/4 nicht 
 await p.click('.zettel [data-a="pwErledigt"]'); await p.waitForSelector(".zettel .erl");
 await p.screenshot({ path: `${BILDER}pinnwand.png`, fullPage: true });
 await p.click('[data-a="zurueck"]'); await p.waitForSelector(".kachel");
+// 🏠 Startseite wie KC (0.28.0): Laufband, Kachel umdrehen (doppelt tippen), Anordnen (lange drücken, ziehen, ✕/👁️), Schnellstart, einfache Ansicht
+if (!(await p.$("#ilBand .il-eintrag"))) fehler.push("Startseite: Info-Laufband fehlt");
+{ const k = await p.$('#raster > .kachel[data-id="pinnwand"]'); await k.scrollIntoViewIfNeeded(); await k.click(); await p.waitForTimeout(80); await k.click(); await p.waitForTimeout(450);
+  if (!(await p.$("#raster > .kachel.kr-hinten .kr-akt"))) fehler.push("Startseite: Kachel dreht sich nicht um");
+  await p.click('#raster > .kachel.kr-hinten [data-kr="zu"]'); await p.waitForTimeout(300); }
+await p.evaluate(() => document.querySelector("#raster > .kachel").scrollIntoView({ block: "center" })); await p.waitForTimeout(150);
+{ const b0 = await (await p.$("#raster > .kachel:nth-child(1)")).boundingBox(), erste = await p.$eval("#raster > .kachel:nth-child(1)", (e) => e.dataset.id);
+  await p.mouse.move(b0.x + 30, b0.y + 30); await p.mouse.down(); await p.waitForTimeout(800);
+  if (!(await p.$(".ka-leiste"))) fehler.push("Startseite: lange drücken öffnet Anordnen nicht");
+  const z = await (await p.$("#raster > .kachel:nth-child(4)")).boundingBox(); await p.mouse.move(z.x + 40, z.y + 40, { steps: 8 }); await p.mouse.up(); await p.waitForTimeout(300);
+  if ((await p.$eval("#raster > .kachel:nth-child(1)", (e) => e.dataset.id)) === erste) fehler.push("Startseite: Ziehen verschiebt nicht");
+  await p.screenshot({ path: `${BILDER}start-anordnen.png`, fullPage: true });
+  await p.click('#raster > .kachel[data-id="buehne"] .kweg', { force: true }); await p.click('[data-a="kaFertig"]', { force: true }); await p.waitForTimeout(200);
+  if (await p.$('#raster > .kachel[data-id="buehne"]')) fehler.push("Startseite: ✕ blendet nicht aus");
+  await p.click('[data-a="kaNurAus"][data-x="1"]'); await p.click('[data-a="kaAnordnen"] >> nth=0'); await p.waitForTimeout(200);
+  await p.click('#raster > .kachel[data-id="buehne"] [data-a="kaEin"]', { force: true }); await p.click('[data-a="kaStandard"]', { force: true }); await p.click('[data-a="kaFertig"]', { force: true }); await p.waitForTimeout(200);
+  if (!(await p.$('#raster > .kachel[data-id="buehne"]'))) fehler.push("Startseite: 👁️ Einblenden / Standard wirkt nicht"); }
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start", {}, { ersetzen: true })); await p.waitForTimeout(200);
+await p.evaluate(() => [...document.querySelectorAll(".ipunkt")].find((b) => b.title === "Schnellstart")?.click()); await p.waitForTimeout(300);
+if (!(await p.$(".schnell-raster .mini"))) fehler.push("Startseite: Schnellstart fehlt");
+await p.click('[data-a="ansichtWechseln"]'); await p.waitForSelector(".raster.einfach");
+if (await p.$("#register")) fehler.push("Einfache Ansicht: Register sichtbar");
+await p.screenshot({ path: `${BILDER}start-einfach.png`, fullPage: true });
+await p.click('[data-a="ansichtWechseln"]'); await p.waitForSelector("#register"); await p.evaluate(() => document.getElementById("blattHg")?.remove());
+await p.evaluate(() => [...document.querySelectorAll(".ipunkt")][0]?.click()); await p.waitForTimeout(200);
 // 💬 Nachrichten wie KC: Chatliste, Einzelchat, ❗ wichtig senden → Haken wandern (Vorführversion spielt Ankunft/Lesen nach), Details, ⏰ planen
 await p.click('.fuss-leiste [data-x="nachrichten"]'); await p.waitForSelector(".chatliste");
 await p.click('[data-x="unterhaltung|u-e1"]'); await p.waitForSelector("#chatVerlauf .blase");
@@ -135,7 +160,7 @@ await p.waitForSelector(".kachel");
 // Kopf wie KC: alle Infofeld-Karten, Wetter-Tag, Jalousie halb/ganz, Jahreszeiten-Vorschauen
 const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);
 for (let i = 0; i < karten; i++) { await p.click(`#infoPunkte .ipunkt[data-x="${i}"]`); await p.waitForTimeout(150); }
-await p.click('[data-a="infoGehe"][data-x="1"]'); await p.waitForSelector(".wtag", { timeout: 8000 }); await p.click('.wtag[data-wtag="2"]');
+await p.click('#infoPunkte .ipunkt[title="Wetter"]'); await p.waitForSelector(".wtag", { timeout: 8000 }); await p.click('.wtag[data-wtag="2"]');
 for (const art of ["halb", "ganz", "ganz"]) { await p.click(`[data-a="kopfRollo"][data-x="${art}"]`); await p.waitForTimeout(2300); }
 for (const x of ["herbst", "advent", "winter", "fruehling", "sommer", "kirmes", "wiesn", "karibik", "karneval", "halloween"]) {
   await p.evaluate(async (x) => (await import("/js/app/jahreszeiten.js")).jahreszeitVorschau(x), x); await p.waitForTimeout(700);

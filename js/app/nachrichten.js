@@ -691,7 +691,8 @@ function expressOffen() {
     .sort((a, b) => String(a.zeit).localeCompare(String(b.zeit)));
 }
 export function expressPruefen() {
-  if (!S.ich || document.hidden || document.querySelector(".blatt-hg") || EXP.aktiv) return false;
+  // offene Fenster blockieren – außer „leise“ Start-Fenster (Ansicht wählen, Tagesübersicht, Vorschlag): Express hat Vorrang
+  if (!S.ich || document.hidden || document.querySelector(".blatt-hg .blatt:not([data-leise])") || EXP.aktiv) return false;
   const l = expressOffen(); if (!l.length) return false;
   const n = l[0], u = hole("unterhaltungen", n.unterhaltung_id);
   if (S.view === "unterhaltung" && S.params.id === n.unterhaltung_id) return false; // steht schon offen vor einem

@@ -24,6 +24,7 @@ const $ = (id) => document.getElementById(id);
 const K = { hero: null, glanzGelaufen: false, infoLetztes: "", adminZustaende: () => ({}), ungelesen: () => 0, meineUnterhaltungen: () => [], offeneGenehmigungen: () => 0 };
 // start.js reicht Zähl-Funktionen herein (vermeidet Kreis-Importe)
 export function kopfVerbinden(f) { Object.assign(K, f); }
+document.addEventListener("bk-kopf-neu", () => { infoFelderAktualisieren(); heroZeigen(0); });
 
 // ---------- Hilfen ----------
 const fuerWen = () => (istEltern() ? kinderVon(db, S.ich.id) : [S.ich.id]);
@@ -131,6 +132,7 @@ export function kopfAuffrischen() {
 // ---------- Infofeld (KC-CLUB-INFOFELD) ----------
 const INFO_ALLE = [
   { id: "termin", t: "Nächster Termin", html: () => infoTermin() },
+  { id: "schnell", t: "Schnellstart", html: () => K.schnellstart?.() || "", nur: () => !!K.schnellstartAn?.() }, // ⚡ KC-CLUB-SCHNELLSTART (0.28.0)
   { id: "wetter", t: "Wetter", html: () => infoWetter(naechsterTermin()?.t) },
   { id: "fuerdich", t: "Für dich", html: () => infoFuerDich() },
   { id: "demnaechst", t: "Demnächst", html: () => infoDemnaechst() },
@@ -157,6 +159,7 @@ export function heroZeigen(richtung) {
   $("infoPunkte").innerHTML = INFO_FELDER.map((x, i) => `<button class="ipunkt${i === INFO_I ? " an" : ""}" data-a="infoGehe" data-x="${i}" aria-label="${esc(x.t)}" title="${esc(x.t)}"></button>`).join("");
   if (f.id === "wetter") { wetterSzene(); if (!WET.laedt && Date.now() - WET.geholt > WETTER_NEU_MIN * 60000) wetterLaden(() => { if (INFO_FELDER[INFO_I]?.id === "wetter") heroZeigen(0); kopfLedsWetter(); }); }
   if (f.id === "zentrale") zentraleUhr();
+  K.laufbandStart?.(); // 📰 Info-Laufband (0.28.0)
 }
 function kopfLedsWetter() { if (K.hero) kopfAuffrischen(); }
 function infoGehe(i, richtung) {
@@ -189,10 +192,10 @@ function dreiKacheln(t, tage, a) {
   const mitglieder = new Set(liste("gruppe_zuordnung").map((x) => x.person_id)).size;
   const bis = !t ? "–" : tage <= 0 ? "Heute" : tage === 1 ? "Morgen" : `in ${tage} Tagen`;
   const ameise = (k) => `<svg class="ameisen ${k}" aria-hidden="true"><rect width="100%" height="100%" rx="16"/></svg>`;
-  return `<div class="kacheln3">
+  return `${K.laufband?.() || ""}<div class="kacheln3">
     <button type="button" class="mini${n ? " mini-neu" : ""}" data-a="kachel" data-x="nachrichten">${n ? ameise("neu") : ""}<b>${n}</b><span>${n === 1 ? "neue Nachricht" : "neue Nachr."}</span></button>
     <button type="button" class="mini${on && z ? " mini-online" : ""}" data-a="${on ? "onlineListe" : "kachel"}" data-x="${on ? "" : "orchester"}">${on && z ? ameise("on") : ""}<b>${on ? `<span class="mini-on"></span>${z}` : mitglieder || "–"}</b><span>${on ? (z === 1 ? "ist online" : "sind online") : "Mitglieder"}</span></button>
-    <button type="button" class="mini${t && tage <= 1 ? " mini-bald" : ""}" data-a="${t ? "oeffne" : "kachel"}" data-x="${t ? "termin|" + t.id : "termine"}">${t && tage <= 1 ? ameise("bald") : ""}<b>${esc(bis)}</b><span>${t ? (a ? { ja: "✅ zugesagt", nein: "❌ abgesagt", vielleicht: "⏳ offen" }[a.antwort] : "❔ antworten") : "kein Termin"}</span></button>
+    <button type="button" class="mini${t && tage <= 1 ? " mini-bald" : ""}" data-a="${t ? "oeffne" : "kachel"}" data-x="${t ? "termin|" + t.id : "termine"}">${t && tage <= 1 ? ameise("bald") : ""}<b>${K.countdown ? K.countdown(bis, tage) : esc(bis)}</b><span>${t ? (a ? { ja: "✅ zugesagt", nein: "❌ abgesagt", vielleicht: "⏳ offen" }[a.antwort] : "❔ antworten") : "kein Termin"}</span></button>
   </div>`;
 }
 function infoTermin() {

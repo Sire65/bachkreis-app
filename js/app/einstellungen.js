@@ -1,7 +1,7 @@
 // ⚙️ Mehr – Einstellungen aufgebaut wie in der KC Club App (Klappbereiche): Das Wichtigste · Benachrichtigungen · Ansagen, Töne & Tipps ·
 // Privatsphäre · Termine im Handy-Kalender · Darstellung (Farbdesign, Themen, Tag/Nacht, Schrift, Chat-Farben, Sparmodus) · Effekte ·
 // Startseite & Ansicht · App-Installation · App-Info. Fast alles gilt nur für dieses Gerät; die Privatsphäre wird beim Server gemerkt.
-import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern } from "./zustand.js";
+import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern, istLehrkraft, istVorstand } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt } from "../kern/ui.js";
 import { speichere, datenInfo, serverAktion, konfig } from "../kern/daten.js";
 import { EREIGNISSE, KANAELE, wahlVon } from "../kern/versand.js";
@@ -108,9 +108,19 @@ VIEWS.einstellungen = {
       ${schalter("feiertage", "🇩🇪 Feiertage NRW im Kalender", "", e.feiertage !== false)}
       <div class="feld"><label>🪧 Info-Feld oben beim Start</label><select data-c="infoStart"><option value="">Die zuletzt gezeigte Karte</option>${infoKarten().map(([id, t], i) => `<option value="${id}" ${e.infoStart === id ? "selected" : ""}>${i + 1}. ${esc(t)}</option>`).join("")}</select></div>
       <div class="feld"><label>Start-Register</label><select data-c="einstStartReg">${REGISTER_ALLE.map(([r, n]) => `<option value="${r}" ${e.startRegister === r ? "selected" : ""}>${n}</option>`).join("")}</select></div>
-      <h4>🔲 Kacheln auf der Startseite</h4><p class="hinweis">Ausgeblendete Kacheln bleiben hier erreichbar. ▲ schiebt eine Kachel nach vorn.</p>
-      ${["bachkreis", "meins", "technik"].map((r) => `<h4>${REGISTER_ALLE.find(([x]) => x === r)[1]}</h4>${KACHELN[r].filter((k) => !k.nur || k.nur()).map((k) => `<label class="schalter"><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span><span><button class="knopf klein" data-a="kachelSchieben" data-x="${r}|${k.id}|-1">▲</button> <input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}></span></label>`).join("")}`).join("")}
-      <button class="knopf" data-a="kachelnStandard">↺ Standard</button>`;
+      ${schalter("kachelRueck", "🔄 Kacheln umdrehen", "Doppelt auf eine Kachel tippen – hinten warten Schnellaktionen (erweiterte Ansicht)", e.kachelRueck !== false)}
+      ${schalter("laufband", "📰 Info-Laufband", "Über den drei Feldern oben: was zu erledigen ist, Hinweise, schöne Infos – wechselt alle 6 Sekunden", e.laufband !== false)}
+      ${schalter("schnellstart", "⚡ Schnellstart im Info-Feld", "Bis zu 8 Symbole für die wichtigsten Dinge (erweiterte Ansicht)", e.schnellstart !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="schnellWahl">✏️ Symbole wählen</button></div>
+      <h4>🔲 Kachelgröße (erweiterte Ansicht)</h4>${chips([["normal", "Normal (2–3 je Reihe)"], ["klein", "Klein (3 je Reihe)"], ["mini", "Mini (4 je Reihe)"]], e.kachelGroesse || "normal", "kachelGroesseWahl")}
+      <h4>⏳ Countdown bis zum nächsten Termin</h4>${chips([["normal", "Normal"], ["fallblatt", "🔢 Fallblatt (Klappzahlen)"]], e.countdown || "normal", "countdownWahl")}
+      ${schalter("vorschlaege", "💡 Vorschläge zur Startseite", "Selten ein Vorschlag, z. B. eine lange nicht benutzte Kachel zu verbergen – die App baut nie selbst um. Gezählt wird nur auf diesem Gerät.", e.vorschlaege !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="nuVergessen">🧹 Gemerktes löschen</button></div>
+      ${istLehrkraft() || istVorstand() ? schalter("tagesinfo", "📋 Tagesübersicht beim Start", "Einmal am Tag: alles Wichtige für Leitung, Lehrkräfte und Vorstand", e.tagesinfo !== false) : ""}
+      <h4>✥ Kacheln anordnen</h4><p class="hinweis">Auf der Startseite lange auf eine Kachel drücken – dann ziehen, mit den Pfeilen verschieben oder mit ✕ ausblenden. Register lassen sich genauso festhalten und verschieben.</p>
+      <div class="knopfreihe"><button type="button" class="knopf" data-a="kaAnordnen">✥ Jetzt anordnen</button><button class="knopf" data-a="kachelnStandard">↺ Alles auf Standard</button></div>
+      <h4>☑️ Welche Kacheln möchtest du sehen?</h4>${e.einfach ? '<p class="hinweis">🟢 Du nutzt gerade die einfache Ansicht – die Auswahl gilt für die erweiterte Ansicht.</p>' : ""}
+      ${["bachkreis", "meins", "technik"].map((r) => { const l = KACHELN[r].filter((k) => !k.nur || k.nur()), an = l.filter((k) => !e.kachelnAus.includes(k.id)).length;
+        return `<details class="ka-wahl"><summary>${REGISTER_ALLE.find(([x]) => x === r)[1]} <span class="ka-wahl-zahl">${an} von ${l.length}</span></summary><div class="ka-wahl-raster">${l.map((k) => `<label><input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span></label>`).join("")}</div>
+          <button type="button" class="knopf klein" data-a="kachelnAlleAn" data-x="${r}">✅ Alle anzeigen</button></details>`; }).join("")}`;
     const install = `<p>Die Bachkreis-App läuft im Browser und lässt sich wie eine App auf den Startbildschirm legen – kostenlos, ohne App-Store.</p>
       ${installEreignis ? `<button class="knopf haupt breit" data-a="appInstallieren">📲 Jetzt als App installieren</button>` : ""}
       <h4>Android (Chrome)</h4><ol class="install-schritte"><li>Den persönlichen Link in <b>Chrome</b> öffnen</li><li>Oben rechts <b>⋮</b> antippen</li><li><b>„App installieren“</b> bzw. „Zum Startbildschirm hinzufügen“</li><li><b>„Installieren“</b> bestätigen – die App liegt jetzt in der App-Liste</li></ol>
@@ -149,6 +159,9 @@ const neu = () => { const y = scrollY; zeige("einstellungen", {}, { ersetzen: tr
 
 // ---------- Aktionen ----------
 AKTIONEN.schriftWahl = (v) => { einstSetzen("schrift", v); neu(); };
+AKTIONEN.kachelGroesseWahl = (x) => { einstSetzen("kachelGroesse", x); neu(); };
+AKTIONEN.countdownWahl = (x) => { einstSetzen("countdown", x); neu(); };
+AKTIONEN.kachelnAlleAn = (r) => { const ids = KACHELN[r].map((k) => k.id); einstSetzen("kachelnAus", einst().kachelnAus.filter((x) => !ids.includes(x))); neu(); };
 AKTIONEN.einstSchalter2 = (_, el) => { einstSetzen(el.dataset.x, el.checked); neu(); };
 AKTIONEN.designWahl = (id) => { D.designWaehlen(id); neu(); };
 AKTIONEN.designStandard = () => { D.designStandard(); neu(); };

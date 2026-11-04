@@ -3,7 +3,7 @@
 // (aus dem Admin-Register und von der Bühne auf das erste Register / die Vorderseite – wie KC-CLUB-START-HEIM).
 import { S, zeige, istEltern } from "./zustand.js";
 import { AKTIONEN, esc } from "../kern/ui.js";
-import { ungelesen } from "./start.js";
+import { ungelesen, nachrichtStufe, NACHRICHT_STUFE_TEXT } from "./start.js";
 import { kopfVorne } from "./buehne.js";
 import { onlineZahl } from "./online.js";
 
@@ -23,7 +23,8 @@ export function fussZeichnen() {
   if (!f) { f = document.createElement("nav"); f.className = "fuss-leiste"; f.id = "fuss"; f.setAttribute("aria-label", "Hauptnavigation"); document.body.appendChild(f); }
   document.body.classList.add("mit-fuss");
   const aktiv = ZU[S.view] || S.view, n = (() => { try { return ungelesen(); } catch { return 0; } })(), on = onlineZahl(); // 🟢 kleine grüne Zahl: so viele gerade online
-  f.innerHTML = KNOEPFE().map(([v, sym, t]) => `<button type="button" data-a="fuss" data-x="${v}" class="${v === aktiv ? "an" : ""}" ${v === aktiv ? 'aria-current="page"' : ""}><span>${sym}</span>${esc(t)}${v === "nachrichten" && n ? `<i class="zaehler">${n > 99 ? "99+" : n}</i>` : ""}${["orchester", "kinder"].includes(v) && on ? `<i class="on-zahl" title="${on} gerade online">${on}</i>` : ""}</button>`).join("");
+  const st = n ? (() => { try { return nachrichtStufe(); } catch { return null; } })() : null; // 0.29.0: blinkt nach Alter
+  f.innerHTML = KNOEPFE().map(([v, sym, t]) => `<button type="button" data-a="fuss" data-x="${v}" class="${v === aktiv ? "an" : ""}${v === "nachrichten" && st ? " alt-" + st : ""}" ${v === aktiv ? 'aria-current="page"' : ""}${v === "nachrichten" && st ? ` title="${NACHRICHT_STUFE_TEXT[st]}"` : ""}><span>${sym}</span>${esc(t)}${v === "nachrichten" && n ? `<i class="zaehler">${n > 99 ? "99+" : n}</i>` : ""}${["orchester", "kinder"].includes(v) && on ? `<i class="on-zahl" title="${on} gerade online">${on}</i>` : ""}</button>`).join("");
 }
 AKTIONEN.fuss = (v) => {
   if (v === "start") {

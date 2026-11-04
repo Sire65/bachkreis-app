@@ -68,12 +68,23 @@ await p.evaluate(() => [...document.querySelectorAll(".ipunkt")][0]?.click()); a
 // 💬 Nachrichten wie KC: Chatliste, Einzelchat, ❗ wichtig senden → Haken wandern (Vorführversion spielt Ankunft/Lesen nach), Details, ⏰ planen
 await p.click('.fuss-leiste [data-x="nachrichten"]'); await p.waitForSelector(".chatliste");
 await p.click('[data-x="unterhaltung|u-e1"]'); await p.waitForSelector("#chatVerlauf .blase");
-await p.click('[data-a="wichtigUm"]'); await p.fill("#chatText", "Rundgang: bitte Noten mitbringen"); await p.click('[data-a="chatSenden"]');
+await p.fill("#chatText", "Rundgang: bitte Noten mitbringen"); await p.click('[data-a="wichtigUm"]'); await p.click('[data-a="chatSenden"]');
 await p.waitForSelector("#chatVerlauf .blase.ich.wichtig:last-of-type .haken.blau", { timeout: 9000 }).catch(() => fehler.push("Chat: blaue Haken kamen nicht"));
 const letzte = (await p.$$("#chatVerlauf .blase.ich")).pop(); await letzte.click(); await p.click('[data-a="naInfo"]'); await p.waitForSelector(".ni-zeile");
 await p.screenshot({ path: `${BILDER}chat-details.png` }); await p.click('#blattHg [data-a="blattZu"]');
 await p.fill("#chatText", "Rundgang geplant"); await p.click('[data-a="spaeterWahl"]'); await p.click('[data-a="gpZeit"][data-x="1"]'); await p.click('[data-a="gpPlanen"]');
 await p.waitForSelector(".gp-blase"); await p.screenshot({ path: `${BILDER}chat.png` });
+// 0.29: Versand-Leiste erst beim Schreiben, 𝐅 Formatieren, 📅 Termin aus der Nachricht, 👥 Filter, Chatliste mit Filter-Chips
+if (!(await p.$("#versandLeiste.versteckt"))) fehler.push("Chat: Versand-Leiste sichtbar ohne Text");
+await p.fill("#chatText", "Zusatzprobe am 20.12. um 18 Uhr – *bitte* kommen"); await p.waitForSelector("#versandLeiste:not(.versteckt)", { timeout: 3000 }).catch(() => fehler.push("Chat: Versand-Leiste erscheint nicht beim Schreiben"));
+await p.click('[data-a="formatAuf"]'); if (!(await p.$(".format-leiste"))) fehler.push("Chat: Format-Leiste fehlt");
+await p.click('[data-a="chatSenden"]'); await p.waitForSelector("#chatVerlauf .blase.ich b", { timeout: 4000 }).catch(() => fehler.push("Chat: *fett* nicht formatiert"));
+if (!(await p.waitForSelector("#chatVerlauf .nt-knopf", { timeout: 3000 }).catch(() => null))) fehler.push("Chat: 📅 Termin-Knopf fehlt"); else { await p.locator("#chatVerlauf .nt-knopf").last().click(); await p.waitForSelector("#blattHg"); await p.click('#blattHg [data-a="blattZu"]'); }
+await p.click('[data-a="chatFilterWeiter"]'); if (!(await p.$("#chatVerlauf.nur-andere"))) fehler.push("Chat: Filter „nur andere“ wirkt nicht");
+await p.screenshot({ path: `${BILDER}chat-format.png` });
+await p.click('.fuss-leiste [data-x="nachrichten"]'); await p.waitForSelector(".chat-filter");
+await p.click('[data-a="chatListFilter"][data-x="gruppen"]'); await p.waitForSelector('.chat-filter button.an[data-x="gruppen"]');
+await p.click('[data-a="chatListFilter"][data-x="alle"]'); await p.screenshot({ path: `${BILDER}chatliste.png` });
 // 0.9: eingeklappte Tage/KW, Umfrage, Foto als Anhang, Sprachsteuerung (Befehl direkt – Headless hat keine Spracherkennung)
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("unterhaltung", { id: "u-a" })); await p.waitForSelector("#chatVerlauf");
 if (!(await p.$(".tag-zu.kw"))) fehler.push("Chat: keine eingeklappten Wochen (KW)");

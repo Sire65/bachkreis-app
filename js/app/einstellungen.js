@@ -51,6 +51,7 @@ function nachrichtenEinst(e) {
   const zs = e.zustellStandard || "regel";
   return `${schalter("lesebestaetigung", "✓✓ Lesebestätigungen (blaue Haken)", "Andere sehen, wann du ihre Nachricht gelesen hast. Aus: du siehst auch bei anderen keine blauen Haken – wie bei WhatsApp", e.lesebestaetigung !== false)}
     ${schalter("wichtigFragen", "❗ Vor dem Senden nach der Wichtigkeit fragen", "📝 Normal oder ❗ Hoch – höchstens alle 30 Min. je Chat", e.wichtigFragen ?? (S.ich?.rollen || []).some((r) => ["leitung", "admin"].includes(r)))}
+    ${schalter("versandImmer", "📝❗🏎️ Versand-Leiste immer zeigen", "Aus: erscheint erst, wenn du schreibst oder etwas anhängst", e.versandImmer === true)}
     ${schalter("chatTon", "🔔 Ton bei neuer Nachricht im offenen Chat", "Kurzer Ton und Vibrieren", e.chatTon !== false)}
     ${schalter("vorlesen", "🔊 Neue Nachrichten vorlesen", "Im geöffneten Chat liest das Handy neue Nachrichten vor", e.vorlesen === true)}
     ${schalter("entwuerfe", "✏️ Entwürfe merken", "Angefangene Nachrichten bleiben je Chat stehen – auch nach dem Schließen", e.entwuerfe !== false)}

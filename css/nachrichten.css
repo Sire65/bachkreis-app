@@ -185,3 +185,39 @@ button.tag-trenner { border: none; background: none; font: inherit; cursor: poin
 .on-uhr { text-align: center; font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .on-punkt, .on-gross.klopft svg { animation: none; } }
 :root.dunkel .chat-rechts .hinweis.neu { color: #7bd88f; }
+/* 0.29.0 – Nachrichten wie KC 2.858: Versand-Leiste · Formatieren · Grüße · Hinweise · Filter · Gliederung · Alter blinkt */
+.versand-leiste { display: flex; gap: 6px; padding: 4px 0 6px; } .versand-leiste.versteckt { display: none; }
+.versand-leiste button { flex: 1; min-height: 40px; border: 1px solid var(--linie); border-radius: 12px; background: var(--karte); color: var(--text); font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; position: relative; }
+.versand-leiste button.an { background: #1f5fae; border-color: transparent; color: #fff; }
+.versand-leiste button.wichtig.an { background: #c62828; } .versand-leiste button.express.an { background: #e65100; }
+.versand-leiste button[data-zahl]::after { content: attr(data-zahl); position: absolute; top: -6px; right: -4px; font-size: .65rem; background: var(--text); color: var(--karte); border-radius: 8px; padding: 0 5px; }
+.format-leiste { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 0 6px; }
+.format-leiste button { min-width: 40px; min-height: 40px; border: 1px solid var(--linie); border-radius: 10px; background: var(--karte); color: var(--text); font: inherit; font-weight: 800; cursor: pointer; }
+.format-leiste .hinweis { margin: 0; font-size: .75rem; }
+.format-leiste.gruss button { min-width: 0; padding: 0 10px; font-weight: 600; font-size: .85rem; }
+.nf-knopf.nf-rot { color: #c62828; } .nf-knopf.nf-blau { color: #1565c0; } .nf-knopf.nf-gruen { color: #2e7d32; } .nf-knopf.nf-gelb { background: #fff176; color: #2b2410; }
+.nf.nf-rot { color: #c62828; } .nf.nf-blau { color: #1565c0; } .nf.nf-gruen { color: #2e7d32; } .nf.nf-gelb { background: #fff176; color: #2b2410; border-radius: 3px; padding: 0 2px; }
+:root.dunkel .nf.nf-rot, :root.dunkel .nf-knopf.nf-rot { color: #ff8a80; } :root.dunkel .nf.nf-blau, :root.dunkel .nf-knopf.nf-blau { color: #82b1ff; } :root.dunkel .nf.nf-gruen, :root.dunkel .nf-knopf.nf-gruen { color: #8be09a; }
+.link-karte, .link-warn { display: block; width: fit-content; max-width: 100%; margin: 4px 0; padding: 3px 8px; border-radius: 8px; font-size: .78rem; font-weight: 700; overflow-wrap: anywhere; }
+.link-karte { background: rgba(31, 95, 174, .1); } .link-warn { background: #ffebee; color: #8e1b1b; } :root.dunkel .link-warn { background: #4a1414; color: #ffcdd2; }
+.erw { font-weight: 800; color: #1f5fae; } :root.dunkel .erw { color: #8ab4f8; }
+.nt-knopf, .erk-knopf { display: block; margin-top: 6px; min-height: 36px; padding: 4px 10px; border: 1px dashed var(--linie); border-radius: 10px; background: transparent; color: inherit; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; text-align: left; }
+.erk-zeile { display: flex; align-items: stretch; gap: 4px; } .erk-zeile .erk-knopf { flex: 1; }
+.erk-weg { margin-top: 6px; min-width: 36px; border: none; background: transparent; color: inherit; cursor: pointer; opacity: .7; }
+#chatVerlauf.nur-andere .blase.ich, #chatVerlauf.nur-meine .blase.du, #chatVerlauf.nur-keine .blase { display: none; }
+.chat-filter { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.chat-filter button { min-height: 38px; padding: 0 12px; border: 1px solid var(--linie); border-radius: 19px; background: var(--karte); color: var(--text); font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.chat-filter button.an { background: #1f5fae; color: #fff; border-color: transparent; } .chat-filter small { opacity: .8; }
+.chat-filter select { min-height: 38px; border-radius: 19px; border: 1px solid var(--linie); background: var(--karte); color: var(--text); font: inherit; font-size: .85rem; padding: 0 10px; }
+.chat-abschnitt { margin-bottom: 6px; }
+.chat-abschnitt-kopf { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 40px; padding: 0 10px; border: none; border-radius: 10px; background: var(--karte); color: var(--text); font: inherit; font-weight: 800; cursor: pointer; }
+.liste li.hat-neu { box-shadow: inset 4px 0 0 #2e9d5b; } .liste li.hat-neu b { font-weight: 900; }
+/* Alter der ältesten ungelesenen Nachricht: grün ≤ 2 Tage · orange ≤ 4 · rot älter – blinkt */
+.fuss-leiste button.alt-gruen .zaehler, .kachel.na-gruen .zahl, .mini.na-gruen b { background: #1e7a43; }
+.fuss-leiste button.alt-orange .zaehler, .kachel.na-orange .zahl, .mini.na-orange b { background: #b04a00; }
+.fuss-leiste button.alt-rot .zaehler, .kachel.na-rot .zahl, .mini.na-rot b { background: #c62828; }
+.fuss-leiste button[class*="alt-"] .zaehler, .kachel[class*="na-"] .zahl, .mini.mini-neu b { color: #fff; animation: naBlink 1.4s ease-in-out infinite; }
+.mini.mini-neu b { border-radius: 10px; padding: 0 6px; }
+@keyframes naBlink { 50% { opacity: .35; } }
+:root.ohne-effekt .fuss-leiste button[class*="alt-"] .zaehler, :root.ohne-effekt .kachel[class*="na-"] .zahl, :root.ohne-effekt .mini.mini-neu b { animation: none; }
+@media (prefers-reduced-motion: reduce) { .fuss-leiste button[class*="alt-"] .zaehler, .kachel[class*="na-"] .zahl, .mini.mini-neu b { animation: none; } }

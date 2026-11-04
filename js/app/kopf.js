@@ -193,7 +193,7 @@ function dreiKacheln(t, tage, a) {
   const bis = !t ? "–" : tage <= 0 ? "Heute" : tage === 1 ? "Morgen" : `in ${tage} Tagen`;
   const ameise = (k) => `<svg class="ameisen ${k}" aria-hidden="true"><rect width="100%" height="100%" rx="16"/></svg>`;
   return `${K.laufband?.() || ""}<div class="kacheln3">
-    <button type="button" class="mini${n ? " mini-neu" : ""}" data-a="kachel" data-x="nachrichten">${n ? ameise("neu") : ""}<b>${n}</b><span>${n === 1 ? "neue Nachricht" : "neue Nachr."}</span></button>
+    <button type="button" class="mini${n ? " mini-neu na-" + (K.nachrichtStufe?.() || "gruen") : ""}" data-a="kachel" data-x="nachrichten">${n ? ameise("neu") : ""}<b>${n}</b><span>${n === 1 ? "neue Nachricht" : "neue Nachr."}</span></button>
     <button type="button" class="mini${on && z ? " mini-online" : ""}" data-a="${on ? "onlineListe" : "kachel"}" data-x="${on ? "" : "orchester"}">${on && z ? ameise("on") : ""}<b>${on ? `<span class="mini-on"></span>${z}` : mitglieder || "–"}</b><span>${on ? (z === 1 ? "ist online" : "sind online") : "Mitglieder"}</span></button>
     <button type="button" class="mini${t && tage <= 1 ? " mini-bald" : ""}" data-a="${t ? "oeffne" : "kachel"}" data-x="${t ? "termin|" + t.id : "termine"}">${t && tage <= 1 ? ameise("bald") : ""}<b>${K.countdown ? K.countdown(bis, tage) : esc(bis)}</b><span>${t ? (a ? { ja: "✅ zugesagt", nein: "❌ abgesagt", vielleicht: "⏳ offen" }[a.antwort] : "❔ antworten") : "kein Termin"}</span></button>
   </div>`;

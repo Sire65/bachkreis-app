@@ -37,6 +37,16 @@ export function ungelesen() {
   if (!S.ich) return 0;
   return meineUnterhaltungen().reduce((s, u) => s + liste("nachrichten", (n) => n.unterhaltung_id === u.id && nachrichtFrei(n) && !gelesenVonMir(n)).length, 0);
 }
+// 0.29.0 Nachrichten-Alter (KC-CLUB-NACHRICHT-ALTER/-BLINKEN): blinkt, solange etwas ungelesen ist – bis 2 Tage grün, 3./4. Tag orange, danach rot
+export function nachrichtStufe() {
+  if (!S.ich) return null;
+  let aelteste = null;
+  for (const u of meineUnterhaltungen()) for (const n of liste("nachrichten", (x) => x.unterhaltung_id === u.id && nachrichtFrei(x) && !gelesenVonMir(x))) if (!aelteste || n.zeit < aelteste) aelteste = n.zeit;
+  if (!aelteste) return null;
+  const tage = (Date.now() - Date.parse(aelteste)) / 86400000;
+  return tage <= 2 ? "gruen" : tage <= 4 ? "orange" : "rot";
+}
+export const NACHRICHT_STUFE_TEXT = { gruen: "Ungelesen – neu", orange: "Ungelesen seit ein paar Tagen", rot: "Ungelesen seit mehr als 4 Tagen" };
 export function meineUnterhaltungen() {
   // Einzelchats und Runden sind privat – auch die Leitung sieht nur die, in denen sie dabei ist
   return liste("unterhaltungen").filter((u) => (u.mitglieder || []).includes(S.ich.id) || (!["einzel", "runde"].includes(u.art) && (istLeitung() || imVerteiler(u.verteiler))));
@@ -149,7 +159,8 @@ export function einfachKacheln() {
 function kachelHtml(k) {
   const z = k.zahl ? wert(k.zahl) : 0;
   const ziel = k.aktion ? `data-a="${k.aktion}"` : `data-a="kachel" data-x="${esc(k.id)}"`;
-  return `<button class="kachel ${esc(wert(k.klasse) || "")}" ${ziel} data-id="${esc(k.id)}">${z ? `<span class="zahl">${esc(z)}</span>` : ""}<div class="sym">${k.sym}</div><b>${esc(wert(k.t))}</b><small>${esc(wert(k.u) || "")}</small></button>`;
+  const na = k.id === "nachrichten" && z ? nachrichtStufe() : null;
+  return `<button class="kachel ${esc(wert(k.klasse) || "")}${na ? " na-" + na : ""}" ${ziel} data-id="${esc(k.id)}">${z ? `<span class="zahl">${esc(z)}</span>` : ""}<div class="sym">${k.sym}</div><b>${esc(wert(k.t))}</b><small>${esc(wert(k.u) || "")}</small></button>`;
 }
 
 function heuteWichtig() {
@@ -240,7 +251,7 @@ function registerWischen(schritt) {
   const regs = registerSichtbar().map(([x]) => x), i = regs.indexOf(S.register), n = regs[i + schritt];
   if (n) registerWechseln(n, schritt);
 }
-kopfVerbinden({ adminZustaende, ungelesen, meineUnterhaltungen, offeneGenehmigungen, laufband: laufbandHtml, laufbandStart: laufbandStarten, countdown: countdownHtml, schnellstart: schnellstartHtml, schnellstartAn });
+kopfVerbinden({ adminZustaende, ungelesen, meineUnterhaltungen, offeneGenehmigungen, nachrichtStufe, laufband: laufbandHtml, laufbandStart: laufbandStarten, countdown: countdownHtml, schnellstart: schnellstartHtml, schnellstartAn });
 
 AKTIONEN.register = (r) => {
   if (S.view !== "start") { S.register = r; return zeige("start", {}, { ersetzen: true }); }

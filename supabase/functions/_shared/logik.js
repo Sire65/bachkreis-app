@@ -363,7 +363,8 @@ export function naechsteSendung(iso, wdh) {
 export const nachrichtEreignis = (n, u) => (n.express ? "express" : n.wichtig ? "nachricht_wichtig" : u?.art === "verteiler" ? "rundschreiben" : "nachricht");
 // Kurzfassung einer Nachricht für Chatliste und Benachrichtigung (Text, sonst 📊 Umfrage / 🎤 Sprachnachricht / 📷 Foto / 🎼 Noten / 📄 Datei)
 export function nachrichtKurz(n) {
-  if (n.text) return n.text;
+  // 0.29.0: ohne Formatierungszeichen (*fett*, [rot]…[/rot]) – für Vorschau, Push und E-Mail
+  if (n.text) return String(n.text).replace(/\[(rot|blau|grün|gelb)\]([\s\S]+?)\[\/\1\]/g, "$2").replace(/(^|\s)([*_~])(\S(?:.*?\S)?)\2(?=\s|$|[.,!?;:])/g, "$1$3");
   if (n.umfrage) return `📊 ${n.umfrage.frage}`;
   const a = (n.anlagen || [])[0]; if (!a) return "";
   const mehr = (n.anlagen || []).length > 1 ? ` (+${n.anlagen.length - 1})` : "";

@@ -1,16 +1,28 @@
 {
-  "version": "0.28.0",
-  "datum": "2026-10-18",
+  "version": "0.29.0",
+  "datum": "2026-11-04",
   "stufe": "DEV",
   "neu": [
-    "🟢 Einfache Ansicht neu: große Kacheln passend zur Rolle (Schüler, Eltern, Leitung), Reihenfolge änderbar – beim ersten Start fragt die App, wie du starten möchtest",
-    "🔄 Kacheln umdrehen: doppelt auf eine Kachel tippen – hinten warten Schnellaktionen (z. B. Neuer Zettel, Mitspielen, Stimmgerät, 112 anrufen)",
-    "✥ Anordnen wie in der KC App: lange auf eine Kachel drücken, dann ziehen oder Pfeile – ✕ blendet aus, 👀 zeigt Ausgeblendete; auch die Register lassen sich verschieben",
-    "📰 Info-Laufband über den drei Feldern: was zu erledigen ist (mit ✔ Zusagen direkt), Hinweise und schöne Infos – ✕ blendet für heute aus",
-    "⚡ Schnellstart-Karte im Info-Feld (bis zu 8 Symbole) · 🔢 Countdown als Fallblatt · 🔲 Kachelgröße normal, klein oder mini · ⭐ zuletzt gewählte Kachel",
-    "💡 Vorschläge zur Startseite (nur auf diesem Gerät gezählt) · 📋 Tagesübersicht für Leitung, Lehrkräfte und Vorstand"
+    "📝❗🏎️ Versand-Leiste über dem Eingabefeld: erscheint beim Schreiben – Normal, Wichtig oder Express mit einem Tipp (in den Einstellungen „immer zeigen“)",
+    "𝐅 Schrift im Chat: *fett*, _kursiv_, ~durchgestrichen~ und Farben (Rot, Blau, Grün, Gelb als Textmarker) · 👋 Grußformel mit einem Tipp",
+    "🔗 Links zeigen ihre Adresse – verdächtige Links (Kurz-Links, Nachahmer-Namen, Passwort-Seiten) bekommen ein ⚠️ Vorsicht",
+    "📅 Steht ein Datum in der Nachricht, kannst du es direkt als eigenen Termin oder Bachkreis-Termin übernehmen · 💡 „krank / komme nicht / bin dabei“ wird für die Leitung als Absage oder Zusage vorgeschlagen",
+    "💬 Chat-Übersicht mit Filtern (Ungelesen, Gruppen, Einzeln) und Gliederung nach Zeit, Art oder Name – Ungelesenes steht oben",
+    "🟢🟠🔴 Der Nachrichten-Zähler blinkt grün, orange oder rot – je nachdem, wie lange die älteste ungelesene Nachricht schon wartet · 👥 im Chat nur andere/nur meine anzeigen · ⌨️ Tastatur-Knopf"
   ],
   "verlauf": [
+    {
+      "version": "0.28.0",
+      "datum": "2026-10-18",
+      "neu": [
+        "🟢 Einfache Ansicht neu: große Kacheln passend zur Rolle (Schüler, Eltern, Leitung), Reihenfolge änderbar – beim ersten Start fragt die App, wie du starten möchtest",
+        "🔄 Kacheln umdrehen: doppelt auf eine Kachel tippen – hinten warten Schnellaktionen (z. B. Neuer Zettel, Mitspielen, Stimmgerät, 112 anrufen)",
+        "✥ Anordnen wie in der KC App: lange auf eine Kachel drücken, dann ziehen oder Pfeile – ✕ blendet aus, 👀 zeigt Ausgeblendete; auch die Register lassen sich verschieben",
+        "📰 Info-Laufband über den drei Feldern: was zu erledigen ist (mit ✔ Zusagen direkt), Hinweise und schöne Infos – ✕ blendet für heute aus",
+        "⚡ Schnellstart-Karte im Info-Feld (bis zu 8 Symbole) · 🔢 Countdown als Fallblatt · 🔲 Kachelgröße normal, klein oder mini · ⭐ zuletzt gewählte Kachel",
+        "💡 Vorschläge zur Startseite (nur auf diesem Gerät gezählt) · 📋 Tagesübersicht für Leitung, Lehrkräfte und Vorstand"
+      ]
+    },
     {
       "version": "0.27.0",
       "datum": "2026-10-16",

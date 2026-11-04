@@ -405,6 +405,9 @@ function eigenForm(e) {
     ${e.id ? `<button class="knopf rot breit" data-a="eigenLoeschen" data-x="${esc(e.id)}">🗑️ Löschen</button>` : ""}
     <p class="hinweis">🔒 Nur du${istEltern() ? " und dein Kind" : " und deine Eltern"} sehen eigene Termine.</p></div>`;
 }
+// 0.29.0: Vorlagen von außen (z. B. 📅 Termin aus einer Nachricht)
+export const terminVorlage = (v) => blatt("Neuer Termin", terminForm(v));
+export const eigenTerminVorlage = (v) => blatt("🙋 Eigener Termin", eigenForm(v));
 AKTIONEN.eigenNeu = () => { const b = new Date(); b.setDate(b.getDate() + 1); b.setHours(17, 0, 0, 0); blatt("🙋 Eigener Termin", eigenForm({ beginn: b.toISOString(), art: "ueben", titel: "Üben" })); };
 AKTIONEN.eigenBearbeiten = (id) => { const e = hole("eigene_termine", id); if (e) blatt("🙋 Eigener Termin", eigenForm(e)); };
 AKTIONEN.eigenArt = (v) => { const t = document.getElementById("etTitel"); if (t && (!t.value || Object.values(EIGEN_ART).some(([, n]) => n === t.value) || /^Geigenunterricht$/.test(t.value))) t.value = EIGEN_ART[v]?.[1] || ""; };

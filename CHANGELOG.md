@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.29.0 DEV – 04.11.2026
+- 💬 Nachrichten wie die KC Club App 2.858 – neues Modul js/kern/chattext.js (reines JavaScript, nichts geht an fremde Dienste)
+- 📝❗🏎️ Versand-Leiste über dem Eingabefeld (`versandLeisteHtml`), erscheint beim Schreiben/Anhängen; ❗/🏎️ aus der Werkzeugreihe dorthin verschoben; Schalter „Versand-Leiste immer zeigen“ (`versandImmer`)
+- 𝐅 Formatieren (`naFormat`, `naFarbe`): fett/kursiv/durchgestrichen nur am Wortrand, Farben [rot]…[/rot], Gelb als Textmarker; Vorschau/Push ohne Zeichen (`klartext`, `nachrichtKurz`) · 👋 Grußformeln
+- 🛡️ Link-Prüfer (`linkGruende`): http, Zahlen-Adresse, Punycode, Kurz-Links, @-Adressen, Nachahmer-Namen, Passwort-Seiten → ⚠️; sonst 🔗-Karte mit der Adresse (nichts wird geladen)
+- 📅 Termin in der Nachricht (`terminErkennen`) → eigener Termin oder Bachkreis-Termin (Vorlage vorausgefüllt) · 💡 Zu-/Absage erkennen (`erkennen`, nur Leitung/Planer, nur fremde Nachrichten < 21 Tage) → Rückmeldung eintragen, ✕ blendet aus
+- 💬 Chat-Übersicht: Filter-Chips mit Zahl, Gliederung Zeit/Art/Name/aus, aufklappbare Abschnitte, „🔴 Ungelesen“ zuerst · 👥 Filter im Chat (alle/andere/meine/keine) · ⌨️ Tastatur-Knopf
+- 🟢🟠🔴 Alter der ältesten ungelesenen Nachricht (`nachrichtStufe`): Zähler in Fußleiste, Kachel und Mini-Feld blinkt (≤ 2 Tage grün, ≤ 4 orange, sonst rot; aus bei „ohne Effekte“/reduzierter Bewegung)
+- tests/chattext.test.mjs; Rundgang prüft Versand-Leiste, Formatieren, 📅-Knopf, Filter und Chat-Übersicht
+
 ## 0.28.0 DEV – 18.10.2026
 - 🏠 Startseite wie die KC Club App – neues Modul js/app/startseite.js, css/startseite.css (alles nur Geräte-Einstellungen, nichts geht an den Server)
 - 🟢 Einfache Ansicht: Kacheln je Rolle (`einfachKacheln()`), eigene Reihenfolge (▲▼), erste Frage „Wie möchtest du starten?“ (nur Echtbetrieb), Umschalten unten mit Hinweis

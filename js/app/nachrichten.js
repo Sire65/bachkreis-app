@@ -348,7 +348,14 @@ function umfrageHtml(n) {
   const zahl = u.optionen.map((_, i) => st.filter((x) => x.includes(i)).length), max = Math.max(1, ...zahl);
   return `<div class="umfrage"><div class="uf-frage">📊 ${esc(u.frage)}</div><small class="hinweis">${u.mehrfach ? "Mehrere Antworten möglich" : "Eine Antwort"} · ${st.length} ${st.length === 1 ? "Stimme" : "Stimmen"}</small>
     ${u.optionen.map((o, i) => `<button type="button" class="uf-opt${meine.includes(i) ? " meine" : ""}" data-a="umfrageStimme" data-x="${esc(n.id)}|${i}"><span class="uf-balken" style="width:${Math.round((zahl[i] / max) * 100)}%"></span><span class="uf-text">${meine.includes(i) ? "✅" : "⚪"} ${esc(o)}</span><b>${zahl[i]}</b></button>`).join("")}
-    ${st.length ? `<button type="button" class="uf-wer" data-a="umfrageWer" data-x="${esc(n.id)}">👥 Wer hat was gewählt?</button>` : ""}</div>`;
+    ${u.frei ? umfrageFreiHtml(n) : ""}
+    ${st.length || Object.keys(n.umfrage_frei || {}).length ? `<button type="button" class="uf-wer" data-a="umfrageWer" data-x="${esc(n.id)}">👥 Wer hat was gewählt?</button>` : ""}</div>`;
+}
+// ✏️ freie Antwort (0.31.0, wie KC-CLUB-UMFRAGE-FREI): jede Person ein eigener Text (≤ 120 Zeichen), alle sehen die Antworten
+function umfrageFreiHtml(n) {
+  const fr = Object.entries(n.umfrage_frei || {}), meine = (n.umfrage_frei || {})[ich()] || "";
+  return `<div class="uf-frei">${fr.map(([p, t]) => `<div class="uf-frei-a"><b>${esc(vorn(p))}:</b> ${esc(t)}</div>`).join("")}
+    <div class="uf-frei-eingabe"><input id="uff-${esc(n.id)}" aria-label="Eigene Antwort" maxlength="120" placeholder="✏️ Eigene Antwort …" value="${esc(meine)}"><button type="button" class="knopf klein" data-a="umfrageFrei" data-x="${esc(n.id)}">${meine ? "Ändern" : "Senden"}</button></div></div>`;
 }
 function bilderLaden(wurzel = document) {
   wurzel.querySelectorAll("img[data-datei]:not([data-geladen])").forEach((img) => {
@@ -383,10 +390,17 @@ AKTIONEN.umfrageStimme = async (x) => {
   await speichere("nachrichten", { ...n, umfrage_stimmen: { ...(n.umfrage_stimmen || {}), [ich()]: neu } });
   verlaufNeu(n.unterhaltung_id, true);
 };
+AKTIONEN.umfrageFrei = async (nid) => {
+  const n = hole("nachrichten", nid); if (!n?.umfrage?.frei) return;
+  const t = String(document.getElementById("uff-" + nid)?.value || "").trim().slice(0, 120);
+  await speichere("nachrichten", { ...n, umfrage_frei: { ...(n.umfrage_frei || {}), [ich()]: t } });
+  toast(t ? "✏️ Antwort gespeichert" : "Antwort zurückgenommen"); verlaufNeu(n.unterhaltung_id, true);
+};
 AKTIONEN.umfrageWer = (nid) => {
   const n = hole("nachrichten", nid); if (!n?.umfrage) return;
   const st = Object.entries(n.umfrage_stimmen || {}).filter(([, v]) => Array.isArray(v) && v.length);
-  blatt(`📊 ${n.umfrage.frage}`, n.umfrage.optionen.map((o, i) => { const w = st.filter(([, v]) => v.includes(i)).map(([p]) => vorn(p)); return `<div class="ni-zeile"><span><b>${esc(o)}</b> (${w.length})</span><span class="hinweis">${esc(w.join(", ") || "–")}</span></div>`; }).join(""));
+  blatt(`📊 ${n.umfrage.frage}`, n.umfrage.optionen.map((o, i) => { const w = st.filter(([, v]) => v.includes(i)).map(([p]) => vorn(p)); return `<div class="ni-zeile"><span><b>${esc(o)}</b> (${w.length})</span><span class="hinweis">${esc(w.join(", ") || "–")}</span></div>`; }).join("")
+    + Object.entries(n.umfrage_frei || {}).map(([p, t]) => `<div class="ni-zeile"><span><b>✏️ ${esc(vorn(p))}</b></span><span class="hinweis">${esc(t)}</span></div>`).join(""));
 };
 
 const EMOJIS = ["👍", "❤️", "😂", "😊", "🙏", "👏", "🎻", "🎵", "🎼", "🎉", "😮", "😢", "🤗", "💪", "☀️", "🚗"];
@@ -923,14 +937,17 @@ AKTIONEN.umfrageNeu = () => {
     <div id="ufOptionen">${[1, 2, 3].map((i) => `<div class="feld"><input class="uf-o" maxlength="80" placeholder="Antwort ${i}"></div>`).join("")}</div>
     <button class="knopf klein" data-a="umfrageOption">＋ Antwort</button>
     <label class="schalter"><span>Mehrere Antworten erlauben</span><input type="checkbox" id="ufMehr"></label>
+    <label class="schalter"><span>✏️ Eigene Antwort erlauben</span><input type="checkbox" id="ufFrei"></label>
     <button class="knopf haupt breit" data-a="umfrageSenden">📊 Umfrage senden</button></div>`);
 };
 AKTIONEN.umfrageOption = () => { const l = document.getElementById("ufOptionen"); if (l && l.children.length < 10) l.insertAdjacentHTML("beforeend", `<div class="feld"><input class="uf-o" maxlength="80" placeholder="Antwort ${l.children.length + 1}"></div>`); };
 AKTIONEN.umfrageSenden = async () => {
   const frage = String(document.getElementById("ufFrage")?.value || "").trim(), optionen = [...document.querySelectorAll(".uf-o")].map((x) => x.value.trim()).filter(Boolean);
   if (!frage || optionen.length < 2) return toast("Bitte eine Frage und mindestens zwei Antworten eintragen.");
+  // Häkchen lesen, BEVOR das Fenster zugeht (vorher kam „mehrere Antworten“ nie an)
+  const mehrfach = !!document.getElementById("ufMehr")?.checked, frei = !!document.getElementById("ufFrei")?.checked;
   const uid = S.params.id, u = hole("unterhaltungen", uid); blattZu();
-  const n = await nachrichtBauen(uid, "", { umfrage: { frage, optionen, mehrfach: !!document.getElementById("ufMehr")?.checked }, anlagen: [] });
+  const n = await nachrichtBauen(uid, "", { umfrage: { frage, optionen, mehrfach, frei }, anlagen: [] });
   await speichere("nachrichten", n); zeichne(); window.scrollTo(0, document.body.scrollHeight); await bescheid(n, u);
 };
 // ⏳ Selbstlöschen für die nächste Nachricht (KC-CLUB-SELBSTLOESCHEN)

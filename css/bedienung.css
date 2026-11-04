@@ -102,3 +102,16 @@
 .pw-nadel { min-height: 40px; display: inline-flex; align-items: center; gap: 4px; padding: 0 10px; border: none; border-radius: 20px; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; color: #2b2410; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pw-nadel::before { content: "📍"; }
 .pw-nadel { background: #fff59d; } .pw-nadel.f2 { background: #f8bbd0; } .pw-nadel.f3 { background: #c5e1a5; } .pw-nadel.f4 { background: #b3e5fc; }
+/* 0.31.0 – Zugang & Organisation */
+.link-hilfe { text-align: left; margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: var(--karte2, rgba(0,0,0,.05)); border-left: 4px solid #b04a00; }
+.link-hilfe ul { margin: 6px 0; padding-left: 18px; } .link-hilfe li { margin: 3px 0; }
+.install-vorteile { list-style: none; padding: 0; margin: 0 0 10px; } .install-vorteile li { padding: 4px 0; font-weight: 700; }
+.zg-balken { display: flex; align-items: flex-end; gap: 4px; min-height: 80px; overflow-x: auto; padding: 4px 0; }
+.zg-balken > div { display: flex; flex-direction: column-reverse; align-items: center; min-width: 18px; } .zg-balken i { display: block; width: 14px; border-radius: 3px 3px 0 0; }
+.zg-balken i.ok { background: #2e9d5b; } .zg-balken i.fehl { background: #c62828; } .zg-balken small { font-size: .65rem; color: var(--grau); order: -1; }
+.zahlen-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.zahl-karte { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: var(--radius); background: var(--karte); box-shadow: var(--schatten); }
+.zahl-karte span { font-size: 1.5rem; } .zahl-karte b { font-size: 1.8rem; font-weight: 900; font-variant-numeric: tabular-nums; } .zahl-karte small { color: var(--grau); font-weight: 700; }
+.tipp-rueck { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
+.uf-frei { margin-top: 6px; } .uf-frei-a { font-size: .88rem; padding: 3px 0; overflow-wrap: anywhere; }
+.uf-frei-eingabe { display: flex; gap: 6px; margin-top: 4px; } .uf-frei-eingabe input { flex: 1; min-width: 0; min-height: 40px; border-radius: 10px; border: 1px solid var(--linie); padding: 0 10px; background: var(--karte); color: var(--text); font: inherit; }

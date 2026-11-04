@@ -13,6 +13,7 @@ import * as D from "./darstellung.js";
 import { onlineEinstellungenHtml } from "./online.js";
 import { SCHATTEN, KACHEL_EFFEKTE, eckenWert } from "./bedienung.js";
 import { stundenuhrenEinstHtml } from "./stundenuhren.js";
+import { installModus, installMoeglich } from "./zugang.js";
 import { SENDE_EFFEKTE, sendeEffektWahl, sendeEffektSetzen, sendeEffektVorschau, blaulichtVorschau, feeKommt, reisswolf } from "./effekte.js";
 
 const JZ_VORSCHAUEN = [["herbst", "🍂 Herbst"], ["advent", "🕯️ Advent"], ["winter", "⛄ Winter"], ["fruehling", "🌱 Frühling"], ["sommer", "🌻 Sommer"],
@@ -78,7 +79,7 @@ VIEWS.einstellungen = {
     const sz = `<div class="einst-zeile"><b>🔍 Schriftgröße der Texte</b><span style="flex:1"></span><button class="knopf klein" data-a="szAendern" data-x="-0.1" aria-label="kleiner">A−</button><span class="sz-wert">${Math.round(D.SZ.wert * 100)} %</span><button class="knopf klein" data-a="szAendern" data-x="0.1" aria-label="größer">A+</button><button class="knopf klein" data-a="szAendern" data-x="0">100 %</button></div><p class="hinweis">Nachrichten und Zettel werden größer, Knöpfe bleiben gleich. Auch mit zwei Fingern auseinanderziehen.</p>`;
     const gross = `<div class="feld"><label>🔠 Große Schrift (ganze App)</label><div class="umschalter">${[["normal", "Normal"], ["gross", "Groß"], ["riesig", "Sehr groß"]].map(([v, n]) => `<button class="${e.schrift === v ? "an" : ""}" data-a="schriftWahl" data-x="${v}">${n}</button>`).join("")}</div></div>`;
     const modus = `<div class="feld"><label>🌗 Tag- und Nachtmodus</label><div class="umschalter modus3">${[["auto", "🔄 Automatisch"], ["tag", "☀️ Immer Tag"], ["nacht", "🌙 Immer Nacht"]].map(([m, t]) => `<button class="${D.DS.modus === m ? "an" : ""}" data-a="modusWahl" data-x="${m}">${t}</button>`).join("")}</div><p class="hinweis">${esc(D.modusInfo())} Der Mond/Sonne-Knopf oben schaltet reihum A → T → N.</p></div>`;
-    const tipps = `${schalter("tippDesTages", "💡 Tipp des Tages", "Beim ersten Öffnen am Tag ein kurzer Tipp", e.tippDesTages !== false)}
+    const tipps = `${schalter("tippDesTages", "💡 Tipp des Tages", "Beim ersten Öffnen am Tag ein kurzer Tipp – mit 👍/👎: „Kenne ich schon“ blendet ihn aus", e.tippDesTages !== false)}<button type="button" class="knopf klein" data-a="tippsZuruecksetzen">↺ Ausgeblendete Tipps wieder zeigen</button>
       ${schalter("wasNeu", "👋 Beim Öffnen zeigen, was neu ist", "Nach einem Update die Neuerungen anzeigen", e.wasNeu !== false)}
       ${schalter("vorlesen", "🔊 Neue Nachrichten vorlesen", "Im geöffneten Chat liest das Handy neue Nachrichten vor", e.vorlesen === true)}
       ${schalter("tippfehler", "🖍️ Tippfehler rot unterstreichen", "Rechtschreibprüfung beim Schreiben", e.tippfehler !== false)}
@@ -133,7 +134,9 @@ VIEWS.einstellungen = {
         return `<details class="ka-wahl"><summary>${REGISTER_ALLE.find(([x]) => x === r)[1]} <span class="ka-wahl-zahl">${an} von ${l.length}</span></summary><div class="ka-wahl-raster">${l.map((k) => `<label><input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span></label>`).join("")}</div>
           <button type="button" class="knopf klein" data-a="kachelnAlleAn" data-x="${r}">✅ Alle anzeigen</button></details>`; }).join("")}`;
     const install = `<p>Die Bachkreis-App läuft im Browser und lässt sich wie eine App auf den Startbildschirm legen – kostenlos, ohne App-Store.</p>
-      ${installEreignis ? `<button class="knopf haupt breit" data-a="appInstallieren">📲 Jetzt als App installieren</button>` : ""}
+      <p><b>Auf diesem Gerät:</b> ${{ installiert: "✅ installiert – prima!", browser: "🌐 im Browser – bitte einmal installieren", pc: "💻 am PC" }[installModus()]}</p>
+      <div class="knopfreihe">${installEreignis || installMoeglich() ? `<button class="knopf haupt" data-a="installieren">📲 Jetzt installieren</button>` : ""}<button class="knopf" data-a="installAnleitung">🖼️ Mit Bildern</button><button class="knopf" data-a="kachel" data-x="hilfe">🙋 Hilfe</button></div>
+      ${schalter("installEinladung", "📲 An das Installieren erinnern", "Im Browser höchstens alle 3 Tage eine freundliche Einladung", e.installEinladung !== false)}
       <h4>Android (Chrome)</h4><ol class="install-schritte"><li>Den persönlichen Link in <b>Chrome</b> öffnen</li><li>Oben rechts <b>⋮</b> antippen</li><li><b>„App installieren“</b> bzw. „Zum Startbildschirm hinzufügen“</li><li><b>„Installieren“</b> bestätigen – die App liegt jetzt in der App-Liste</li></ol>
       <h4>iPhone / iPad (Safari)</h4><ol class="install-schritte"><li>Den Link in <b>Safari</b> öffnen</li><li>Unten das <b>Teilen-Symbol</b> (Quadrat mit Pfeil) antippen</li><li><b>„Zum Home-Bildschirm“</b> wählen und „Hinzufügen“</li><li>Erst danach funktionieren Push-Benachrichtigungen auf dem iPhone</li></ol>
       <h4>💻 Am PC oder Tablet</h4><p class="hinweis">Einfach den Link im Browser öffnen. Für Leitung und Lehrkräfte gibt es zusätzlich die PC-Verwaltung (Technik › PC-Verwaltung).</p>
@@ -248,9 +251,16 @@ export const TIPPS = [
   "📲 Lege die App auf den Startbildschirm – dann kommen auch Push-Benachrichtigungen.",
   "🧚 Ab und zu schwebt eine Fee durchs Startbild. Antippen!",
 ];
-export function tippZeigen() { const i = Math.floor(Date.now() / 86400000) % TIPPS.length; blatt("💡 Tipp des Tages", `<p style="font-size:1.1rem">${TIPPS[i]}</p><button class="knopf" data-a="tippWeiter" data-x="${i}">Noch ein Tipp ›</button>`).dataset.leise = "1"; } // Start-Fenster: 🏎️ Express/📣 Startnachricht dürfen es verdrängen
+// 💡 Tipps mit Rückmeldung (0.31.0, wie KC-CLUB-HILFE-TIPPS): 👍 hilft · 👎 kenne ich schon → dieser Tipp kommt nicht wieder (nur auf diesem Gerät)
+const tippWeg = () => { try { return new Set(JSON.parse(localStorage.getItem("bk_tipp_weg") || "[]")); } catch { return new Set(); } };
+const tippIndex = (ab) => { const w = tippWeg(); for (let d = 0; d < TIPPS.length; d++) { const i = (ab + d) % TIPPS.length; if (!w.has(i)) return i; } return -1; };
+const tippHtml = (i) => `<p style="font-size:1.1rem">${TIPPS[i]}</p><div class="tipp-rueck"><span class="hinweis">Hilft dir das?</span><button type="button" class="knopf klein" data-a="tippGut" data-x="${i}">👍 Ja</button><button type="button" class="knopf klein" data-a="tippWegK" data-x="${i}">👎 Kenne ich schon</button></div><button class="knopf" data-a="tippWeiter" data-x="${i}">Noch ein Tipp ›</button>`;
+export function tippZeigen() { const i = tippIndex(Math.floor(Date.now() / 86400000) % TIPPS.length); if (i < 0) return; blatt("💡 Tipp des Tages", tippHtml(i)).dataset.leise = "1"; } // Start-Fenster: 🏎️ Express/📣 Startnachricht dürfen es verdrängen
 AKTIONEN.tippZeigen = tippZeigen;
-AKTIONEN.tippWeiter = (i) => { const n = (+i + 1) % TIPPS.length; blatt("💡 Tipp", `<p style="font-size:1.1rem">${TIPPS[n]}</p><button class="knopf" data-a="tippWeiter" data-x="${n}">Noch ein Tipp ›</button>`); };
+AKTIONEN.tippWeiter = (i) => { const n = tippIndex(+i + 1); if (n < 0) return toast("👍 Du kennst schon alle Tipps!"); blatt("💡 Tipp", tippHtml(n)); };
+AKTIONEN.tippGut = (i, el) => { try { const g = JSON.parse(localStorage.getItem("bk_tipp_gut") || "{}"); g[i] = (g[i] || 0) + 1; localStorage.setItem("bk_tipp_gut", JSON.stringify(g)); } catch {} el.closest(".tipp-rueck").innerHTML = '<span class="hinweis">👍 Danke!</span>'; };
+AKTIONEN.tippWegK = (i) => { const w = tippWeg(); w.add(Number(i)); try { localStorage.setItem("bk_tipp_weg", JSON.stringify([...w])); } catch {} toast("👎 Alles klar – dieser Tipp kommt nicht wieder"); AKTIONEN.tippWeiter(i); };
+AKTIONEN.tippsZuruecksetzen = () => { try { localStorage.removeItem("bk_tipp_weg"); } catch {} toast("💡 Alle Tipps kommen wieder"); };
 export async function wasNeuZeigen() {
   try { const v = await (await fetch("version.json", { cache: "no-store" })).json(); blatt(`👋 Neu in v${v.version}`, `<ul class="liste">${(v.neu || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`).dataset.leise = "1"; } catch { toast("Gerade nicht verfügbar"); }
 }

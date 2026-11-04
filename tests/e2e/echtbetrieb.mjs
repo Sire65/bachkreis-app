@@ -39,6 +39,10 @@ try {
   const l = await seite();
   await l.goto(B + "/index.html?k=" + info.codes.leitung.code); await l.waitForSelector(".kachel", { timeout: 20000 });
   await pinnwandGelesen(l);
+  // 🛡️ 0.31.0 Zugang im Blick: der Fehlversuch „FALSCH12“ von oben ist gezählt, die Liste „📲 Installiert?“ ist da
+  await l.evaluate(async () => (await import("/js/app/zustand.js")).zeige("zugang")); await l.waitForSelector(".zg-balken", { timeout: 10000 });
+  assert.ok(/fehlgeschlagen/.test(await l.textContent("#inhalt")) && (await l.$$('[data-a="zgFilter"]')).length === 5, "Zugang im Blick");
+  await l.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start")); await l.waitForSelector("#raster .kachel");
   const gl = await l.evaluate(async (e) => (await import("/js/kern/daten.js")).liste("pinnwand_gelesen", (g) => g.zettel_id === "pw-2" && g.person_id === e).length, info.codes.eltern.id);
   assert.equal(gl, 1, "Verfasserin sieht, dass die Eltern den Zettel gelesen haben");
   const z = await l.evaluate(async () => (await import("/js/kern/daten.js")).liste("antworten", (a) => a.von_person_id && a.von_person_id !== a.person_id).length);

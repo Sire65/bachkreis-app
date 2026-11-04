@@ -28,6 +28,7 @@ import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";
 import { snPruefen } from "./startnachricht.js";
+import { linkHilfeHtml, installEinladungPruefen } from "./zugang.js";
 import "./bedienung.js";
 import { buehneLaeuft } from "./buehne.js";
 
@@ -68,13 +69,13 @@ async function anmeldenMitCode(code) {
 }
 
 // ---------- Anmeldung (Echtbetrieb): persönlicher Code oder QR-Link ?k=CODE ----------
-function anmeldeSeite(meldung = "") {
+function anmeldeSeite(meldung = "", grund = "") {
   $("#demoleiste")?.remove();
   $("#lade")?.remove();
   $("#inhalt").innerHTML = `<div class="karte" style="max-width:440px;margin:40px auto;text-align:center">
     <div style="width:120px;margin:0 auto 10px">${BACHKREIS_LOGO}</div><h2>${esc(konfig().name || "Bachkreis Bergkamen")}</h2>
     <p>Bitte mit deinem persönlichen Zugangscode anmelden.</p>
-    ${meldung ? `<p class="badge b-rot">${esc(meldung)}</p>` : ""}
+    ${meldung ? `<p class="badge b-rot">${esc(meldung)}</p>` : ""}${grund ? linkHilfeHtml(grund) : ""}
     <div class="feld"><input id="anmeldeCode" placeholder="z. B. AB12CD34" autocomplete="one-time-code" autocapitalize="characters" style="text-align:center;font-size:1.2rem;letter-spacing:.12em"></div>
     <button class="knopf haupt breit" data-a="anmeldenCode">Anmelden</button>
     <p class="hinweis">Tipp: Den QR-Code auf deiner Einrichtungskarte mit der Handy-Kamera scannen – dann geht es automatisch. Keine Karte? Bitte bei der Leitung melden.</p></div>`;
@@ -85,7 +86,7 @@ AKTIONEN.anmeldenCode = async () => {
   const code = ($("#anmeldeCode")?.value || "").trim();
   if (code.length < 6) { toast("Bitte den vollständigen Code eingeben"); return; }
   const r = await anmelden(code).catch(() => ({ ok: false, fehler: "OFFLINE" }));
-  if (!r.ok) { anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung nicht möglich – bitte Internetverbindung prüfen."); return; }
+  if (!r.ok) { anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung nicht möglich – bitte Internetverbindung prüfen.", r.fehler || "OFFLINE"); return; }
   location.reload();
 };
 AKTIONEN.abmeldenApp = async () => { if (!confirm("Von diesem Gerät abmelden?")) return; await abmelden(); location.reload(); };
@@ -101,13 +102,13 @@ async function starten() {
     await datenStarten({ quelle: "app" });
   } catch (e) {
     if (e.code !== "ANMELDUNG") throw e;
-    if (code) { const r = await anmelden(code.trim()).catch(() => ({ ok: false })); if (r.ok) return location.reload(); return anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung mit diesem Link nicht möglich."); }
+    if (code) { const r = await anmelden(code.trim()).catch(() => ({ ok: false })); if (r.ok) return location.reload(); return anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung mit diesem Link nicht möglich.", r.fehler || "OFFLINE"); }
     return anmeldeSeite();
   }
   let ok = false;
   if (istEchtbetrieb()) {
     ok = alsPerson(datenInfo().ich);
-    if (!ok) return anmeldeSeite("Dein Zugang ist nicht mehr aktiv.");
+    if (!ok) return anmeldeSeite("Dein Zugang ist nicht mehr aktiv.", "CODE_UNGUELTIG");
     $("#demoleiste")?.remove();
     beiHinweis((t) => toast("ℹ️ " + t, 4000));
   } else {
@@ -129,7 +130,7 @@ async function starten() {
   const pw = pinnwandStart();
   const sn = !express && snPruefen(); // 📣 Startnachricht der Leitung (Pflicht-Fenster)
   onlineStart(); // 🟢 Wer ist online · 👋 Anklopfen
-  beimStart(express || pw || sn || termineStart() || uebenStart()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
+  beimStart(express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
   // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird

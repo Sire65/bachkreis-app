@@ -211,6 +211,7 @@ create table if not exists bk_nachrichten (
   zurueckgezogen_am timestamptz,
   geplant_frei timestamptz,
   umfrage_stimmen jsonb,
+  umfrage_frei jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -248,6 +249,7 @@ alter table bk_nachrichten add column if not exists bearbeitet_am timestamptz;
 alter table bk_nachrichten add column if not exists zurueckgezogen_am timestamptz;
 alter table bk_nachrichten add column if not exists geplant_frei timestamptz;
 alter table bk_nachrichten add column if not exists umfrage_stimmen jsonb;
+alter table bk_nachrichten add column if not exists umfrage_frei jsonb;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_unterhaltung_id_fk') then alter table bk_nachrichten add constraint bk_nachrichten_unterhaltung_id_fk foreign key (unterhaltung_id) references bk_unterhaltungen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_von_fk') then alter table bk_nachrichten add constraint bk_nachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 

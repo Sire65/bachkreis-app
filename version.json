@@ -1,16 +1,27 @@
 {
-  "version": "0.30.0",
+  "version": "0.31.0",
   "datum": "2026-11-04",
   "stufe": "DEV",
   "neu": [
-    "📣 Startnachricht der Leitung: erscheint beim nächsten Öffnen als Fenster – „gelesen“ bestätigen oder ✅ Ja · ⏰ Später · ✖ Nein, dazu ↩️ Rückfrage; die Leitung sieht, wer wie geantwortet hat",
-    "🔄 Kacheln mit Rückseite haben oben rechts ein kleines 🔄 – antippen dreht sie sofort um · 🌀 Kacheln erscheinen auf Wunsch als Kachel-Zug, Welle, Wirbel, Wackeln oder Start",
-    "🌗 Schatten und ⬜ Ecken der Kacheln einstellbar · 👆 größere Tippflächen · ⚙️ Einstellungen mit Übersicht zum Antippen",
-    "📌 Die Pinnwand geht nicht mehr von selbst auf (einschaltbar) – gelesene Zettel hängen ab dem nächsten Tag als 📍 Nadel im Rahmen",
-    "🕰️ Stundenuhren: neben dem Kuckuck Big Ben, Westminster-Glockenspiel, Kiel, Freiburg, Berliner Dom, Röhrenglocken und große Standuhr – mit echten freien Aufnahmen",
-    "⏱️ Uhr & Takt: 🥁 Metronom (mit Takt und Tempo-Tippen), ⏲️ Timer mit Gong, ⏱️ Stoppuhr · 🎁 Geburtstags-Vogel im Kopf · 🟢 Namen, wer online ist · 🔔 Kopf-Pfeil blinkt bei Neuem · § Impressum"
+    "📲 Mach die Bachkreis-App zu einer echten App: im Browser kommt ab und zu eine freundliche Einladung zum Installieren – mit „Jetzt installieren“ und „Zeig mir wie“",
+    "🔗 Link funktioniert nicht? Die Anmeldeseite erklärt jetzt freundlich, woran es liegen kann und was hilft",
+    "✏️ Umfragen im Chat mit eigener Antwort – und „Mehrere Antworten erlauben“ funktioniert jetzt richtig",
+    "💡 Tipp des Tages mit 👍 / 👎 – „Kenne ich schon“ blendet ihn aus",
+    "📊 Bachkreis in Zahlen (Leitung, Lehrkräfte, Vorstand) · 🛡️ Zugang im Blick für die Leitung: Anmeldeversuche, Sperren und wer die App installiert hat"
   ],
   "verlauf": [
+    {
+      "version": "0.30.0",
+      "datum": "2026-11-04",
+      "neu": [
+        "📣 Startnachricht der Leitung: erscheint beim nächsten Öffnen als Fenster – „gelesen“ bestätigen oder ✅ Ja · ⏰ Später · ✖ Nein, dazu ↩️ Rückfrage; die Leitung sieht, wer wie geantwortet hat",
+        "🔄 Kacheln mit Rückseite haben oben rechts ein kleines 🔄 – antippen dreht sie sofort um · 🌀 Kacheln erscheinen auf Wunsch als Kachel-Zug, Welle, Wirbel, Wackeln oder Start",
+        "🌗 Schatten und ⬜ Ecken der Kacheln einstellbar · 👆 größere Tippflächen · ⚙️ Einstellungen mit Übersicht zum Antippen",
+        "📌 Die Pinnwand geht nicht mehr von selbst auf (einschaltbar) – gelesene Zettel hängen ab dem nächsten Tag als 📍 Nadel im Rahmen",
+        "🕰️ Stundenuhren: neben dem Kuckuck Big Ben, Westminster-Glockenspiel, Kiel, Freiburg, Berliner Dom, Röhrenglocken und große Standuhr – mit echten freien Aufnahmen",
+        "⏱️ Uhr & Takt: 🥁 Metronom (mit Takt und Tempo-Tippen), ⏲️ Timer mit Gong, ⏱️ Stoppuhr · 🎁 Geburtstags-Vogel im Kopf · 🟢 Namen, wer online ist · 🔔 Kopf-Pfeil blinkt bei Neuem · § Impressum"
+      ]
+    },
     {
       "version": "0.29.0",
       "datum": "2026-11-04",

@@ -57,6 +57,18 @@ await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("einstel
 if (!(await p.$('details.einst[data-klappe="effekte"][open] .su-wahl'))) fehler.push("Einstellungen: Übersicht öffnet Effekte/Stundenuhren nicht");
 await p.screenshot({ path: `${BILDER}einstellungen-uebersicht.png` });
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("impressum")); await p.waitForSelector(".impressum .fehlt");
+// 0.31.0: 📊 Bachkreis in Zahlen · 🛡️ Zugang im Blick (Vorführversion: Hinweis) · 💡 Tipp mit 👍/👎 · ✏️ Umfrage mit freier Antwort
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("zahlen")); await p.waitForSelector(".zahl-karte");
+if ((await p.$$(".zahl-karte")).length < 8) fehler.push("Bachkreis in Zahlen: zu wenige Zahlen");
+await p.screenshot({ path: `${BILDER}zahlen.png`, fullPage: true });
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("zugang")); await p.waitForSelector("text=Vorführversion");
+await p.evaluate(async () => (await import("/js/app/einstellungen.js")).tippZeigen()); await p.waitForSelector(".tipp-rueck");
+await p.click('[data-a="tippWegK"]'); await p.waitForSelector(".tipp-rueck"); await p.click('#blattHg [data-a="blattZu"]');
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("unterhaltung", { id: "u-e1" })); await p.waitForSelector("#chatText");
+await p.evaluate(async () => (await import("/js/kern/ui.js")).AKTIONEN.umfrageNeu()); await p.fill("#ufFrage", "Rundgang: Wann proben?"); await p.fill(".uf-o >> nth=0", "Montag"); await p.fill(".uf-o >> nth=1", "Dienstag");
+await p.check("#ufFrei"); await p.click('[data-a="umfrageSenden"]'); await p.waitForSelector(".uf-frei-eingabe input");
+await p.fill(".uf-frei-eingabe input >> nth=-1", "Mittwoch wäre super"); await p.click('[data-a="umfrageFrei"] >> nth=-1'); await p.waitForSelector("text=Mittwoch wäre super", { timeout: 4000 }).catch(() => fehler.push("Umfrage: freie Antwort erscheint nicht"));
+await p.screenshot({ path: `${BILDER}umfrage-frei.png` });
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("startnachricht")); await p.waitForSelector("#snText");
 await p.fill("#snText", "Rundgang: bitte das Gesicht aussuchen 🙂"); await p.click('[data-a="snWahl"][data-x="1"]'); await p.fill("#snText", "Rundgang: bitte das Gesicht aussuchen 🙂");
 const jaSagen = (d) => d.accept(), neinSagen = (d) => d.dismiss(); p.removeAllListeners("dialog"); p.on("dialog", jaSagen);

@@ -86,6 +86,7 @@ export const KACHELN = {
     { id: "anfragen", sym: "📨", t: "Auftrittsanfragen", u: "Gemeinden, Kirchen, Feste – zusagen", v: "anfragen", nur: () => istLehrkraft() || istVorstand(), zahl: () => anfragenOffen() },
     { id: "partner", sym: "🤝", t: "Partner & Kontakte", u: "Musikschule · Partnerorchester · Austausch", v: "partner", nur: () => istLehrkraft() || istVorstand() },
     { id: "startnachricht", sym: "📣", t: "Startnachricht", u: "Fenster beim nächsten Öffnen · Ja/Später/Nein", v: "startnachricht", nur: () => istLeitung() },
+    { id: "zahlen", sym: "📊", t: "Bachkreis in Zahlen", u: "Mitglieder · Termine · Zusagen · Übezeit", v: "zahlen", nur: () => istVerwalter() },
     { id: "uhrtakt", sym: "⏱️", t: "Uhr & Takt", u: "Metronom · Timer · Stoppuhr", aktion: "uhrWerkzeug" },
     { id: "foerderverein", sym: "💛", t: "Förderverein", u: "Einkauf · Spenden · Freigaben", v: "foerderverein", nur: () => istVorstand() || istLeitung() },
   ],
@@ -111,6 +112,8 @@ export const KACHELN = {
   ],
   technik: [
     { id: "update", sym: "🔄", t: "Update prüfen", u: () => `Installiert: v${APP_VERSION} ${APP_STUFE}`, aktion: "updatePruefen" },
+    { id: "zugang", sym: "🛡️", t: "Zugang im Blick", u: "Anmeldeversuche · Sperren · 📲 Installiert?", v: "zugang", nur: () => istLeitung() },
+    { id: "installieren", sym: "📲", t: "App installieren", u: "Auf den Startbildschirm – startet schneller", aktion: "installieren" },
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
     { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt", v: "hilfe" },

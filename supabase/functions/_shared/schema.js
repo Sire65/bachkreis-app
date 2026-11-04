@@ -831,7 +831,7 @@ export const TABELLEN = {
     liste: ["unterhaltung_id", "von", "text", "zeit"],
     intern: [{ k: "gelesen_von", typ: "refs", ref: "personen" }, { k: "rueckmeldungen", typ: "json" }, { k: "reaktionen", typ: "json" }, { k: "anzahl", typ: "zahl" },
       { k: "bearbeitet_am", typ: "zeit" }, { k: "zurueckgezogen_am", typ: "zeit" }, { k: "geplant_frei", typ: "zeit" },
-      { k: "umfrage_stimmen", typ: "json" }],
+      { k: "umfrage_stimmen", typ: "json" }, { k: "umfrage_frei", typ: "json" }], // 0.31.0: freie Antworten je Person (Text)
   },
   nachricht_status: {
     titel: "Nachrichten: angekommen & gelesen", sym: "✓✓", gruppe: "Kommunikation", lesen: L, schreiben: [],

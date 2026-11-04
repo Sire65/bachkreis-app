@@ -972,6 +972,7 @@ create table if not exists bk_nachrichten (
   zurueckgezogen_am timestamptz,
   geplant_frei timestamptz,
   umfrage_stimmen jsonb,
+  umfrage_frei jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),

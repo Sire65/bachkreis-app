@@ -12,6 +12,7 @@ import { gesicht } from "./gesichter.js";
 
 const ONL = { liste: [], erlaubt: false, stand: 0, timer: null, warte: null, gesehen: new Set() };
 const TAKT_MS = 45000, KLOPF_SEK = 60;
+import { installModus } from "./zugang.js";
 export const onlineAn = () => !!S.ich && onlineErlaubt(S.ich, konfig());
 
 // Vorführversion: ein paar Personen „sind online“ (feste Auswahl je 5 Minuten), nach denselben Regeln wie der Server
@@ -25,7 +26,7 @@ async function melden() {
   if (!S.ich || document.hidden) return;
   if (!istEchtbetrieb()) { ONL.erlaubt = onlineAn(); ONL.liste = ONL.erlaubt ? demoListe() : []; ONL.stand = Date.now(); return aktualisieren(); }
   try {
-    const r = await serverAktionStill("online", { sichtbar: einst().onlineZeigen !== false });
+    const r = await serverAktionStill("online", { sichtbar: einst().onlineZeigen !== false, modus: installModus() });
     if (r?.ok) { ONL.erlaubt = !!r.erlaubt; ONL.liste = r.liste || []; ONL.stand = Date.now(); }
   } catch { /* offline: Stand veraltet → Anzeige verschwindet nach 3 Minuten (nie „online“ aus altem Stand) */ }
   aktualisieren();

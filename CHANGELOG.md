@@ -1,5 +1,16 @@
 # Änderungen
 
+## 0.31.0 DEV – 04.11.2026
+- 🔑 Zugang & Organisation wie die KC Club App 2.859 – neues Modul js/app/zugang.js
+- 📲 Einladung zum Installieren (KC-CLUB-INSTALL-EINLADUNG): nur Handy/Tablet im Browser, ab dem 3. Öffnen, höchstens alle 3 Tage, „leise“; Knöpfe Jetzt installieren / Zeig mir wie / Nicht mehr fragen; Hilfe-Kapitel und App-Installation mit Knöpfen (KC-CLUB-HILFE-INSTALL); Kachel „📲 App installieren“
+- 🛡️ Zugang im Blick (Leitung, KC-CLUB-INSTALL-STAND): Server-Aktion `zugang_lage` – Anmeldeversuche 14 Tage je Tag, gerade gesperrte Anschlüsse (nur Anzahl, keine Adresse), Fehlversuche 24 Std., je Mitglied ✅ installiert · 🌐 Browser · 💻 PC · ❔ noch nicht gesehen; Online-Meldung trägt nur die Art (`bk_online.modus`), keine Gerätekennung
+- 🔗 Freundliche Link-Hilfe auf der Anmeldeseite (ungültig/gesperrt, zu viele Versuche, offline)
+- ✏️ Umfrage mit freier Antwort (`umfrage.frei`, `umfrage_frei` je Person ≤ 120 Zeichen, nur die eigene – Server prüft) · 🐞 „Mehrere Antworten erlauben“ wurde nie übernommen (Häkchen erst nach dem Schließen gelesen) – behoben
+- 💡 Tipp des Tages mit 👍 / 👎 („Kenne ich schon“ blendet ihn auf diesem Gerät aus, ↺ in den Einstellungen)
+- 📊 Bachkreis in Zahlen (nur aus sichtbaren Daten)
+- „Termin ändern ohne Benachrichtigung“ gab es schon (Schalter „Eingeladene benachrichtigen“ im Terminformular)
+- Migration 20261104000000_bk_zugang.sql; tests/zugang.test.mjs; Rundgang (Zahlen, Zugang, Tipp, Umfrage frei), Echtbetrieb (Zugang im Blick)
+
 ## 0.30.0 DEV – 04.11.2026
 - 🧩 Bedienung wie die KC Club App 2.858 – neue Module js/app/bedienung.js, js/app/stundenuhren.js, js/app/startnachricht.js, css/bedienung.css
 - 📣 Startnachricht der Leitung (KC-CLUB-STARTNACHRICHT, -SPRUNG, -ANTWORT): Tabellen `startnachrichten` + `startnachricht_antworten`, Empfänger alle/Orchester/Personen (`snFuerMich` in schema.js), Pflicht-Fenster ohne ✕, Ja/Später (24 Std.)/Nein, Rückfrage, Knopf zu fester Stelle der App; Absender/Zeit/„später“ setzt der Server; Leitung sieht die Antworten

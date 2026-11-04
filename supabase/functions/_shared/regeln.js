@@ -196,7 +196,7 @@ function umfragePruefen(u) {
   if (u == null) return null;
   const frage = String(u.frage || "").trim().slice(0, 200), optionen = (Array.isArray(u.optionen) ? u.optionen : []).map((o) => String(o || "").trim().slice(0, 80)).filter(Boolean);
   if (!frage || optionen.length < 2 || optionen.length > 10) return { grund: "UMFRAGE_UNGUELTIG" };
-  return { frage, optionen, mehrfach: !!u.mehrfach };
+  return { frage, optionen, mehrfach: !!u.mehrfach, frei: !!u.frei }; // frei: zusätzlich „✏️ eigene Antwort“ (0.31.0)
 }
 // Darf ctx.ich mit Person id eine eigene Unterhaltung anfangen? (Kinderschutz-Regel in schema.js)
 export function chatPartnerOk(ctx, id) {
@@ -302,7 +302,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         if (express && !hatRolle(ctx, CHAT.expressUnbegrenzt) && (ctx.expressHeute ?? 0) >= (ctx.expressMax ?? CHAT.expressMax)) return { ok: false, grund: "EXPRESS_GRENZE" };
         if (express) ctx.expressHeute = (ctx.expressHeute ?? 0) + 1;
         return { ok: true, zeile: { ...nur(neu, ["id", "unterhaltung_id"]), text: String(neu.text ?? "").trim(), von: ctx.ich, zeit: geplant || jetzt, gelesen_von: [ctx.ich],
-          anlagen: an.liste, umfrage: um, umfrage_stimmen: {}, loescht_am: geplant ? null : loescht,
+          anlagen: an.liste, umfrage: um, umfrage_stimmen: {}, umfrage_frei: {}, loescht_am: geplant ? null : loescht,
           rueckmeldung: ctx.istVerwalter && !!neu.rueckmeldung, rueckmeldungen: {}, reaktionen: {}, wichtig: !!neu.wichtig, express,
           antwort_auf: neu.antwort_auf ? String(neu.antwort_auf).slice(0, 80) : null, kanaele: kanaele(neu.kanaele),
           geplant_um: geplant, wiederholung: geplant ? (WIEDERHOLUNG.includes(neu.wiederholung) ? neu.wiederholung : "einmal") : null,
@@ -321,7 +321,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       // Zurückziehen („Diese Nachricht wurde gelöscht“): Absender – oder die Leitung als Moderation
       if (neu.zurueckgezogen_am && !alt.zurueckgezogen_am) {
         if (!eigen && !hatRolle(ctx, MODERATION)) return { ok: false, grund: "NUR_EIGENE" };
-        return { ok: true, zeile: { ...alt, text: "", zurueckgezogen_am: jetzt, reaktionen: {}, rueckmeldungen: {}, anlagen: [], umfrage: null, umfrage_stimmen: {} }, zusammenfuehren: true };
+        return { ok: true, zeile: { ...alt, text: "", zurueckgezogen_am: jetzt, reaktionen: {}, rueckmeldungen: {}, anlagen: [], umfrage: null, umfrage_stimmen: {}, umfrage_frei: {} }, zusammenfuehren: true };
       }
       let z = { ...alt };
       // Bearbeiten: nur der Absender, nur innerhalb der Frist
@@ -346,7 +346,13 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         const w = [...new Set((Array.isArray(neu.umfrage_stimmen[ctx.ich]) ? neu.umfrage_stimmen[ctx.ich] : []).map(Number))].filter((i) => Number.isInteger(i) && i >= 0 && i < alt.umfrage.optionen.length);
         if (!w.length) delete us[ctx.ich]; else us[ctx.ich] = alt.umfrage.mehrfach ? w : [w[0]];
       }
-      return { ok: true, zeile: { ...z, gelesen_von: [...gelesen], rueckmeldungen: rm, reaktionen: re, umfrage_stimmen: us }, zusammenfuehren: true };
+      // ✏️ freie Antwort (0.31.0): nur die eigene, höchstens 120 Zeichen; leer = zurücknehmen
+      const uf = { ...(alt.umfrage_frei || {}) };
+      if (alt.umfrage?.frei && neu.umfrage_frei && Object.prototype.hasOwnProperty.call(neu.umfrage_frei, ctx.ich) && !alt.zurueckgezogen_am) {
+        const t = [...String(neu.umfrage_frei[ctx.ich] ?? "").trim()].slice(0, 120).join("");
+        if (t) uf[ctx.ich] = t; else delete uf[ctx.ich];
+      }
+      return { ok: true, zeile: { ...z, gelesen_von: [...gelesen], rueckmeldungen: rm, reaktionen: re, umfrage_stimmen: us, umfrage_frei: uf }, zusammenfuehren: true };
     }
     case "nachricht_status": {
       // ✓✓ angekommen / blaue ✓✓ gelesen / 🏎️ Express-Antwort: jede Person nur für sich, Zeiten setzt der Server

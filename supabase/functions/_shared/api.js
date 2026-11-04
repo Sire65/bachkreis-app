@@ -14,6 +14,19 @@ import * as kom from "./kom/kern.js";
 
 const SITZUNG_TAGE = 180;
 const MAX_FEHLVERSUCHE = 20; // je IP in 15 Minuten
+export const INSTALL_MODI = ["installiert", "browser", "pc"];
+// 🛡️ 0.31.0 Zugang im Blick (nur Leitung/Admin): Anmeldeversuche der letzten 14 Tage je Tag, gerade gesperrte Anschlüsse (nur Anzahl –
+// keine IP, die ist ohnehin nur als Prüfsumme gespeichert), Zugänge nie benutzt, und wie die App bei jedem läuft (📲 installiert?)
+async function zugangLage(db, s) {
+  if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
+  const tage = await db.q(`select to_char(date_trunc('day', zeit), 'YYYY-MM-DD') as tag, count(*) filter (where ok)::int as ok, count(*) filter (where not ok)::int as fehl
+    from bk_anmeldeversuche where zeit > now() - interval '14 days' group by 1 order by 1 desc`);
+  const gesperrt = (await db.q(`select count(*)::int as n from (select ip_hash from bk_anmeldeversuche where ok = false and zeit > now() - interval '15 minutes' group by ip_hash having count(*) >= $1) x`, [MAX_FEHLVERSUCHE]))[0].n;
+  const fehl24 = (await db.q(`select count(*)::int as n from bk_anmeldeversuche where ok = false and zeit > now() - interval '24 hours'`))[0].n;
+  const geraete = await db.q(`select p.id as person_id, o.modus, o.modus_am, o.zuletzt from bk_personen p left join bk_online o on o.person_id = p.id
+    where p.geloescht_am is null and p.status = 'aktiv' order by p.nachname, p.vorname`);
+  return { status: 200, json: { ok: true, tage, gesperrt, fehl24, max: MAX_FEHLVERSUCHE, geraete } };
+}
 const UEBERLAPPUNG_MS = 5000; // Abgleich: kleine Überlappung gegen gleichzeitige Transaktionen
 
 export { sha256 };
@@ -302,6 +315,8 @@ async function online(db, s, body) {
   const ctx = await kontextLaden(db, s.person);
   const sichtbar = body.sichtbar !== false && onlineErlaubt(s.person, ctx.konfig);
   await db.q(`insert into bk_online (person_id, zuletzt, sichtbar) values ($1, now(), $2) on conflict (person_id) do update set zuletzt = now(), sichtbar = excluded.sichtbar`, [s.person.id, sichtbar]);
+  // 📲 0.31.0 (wie KC-CLUB-INSTALL-STAND): wie läuft die App auf diesem Gerät? Nur die Art – kein Gerätename, keine Kennung
+  if (INSTALL_MODI.includes(body.modus)) await db.q(`update bk_online set modus = $2, modus_am = now() where person_id = $1`, [s.person.id, body.modus]);
   if (!onlineErlaubt(s.person, ctx.konfig)) return { status: 200, json: { ok: true, erlaubt: false, liste: [] } };
   return { status: 200, json: { ok: true, erlaubt: true, liste: await onlineListe(db, s, ctx) } };
 }
@@ -358,6 +373,7 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
     }
     if (aktion === "kalender_link") return await kalenderLink(db, s, body, dienste);
     if (aktion === "online") return await online(db, s, body);
+    if (aktion === "zugang_lage") return await zugangLage(db, s);
     if (aktion === "anklopfen") return await anklopfen(db, s, body, dienste);
     if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
       const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);

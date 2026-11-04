@@ -1,4 +1,4 @@
-# Konzept-Check Bachkreis (Stand 0.30.0, 04.11.2026)
+# Konzept-Check Bachkreis (Stand 0.31.0, 04.11.2026)
 
 Gesamtprüfung: Was braucht ein Schul-/Jugendorchester mit Förderverein, was hat die App schon, was fehlt noch?
 Rechte werden auf dem Server durchgesetzt (`supabase/functions/_shared/regeln.js`); was die Oberfläche nur ausblendet, gilt hier als **nicht** geschützt.
@@ -49,7 +49,7 @@ Die Abläufe Termine → Zusage/Absage → Ampel → Erinnerung, Nachrichten/Pin
 - ✅ **Startseite wie KC** (einfache/erweiterte Ansicht, Umdrehen, Anordnen, Laufband, Schnellstart)
 - ✅ **Nachrichten wie KC** (Versand-Leiste, Formatieren, Link-Prüfer, Termin/Absage erkennen, Chat-Übersicht, Alter-Blinken)
 - ✅ 0.30.0 Startseite & Bedienung (🔄, Effekte, Schatten/Ecken, Stundenuhren, Uhr & Takt, Startnachricht, Impressum)
-- ⏳ 0.31.0 Zugang & Organisation
+- ✅ 0.31.0 Zugang & Organisation (Stand KC 2.859: Installieren, Zugang im Blick, Link-Hilfe, Umfrage frei, Tipps, Zahlen)
 - ➖ Bewusst nicht übernommen: verschlüsselte Chats (Kinderschutz – Leitung muss Meldungen prüfen können), „schreibt gerade“ (braucht Echtzeit-Verbindung), Club-Themen (Dienstplan, Rezepte, Büro …)
 
 > Damit ist die Liste unten abgearbeitet. Bewusst nicht gebaut: Lastschrift/SEPA (Konzept: kein Zahlungsverkehr in der App) und eine Ausleihe von Ausstattung über die App (läuft über die PC-Verwaltung).

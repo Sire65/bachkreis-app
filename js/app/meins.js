@@ -113,6 +113,8 @@ VIEWS.sicherheit = {
 VIEWS.hilfe = {
   render() {
     const t = [
+      ["📲 Die App auf den Startbildschirm legen", `Einmal installieren – dann startet die App schneller, du bleibst angemeldet und Benachrichtigungen kommen zuverlässig.<span class="knopfreihe" style="display:flex;margin-top:8px"><button type="button" class="knopf klein" data-a="installieren">📲 Jetzt installieren</button><button type="button" class="knopf klein" data-a="installAnleitung">🖼️ Mit Bildern</button></span>`],
+      ["🔗 Mein Link funktioniert nicht", "Den Link direkt aus der Nachricht antippen (nicht abtippen). Nach vielen Fehlversuchen ist die Anmeldung 15 Minuten gesperrt. Die Leitung schickt dir gern einen neuen persönlichen Link – der alte gilt dann nicht mehr."],
       ["📅 Zu- oder absagen", "Termine › bei jedem Termin ✅ Zusage, 🤔 Vielleicht oder ❌ Absage antippen. Eltern sagen für ihre Kinder zu."],
       ["🏖️ Längere Abwesenheit", "Meins › Abwesenheit: Zeitraum wählen – alle Termine darin werden auf einmal abgesagt."],
       ["🎼 Meine Noten", "Meins › Meine Noten zeigt automatisch die Stimmen für dein Instrument und deine Gruppe."],

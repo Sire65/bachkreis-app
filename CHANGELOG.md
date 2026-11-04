@@ -1,5 +1,19 @@
 # Änderungen
 
+## 0.30.0 DEV – 04.11.2026
+- 🧩 Bedienung wie die KC Club App 2.858 – neue Module js/app/bedienung.js, js/app/stundenuhren.js, js/app/startnachricht.js, css/bedienung.css
+- 📣 Startnachricht der Leitung (KC-CLUB-STARTNACHRICHT, -SPRUNG, -ANTWORT): Tabellen `startnachrichten` + `startnachricht_antworten`, Empfänger alle/Orchester/Personen (`snFuerMich` in schema.js), Pflicht-Fenster ohne ✕, Ja/Später (24 Std.)/Nein, Rückfrage, Knopf zu fester Stelle der App; Absender/Zeit/„später“ setzt der Server; Leitung sieht die Antworten
+- 🔐 Migrationen geben jede Tabelle ausdrücklich nur `service_role` frei (`revoke … from public, anon, authenticated` + `grant …`) – Supabase vergibt für neue Tabellen seit 30.10.2026 keine Rechte mehr von selbst (wie KC-SUPABASE-GRANTS); Nachtrag 20261103000000_bk_startnachricht.sql mit Sicherheitsnetz für alle bk_-Tabellen; Test prüft jede Migration
+- 🔄 Drehzeichen auf Kacheln mit Rückseite (überdeckt keine Zahl), Rückseite mit 🔄 zurück · 🌀 Kachel-Effekte Einblenden/Zug/Welle/Wirbel/Wackeln/Start/Abwechselnd/Ohne
+- 🌗 Schatten (Standard/aus/leicht/mittel/kräftig) · ⬜ Ecken per Regler (2–32 px) · 👆 größere Tippflächen (Standard an) · ⚙️ Einstellungs-Übersicht oben
+- 🔔 Kopf-Pfeil blinkt bei eingerolltem Kopf, solange es einen Grund gibt (neue Nachricht, neues Mitglied, jemand neu online) · 🟢 Vornamen unter „online“
+- 📌 Pinnwand öffnet sich nie von selbst (Schalter „Neue Zettel sofort als Fenster“) · 📍 gelesene Zettel ab dem Folgetag als Nadel im Rahmen
+- 🎁 Geburtstags-Vogel mit Paket, Strauß und „Happy Birthday“ (nur freigegebene Geburtstage, höchstens stündlich) · 🕰️ sieben Stundenuhren mit freien Aufnahmen (Quellen in den Einstellungen, docs/LIZENZEN-TOENE.md), Laden erst beim Gebrauch, sonst Ersatzglocke
+- ⏱️ Uhr & Takt: Metronom 30–240, Taktarten mit Betonung, Tempo tippen · Timer mit Gong · Stoppuhr mit Runden
+- § Impressum (Felder in der PC-Verwaltung; Fehlendes steht als „noch nicht eingetragen“ da)
+- 🐞 Start-Fenster (Tipp, Was ist neu, Übetag, Nachfrage zu Terminen) sind „leise“ – 🏎️ Express und 📣 Startnachricht gehen vor
+- tests/startnachricht.test.mjs; Rundgang prüft 🔄, Metronom/Timer, Einstellungs-Übersicht, Impressum, Startnachricht Leitung → Eltern → Antwort; Echtbetrieb ohne Pinnwand-Fenster
+
 ## 0.29.0 DEV – 04.11.2026
 - 💬 Nachrichten wie die KC Club App 2.858 – neues Modul js/kern/chattext.js (reines JavaScript, nichts geht an fremde Dienste)
 - 📝❗🏎️ Versand-Leiste über dem Eingabefeld (`versandLeisteHtml`), erscheint beim Schreiben/Anhängen; ❗/🏎️ aus der Werkzeugreihe dorthin verschoben; Schalter „Versand-Leiste immer zeigen“ (`versandImmer`)

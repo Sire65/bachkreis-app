@@ -85,6 +85,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F75 | 🏫 Abgleich Internetseite: Chronik & Repertoire, Dokumente, Austausch & Gastfamilien, Auftrittsanfragen → Termin, Partner, Dirigier-/Kompositionsversuche | ✅ | tests/abgleich.test.mjs, e2e rundgang, axe |
 | BK-F76 | 🏠 Startseite wie KC: einfache/erweiterte Ansicht, Kacheln umdrehen, Anordnen/Ziehen, Register verschieben, Laufband, Schnellstart, Fallblatt, Kachelgröße, Vorschläge, Tagesübersicht | ✅ | e2e rundgang, echtbetrieb, axe |
 | BK-F77 | 💬 Nachrichten wie KC 2.858: Versand-Leiste, Formatieren/Farben, Grußformeln, Link-Prüfer, Termin aus Nachricht, Zu-/Absage erkennen, Chat-Übersicht mit Filtern/Gliederung, Alter-Blinken | ✅ | tests/chattext.test.mjs, e2e rundgang, echtbetrieb, axe |
+| BK-F78 | 🧩 Bedienung wie KC 2.858: 🔄-Zeichen, Kachel-Effekte, Schatten/Ecken, Tippflächen, Kopf-Pfeil blinkt, Online-Namen, Einstellungs-Übersicht, Pinnwand-Nadeln & nie automatisch, Geburtstags-Vogel, Stundenuhren, Uhr & Takt, Impressum | ✅ | e2e rundgang, echtbetrieb, axe |
+| BK-F79 | 📣 Startnachricht der Leitung mit Ja/Später/Nein, Rückfrage, Antworten-Übersicht; ausdrückliche Tabellenrechte für service_role | ✅ | tests/startnachricht.test.mjs, e2e rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

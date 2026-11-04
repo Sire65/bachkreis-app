@@ -10,7 +10,7 @@ import { PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson } from "..
 import { senden } from "../kern/versand.js";
 import { reisswolf, zettelAnpinnen } from "./effekte.js";
 
-const PW = { form: null, wichtigStart: false };
+const PW = { form: null, wichtigStart: false, auf: new Set() };
 const ich = () => S.ich?.id;
 const jetztIso = () => new Date().toISOString();
 
@@ -113,6 +113,16 @@ function formHtml() {
 }
 
 // ---------- Ansicht ----------
+// 0.30.0 KC-CLUB-PINNWAND-NADELN: Gelesene fremde Zettel hängen ab dem Folgetag nur noch als 📍 Nadel im Rahmen – die Wand bleibt übersichtlich.
+// Antippen macht den Zettel wieder groß, „📍 Wieder als Nadel“ legt ihn zurück. Wichtige, noch nicht erledigte Zettel bleiben immer groß.
+const heuteBeginn = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString(); };
+const istNadel = (z) => z.von !== ich() && !pwOffen(z) && !PW.auf.has(z.id) && !!gelesen(z.id)?.gesehen_am && gelesen(z.id).gesehen_am < heuteBeginn();
+function nadelnHtml(zs) {
+  const l = zs.filter(istNadel); if (!l.length) return "";
+  return `<div class="pw-nadeln"><small>📍 Schon gelesen (${l.length}) – antippen zum Aufmachen</small>${l.map((z) => `<button type="button" class="pw-nadel${farbe(z)}" data-a="pwNadelAuf" data-x="${esc(z.id)}" title="${esc(String(z.text || "").slice(0, 120))}">${esc(vorn(z.von))}: ${esc(String(z.text || "").slice(0, 24))}${String(z.text || "").length > 24 ? "…" : ""}</button>`).join("")}</div>`;
+}
+AKTIONEN.pwNadelAuf = (id) => { PW.auf.add(id); zeichne(); };
+AKTIONEN.pwNadel = (id) => { PW.auf.delete(id); zeichne(); };
 VIEWS.pinnwand = {
   render() {
     const zs = pwZettel(), m = meine().length, voll = m >= PINNWAND.max, wichtigOffen = zs.filter(pwOffen).length;
@@ -121,7 +131,7 @@ VIEWS.pinnwand = {
       + (PW.wichtigStart && wichtigOffen ? `<div class="karte pw-hinweis-wichtig"><b>❗ ${wichtigOffen === 1 ? "Ein wichtiger Zettel" : wichtigOffen + " wichtige Zettel"} für dich.</b> Bitte lesen und mit „✓ Erledigt“ abhaken.</div>` : "")
       + (voll && !PW.form ? `<div class="hinweis pw-voll">📌 Du hast schon <b>${PINNWAND.max} von ${PINNWAND.max}</b> Zetteln hängen. Für einen neuen erst einen eigenen abnehmen – mit <b>🗑️ abnehmen</b> auf deinem Zettel oder über „＋ Zettel“.</div>` : "")
       + (PW.form ? formHtml() : "")
-      + `<div class="kork" id="pwWand">${aushang}${zs.map(zettelHtml).join("")}${!zs.length && !aushang ? `<div class="leer">Noch keine Zettel an der Pinnwand.<br>Mit „＋ Zettel“ einen anheften.</div>` : ""}</div>`
+      + `<div class="kork" id="pwWand">${aushang}${nadelnHtml(zs)}${zs.filter((z) => !istNadel(z)).map((z) => (PW.auf.has(z.id) ? zettelHtml(z).replace(/<\/div>$/, `<div class="zknoepfe"><button class="antw" data-a="pwNadel" data-x="${esc(z.id)}">📍 Wieder als Nadel</button></div></div>`) : zettelHtml(z))).join("")}${!zs.length && !aushang ? `<div class="leer">Noch keine Zettel an der Pinnwand.<br>Mit „＋ Zettel“ einen anheften.</div>` : ""}</div>`
       + `<p class="hinweis" style="margin-top:12px">Jeder darf höchstens <b>${PINNWAND.max} Zettel</b> gleichzeitig anheften – der 1. gelb, der 2. rosé, der 3. hellgrün, der 4. hellblau, je höchstens <b>${PINNWAND.zeichen} Zeichen</b>. „✓ Erledigt“ zeigt dem Verfasser, dass du es gelesen und erledigt hast.</p>`;
   },
   nach() { setTimeout(gesehenMarkieren, 0); },
@@ -312,6 +322,10 @@ export function pinnwandStart() {
   if (!abonniert) { abonniert = true; abonnieren(neueImLauf); }
   if (!S.ich || fensterOffen()) return false;
   const neu = neueFremde();
+  if (einst().pwFenster !== true) { // 0.30.0: Standard – die Pinnwand geht nie von selbst auf; Kachel und Kopf zeigen die Zahl
+    if (neu.length) { gemeldetMerken(neu.map((z) => z.id)); toast(`📌 ${neu.length === 1 ? hinweisText(neu[0]) : `${neu.length} neue Zettel an der Pinnwand`}`, 4000); }
+    return false;
+  }
   if (neu.length) { pwFenster(neu); return true; }
   if (pwZettel().some(pwOffen) && S.view === "start") { PW.wichtigStart = true; zeige("pinnwand"); return true; }
   return pwErinnern();
@@ -322,6 +336,7 @@ function neueImLauf(tabs) {
   if (!S.ich || !(tabs || []).includes("pinnwand") || document.hidden || S.view === "pinnwand" || fensterOffen()) return;
   const neu = neueFremde();
   if (!neu.length) return;
+  if (einst().pwFenster !== true) { gemeldetMerken(neu.map((z) => z.id)); toast(`📌 ${neu.length === 1 ? hinweisText(neu[0]) : `${neu.length} neue Zettel an der Pinnwand`}`, 4000); document.dispatchEvent(new CustomEvent("bk-kopf-neu")); return; }
   pwFenster(neu);
   if (einst().ton !== false) try { navigator.vibrate?.([30, 40, 30]); } catch {}
 }

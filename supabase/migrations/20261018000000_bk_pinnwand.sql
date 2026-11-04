@@ -20,6 +20,8 @@ create table if not exists bk_pinnwand (
 );
 create index if not exists bk_pinnwand_geaendert on bk_pinnwand (geaendert_am);
 alter table bk_pinnwand enable row level security;
+revoke all on bk_pinnwand from public, anon, authenticated;
+grant select, insert, update, delete on bk_pinnwand to service_role;
 drop trigger if exists bk_pinnwand_stempel on bk_pinnwand;
 create trigger bk_pinnwand_stempel before update on bk_pinnwand for each row execute function bk_abgleich_stempel();
 
@@ -51,6 +53,8 @@ create table if not exists bk_pinnwand_gelesen (
 );
 create index if not exists bk_pinnwand_gelesen_geaendert on bk_pinnwand_gelesen (geaendert_am);
 alter table bk_pinnwand_gelesen enable row level security;
+revoke all on bk_pinnwand_gelesen from public, anon, authenticated;
+grant select, insert, update, delete on bk_pinnwand_gelesen to service_role;
 drop trigger if exists bk_pinnwand_gelesen_stempel on bk_pinnwand_gelesen;
 create trigger bk_pinnwand_gelesen_stempel before update on bk_pinnwand_gelesen for each row execute function bk_abgleich_stempel();
 

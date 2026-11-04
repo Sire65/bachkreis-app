@@ -611,6 +611,10 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "an-2", anlass: "Neujahrsempfang (Beispiel)", veranstalter: "Stadt Bergkamen (Beispiel)", kontakt_name: "Kulturbüro", datum: new Date(tag(jetzt, 80).setHours(18, 0, 0, 0)).toISOString(), dauer_min: 30, ort: "Ratssaal (Beispiel)", besetzung: "ensemble", gruppen: ["g-a"], honorar: 300, status: "pruefung", eingegangen_am: isoTag(tag(jetzt, -9)) },
     { id: "an-3", anlass: "Sommerfest Seniorenheim (Beispiel)", veranstalter: "Seniorenzentrum (Beispiel)", datum: new Date(tag(jetzt, 120).setHours(15, 0, 0, 0)).toISOString(), dauer_min: 45, besetzung: "b", gruppen: ["g-b"], honorar: 0, status: "abgesagt", eingegangen_am: isoTag(tag(jetzt, -20)), notiz: "Termin fällt in die Ferien." },
   ];
+  // 📣 Startnachricht (0.30.0): an drei Eltern (nicht an die Vorführ-Personen – sonst ginge beim Ausprobieren gleich ein Fenster auf)
+  const snAn = elternA.filter((id) => id !== demoEltern?.id).slice(0, 3);
+  d.startnachrichten = [{ id: "sn-demo", text: "Liebe Eltern, bitte tragt im Kalender die Generalprobe ein – danke! 🎻", von: "p-leitung", an: "personen", gruppen: [], personen: snAn, wichtig: false, wahl: true, ziel: "termine", zeit: iso(tag(jetzt, -2, 18)), bis: null }];
+  d.startnachricht_antworten = snAn.slice(0, 2).map((pid, i) => ({ id: `sna-sn-demo-${pid}`, nachricht_id: "sn-demo", person_id: pid, antwort: i ? "spaeter" : "ja", rueckfrage: i ? null : "Gilt das auch für Geschwister?", am: iso(tag(jetzt, -1, 19)), spaeter_bis: i ? iso(tag(jetzt, 0, 19)) : null }));
   const quelle = "Schul-Website (Bachkreis)";
   d.chronik = [
     { id: "ch-1969", jahr: 1969, titel: "Gründung des Bachkreises", art: "gruendung", beschreibung: "Gegründet vom Musiklehrer Horst Römer – eines der ersten Jugendorchester, die nach 1945 in Deutschland entstanden.", quelle },

@@ -34,6 +34,8 @@ create table if not exists bk_inventar (
 );
 create index if not exists bk_inventar_geaendert on bk_inventar (geaendert_am);
 alter table bk_inventar enable row level security;
+revoke all on bk_inventar from public, anon, authenticated;
+grant select, insert, update, delete on bk_inventar to service_role;
 drop trigger if exists bk_inventar_stempel on bk_inventar;
 create trigger bk_inventar_stempel before update on bk_inventar for each row execute function bk_abgleich_stempel();
 
@@ -106,6 +108,8 @@ create table if not exists bk_ausstattung (
 );
 create index if not exists bk_ausstattung_geaendert on bk_ausstattung (geaendert_am);
 alter table bk_ausstattung enable row level security;
+revoke all on bk_ausstattung from public, anon, authenticated;
+grant select, insert, update, delete on bk_ausstattung to service_role;
 drop trigger if exists bk_ausstattung_stempel on bk_ausstattung;
 create trigger bk_ausstattung_stempel before update on bk_ausstattung for each row execute function bk_abgleich_stempel();
 

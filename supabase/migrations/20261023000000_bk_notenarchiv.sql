@@ -24,6 +24,8 @@ create table if not exists bk_werke (
 );
 create index if not exists bk_werke_geaendert on bk_werke (geaendert_am);
 alter table bk_werke enable row level security;
+revoke all on bk_werke from public, anon, authenticated;
+grant select, insert, update, delete on bk_werke to service_role;
 drop trigger if exists bk_werke_stempel on bk_werke;
 create trigger bk_werke_stempel before update on bk_werke for each row execute function bk_abgleich_stempel();
 

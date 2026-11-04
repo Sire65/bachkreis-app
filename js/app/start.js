@@ -12,7 +12,8 @@ import { pwOffenZahl } from "./pinnwand.js";
 import { gesundheitFuer, gesundheitVon } from "./schutz.js";
 import { mitfahrtZahlen } from "./extras.js";
 import { wochenStand } from "./ueben.js";
-import { startseiteVerbinden, ANO, anordnenHtml, anordnenLeiste, nachDemZeichnen, laufbandHtml, laufbandStarten, countdownHtml, schnellstartHtml, schnellstartAn, vorschlagPruefen, nuTagZaehlen, ansichtFrage, tagesinfoBeimStart, kachelOffenHinten } from "./startseite.js";
+import { startseiteVerbinden, ANO, anordnenHtml, anordnenLeiste, nachDemZeichnen, laufbandHtml, laufbandStarten, countdownHtml, schnellstartHtml, schnellstartAn, vorschlagPruefen, nuTagZaehlen, ansichtFrage, tagesinfoBeimStart, kachelOffenHinten, drehZeichen } from "./startseite.js";
+import { gbvPruefen } from "./bedienung.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
 import { offeneUebeAufgaben } from "./uebebuehne.js";
 import { austauschProjekte, anfragenOffen } from "./vereinsleben.js";
@@ -84,6 +85,8 @@ export const KACHELN = {
     { id: "austausch", sym: "🏠", t: "Austausch & Gastfamilien", u: "Gäste aufnehmen · Zuordnung", v: "austausch", nur: () => austauschProjekte().length > 0 && (istEltern() || istLehrkraft()), zahl: () => (istLehrkraft() ? austauschProjekte().reduce((s, p) => s + liste("gaeste", (g) => g.projekt_id === p.id && !g.gastgeber_id).length, 0) : 0) },
     { id: "anfragen", sym: "📨", t: "Auftrittsanfragen", u: "Gemeinden, Kirchen, Feste – zusagen", v: "anfragen", nur: () => istLehrkraft() || istVorstand(), zahl: () => anfragenOffen() },
     { id: "partner", sym: "🤝", t: "Partner & Kontakte", u: "Musikschule · Partnerorchester · Austausch", v: "partner", nur: () => istLehrkraft() || istVorstand() },
+    { id: "startnachricht", sym: "📣", t: "Startnachricht", u: "Fenster beim nächsten Öffnen · Ja/Später/Nein", v: "startnachricht", nur: () => istLeitung() },
+    { id: "uhrtakt", sym: "⏱️", t: "Uhr & Takt", u: "Metronom · Timer · Stoppuhr", aktion: "uhrWerkzeug" },
     { id: "foerderverein", sym: "💛", t: "Förderverein", u: "Einkauf · Spenden · Freigaben", v: "foerderverein", nur: () => istVorstand() || istLeitung() },
   ],
   meins: [
@@ -160,7 +163,7 @@ function kachelHtml(k) {
   const z = k.zahl ? wert(k.zahl) : 0;
   const ziel = k.aktion ? `data-a="${k.aktion}"` : `data-a="kachel" data-x="${esc(k.id)}"`;
   const na = k.id === "nachrichten" && z ? nachrichtStufe() : null;
-  return `<button class="kachel ${esc(wert(k.klasse) || "")}${na ? " na-" + na : ""}" ${ziel} data-id="${esc(k.id)}">${z ? `<span class="zahl">${esc(z)}</span>` : ""}<div class="sym">${k.sym}</div><b>${esc(wert(k.t))}</b><small>${esc(wert(k.u) || "")}</small></button>`;
+  return `<button class="kachel ${esc(wert(k.klasse) || "")}${na ? " na-" + na : ""}" ${ziel} data-id="${esc(k.id)}">${z ? `<span class="zahl">${esc(z)}</span>` : ""}<div class="sym">${k.sym}</div><b>${esc(wert(k.t))}</b><small>${esc(wert(k.u) || "")}</small>${drehZeichen(k.id)}</button>`;
 }
 
 function heuteWichtig() {
@@ -212,6 +215,7 @@ VIEWS.start = {
     nachDemZeichnen(); nuTagZaehlen();
     clearTimeout(START_FRAGEN); START_FRAGEN = setTimeout(() => { if (S.view === "start" && !ansichtFrage()) tagesinfoBeimStart(); }, 1200);
     clearTimeout(START_VORSCHLAG); START_VORSCHLAG = setTimeout(vorschlagPruefen, 25000);
+    setTimeout(gbvPruefen, 1500); // 🎁 Geburtstags-Vogel (höchstens einmal je Stunde)
     if (einst().einfach) return;
     // Wischen links/rechts über Kacheln oder Register wechselt das Register (wie Club-App)
     for (const el of [document.getElementById("rasterBlock")]) {

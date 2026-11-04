@@ -33,6 +33,8 @@ create table if not exists bk_nachrichten (
 );
 create index if not exists bk_nachrichten_geaendert on bk_nachrichten (geaendert_am);
 alter table bk_nachrichten enable row level security;
+revoke all on bk_nachrichten from public, anon, authenticated;
+grant select, insert, update, delete on bk_nachrichten to service_role;
 drop trigger if exists bk_nachrichten_stempel on bk_nachrichten;
 create trigger bk_nachrichten_stempel before update on bk_nachrichten for each row execute function bk_abgleich_stempel();
 
@@ -66,4 +68,6 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachr
 -- Ablage für Dateien (Anhänge, Sprachnachrichten, Noten)
 create table if not exists bk_dateien (id text primary key, von text references bk_personen(id), name text not null, mime text not null, groesse integer not null, art text, inhalt bytea, ablage text not null default 'datenbank', erstellt_am timestamptz not null default now(), geloescht_am timestamptz);
 alter table bk_dateien enable row level security;
+revoke all on bk_dateien from public, anon, authenticated;
+grant select, insert, update, delete on bk_dateien to service_role;
 

@@ -34,7 +34,7 @@ end $$;`);
   z.push("-- Zugangscodes nur als Hash speichern (Spalte code bleibt für die Vorführversion, im Echtbetrieb leer)");
   z.push("alter table bk_zugaenge add column if not exists code_hash text;");
   z.push("create unique index if not exists bk_zugaenge_code_hash on bk_zugaenge (code_hash) where code_hash is not null;");
-  return z.join("\n") + "\n";
+  return mitRechten(z.join("\n") + "\n");
 }
 
 // Eine Tabelle (Spalten aus der Registry, Abgleich-Spalten, Index, RLS, Versions-Trigger)
@@ -57,6 +57,10 @@ function tabelleSql(t) {
   z.push("");
   return z;
 }
+// 0.30.0 (wie KC-SUPABASE-GRANTS): Seit 30.10.2026 vergibt Supabase für neue Tabellen keine Rechte mehr von selbst – ohne grant
+// antwortet die Schnittstelle auch dem Server (service_role) mit „permission denied“. Darum nach jeder RLS-Zeile: nichts für public/anon/
+// authenticated (die App liest nie direkt), volle Rechte nur für service_role (Edge Functions).
+export const mitRechten = (sql) => sql.replace(/^alter table (bk_\w+) enable row level security;$/gm, (m, t) => `${m}\nrevoke all on ${t} from public, anon, authenticated;\ngrant select, insert, update, delete on ${t} to service_role;`);
 const wahlPruefung = (f) => `${f.k} is null or ${f.k} in (${Object.keys(f.werte).map(q).join(", ")})`;
 function fkSql(t) {
   const z = [];
@@ -89,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261103000000_bk_startnachricht.sql": { titel: "Startnachricht der Leitung mit Antworten Ja/Später/Nein (0.30.0) + ausdrückliche Rechte für service_role (KC-SUPABASE-GRANTS)", tabellen: ["startnachrichten", "startnachricht_antworten"], extra: ["-- Sicherheitsnetz: alle Bachkreis-Tabellen ausdrücklich für den Server freigeben, für die App-Schlüssel nichts", "do $$ declare t text; begin for t in select tablename from pg_tables where schemaname = 'public' and tablename like 'bk\\_%' loop execute format('revoke all on %I from public, anon, authenticated', t); execute format('grant select, insert, update, delete on %I to service_role', t); end loop; end $$;"] },
   "20261102000000_bk_abgleich.sql": { titel: "Abgleich Internetseite: Austausch & Gastfamilien, Auftrittsanfragen, Chronik, Dokumente, Partner, Dirigier-/Kompositionsversuche (0.27.0)", tabellen: ["projekte", "programm", "gastgeber", "gaeste", "anfragen", "chronik", "dokumente", "partner"] },
   "20261101000000_bk_uebebuehne.sql": { titel: "Übe-Bühne: Aufgaben mit Notenstelle/Rhythmus/Tonleiter/Ton halten/Ohr-Spiel/Material, Ergebnisse, Einwilligung Übe-Aufnahmen (0.26.0)", tabellen: ["uebeaufgaben", "uebe_ergebnisse", "genehmigung_vorlagen"] },
   "20261031000000_bk_pc.sql": { titel: "PC-Verwaltung: Probenplan, Ausleihe von Ausstattung, Interessenten, Helfer- & Dienstplan (0.24.0)", tabellen: ["termine", "ausleihen", "interessenten", "dienste", "nachrichten"], extra: ["alter table bk_ausleihen alter column inventar_id drop not null;"] },
@@ -121,7 +126,7 @@ export function erzeugeNachtragSql(datei) {
   for (const [t, k] of n.pruefungen || []) z.push(...pruefung(t, TABELLEN[t].felder.find((f) => f.k === k)));
   if (n.extra) z.push(...n.extra, "");
   for (const [t, ids] of Object.entries(n.kom || {})) for (const id of ids) z.push(komZeile(t, KOM_STANDARD[t].find((r) => r.id === id)));
-  return z.join("\n") + "\n";
+  return mitRechten(z.join("\n") + "\n");
 }
 
 // Startwerte des BK Communicators (js/kern/kom-standard.js). Bestehende Zeilen bleiben unangetastet (on conflict do nothing).

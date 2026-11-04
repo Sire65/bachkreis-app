@@ -26,9 +26,9 @@ await p.route("https://api.open-meteo.com/**", (r) => {
 });
 await p.goto(BASIS + "/index.html");
 await p.waitForSelector(".kachel");
-// 📌 Pinnwand wie KC: neue Zettel gehen beim Öffnen als Post-it-Fenster auf → Zur Pinnwand, Zettel anheften, erledigt abhaken
-await p.waitForSelector("#pwFensterHg", { timeout: 4000 }); await p.screenshot({ path: `${BILDER}pinnwand-fenster.png` });
-await p.click('[data-a="pwFensterWand"]'); await p.waitForSelector("#pwWand .zettel");
+// 📌 Pinnwand wie KC 2.858: neue Zettel öffnen sich nie von selbst (nur Hinweis) → Pinnwand öffnen, Zettel anheften, erledigt abhaken
+if (await p.waitForSelector("#pwFensterHg", { timeout: 2500 }).catch(() => null)) fehler.push("Pinnwand: Fenster ging von selbst auf");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("pinnwand")); await p.waitForSelector("#pwWand .zettel");
 if (!(await p.$("#pwWand .zettel.f2.wichtig"))) fehler.push("Pinnwand: wichtiger rosé Zettel fehlt");
 await p.click("#pwNeuKnopf"); await p.fill("#pwText", "Notenständer nach der Probe wegräumen"); await p.click('[data-a="pwEmo"][data-x="🎻"]');
 await p.click('[data-a="pwFuer"][data-x="personen"]'); await p.fill("#pwSuche", "sommer");
@@ -45,6 +45,30 @@ if (!(await p.$("#ilBand .il-eintrag"))) fehler.push("Startseite: Info-Laufband 
 { const k = await p.$('#raster > .kachel[data-id="pinnwand"]'); await k.scrollIntoViewIfNeeded(); await k.click(); await p.waitForTimeout(80); await k.click(); await p.waitForTimeout(450);
   if (!(await p.$("#raster > .kachel.kr-hinten .kr-akt"))) fehler.push("Startseite: Kachel dreht sich nicht um");
   await p.click('#raster > .kachel.kr-hinten [data-kr="zu"]'); await p.waitForTimeout(300); }
+// 0.30.0: 🔄 dreht sofort um · ⏱️ Uhr & Takt · ⚙️ Übersicht · § Impressum · 📣 Startnachricht (Leitung → Eltern antworten)
+{ const z = await p.$('#raster > .kachel[data-id="pinnwand"] .kr-zeichen'); if (!z) fehler.push("Startseite: 🔄 fehlt"); else { await z.click(); await p.waitForTimeout(400);
+  if (!(await p.$("#raster > .kachel.kr-hinten"))) fehler.push("Startseite: 🔄 dreht nicht um"); else { await p.click('#raster > .kachel.kr-hinten [data-kr="zu"]'); await p.waitForTimeout(300); } } }
+await p.evaluate(() => (window.__a = (async () => (await import("/js/kern/ui.js")).AKTIONEN)())); await p.evaluate(async () => (await window.__a).uhrWerkzeug("metronom"));
+await p.waitForSelector(".mt-anzeige"); await p.click('[data-a="mtSchritt"][data-x="5"]');
+if ((await p.textContent("#mtBpm")) !== "95") fehler.push("Metronom: +5 wirkt nicht");
+await p.click('[data-a="mtUm"]'); await p.waitForTimeout(700); await p.click('[data-a="mtUm"]'); await p.click('[data-a="uwTab"][data-x="timer"]'); await p.waitForSelector('[data-a="uwTimerSetzen"]');
+await p.screenshot({ path: `${BILDER}uhr-takt.png` }); await p.click('#blattHg [data-a="blattZu"]');
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("einstellungen")); await p.click('.eu-raster [data-x="effekte"]'); await p.waitForTimeout(300);
+if (!(await p.$('details.einst[data-klappe="effekte"][open] .su-wahl'))) fehler.push("Einstellungen: Übersicht öffnet Effekte/Stundenuhren nicht");
+await p.screenshot({ path: `${BILDER}einstellungen-uebersicht.png` });
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("impressum")); await p.waitForSelector(".impressum .fehlt");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("startnachricht")); await p.waitForSelector("#snText");
+await p.fill("#snText", "Rundgang: bitte das Gesicht aussuchen 🙂"); await p.click('[data-a="snWahl"][data-x="1"]'); await p.fill("#snText", "Rundgang: bitte das Gesicht aussuchen 🙂");
+const jaSagen = (d) => d.accept(), neinSagen = (d) => d.dismiss(); p.removeAllListeners("dialog"); p.on("dialog", jaSagen);
+await p.click('[data-a="snSenden"]'); await p.waitForTimeout(500);
+await p.selectOption("#demoleiste select", "eltern"); await p.waitForSelector("#snHg", { timeout: 4000 }).catch(() => fehler.push("Startnachricht: Fenster kommt bei den Eltern nicht"));
+await p.screenshot({ path: `${BILDER}startnachricht.png` });
+if (await p.$("#snHg")) { await p.click('#snHg [data-a="snAntwort"][data-x$="|spaeter"]'); await p.waitForSelector("#snHg", { state: "detached" }); }
+await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(400);
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("startnachricht")); await p.waitForSelector("details.karte");
+if (!/⏰ 1/.test(await p.textContent("details.karte >> nth=0"))) fehler.push("Startnachricht: Leitung sieht die Antwort „später“ nicht");
+await p.click("details.karte >> nth=0"); await p.click('[data-a="snLoeschen"] >> nth=0'); await p.waitForTimeout(300); p.removeAllListeners("dialog"); p.on("dialog", neinSagen); // zurückziehen – sonst käme sie bei den anderen Rollen unten
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start", {}, { ersetzen: true })); await p.waitForSelector("#raster .kachel");
 await p.evaluate(() => document.querySelector("#raster > .kachel").scrollIntoView({ block: "center" })); await p.waitForTimeout(150);
 { const b0 = await (await p.$("#raster > .kachel:nth-child(1)")).boundingBox(), erste = await p.$eval("#raster > .kachel:nth-child(1)", (e) => e.dataset.id);
   await p.mouse.move(b0.x + 30, b0.y + 30); await p.mouse.down(); await p.waitForTimeout(800);
@@ -215,7 +239,7 @@ for (const rolle of ["leitung", "lehrkraft", "vorstand", "schueler", "eltern"]) 
       await p.waitForTimeout(120);
       const t = await p.$eval("#inhalt", (e) => e.innerText);
       if (t.includes("Fehler beim Anzeigen")) fehler.push(`${rolle}/${id}: ${t.slice(0, 200)}`);
-      await p.evaluate(() => document.querySelector('[data-a="zurueck"]')?.click());
+      await p.evaluate(() => { document.getElementById("blattHg")?.remove(); document.querySelector('[data-a="zurueck"]')?.click(); }); // Kacheln mit Fenster (⏱️ Uhr & Takt) schließen
       await p.waitForTimeout(80);
       await p.evaluate((r) => document.querySelector(`#register button[data-x="${r}"]`)?.click(), r);
     }

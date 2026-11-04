@@ -18,10 +18,10 @@ const sicht = (p) => p.evaluate(async () => {
   const m = await import("/js/kern/daten.js");
   return { mitAdresse: m.liste("personen", (x) => x.strasse).length, zugaenge: m.liste("zugaenge").length, spenden: m.liste("spenden").length, info: m.datenInfo() };
 });
-// 📌 Pinnwand: neue Zettel gehen beim Öffnen als Post-it-Fenster auf – „✓ Gelesen“ meldet es dem Server
+// 📌 Pinnwand: geht seit 0.30.0 nicht mehr von selbst auf – Öffnen meldet „gelesen“ an den Server
 async function pinnwandGelesen(pg) {
-  await pg.waitForSelector("#pwFensterHg", { timeout: 6000 });
-  await pg.click('[data-a="pwFensterGelesen"]'); await pg.waitForSelector("#pwFensterHg", { state: "detached" });
+  await pg.evaluate(async () => (await import("/js/app/zustand.js")).zeige("pinnwand")); await pg.waitForSelector("#pwWand .zettel", { timeout: 6000 }); await pg.waitForTimeout(1500);
+  await pg.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start")); await pg.waitForSelector("#raster .kachel");
 }
 try {
   const p = await seite();

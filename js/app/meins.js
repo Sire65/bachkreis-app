@@ -132,7 +132,19 @@ VIEWS.ueber = {
       <p>Versand: <b>BK Communicator</b> – ${adapterInfo().map((a) => esc(a.name)).join(" · ")} · WhatsApp-Übergabe (wa.me)</p>
       <p class="hinweis">Abgeleitet aus der KC Club App (Muster für Termine, Zusagen, Nachrichten, SOS, Register & Kacheln). Kostenfrei: keine kostenpflichtigen Dienste oder APIs.</p>
       <p class="hinweis">Mitgelieferte Bibliothek: qrcode-generator (Kazuhiko Arase, MIT-Lizenz).</p>
-      <div class="knopfreihe">${konfig().webseite ? `<a class="knopf klein" href="${esc(konfig().webseite)}" target="_blank" rel="noopener">🌐 Bachkreis im Internet ↗</a>` : ""}${konfig().instagram ? `<a class="knopf klein" href="${esc(konfig().instagram)}" target="_blank" rel="noopener">📸 Instagram ↗</a>` : ""}<button class="knopf klein" data-a="ueberChronik">📜 Chronik & Über uns</button></div></div>`;
+      <div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachel" data-x="impressum">§ Impressum</button>${konfig().webseite ? `<a class="knopf klein" href="${esc(konfig().webseite)}" target="_blank" rel="noopener">🌐 Bachkreis im Internet ↗</a>` : ""}${konfig().instagram ? `<a class="knopf klein" href="${esc(konfig().instagram)}" target="_blank" rel="noopener">📸 Instagram ↗</a>` : ""}<button class="knopf klein" data-a="ueberChronik">📜 Chronik & Über uns</button></div></div>`;
+  },
+};
+// § Impressum (0.30.0, wie KC-CLUB-IMPRESSUM): Angaben pflegt die Leitung in der PC-Verwaltung (Einstellungen › Impressum).
+// Fehlt etwas, steht dort deutlich „noch nicht eingetragen“ – nie ein ausgedachter Wert (UNKNOWN ist nie OK).
+export const IMPRESSUM_FELDER = [["impressum_name", "Name / Träger"], ["impressum_anschrift", "Anschrift"], ["impressum_vertreten", "Vertreten durch"], ["impressum_kontakt", "Kontakt (Telefon, E-Mail)"], ["impressum_verantwortlich", "Inhaltlich verantwortlich"]];
+VIEWS.impressum = {
+  render() {
+    const k = konfig(), fehlt = IMPRESSUM_FELDER.filter(([f]) => !String(k[f] || "").trim()).length;
+    return kopf("§ Impressum") + `<div class="karte impressum">${fehlt ? `<p class="fehlt">⚠️ ${fehlt === IMPRESSUM_FELDER.length ? "Das Impressum ist noch nicht eingetragen." : `${fehlt} Angabe${fehlt > 1 ? "n fehlen" : " fehlt"} noch.`} Die Leitung trägt es in der PC-Verwaltung ein (Einstellungen › Impressum).</p>` : ""}
+      <dl>${IMPRESSUM_FELDER.map(([f, t]) => `<dt>${t}</dt><dd>${String(k[f] || "").trim() ? esc(k[f]).replace(/\n/g, "<br>") : '<span class="fehlt">– noch nicht eingetragen –</span>'}</dd>`).join("")}</dl>
+      <p class="hinweis">Die App ist kostenlos und werbefrei. Programm: Bachkreis-App v${APP_VERSION} (abgeleitet aus der KC Club App). Datenschutz: siehe „Meine Daten“.</p>
+      <div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachel" data-x="meinedaten">🔐 Meine Daten</button><button type="button" class="knopf klein" data-a="kachel" data-x="ueber">ℹ️ Über die App</button></div></div>`;
   },
 };
 AKTIONEN.ueberChronik = () => zeige("chronik", { tab: "ueber" });

@@ -183,7 +183,7 @@ export function termineStart() {
   if (!faellig.length) return false;
   try { if (localStorage.getItem("bk_nachfragen") === heute) return false; localStorage.setItem("bk_nachfragen", heute); } catch { return false; }
   setTimeout(() => blatt("⏳ Du wolltest dich noch entscheiden", faellig.slice(0, 4).map(({ t, p }) => `<div class="karte t-nachfrage"><b>${esc(t.titel)}</b><div class="hinweis">${esc(datum(t.beginn))}, ${esc(uhr(t.beginn))} Uhr${istEltern() ? ` · ${esc(vorname(p))}` : ""}</div>
-    <div class="antworten gross">${Object.entries(ANTW_ICH).map(([w, [s, n]]) => `<button class="${w}" data-a="antworten" data-x="${esc(t.id)}|${esc(p)}|${w}">${s}<b>${n}</b></button>`).join("")}</div></div>`).join("")), 900);
+    <div class="antworten gross">${Object.entries(ANTW_ICH).map(([w, [s, n]]) => `<button class="${w}" data-a="antworten" data-x="${esc(t.id)}|${esc(p)}|${w}">${s}<b>${n}</b></button>`).join("")}</div></div>`).join("")).dataset.leise = "1", 900); // leise: Express/Startnachricht gehen vor
   return true;
 }
 

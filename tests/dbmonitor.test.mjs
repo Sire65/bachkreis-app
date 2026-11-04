@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { PGlite } from "@electric-sql/pglite";
+import { SUPABASE_ROLLEN } from "./demo-db.mjs";
 
 const W = path.resolve(import.meta.dirname, "..");
 test("db_monitor (KC System Check): Sicherheit und Kapazität ohne Befund", async () => {
@@ -15,6 +16,7 @@ test("db_monitor (KC System Check): Sicherheit und Kapazität ohne Befund", asyn
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
     alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
     alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;`);
+  await pg.exec(SUPABASE_ROLLEN); // wie auf Supabase: anon, authenticated, service_role gibt es schon
   for (const f of fs.readdirSync(path.join(W, "supabase/migrations")).sort()) await pg.exec(fs.readFileSync(path.join(W, "supabase/migrations", f), "utf8"));
   await pg.exec(fs.readFileSync(path.join(W, "tools/db-monitor.sql"), "utf8"));
   const r = (await pg.query("select db_monitor.report() as r")).rows[0].r;

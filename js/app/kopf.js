@@ -11,7 +11,9 @@ import { S, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istEltern, 
 import { esc, AKTIONEN, toast, datum, uhr, vorZeit, BACHKREIS_LOGO } from "../kern/ui.js";
 import { liste, hole, konfig, datenInfo, jetztAbgleichen } from "../kern/daten.js";
 import { termineFuer, antwortVon, kinderVon, cockpit, ausleihenVon, teilnahmeVon } from "../kern/logik.js";
-import { onlineSichtbar, onlineZahl } from "./online.js";
+import { onlineSichtbar, onlineZahl, onlineNamen, onlineIds } from "./online.js";
+import { stundenuhrFuer, stundenuhrZeigen } from "./stundenuhren.js";
+import { gbvVerbinden, gbvPruefen } from "./bedienung.js";
 import { communicatorZustand, versandStatistik } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { WET, WETTER_NEU_MIN, wetterLaden, infoWetter, wetterSzene, wetterTagDetails } from "./wetter.js";
@@ -186,6 +188,19 @@ AKTIONEN.webseite = () => {
 };
 export const infoKarten = () => INFO_ALLE.filter((f) => !f.nur || f.nur()).map((f) => [f.id, f.t]);
 
+// 0.30.0 KC-CLUB-ONLINE-NAMEN: wer online ist, steht mit Vornamen unter der Zahl (bis 2 Namen, dann „+n“)
+function onNamenText(z) {
+  if (!z) return "online";
+  const n = onlineNamen(); if (!n.length) return z === 1 ? "ist online" : "sind online";
+  return esc(n.slice(0, 2).join(", ") + (n.length > 2 ? ` +${n.length - 2}` : ""));
+}
+// 🎂 Wer hat heute Geburtstag? Nur Freigegebene (wie „Für dich“) – für die Karte und den Geburtstags-Vogel
+export function geburtstageHeute() {
+  if (!S.ich) return [];
+  const heute = new Date(), md = `${String(heute.getMonth() + 1).padStart(2, "0")}-${String(heute.getDate()).padStart(2, "0")}`;
+  return liste("personen", (p) => p.status === "aktiv" && (p.id === S.ich.id ? (p.geburtsdatum || "").slice(5, 10) === md : (p.freigaben?.geburtstag || p.gb_md) && (p.gb_md || (p.geburtsdatum || "").slice(5, 10)) === md));
+}
+gbvVerbinden(() => geburtstageHeute().map((p) => (p.id === S.ich?.id ? "dir" : p.vorname)));
 // Karte 1: Nächster Termin – darunter drei Kacheln wie in der KC Club App: 💬 Nachrichten · 🟢 Wer ist online · ⏳ Nächster Termin
 function dreiKacheln(t, tage, a) {
   const n = K.ungelesen(), on = onlineSichtbar(), z = onlineZahl();
@@ -194,7 +209,7 @@ function dreiKacheln(t, tage, a) {
   const ameise = (k) => `<svg class="ameisen ${k}" aria-hidden="true"><rect width="100%" height="100%" rx="16"/></svg>`;
   return `${K.laufband?.() || ""}<div class="kacheln3">
     <button type="button" class="mini${n ? " mini-neu na-" + (K.nachrichtStufe?.() || "gruen") : ""}" data-a="kachel" data-x="nachrichten">${n ? ameise("neu") : ""}<b>${n}</b><span>${n === 1 ? "neue Nachricht" : "neue Nachr."}</span></button>
-    <button type="button" class="mini${on && z ? " mini-online" : ""}" data-a="${on ? "onlineListe" : "kachel"}" data-x="${on ? "" : "orchester"}">${on && z ? ameise("on") : ""}<b>${on ? `<span class="mini-on"></span>${z}` : mitglieder || "–"}</b><span>${on ? (z === 1 ? "ist online" : "sind online") : "Mitglieder"}</span></button>
+    <button type="button" class="mini${on && z ? " mini-online" : ""}" data-a="${on ? "onlineListe" : "kachel"}" data-x="${on ? "" : "orchester"}">${on && z ? ameise("on") : ""}<b>${on ? `<span class="mini-on"></span>${z}` : mitglieder || "–"}</b><span${on && z ? ' class="on-namen"' : ""}>${on ? onNamenText(z) : "Mitglieder"}</span></button>
     <button type="button" class="mini${t && tage <= 1 ? " mini-bald" : ""}" data-a="${t ? "oeffne" : "kachel"}" data-x="${t ? "termin|" + t.id : "termine"}">${t && tage <= 1 ? ameise("bald") : ""}<b>${K.countdown ? K.countdown(bis, tage) : esc(bis)}</b><span>${t ? (a ? { ja: "✅ zugesagt", nein: "❌ abgesagt", vielleicht: "⏳ offen" }[a.antwort] : "❔ antworten") : "kein Termin"}</span></button>
   </div>`;
 }
@@ -226,8 +241,7 @@ function infoFuerDich() {
   if (istLehrkraft() || istVorstand()) { const c = cockpit(db, S.ich.id).filter((x) => x.dring >= 2).length; if (c) z.push(zeile("🧭", `<b>${c}</b> Punkt${c > 1 ? "e brauchen" : " braucht"} deine Aufmerksamkeit`, "kachel", "cockpit")); }
   const aufg = liste("aufgaben", (a) => a.zustaendig_id === S.ich.id && a.status !== "erledigt").length;
   if (aufg) z.push(zeile("🗂️", `<b>${aufg}</b> offene Aufgabe${aufg > 1 ? "n" : ""}`, "kachel", "cockpit"));
-  const heute = new Date(), md = `${String(heute.getMonth() + 1).padStart(2, "0")}-${String(heute.getDate()).padStart(2, "0")}`;
-  const gb = liste("personen", (p) => p.status === "aktiv" && (p.id === S.ich.id ? (p.geburtsdatum || "").slice(5, 10) === md : (p.freigaben?.geburtstag || p.gb_md) && (p.gb_md || (p.geburtsdatum || "").slice(5, 10)) === md));
+  const gb = geburtstageHeute();
   for (const p of gb.slice(0, 3)) z.push(zeile("🎂", p.id === S.ich.id ? "<b>Herzlichen Glückwunsch zum Geburtstag!</b> 🎉" : `<b>${esc(name(p))}</b> hat heute Geburtstag`, p.id === S.ich.id ? "konfetti" : "nix"));
   if (!z.length) return `<h2>👍 Alles erledigt</h2><div class="unter">Gerade ist nichts Offenes für dich. Schön! 🎶</div>`;
   const MAX = 4;
@@ -278,7 +292,36 @@ const ROLLO_RANG = { offen: 0, halb: 1, ganz: 2 };
 const kopfRolloStand = () => { const h = K.hero; return h?.classList.contains("eingerollt") ? "ganz" : h?.classList.contains("halb-eingerollt") ? "halb" : "offen"; };
 function kopfRolloKlassen(h, stand) { h.classList.toggle("eingerollt", stand === "ganz"); h.classList.toggle("halb-eingerollt", stand === "halb"); requestAnimationFrame(jzEisLaenge); }
 function kopfRolloSetzen(stand) { const h = K.hero; if (!h) return; kopfRolloKlassen(h, stand); kopfPfeileZeigen(stand); }
+// 0.30.0 KC-CLUB-KOPF-PFEIL-NEU / -GRUND: Ist der Kopf eingerollt, blinkt der Pfeil, solange es einen Grund gibt – neue Nachricht (bis gelesen
+// oder ausgerollt), neues Mitglied, jemand neu online (nur solange er online ist). Ohne Effekte leuchtet er fest. Keine zusätzlichen Abfragen.
+const KPN = { n: null, mg: null, ids: null, an: false, nachricht: false, mitglied: false, neuOnline: new Set() };
+export function kopfNeuPruefen() {
+  if (!K.hero || !S.ich) return;
+  const stand = kopfRolloStand(), n = K.ungelesen() || 0, mg = new Set(liste("gruppe_zuordnung").map((x) => x.person_id)).size;
+  const ids = onlineSichtbar() ? onlineIds() : null;
+  if (stand === "offen") { KPN.nachricht = KPN.mitglied = false; KPN.neuOnline.clear(); }
+  else {
+    if (KPN.n === null ? n > 0 : n > KPN.n) KPN.nachricht = true;
+    if (n === 0) KPN.nachricht = false;
+    if (KPN.mg !== null && mg > KPN.mg) KPN.mitglied = true;
+    if (KPN.ids && ids) for (const id of ids) if (!KPN.ids.has(id)) KPN.neuOnline.add(id);
+    for (const id of [...KPN.neuOnline]) if (!ids || !ids.has(id)) KPN.neuOnline.delete(id);
+  }
+  KPN.an = KPN.nachricht || KPN.mitglied || KPN.neuOnline.size > 0;
+  KPN.n = n; KPN.mg = mg; KPN.ids = ids;
+  kopfPfeilNeuZeigen(stand);
+}
+function kopfPfeilNeuZeigen(stand = kopfRolloStand()) {
+  const fest = einst().effekte === false || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const grund = KPN.nachricht ? "neue Nachricht" : KPN.mitglied ? "neues Mitglied" : KPN.neuOnline.size ? "jemand ist neu online" : "";
+  [["kopfPfeil", "ganz"], ["kopfPfeilHalb", "halb"]].forEach(([id, s]) => { const p = $(id); if (!p) return;
+    const an = KPN.an && stand === s; p.classList.toggle("kp-neu", an); p.classList.toggle("still", an && fest);
+    if (an) p.title = `Neues im Kopf (${grund}) – antippen zum Ausrollen`; });
+}
+setInterval(() => { if (!document.hidden && S.view === "start") kopfNeuPruefen(); }, 4000);
+document.addEventListener("bk-kopf-neu", () => setTimeout(kopfNeuPruefen, 50));
 function kopfPfeileZeigen(stand) {
+  if (stand === "offen") { KPN.an = KPN.nachricht = KPN.mitglied = false; KPN.neuOnline.clear(); }
   const g = $("kopfPfeil"), hb = $("kopfPfeilHalb");
   if (g) { const zu = stand === "ganz"; g.classList.toggle("dreh", zu); g.setAttribute("aria-expanded", zu ? "false" : "true"); g.title = zu ? "Kopf ausrollen – alles zeigen" : "Kopf ganz einrollen – nur die Kopfzeile bleibt"; g.setAttribute("aria-label", g.title.split(" – ")[0]); }
   if (hb) { const zu = stand !== "offen"; hb.classList.toggle("dreh", zu); hb.setAttribute("aria-expanded", zu ? "false" : "true"); hb.title = stand === "halb" ? "Kopf ausrollen – alles zeigen" : stand === "ganz" ? "Kopf halb ausrollen – Statusleiste mit LEDs zeigen" : "Kopf halb einrollen – Statusleiste mit LEDs bleibt"; hb.setAttribute("aria-label", hb.title.split(" – ")[0]); }
@@ -501,10 +544,11 @@ function kuckuckPruefen() {
   const { h, m } = kkJetzt(); if (m >= KK_FENSTER_MIN) return;
   const stunde = `${new Date().toISOString().slice(0, 10)} ${h}`;
   try { if (localStorage.getItem("bk_kuckuck_zuletzt") === stunde) return; localStorage.setItem("bk_kuckuck_zuletzt", stunde); } catch { return; }
-  kuckuckZeigen(h);
+  const uhr = stundenuhrFuer(h); if (uhr === "kuckuck") kuckuckZeigen(h); else stundenuhrZeigen(uhr, h);
 }
 setInterval(kuckuckPruefen, 15000); document.addEventListener("visibilitychange", () => { if (!document.hidden) kuckuckPruefen(); });
 AKTIONEN.kuckuckProbe = () => kuckuckZeigen(kkJetzt().h, true);
+AKTIONEN.stundenuhrProbe = (id) => (id === "kuckuck" ? kuckuckZeigen(kkJetzt().h, true) : stundenuhrZeigen(id, kkJetzt().h, true));
 
 // ---------- Konfetti zum eigenen Geburtstag (KC-CLUB-KONFETTI) – in Bachkreis-Farben Gold, Schwarz, Weiß ----------
 const KONFETTI_FARBEN = ["#d4a017", "#f2b705", "#1a1500", "#ffffff", "#fff1a8", "#8a6400"];

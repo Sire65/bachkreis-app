@@ -35,6 +35,8 @@ const frisch = () => Date.now() - ONL.stand < 3 * 60000;
 export const onlineIds = () => new Set(ONL.erlaubt && frisch() ? ONL.liste.map((p) => p.id) : []);
 export const onlineZahl = () => onlineIds().size;
 export const onlineSichtbar = () => ONL.erlaubt && frisch();
+// 0.30.0 KC-CLUB-ONLINE-NAMEN: Vornamen für das mittlere Feld im Kopf
+export const onlineNamen = () => (ONL.erlaubt && frisch() ? ONL.liste.map((p) => p.vorname || String(p.name || "").split(" ")[0]).filter(Boolean) : []);
 let letzteIds = "";
 function geaendert() { const k = [...onlineIds()].sort().join(","); if (k !== letzteIds) { letzteIds = k; document.dispatchEvent(new CustomEvent("bk-online")); } }
 // 🟢 Liste „Gerade online“ als Fenster (Startseite, Fußzeile): Anklopfen oder gleich schreiben

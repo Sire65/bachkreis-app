@@ -1,0 +1,104 @@
+/* 0.30.0 – Bedienung wie die KC Club App 2.858: Schatten, Ecken, Tippflächen, 🔄, Kachel-Effekte, Kopf-Pfeil, Online-Namen,
+   Geburtstags-Vogel, Stundenuhren, Uhr & Takt, Einstellungs-Übersicht, Startnachricht, Impressum */
+
+/* 🌗 Schatten (KC-CLUB-SCHATTEN) – „Standard“ = wie das Farbdesign */
+:root.sch-aus { --schatten: none; }
+:root.sch-leicht { --schatten: 0 2px 6px rgba(40, 30, 0, .10); } :root.dunkel.sch-leicht { --schatten: 0 2px 6px rgba(0, 0, 0, .35); }
+:root.sch-mittel { --schatten: 0 6px 16px rgba(40, 30, 0, .18); } :root.dunkel.sch-mittel { --schatten: 0 6px 16px rgba(0, 0, 0, .5); }
+:root.sch-kraeftig { --schatten: 0 10px 26px rgba(40, 30, 0, .30); } :root.dunkel.sch-kraeftig { --schatten: 0 10px 26px rgba(0, 0, 0, .65); }
+.raster { padding-bottom: 4px; } /* Schatten der letzten Reihe nicht abschneiden (KC-CLUB-SCHATTEN-RASTER) */
+.ecken-zeile { display: flex; align-items: center; gap: 10px; } .ecken-zeile input { flex: 1; } .ecken-zeile b { min-width: 52px; text-align: right; }
+.ecken-muster { display: flex; gap: 8px; margin: 6px 0; } .ecken-muster i { width: 46px; height: 34px; background: var(--haupt); border-radius: var(--radius); box-shadow: var(--schatten); }
+
+/* 👆 Größere Tippflächen (KC-CLUB-TIPPFLAECHEN): kleine Knöpfe mindestens 44 px hoch */
+:root.tipp-gross .knopf.klein, :root.tipp-gross .chip-wahl, :root.tipp-gross .zchip, :root.tipp-gross .ifz, :root.tipp-gross .schalter input[type="checkbox"] + *, :root.tipp-gross select { min-height: 44px; }
+:root.tipp-gross .schalter input[type="checkbox"] { min-width: 26px; min-height: 26px; }
+:root.tipp-gross .hinweis { font-size: max(.82rem, 13px); }
+
+/* 🔄 Drehzeichen (KC-CLUB-KACHEL-DREHZEICHEN) – überdeckt weder Zahl noch Text */
+#raster > .kachel > .kr-zeichen { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: .82rem; line-height: 1; background: rgba(0, 0, 0, .06); cursor: pointer; z-index: 2; }
+:root.dunkel #raster > .kachel > .kr-zeichen { background: rgba(255, 255, 255, .12); }
+#raster > .kachel:has(> .kr-zeichen) > .zahl { right: 42px; }
+#raster.klein3 > .kachel > .kr-zeichen { transform: scale(.8); transform-origin: top right; top: 5px; right: 5px; } #raster.klein3 > .kachel:has(> .kr-zeichen) > .zahl { right: 34px; }
+#raster.klein4 > .kachel > .kr-zeichen { right: auto; left: 3px; top: 3px; transform: scale(.7); transform-origin: top left; } #raster.klein4 > .kachel:has(> .kr-zeichen) > .zahl { right: 4px; }
+.kachel.kr-hinten > .kr-zeichen { display: none; }
+
+/* 🌀 Kachel-Effekte (KC-CLUB-KACHEL-WIRBEL, -ZUG, -EXTRAS) – --i = Platz der Kachel */
+.raster.fx-zug > .kachel { animation: fxZug .55s cubic-bezier(.2, .7, .3, 1) both; animation-delay: calc(var(--i, 0) * 90ms); }
+@keyframes fxZug { from { transform: translateX(-110vw); } 80% { transform: translateX(6px); } to { transform: none; } }
+.raster.fx-welle > .kachel { animation: fxWelle .6s ease both; animation-delay: calc(var(--i, 0) * 60ms); }
+@keyframes fxWelle { from { transform: translateY(26px) scale(.9); opacity: 0; } 60% { transform: translateY(-6px); opacity: 1; } to { transform: none; } }
+.raster.fx-wirbel > .kachel { animation: fxWirbel .65s cubic-bezier(.2, .8, .3, 1.1) both; animation-delay: calc(var(--i, 0) * 55ms); }
+@keyframes fxWirbel { from { transform: rotate(-200deg) scale(.1); opacity: 0; } to { transform: none; opacity: 1; } }
+.raster.fx-wackeln > .kachel { animation: fxWackeln .7s ease both; animation-delay: calc(var(--i, 0) * 40ms); }
+@keyframes fxWackeln { 0% { opacity: 0; transform: scale(.9); } 30% { opacity: 1; transform: rotate(-4deg); } 50% { transform: rotate(3deg); } 70% { transform: rotate(-2deg); } 100% { transform: none; } }
+.raster.fx-start > .kachel { animation: fxStart .6s cubic-bezier(.2, .9, .3, 1.2) both; animation-delay: calc(var(--i, 0) * 50ms); }
+@keyframes fxStart { from { transform: translateY(70vh) scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.raster.fx-aus > .kachel { animation: none; }
+:root.ohne-effekt .raster[class*="fx-"] > .kachel, :root.spar .raster[class*="fx-"] > .kachel { animation: none; }
+@media (prefers-reduced-motion: reduce) { .raster[class*="fx-"] > .kachel { animation: none; } }
+
+/* 🔔 Kopf-Pfeil blinkt bei Neuem (KC-CLUB-KOPF-PFEIL-NEU) */
+.kopf-pfeil.kp-neu { background: #f5b700; color: #3a1d00; animation: kpNeu 1.1s ease-in-out infinite; }
+.kopf-pfeil.kp-neu.still { animation: none; box-shadow: 0 0 0 2px #fff, 0 0 10px 3px rgba(245, 183, 0, .9); }
+@keyframes kpNeu { 0%, 100% { background: #f5b700; box-shadow: 0 0 0 0 rgba(245, 183, 0, 0); } 50% { background: #ff6a00; box-shadow: 0 0 12px 5px rgba(255, 150, 0, .95); } }
+@media (prefers-reduced-motion: reduce) { .kopf-pfeil.kp-neu { animation: none; } }
+
+/* 🟢 Online-Namen unter der Zahl */
+.mini span.on-namen { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: block; }
+
+/* 🎁 Geburtstags-Vogel (KC-CLUB-GEBURTSTAG-VOGEL) */
+.gbv { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.gbv > i, .gbv > u { position: absolute; left: 0; top: 0; font-style: normal; }
+.gbv-vogel { transform: translate(-100px, 0); } .gbv-fluegel { transform-origin: 46px 28px; animation: gbvFlap .28s ease-in-out infinite alternate; }
+@keyframes gbvFlap { from { transform: scaleY(1); } to { transform: scaleY(-.6); } }
+.gbv-paket { opacity: 0; } .gbv-fetzen { width: 10px; height: 7px; border-radius: 1px; text-decoration: none; }
+.gbv-strauss { font-size: 4.6rem; line-height: 1; opacity: 0; filter: drop-shadow(0 3px 4px rgba(0, 0, 0, .35)); }
+.gbv-text { position: absolute; left: 0; right: 0; text-align: center; font: 800 2.3rem/1.1 Georgia, serif; white-space: nowrap; opacity: 0; }
+.gbv-text span { display: inline-block; text-shadow: 0 2px 0 rgba(0, 0, 0, .35), 0 0 8px rgba(255, 255, 255, .6); }
+.gbv-text span:nth-child(6n+1) { color: #e94b3c; } .gbv-text span:nth-child(6n+2) { color: #f2a900; } .gbv-text span:nth-child(6n+3) { color: #2fa36b; }
+.gbv-text span:nth-child(6n+4) { color: #3d9be9; } .gbv-text span:nth-child(6n+5) { color: #b05bd8; } .gbv-text span:nth-child(6n) { color: #ff7ab6; }
+.gbv-feier .gbv-text { opacity: 1; } .gbv-feier .gbv-text span { animation: gbvHupf .9s cubic-bezier(.3, 1.6, .5, 1) both, gbvWipp 1.6s ease-in-out .9s infinite alternate; animation-delay: calc(var(--i) * 55ms), calc(.9s + var(--i) * 80ms); }
+@keyframes gbvHupf { from { transform: translateY(-30px) scale(.2); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes gbvWipp { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+.gbv-name { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 700 1rem/1.2 system-ui, sans-serif; color: #fff; background: rgba(26, 21, 0, .88); border: 1px solid #d4a017; border-radius: 12px; padding: 3px 12px; opacity: 0; }
+
+/* 🕰️ Stundenuhren */
+.stundenuhr { width: 130px; } .stundenuhr.ruft svg { animation: suRuft .3s ease; } @keyframes suRuft { 50% { transform: rotate(-3deg) scale(1.03); } }
+.su-name { text-align: center; margin-top: 4px; font: 800 .8rem/1.2 system-ui, sans-serif; color: #fff; background: rgba(26, 21, 0, .85); border-radius: 10px; padding: 3px 6px; }
+.su-wahl .schalter label { display: block; flex: 1; cursor: pointer; } .su-wahl .schalter { gap: 8px; }
+.su-quellen { margin-top: 8px; font-size: .82rem; } .su-quellen ul { padding-left: 18px; } .su-quellen li { margin: 4px 0; }
+
+/* ⏱️ Uhr & Takt */
+.uw-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.uw-tabs button { flex: 1; min-height: 44px; border: 1px solid var(--linie); border-radius: 12px; background: var(--karte); color: var(--text); font: inherit; font-weight: 800; cursor: pointer; }
+.uw-tabs button.an { background: #1f5fae; color: #fff; border-color: transparent; }
+.mt-anzeige { text-align: center; margin: 6px 0 10px; } .mt-anzeige b { display: block; font-size: 3.4rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.05; } .mt-anzeige small { color: var(--grau); font-weight: 700; }
+.mt-punkte { display: flex; justify-content: center; gap: 10px; margin: 6px 0 12px; }
+.mt-punkt { width: 18px; height: 18px; border-radius: 50%; background: var(--linie); transition: background .05s; } .mt-punkt.an { background: #2e9d5b; } .mt-punkt.eins.an { background: #d0453f; }
+.mt-regler { width: 100%; margin: 4px 0 10px; min-height: 36px; }
+.uw-mitte { justify-content: center; } .uw-runden { font-variant-numeric: tabular-nums; max-height: 160px; overflow: auto; }
+
+/* ⚙️ Einstellungs-Übersicht (KC-CLUB-EINST-UEBERSICHT) */
+.eu-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 0 0 12px; }
+.eu-raster button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 64px; padding: 10px 12px; border: none; border-radius: var(--radius); background: var(--karte); color: var(--text); box-shadow: var(--schatten); font: inherit; text-align: left; cursor: pointer; }
+.eu-raster button span { font-size: 1.4rem; line-height: 1; } .eu-raster button b { font-size: .92rem; } .eu-raster button small { color: var(--grau); font-size: .76rem; font-weight: 700; }
+
+/* 📣 Startnachricht (KC-CLUB-STARTNACHRICHT) */
+.sn-kopf { font-size: 1.05rem; } .sn-wichtig { color: #c62828; font-weight: 900; }
+.sn-text { font-size: 1.08rem; line-height: 1.45; padding: 12px; border-radius: 12px; background: var(--karte); margin-bottom: 12px; overflow-wrap: anywhere; }
+.sn-antworten { display: grid; gap: 8px; } .sn-antworten .knopf, .sn-blatt .knopf { width: 100%; margin-top: 6px; }
+.sn-pflicht { display: flex; gap: 10px; align-items: center; padding: 10px; border: 2px dashed var(--linie); border-radius: 12px; cursor: pointer; } .sn-pflicht input { width: 26px; height: 26px; }
+.sn-pflicht small { display: block; color: var(--grau); }
+.sn-quittung { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--linie); font-size: .9rem; }
+
+/* § Impressum */
+.impressum dt { font-weight: 800; margin-top: 8px; } .impressum dd { margin: 0; overflow-wrap: anywhere; }
+.impressum .fehlt { color: #b04a00; font-weight: 700; } :root.dunkel .impressum .fehlt { color: #ffb74d; }
+
+/* 📌 Pinnwand: gelesene Zettel als Nadel im Rahmen (KC-CLUB-PINNWAND-NADELN) */
+.pw-nadeln { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; margin: 0 0 10px; border-radius: 12px; background: rgba(0, 0, 0, .12); border: 3px solid #8a5a1a; }
+.pw-nadeln > small { flex-basis: 100%; color: #fff; font-weight: 800; text-shadow: 0 1px 2px rgba(0, 0, 0, .6); }
+.pw-nadel { min-height: 40px; display: inline-flex; align-items: center; gap: 4px; padding: 0 10px; border: none; border-radius: 20px; font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; color: #2b2410; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pw-nadel::before { content: "📍"; }
+.pw-nadel { background: #fff59d; } .pw-nadel.f2 { background: #f8bbd0; } .pw-nadel.f3 { background: #c5e1a5; } .pw-nadel.f4 { background: #b3e5fc; }

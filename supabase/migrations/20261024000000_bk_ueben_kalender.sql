@@ -19,6 +19,8 @@ create table if not exists bk_uebungen (
 );
 create index if not exists bk_uebungen_geaendert on bk_uebungen (geaendert_am);
 alter table bk_uebungen enable row level security;
+revoke all on bk_uebungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_uebungen to service_role;
 drop trigger if exists bk_uebungen_stempel on bk_uebungen;
 create trigger bk_uebungen_stempel before update on bk_uebungen for each row execute function bk_abgleich_stempel();
 
@@ -71,6 +73,8 @@ create table if not exists bk_personen (
 );
 create index if not exists bk_personen_geaendert on bk_personen (geaendert_am);
 alter table bk_personen enable row level security;
+revoke all on bk_personen from public, anon, authenticated;
+grant select, insert, update, delete on bk_personen to service_role;
 drop trigger if exists bk_personen_stempel on bk_personen;
 create trigger bk_personen_stempel before update on bk_personen for each row execute function bk_abgleich_stempel();
 
@@ -109,4 +113,6 @@ alter table bk_personen add column if not exists anonymisiert boolean;
 -- 📆 Kalender-Abo: nur die Zählnummer je Person (neuer Link = +1, alter ungültig) – der Link selbst wird nie gespeichert
 create table if not exists bk_kalender_abos (person_id text primary key references bk_personen(id) on delete cascade, epoche integer not null default 0, zuletzt timestamptz);
 alter table bk_kalender_abos enable row level security;
+revoke all on bk_kalender_abos from public, anon, authenticated;
+grant select, insert, update, delete on bk_kalender_abos to service_role;
 

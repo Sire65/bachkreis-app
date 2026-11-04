@@ -164,6 +164,19 @@ export function chatMitgliederMitKopie(ich, andere, { person, elternVon, verwand
 }
 
 // ---------- Pinnwand (gemeinsam für App und Server) ----------
+// 📣 Startnachricht (0.30.0): Empfänger-Regel – gleich in App und Server
+export const SN_AN = { alle: "alle", gruppen: "bestimmte Orchester", personen: "bestimmte Personen" };
+export const SN_ANTWORTEN = { gelesen: "✓ gelesen", ja: "✅ Ja", spaeter: "⏰ Später", nein: "✖ Nein" };
+export const SN_SPAETER_STD = 24;
+export const snAntwortId = (nid, pid) => `sna-${nid}-${pid}`;
+// gruppen = Gruppen der Person und ihrer Kinder (Eltern bekommen die Nachricht an das Orchester ihres Kindes)
+export function snFuerMich(z, ich, gruppen, heute = new Date().toISOString().slice(0, 10)) {
+  if (!z || z.geloescht_am || !ich || z.von === ich) return false;
+  if (z.bis && String(z.bis) < heute) return false;
+  if (z.an === "personen") return (z.personen || []).includes(ich);
+  if (z.an === "gruppen") return (z.gruppen || []).some((g) => gruppen.has(g));
+  return true;
+}
 export const PINNWAND = { max: 4, zeichen: 200, erinnernTage: 3, pauseTage: 7 };
 // Wer bekommt einen Zettel „für alle“? Alle aktiven Personen mit App (Schüler, Eltern, Leitung, Lehrkräfte, Verwalter) außer dem Verfasser.
 // 🟢 Wer ist online / 👋 Anklopfen (wie KC): welche Personenkreise das nutzen, stellt die Leitung im Zahnrad ein (konfig.online_fuer)
@@ -864,6 +877,37 @@ export const TABELLEN = {
       { k: "geteilt", t: "mit Leitung/Lehrkräften geteilt", typ: "ja" },
     ],
     liste: ["person_id", "datum", "minuten", "werk_id", "gefuehl"],
+  },
+  // 📣 Startnachricht der Leitung (0.30.0, wie KC-CLUB-STARTNACHRICHT): geht beim nächsten Öffnen der App als Fenster auf –
+  // Pflicht „gelesen“ oder Antwort ✅ Ja · ⏰ Später · ✖ Nein; dazu ↩️ Rückfrage. Empfänger: alle, Orchester (Gruppen) oder bestimmte Personen.
+  startnachrichten: {
+    titel: "Startnachrichten", sym: "📣", gruppe: "Kommunikation", lesen: L, schreiben: L,
+    felder: [
+      { k: "text", t: "Text", typ: "lang", pflicht: true },
+      { k: "von", t: "von", typ: "ref", ref: "personen" },
+      { k: "an", t: "an", typ: "wahl", werte: SN_AN },
+      { k: "gruppen", t: "Orchester", typ: "refs", ref: "gruppen" },
+      { k: "personen", t: "Personen", typ: "refs", ref: "personen" },
+      { k: "wichtig", t: "❗ wichtig", typ: "ja" },
+      { k: "wahl", t: "mit Antwort Ja / Später / Nein", typ: "ja" },
+      { k: "ziel", t: "Knopf zu (Stelle der App)", typ: "text" },
+      { k: "zeit", t: "gesendet", typ: "zeit" },
+      { k: "bis", t: "zeigen bis", typ: "datum" },
+    ],
+    liste: ["zeit", "text", "an", "wichtig"],
+    anzeige: (z) => String(z.text || "").slice(0, 60),
+  },
+  startnachricht_antworten: {
+    titel: "Startnachricht: Antworten", sym: "✅", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "nachricht_id", t: "Startnachricht", typ: "ref", ref: "startnachrichten", pflicht: true },
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "antwort", t: "Antwort", typ: "wahl", werte: SN_ANTWORTEN },
+      { k: "rueckfrage", t: "Rückfrage", typ: "lang" },
+      { k: "am", t: "am", typ: "zeit" },
+      { k: "spaeter_bis", t: "später – wieder zeigen ab", typ: "zeit" },
+    ],
+    liste: ["nachricht_id", "person_id", "antwort", "am"],
   },
   pinnwand_gelesen: {
     titel: "Pinnwand: gesehen & erledigt", sym: "👁️", gruppe: "Kommunikation", lesen: L, schreiben: [],

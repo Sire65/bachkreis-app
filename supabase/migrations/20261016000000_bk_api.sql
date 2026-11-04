@@ -12,6 +12,8 @@ create table if not exists bk_sitzungen (
 );
 create index if not exists bk_sitzungen_person on bk_sitzungen (person_id);
 alter table bk_sitzungen enable row level security;
+revoke all on bk_sitzungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_sitzungen to service_role;
 
 -- Fehlversuche bei der Anmeldung (nur gehashte IP, wird nach 30 Tagen gelöscht)
 create table if not exists bk_anmeldeversuche (
@@ -22,6 +24,8 @@ create table if not exists bk_anmeldeversuche (
 );
 create index if not exists bk_anmeldeversuche_ip on bk_anmeldeversuche (ip_hash, zeit);
 alter table bk_anmeldeversuche enable row level security;
+revoke all on bk_anmeldeversuche from public, anon, authenticated;
+grant select, insert, update, delete on bk_anmeldeversuche to service_role;
 
 -- Grundeinstellungen (Leitung ändert sie später in der PC-Verwaltung)
 insert into bk_konfig (schluessel, wert) values

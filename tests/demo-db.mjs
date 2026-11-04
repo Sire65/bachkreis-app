@@ -8,9 +8,11 @@ import { TABELLEN, TABELLEN_NAMEN } from "../js/kern/schema.js";
 import { sha256 } from "../supabase/functions/_shared/api.js";
 
 const W = path.resolve(import.meta.dirname, "..");
+export const SUPABASE_ROLLEN = "do $$ begin create role anon nologin; exception when duplicate_object then null; end $$; do $$ begin create role authenticated nologin; exception when duplicate_object then null; end $$; do $$ begin create role service_role nologin; exception when duplicate_object then null; end $$;";
 export async function demoDatenbank({ jetzt = new Date(), geaendert = null } = {}) {
   const pg = new PGlite();
   const db = { q: async (t, p = []) => (await pg.query(t, p)).rows };
+  await pg.exec(SUPABASE_ROLLEN); // wie auf Supabase: anon, authenticated, service_role gibt es schon
   for (const f of fs.readdirSync(path.join(W, "supabase/migrations")).sort()) await pg.exec(fs.readFileSync(path.join(W, "supabase/migrations", f), "utf8"));
   const d = erzeugeDemodaten(jetzt);
   const codes = {};

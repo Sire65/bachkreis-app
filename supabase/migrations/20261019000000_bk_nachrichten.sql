@@ -33,6 +33,8 @@ create table if not exists bk_nachrichten (
 );
 create index if not exists bk_nachrichten_geaendert on bk_nachrichten (geaendert_am);
 alter table bk_nachrichten enable row level security;
+revoke all on bk_nachrichten from public, anon, authenticated;
+grant select, insert, update, delete on bk_nachrichten to service_role;
 drop trigger if exists bk_nachrichten_stempel on bk_nachrichten;
 create trigger bk_nachrichten_stempel before update on bk_nachrichten for each row execute function bk_abgleich_stempel();
 
@@ -81,6 +83,8 @@ create table if not exists bk_nachricht_status (
 );
 create index if not exists bk_nachricht_status_geaendert on bk_nachricht_status (geaendert_am);
 alter table bk_nachricht_status enable row level security;
+revoke all on bk_nachricht_status from public, anon, authenticated;
+grant select, insert, update, delete on bk_nachricht_status to service_role;
 drop trigger if exists bk_nachricht_status_stempel on bk_nachricht_status;
 create trigger bk_nachricht_status_stempel before update on bk_nachricht_status for each row execute function bk_abgleich_stempel();
 

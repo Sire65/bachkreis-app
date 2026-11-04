@@ -1,16 +1,28 @@
 {
-  "version": "0.29.0",
+  "version": "0.30.0",
   "datum": "2026-11-04",
   "stufe": "DEV",
   "neu": [
-    "📝❗🏎️ Versand-Leiste über dem Eingabefeld: erscheint beim Schreiben – Normal, Wichtig oder Express mit einem Tipp (in den Einstellungen „immer zeigen“)",
-    "𝐅 Schrift im Chat: *fett*, _kursiv_, ~durchgestrichen~ und Farben (Rot, Blau, Grün, Gelb als Textmarker) · 👋 Grußformel mit einem Tipp",
-    "🔗 Links zeigen ihre Adresse – verdächtige Links (Kurz-Links, Nachahmer-Namen, Passwort-Seiten) bekommen ein ⚠️ Vorsicht",
-    "📅 Steht ein Datum in der Nachricht, kannst du es direkt als eigenen Termin oder Bachkreis-Termin übernehmen · 💡 „krank / komme nicht / bin dabei“ wird für die Leitung als Absage oder Zusage vorgeschlagen",
-    "💬 Chat-Übersicht mit Filtern (Ungelesen, Gruppen, Einzeln) und Gliederung nach Zeit, Art oder Name – Ungelesenes steht oben",
-    "🟢🟠🔴 Der Nachrichten-Zähler blinkt grün, orange oder rot – je nachdem, wie lange die älteste ungelesene Nachricht schon wartet · 👥 im Chat nur andere/nur meine anzeigen · ⌨️ Tastatur-Knopf"
+    "📣 Startnachricht der Leitung: erscheint beim nächsten Öffnen als Fenster – „gelesen“ bestätigen oder ✅ Ja · ⏰ Später · ✖ Nein, dazu ↩️ Rückfrage; die Leitung sieht, wer wie geantwortet hat",
+    "🔄 Kacheln mit Rückseite haben oben rechts ein kleines 🔄 – antippen dreht sie sofort um · 🌀 Kacheln erscheinen auf Wunsch als Kachel-Zug, Welle, Wirbel, Wackeln oder Start",
+    "🌗 Schatten und ⬜ Ecken der Kacheln einstellbar · 👆 größere Tippflächen · ⚙️ Einstellungen mit Übersicht zum Antippen",
+    "📌 Die Pinnwand geht nicht mehr von selbst auf (einschaltbar) – gelesene Zettel hängen ab dem nächsten Tag als 📍 Nadel im Rahmen",
+    "🕰️ Stundenuhren: neben dem Kuckuck Big Ben, Westminster-Glockenspiel, Kiel, Freiburg, Berliner Dom, Röhrenglocken und große Standuhr – mit echten freien Aufnahmen",
+    "⏱️ Uhr & Takt: 🥁 Metronom (mit Takt und Tempo-Tippen), ⏲️ Timer mit Gong, ⏱️ Stoppuhr · 🎁 Geburtstags-Vogel im Kopf · 🟢 Namen, wer online ist · 🔔 Kopf-Pfeil blinkt bei Neuem · § Impressum"
   ],
   "verlauf": [
+    {
+      "version": "0.29.0",
+      "datum": "2026-11-04",
+      "neu": [
+        "📝❗🏎️ Versand-Leiste über dem Eingabefeld: erscheint beim Schreiben – Normal, Wichtig oder Express mit einem Tipp (in den Einstellungen „immer zeigen“)",
+        "𝐅 Schrift im Chat: *fett*, _kursiv_, ~durchgestrichen~ und Farben (Rot, Blau, Grün, Gelb als Textmarker) · 👋 Grußformel mit einem Tipp",
+        "🔗 Links zeigen ihre Adresse – verdächtige Links (Kurz-Links, Nachahmer-Namen, Passwort-Seiten) bekommen ein ⚠️ Vorsicht",
+        "📅 Steht ein Datum in der Nachricht, kannst du es direkt als eigenen Termin oder Bachkreis-Termin übernehmen · 💡 „krank / komme nicht / bin dabei“ wird für die Leitung als Absage oder Zusage vorgeschlagen",
+        "💬 Chat-Übersicht mit Filtern (Ungelesen, Gruppen, Einzeln) und Gliederung nach Zeit, Art oder Name – Ungelesenes steht oben",
+        "🟢🟠🔴 Der Nachrichten-Zähler blinkt grün, orange oder rot – je nachdem, wie lange die älteste ungelesene Nachricht schon wartet · 👥 im Chat nur andere/nur meine anzeigen · ⌨️ Tastatur-Knopf"
+      ]
+    },
     {
       "version": "0.28.0",
       "datum": "2026-10-18",

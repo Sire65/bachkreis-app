@@ -11,6 +11,7 @@ import { S, db, zeige, einst, einstSetzen, istEltern, istSchueler, istLehrkraft,
 import { esc, AKTIONEN, toast, blatt, blattZu, datum, uhr, frage } from "../kern/ui.js";
 import { liste, hole, datenInfo } from "../kern/daten.js";
 import { kinderVon, termineFuer, antwortVon, cockpit, tagIso, ausleihenVon, aufgabeGiltFuer } from "../kern/logik.js";
+import { kachelEffekt } from "./bedienung.js";
 
 let SV = {}; // von start.js: { KACHELN, kachelnFuer, kachelnAlle, register, neuZeichnen, ungelesen, offeneAntworten, offeneGenehmigungen, onlineZahl, pwOffen }
 export function startseiteVerbinden(f) { Object.assign(SV, f); }
@@ -41,6 +42,8 @@ export const KACHEL_RUECK = {
   anfragen: [["＋", "Neue Anfrage", ZS("anfragen", AK("anNeu"))], ["📨", "Alle Anfragen", ZS("anfragen")]],
   dokumente: [["📂", "Dokumente", ZS("dokumente")], ["＋", "Dokument hochladen", ZS("dokumente", AK("dokNeu")), () => lehrt() || istVorstand()]],
   einstellungen: [["🧩", "Startseite & Ansicht", ZS("einstellungen")], ["🌗", "Hell / Dunkel", AK("themaUmschalten")]],
+  startnachricht: [["✏️", "Neue schreiben", ZS("startnachricht")], ["📊", "Antworten ansehen", ZS("startnachricht")]],
+  uhrtakt: [["🥁", "Metronom", AK("uhrWerkzeug", "metronom")], ["⏲️", "Timer", AK("uhrWerkzeug", "timer")], ["⏱️", "Stoppuhr", AK("uhrWerkzeug", "stopp")]],
   kalender: [["📆", "Kalender-Abo", ZS("kalender")], ["🗓️", "Meine Termine", ZS("termine", null, { filter: "meine" })]],
 };
 const krAn = () => !einst().einfach && einst().kachelRueck !== false;
@@ -52,11 +55,13 @@ function krUmdrehen(el, zurueck) {
   setTimeout(() => {
     if (zurueck || el.classList.contains("kr-hinten")) { KR.offen = null; clearTimeout(KR.zu); SV.neuZeichnen?.(); return; }
     el.classList.add("kr-hinten"); KR.offen = id;
-    el.innerHTML = `<div class="kr-titel">${k?.sym || ""} ${esc(typeof k?.t === "function" ? k.t() : k?.t || "")}</div>${krAktionen(id).map((a, i) => `<span class="kr-akt" role="button" tabindex="0" data-kr="${i}">${a[0]} ${esc(a[1])}</span>`).join("")}<span class="kr-zurueck" role="button" tabindex="0" data-kr="zu" aria-label="Zurückdrehen">↩</span>`;
+    el.innerHTML = `<div class="kr-titel">${k?.sym || ""} ${esc(typeof k?.t === "function" ? k.t() : k?.t || "")}</div>${krAktionen(id).map((a, i) => `<span class="kr-akt" role="button" tabindex="0" data-kr="${i}">${a[0]} ${esc(a[1])}</span>`).join("")}<span class="kr-zurueck" role="button" tabindex="0" data-kr="zu" aria-label="Zurückdrehen" title="Zurückdrehen">🔄</span>`;
     requestAnimationFrame(() => el.classList.remove("kr-dreht"));
     clearTimeout(KR.zu); KR.zu = setTimeout(() => { if (KR.offen === id && el.isConnected) krUmdrehen(el, true); }, 8000);
   }, ruhig() ? 0 : 160);
 }
+// 0.30.0 KC-CLUB-KACHEL-DREHZEICHEN: kleines 🔄 unten rechts auf Kacheln mit Rückseite – antippen dreht sofort um (Doppeltipp geht weiter)
+export const drehZeichen = (id) => (krAn() && krAktionen(id).length ? '<span class="kr-zeichen" aria-hidden="true" title="Umdrehen – Schnellaktionen">🔄</span>' : "");
 export const kachelOffenHinten = () => !!(KR.offen && document.querySelector("#raster > .kachel.kr-hinten"));
 // Wächter vor dem normalen Öffnen (Erfassungsphase): Doppeltipp erkennen, Rückseiten-Aktionen ausführen, sonst normal öffnen
 window.addEventListener("click", (e) => {
@@ -68,6 +73,7 @@ window.addEventListener("click", (e) => {
     const akt = krAktionen(el.dataset.id)[Number(a.dataset.kr)]; krUmdrehen(el, true); if (akt) try { akt[2](); } catch (x) { toast("⚠️ " + x.message); }
     return;
   }
+  if (e.target.closest?.(".kr-zeichen") && krAn() && krAktionen(el.dataset.id).length) { e.preventDefault(); e.stopImmediatePropagation(); clearTimeout(KR.warte); KR.letzt = { id: null, t: 0 }; return krUmdrehen(el); }
   if (!krAn() || !krAktionen(el.dataset.id).length || e.detail === 0 || el.dataset.krDurch) return; // Tastatur: sofort öffnen
   e.preventDefault(); e.stopImmediatePropagation();
   const jetzt = Date.now(), id = el.dataset.id;
@@ -182,6 +188,7 @@ document.addEventListener("click", (e) => {
   lokal.schreiben(ZULETZT, k.dataset.id); nuKachel(k.dataset.id);
 }, true);
 export function nachDemZeichnen() {
+  kachelEffekt();
   const id = lokal.lesen(ZULETZT, "");
   if (id) document.querySelector(`#raster > .kachel[data-id="${CSS.escape(id)}"]`)?.classList.add("zuletzt");
   const alt = lokal.lesen("bk_kachel_zahlen", {}), neu = {};

@@ -27,6 +27,8 @@ create table if not exists bk_termine (
 );
 create index if not exists bk_termine_geaendert on bk_termine (geaendert_am);
 alter table bk_termine enable row level security;
+revoke all on bk_termine from public, anon, authenticated;
+grant select, insert, update, delete on bk_termine to service_role;
 drop trigger if exists bk_termine_stempel on bk_termine;
 create trigger bk_termine_stempel before update on bk_termine for each row execute function bk_abgleich_stempel();
 
@@ -72,6 +74,8 @@ create table if not exists bk_antworten (
 );
 create index if not exists bk_antworten_geaendert on bk_antworten (geaendert_am);
 alter table bk_antworten enable row level security;
+revoke all on bk_antworten from public, anon, authenticated;
+grant select, insert, update, delete on bk_antworten to service_role;
 drop trigger if exists bk_antworten_stempel on bk_antworten;
 create trigger bk_antworten_stempel before update on bk_antworten for each row execute function bk_abgleich_stempel();
 
@@ -112,6 +116,8 @@ create table if not exists bk_eigene_termine (
 );
 create index if not exists bk_eigene_termine_geaendert on bk_eigene_termine (geaendert_am);
 alter table bk_eigene_termine enable row level security;
+revoke all on bk_eigene_termine from public, anon, authenticated;
+grant select, insert, update, delete on bk_eigene_termine to service_role;
 drop trigger if exists bk_eigene_termine_stempel on bk_eigene_termine;
 create trigger bk_eigene_termine_stempel before update on bk_eigene_termine for each row execute function bk_abgleich_stempel();
 
@@ -144,6 +150,8 @@ create table if not exists bk_klopfen (
 );
 create index if not exists bk_klopfen_geaendert on bk_klopfen (geaendert_am);
 alter table bk_klopfen enable row level security;
+revoke all on bk_klopfen from public, anon, authenticated;
+grant select, insert, update, delete on bk_klopfen to service_role;
 drop trigger if exists bk_klopfen_stempel on bk_klopfen;
 create trigger bk_klopfen_stempel before update on bk_klopfen for each row execute function bk_abgleich_stempel();
 
@@ -160,4 +168,6 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_klopf
 -- 🟢 Wer ist online: nur Zeitpunkt der letzten Meldung je Person (wird nie an Geräte geladen)
 create table if not exists bk_online (person_id text primary key references bk_personen(id) on delete cascade, zuletzt timestamptz not null default now(), sichtbar boolean not null default true);
 alter table bk_online enable row level security;
+revoke all on bk_online from public, anon, authenticated;
+grant select, insert, update, delete on bk_online to service_role;
 

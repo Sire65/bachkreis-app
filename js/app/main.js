@@ -27,6 +27,8 @@ import "./meins.js";
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";
+import { snPruefen } from "./startnachricht.js";
+import "./bedienung.js";
 import { buehneLaeuft } from "./buehne.js";
 
 window.addEventListener("error", (e) => fehlerMerken(e.error || e.message));
@@ -55,6 +57,7 @@ AKTIONEN.ansichtWahl = (v) => {
   demoLeiste();
   zeige("start", {}, { ersetzen: true });
   toast(`Ansicht: ${ANSICHTEN[v]}`);
+  setTimeout(snPruefen, 600); // 📣 offene Startnachricht der neuen Person
 };
 
 async function anmeldenMitCode(code) {
@@ -124,8 +127,9 @@ async function starten() {
   nachrichtenStart();
   const express = expressPruefen(); // 🏎️ Express-Sendungen zuerst (wie KC)
   const pw = pinnwandStart();
+  const sn = !express && snPruefen(); // 📣 Startnachricht der Leitung (Pflicht-Fenster)
   onlineStart(); // 🟢 Wer ist online · 👋 Anklopfen
-  beimStart(express || pw || termineStart() || uebenStart()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
+  beimStart(express || pw || sn || termineStart() || uebenStart()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
   // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird

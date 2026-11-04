@@ -30,6 +30,8 @@ create table if not exists bk_projekte (
 );
 create index if not exists bk_projekte_geaendert on bk_projekte (geaendert_am);
 alter table bk_projekte enable row level security;
+revoke all on bk_projekte from public, anon, authenticated;
+grant select, insert, update, delete on bk_projekte to service_role;
 drop trigger if exists bk_projekte_stempel on bk_projekte;
 create trigger bk_projekte_stempel before update on bk_projekte for each row execute function bk_abgleich_stempel();
 
@@ -79,6 +81,8 @@ create table if not exists bk_programm (
 );
 create index if not exists bk_programm_geaendert on bk_programm (geaendert_am);
 alter table bk_programm enable row level security;
+revoke all on bk_programm from public, anon, authenticated;
+grant select, insert, update, delete on bk_programm to service_role;
 drop trigger if exists bk_programm_stempel on bk_programm;
 create trigger bk_programm_stempel before update on bk_programm for each row execute function bk_abgleich_stempel();
 
@@ -119,6 +123,8 @@ create table if not exists bk_gastgeber (
 );
 create index if not exists bk_gastgeber_geaendert on bk_gastgeber (geaendert_am);
 alter table bk_gastgeber enable row level security;
+revoke all on bk_gastgeber from public, anon, authenticated;
+grant select, insert, update, delete on bk_gastgeber to service_role;
 drop trigger if exists bk_gastgeber_stempel on bk_gastgeber;
 create trigger bk_gastgeber_stempel before update on bk_gastgeber for each row execute function bk_abgleich_stempel();
 
@@ -158,6 +164,8 @@ create table if not exists bk_gaeste (
 );
 create index if not exists bk_gaeste_geaendert on bk_gaeste (geaendert_am);
 alter table bk_gaeste enable row level security;
+revoke all on bk_gaeste from public, anon, authenticated;
+grant select, insert, update, delete on bk_gaeste to service_role;
 drop trigger if exists bk_gaeste_stempel on bk_gaeste;
 create trigger bk_gaeste_stempel before update on bk_gaeste for each row execute function bk_abgleich_stempel();
 
@@ -203,6 +211,8 @@ create table if not exists bk_anfragen (
 );
 create index if not exists bk_anfragen_geaendert on bk_anfragen (geaendert_am);
 alter table bk_anfragen enable row level security;
+revoke all on bk_anfragen from public, anon, authenticated;
+grant select, insert, update, delete on bk_anfragen to service_role;
 drop trigger if exists bk_anfragen_stempel on bk_anfragen;
 create trigger bk_anfragen_stempel before update on bk_anfragen for each row execute function bk_abgleich_stempel();
 
@@ -249,6 +259,8 @@ create table if not exists bk_chronik (
 );
 create index if not exists bk_chronik_geaendert on bk_chronik (geaendert_am);
 alter table bk_chronik enable row level security;
+revoke all on bk_chronik from public, anon, authenticated;
+grant select, insert, update, delete on bk_chronik to service_role;
 drop trigger if exists bk_chronik_stempel on bk_chronik;
 create trigger bk_chronik_stempel before update on bk_chronik for each row execute function bk_abgleich_stempel();
 
@@ -288,6 +300,8 @@ create table if not exists bk_dokumente (
 );
 create index if not exists bk_dokumente_geaendert on bk_dokumente (geaendert_am);
 alter table bk_dokumente enable row level security;
+revoke all on bk_dokumente from public, anon, authenticated;
+grant select, insert, update, delete on bk_dokumente to service_role;
 drop trigger if exists bk_dokumente_stempel on bk_dokumente;
 create trigger bk_dokumente_stempel before update on bk_dokumente for each row execute function bk_abgleich_stempel();
 
@@ -327,6 +341,8 @@ create table if not exists bk_partner (
 );
 create index if not exists bk_partner_geaendert on bk_partner (geaendert_am);
 alter table bk_partner enable row level security;
+revoke all on bk_partner from public, anon, authenticated;
+grant select, insert, update, delete on bk_partner to service_role;
 drop trigger if exists bk_partner_stempel on bk_partner;
 create trigger bk_partner_stempel before update on bk_partner for each row execute function bk_abgleich_stempel();
 

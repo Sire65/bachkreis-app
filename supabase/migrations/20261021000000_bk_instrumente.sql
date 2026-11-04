@@ -16,6 +16,8 @@ create table if not exists bk_instrument_typen (
 );
 create index if not exists bk_instrument_typen_geaendert on bk_instrument_typen (geaendert_am);
 alter table bk_instrument_typen enable row level security;
+revoke all on bk_instrument_typen from public, anon, authenticated;
+grant select, insert, update, delete on bk_instrument_typen to service_role;
 drop trigger if exists bk_instrument_typen_stempel on bk_instrument_typen;
 create trigger bk_instrument_typen_stempel before update on bk_instrument_typen for each row execute function bk_abgleich_stempel();
 

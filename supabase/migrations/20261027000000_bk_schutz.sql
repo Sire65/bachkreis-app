@@ -27,6 +27,8 @@ create table if not exists bk_gesundheit (
 );
 create index if not exists bk_gesundheit_geaendert on bk_gesundheit (geaendert_am);
 alter table bk_gesundheit enable row level security;
+revoke all on bk_gesundheit from public, anon, authenticated;
+grant select, insert, update, delete on bk_gesundheit to service_role;
 drop trigger if exists bk_gesundheit_stempel on bk_gesundheit;
 create trigger bk_gesundheit_stempel before update on bk_gesundheit for each row execute function bk_abgleich_stempel();
 
@@ -81,6 +83,8 @@ create table if not exists bk_projekte (
 );
 create index if not exists bk_projekte_geaendert on bk_projekte (geaendert_am);
 alter table bk_projekte enable row level security;
+revoke all on bk_projekte from public, anon, authenticated;
+grant select, insert, update, delete on bk_projekte to service_role;
 drop trigger if exists bk_projekte_stempel on bk_projekte;
 create trigger bk_projekte_stempel before update on bk_projekte for each row execute function bk_abgleich_stempel();
 
@@ -123,6 +127,8 @@ create table if not exists bk_genehmigung_vorlagen (
 );
 create index if not exists bk_genehmigung_vorlagen_geaendert on bk_genehmigung_vorlagen (geaendert_am);
 alter table bk_genehmigung_vorlagen enable row level security;
+revoke all on bk_genehmigung_vorlagen from public, anon, authenticated;
+grant select, insert, update, delete on bk_genehmigung_vorlagen to service_role;
 drop trigger if exists bk_genehmigung_vorlagen_stempel on bk_genehmigung_vorlagen;
 create trigger bk_genehmigung_vorlagen_stempel before update on bk_genehmigung_vorlagen for each row execute function bk_abgleich_stempel();
 
@@ -153,6 +159,8 @@ create table if not exists bk_antworten (
 );
 create index if not exists bk_antworten_geaendert on bk_antworten (geaendert_am);
 alter table bk_antworten enable row level security;
+revoke all on bk_antworten from public, anon, authenticated;
+grant select, insert, update, delete on bk_antworten to service_role;
 drop trigger if exists bk_antworten_stempel on bk_antworten;
 create trigger bk_antworten_stempel before update on bk_antworten for each row execute function bk_abgleich_stempel();
 

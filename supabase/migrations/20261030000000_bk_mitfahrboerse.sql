@@ -20,6 +20,8 @@ create table if not exists bk_mitfahrten (
 );
 create index if not exists bk_mitfahrten_geaendert on bk_mitfahrten (geaendert_am);
 alter table bk_mitfahrten enable row level security;
+revoke all on bk_mitfahrten from public, anon, authenticated;
+grant select, insert, update, delete on bk_mitfahrten to service_role;
 drop trigger if exists bk_mitfahrten_stempel on bk_mitfahrten;
 create trigger bk_mitfahrten_stempel before update on bk_mitfahrten for each row execute function bk_abgleich_stempel();
 

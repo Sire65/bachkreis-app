@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -45,6 +45,7 @@ export function kontext(person, alle) {
   // Pinnwand: alle Zettel (auch abgenommene – für den Abgleich) und die Personen, die man als Empfänger wählen darf
   ctx.pw = new Map((alle.pinnwand || []).map((z) => [z.id, z]));
   ctx.personen = alle.personen || [];
+  ctx.snMap = new Map((alle.startnachrichten || []).map((z) => [z.id, z])); // 📣 Startnachrichten (Antworten prüfen)
   ctx.elternKind = ek;
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
   // 🎙️ Übe-Aufnahmen: für welche (eigenen) Kinder haben die Eltern zuletzt „erteilt“ (Zweck uebeaufnahmen)?
@@ -113,6 +114,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "stimmen": return ctx.meine.has(z.person_id) || (!z.person_id && (!z.register_id || ctx.register.has(z.register_id)) && (!z.gruppe_id || ctx.gruppen.has(z.gruppe_id))); // „nur Gruppe“ nur für diese Gruppe
     case "aufnahmen": return z.freigabe === "mitglieder" || z.freigabe === "oeffentlich";
     case "aufgaben": return ctx.meine.has(z.von_id);
+    case "startnachrichten": return z.von === ctx.ich || snFuerMich(z, ctx.ich, ctx.gruppen, "0000-00-00"); // 📣 an mich (auch abgelaufene – für den Abgleich)
+    case "startnachricht_antworten": return z.person_id === ctx.ich || ctx.snMap?.get(z.nachricht_id)?.von === ctx.ich;
     case "pinnwand": return pwSichtbar(z, ctx.ich);
     case "pinnwand_gelesen": {
       if (z.person_id === ctx.ich) return true;
@@ -237,6 +240,13 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
     // Geschützte Felder nur mit passender Rolle ändern (sonst alten Wert behalten)
     const z = { ...(alt || {}), ...neu };
     for (const f of TABELLEN[tab].felder.filter((f) => f.geschuetzt)) if (!hatRolle(ctx, GESCHUETZT_ROLLEN)) z[f.k] = alt ? alt[f.k] : null;
+    if (tab === "startnachrichten" && !z.geloescht_am) { // 📣 Absender und Zeit setzt der Server; Text 1–1000 Zeichen
+      const t = String(z.text ?? "").trim();
+      if (!t || [...t].length > 1000) return { ok: false, grund: "TEXT_UNGUELTIG" };
+      Object.assign(z, { text: t, von: alt?.von || ctx.ich, zeit: alt?.zeit || jetzt, an: ["alle", "gruppen", "personen"].includes(z.an) ? z.an : "alle", wichtig: !!z.wichtig, wahl: !!z.wahl,
+        ziel: /^[a-z]{2,20}$/.test(String(z.ziel || "")) ? z.ziel : null, gruppen: z.an === "gruppen" ? z.gruppen || [] : [], personen: z.an === "personen" ? z.personen || [] : [] });
+      if ((z.an === "gruppen" && !z.gruppen.length) || (z.an === "personen" && !z.personen.length)) return { ok: false, grund: "EMPFAENGER_FEHLT" };
+    }
     return { ok: true, zeile: z };
   }
   // Selbstbedienung für Schüler/Eltern (und Verwalter in Tabellen ohne Schreibrecht)
@@ -484,6 +494,18 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "startnachricht_antworten": {
+      // 📣 Antwort auf eine Startnachricht: nur die eigene, nur wenn sie an mich ging; Zeit und „später“ setzt der Server
+      const n = ctx.snMap?.get(neu.nachricht_id);
+      if (!n || n.geloescht_am || !snFuerMich(n, ctx.ich, ctx.gruppen, "0000-00-00")) return { ok: false, grund: "NACHRICHT_NICHT_FUER_MICH" };
+      if (neu.person_id !== ctx.ich || (alt && alt.person_id !== ctx.ich)) return { ok: false, grund: "NUR_EIGENE" };
+      const id = snAntwortId(n.id, ctx.ich);
+      if (neu.id !== id) return { ok: false, grund: "ID_UNGUELTIG" };
+      if (!["gelesen", "ja", "spaeter", "nein"].includes(neu.antwort)) return { ok: false, grund: "ANTWORT_UNGUELTIG" };
+      const frage = String(neu.rueckfrage ?? "").trim().slice(0, 1000) || alt?.rueckfrage || null;
+      const spaeter = neu.antwort === "spaeter" ? new Date(Date.parse(jetzt) + SN_SPAETER_STD * 3600000).toISOString() : null;
+      return { ok: true, zeile: { ...(alt || {}), id, nachricht_id: n.id, person_id: ctx.ich, antwort: neu.antwort, rueckfrage: frage, am: jetzt, spaeter_bis: spaeter }, zusammenfuehren: true };
     }
     case "pinnwand_gelesen": {
       const z = ctx.pw.get(neu.zettel_id);

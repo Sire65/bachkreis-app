@@ -38,6 +38,8 @@ create table if not exists bk_personen (
 );
 create index if not exists bk_personen_geaendert on bk_personen (geaendert_am);
 alter table bk_personen enable row level security;
+revoke all on bk_personen from public, anon, authenticated;
+grant select, insert, update, delete on bk_personen to service_role;
 drop trigger if exists bk_personen_stempel on bk_personen;
 create trigger bk_personen_stempel before update on bk_personen for each row execute function bk_abgleich_stempel();
 
@@ -89,6 +91,8 @@ create table if not exists bk_eltern_kind (
 );
 create index if not exists bk_eltern_kind_geaendert on bk_eltern_kind (geaendert_am);
 alter table bk_eltern_kind enable row level security;
+revoke all on bk_eltern_kind from public, anon, authenticated;
+grant select, insert, update, delete on bk_eltern_kind to service_role;
 drop trigger if exists bk_eltern_kind_stempel on bk_eltern_kind;
 create trigger bk_eltern_kind_stempel before update on bk_eltern_kind for each row execute function bk_abgleich_stempel();
 
@@ -123,6 +127,8 @@ create table if not exists bk_gruppen (
 );
 create index if not exists bk_gruppen_geaendert on bk_gruppen (geaendert_am);
 alter table bk_gruppen enable row level security;
+revoke all on bk_gruppen from public, anon, authenticated;
+grant select, insert, update, delete on bk_gruppen to service_role;
 drop trigger if exists bk_gruppen_stempel on bk_gruppen;
 create trigger bk_gruppen_stempel before update on bk_gruppen for each row execute function bk_abgleich_stempel();
 
@@ -164,6 +170,8 @@ create table if not exists bk_ausleihen (
 );
 create index if not exists bk_ausleihen_geaendert on bk_ausleihen (geaendert_am);
 alter table bk_ausleihen enable row level security;
+revoke all on bk_ausleihen from public, anon, authenticated;
+grant select, insert, update, delete on bk_ausleihen to service_role;
 drop trigger if exists bk_ausleihen_stempel on bk_ausleihen;
 create trigger bk_ausleihen_stempel before update on bk_ausleihen for each row execute function bk_abgleich_stempel();
 
@@ -214,6 +222,8 @@ create table if not exists bk_genehmigungen (
 );
 create index if not exists bk_genehmigungen_geaendert on bk_genehmigungen (geaendert_am);
 alter table bk_genehmigungen enable row level security;
+revoke all on bk_genehmigungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_genehmigungen to service_role;
 drop trigger if exists bk_genehmigungen_stempel on bk_genehmigungen;
 create trigger bk_genehmigungen_stempel before update on bk_genehmigungen for each row execute function bk_abgleich_stempel();
 
@@ -265,6 +275,8 @@ create table if not exists bk_projekte (
 );
 create index if not exists bk_projekte_geaendert on bk_projekte (geaendert_am);
 alter table bk_projekte enable row level security;
+revoke all on bk_projekte from public, anon, authenticated;
+grant select, insert, update, delete on bk_projekte to service_role;
 drop trigger if exists bk_projekte_stempel on bk_projekte;
 create trigger bk_projekte_stempel before update on bk_projekte for each row execute function bk_abgleich_stempel();
 
@@ -314,6 +326,8 @@ create table if not exists bk_programm (
 );
 create index if not exists bk_programm_geaendert on bk_programm (geaendert_am);
 alter table bk_programm enable row level security;
+revoke all on bk_programm from public, anon, authenticated;
+grant select, insert, update, delete on bk_programm to service_role;
 drop trigger if exists bk_programm_stempel on bk_programm;
 create trigger bk_programm_stempel before update on bk_programm for each row execute function bk_abgleich_stempel();
 
@@ -357,6 +371,8 @@ create table if not exists bk_reise_anmeldungen (
 );
 create index if not exists bk_reise_anmeldungen_geaendert on bk_reise_anmeldungen (geaendert_am);
 alter table bk_reise_anmeldungen enable row level security;
+revoke all on bk_reise_anmeldungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_reise_anmeldungen to service_role;
 drop trigger if exists bk_reise_anmeldungen_stempel on bk_reise_anmeldungen;
 create trigger bk_reise_anmeldungen_stempel before update on bk_reise_anmeldungen for each row execute function bk_abgleich_stempel();
 

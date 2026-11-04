@@ -35,6 +35,8 @@ create table if not exists bk_uebeaufgaben (
 );
 create index if not exists bk_uebeaufgaben_geaendert on bk_uebeaufgaben (geaendert_am);
 alter table bk_uebeaufgaben enable row level security;
+revoke all on bk_uebeaufgaben from public, anon, authenticated;
+grant select, insert, update, delete on bk_uebeaufgaben to service_role;
 drop trigger if exists bk_uebeaufgaben_stempel on bk_uebeaufgaben;
 create trigger bk_uebeaufgaben_stempel before update on bk_uebeaufgaben for each row execute function bk_abgleich_stempel();
 
@@ -99,6 +101,8 @@ create table if not exists bk_uebe_ergebnisse (
 );
 create index if not exists bk_uebe_ergebnisse_geaendert on bk_uebe_ergebnisse (geaendert_am);
 alter table bk_uebe_ergebnisse enable row level security;
+revoke all on bk_uebe_ergebnisse from public, anon, authenticated;
+grant select, insert, update, delete on bk_uebe_ergebnisse to service_role;
 drop trigger if exists bk_uebe_ergebnisse_stempel on bk_uebe_ergebnisse;
 create trigger bk_uebe_ergebnisse_stempel before update on bk_uebe_ergebnisse for each row execute function bk_abgleich_stempel();
 
@@ -136,6 +140,8 @@ create table if not exists bk_genehmigung_vorlagen (
 );
 create index if not exists bk_genehmigung_vorlagen_geaendert on bk_genehmigung_vorlagen (geaendert_am);
 alter table bk_genehmigung_vorlagen enable row level security;
+revoke all on bk_genehmigung_vorlagen from public, anon, authenticated;
+grant select, insert, update, delete on bk_genehmigung_vorlagen to service_role;
 drop trigger if exists bk_genehmigung_vorlagen_stempel on bk_genehmigung_vorlagen;
 create trigger bk_genehmigung_vorlagen_stempel before update on bk_genehmigung_vorlagen for each row execute function bk_abgleich_stempel();
 

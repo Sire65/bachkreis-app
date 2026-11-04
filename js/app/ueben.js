@@ -162,7 +162,7 @@ export function uebenStart() {
   if (eintraege(S.ich.id).some((u) => u.datum === heute)) return false;
   try { if (localStorage.getItem("bk_uebe_hinweis") === heute) return false; localStorage.setItem("bk_uebe_hinweis", heute); } catch { return false; }
   setTimeout(() => blatt("🎻 Heute ist Übetag", `<p>Deine Übezeit ist um <b>${esc(p.zeit)}</b> (${p.dauer} Min.). Schon geübt?</p>
-    <div class="knopfreihe"><button class="knopf haupt" data-a="uebenJetzt">▶ Jetzt üben</button><button class="knopf" data-a="uebenSchon">✔ Schon geübt – eintragen</button></div>`), 1200);
+    <div class="knopfreihe"><button class="knopf haupt" data-a="uebenJetzt">▶ Jetzt üben</button><button class="knopf" data-a="uebenSchon">✔ Schon geübt – eintragen</button></div>`).dataset.leise = "1", 1200); // leise: 🏎️ Express/📣 Startnachricht gehen vor
   return true;
 }
 AKTIONEN.uebenJetzt = () => { blattZu(); stoppSetzen({ ms: 0, lauf: Date.now() }); zeige("ueben"); };

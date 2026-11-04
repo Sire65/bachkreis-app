@@ -38,6 +38,8 @@ create table if not exists bk_personen (
 );
 create index if not exists bk_personen_geaendert on bk_personen (geaendert_am);
 alter table bk_personen enable row level security;
+revoke all on bk_personen from public, anon, authenticated;
+grant select, insert, update, delete on bk_personen to service_role;
 drop trigger if exists bk_personen_stempel on bk_personen;
 create trigger bk_personen_stempel before update on bk_personen for each row execute function bk_abgleich_stempel();
 
@@ -94,6 +96,8 @@ create table if not exists bk_gruppen (
 );
 create index if not exists bk_gruppen_geaendert on bk_gruppen (geaendert_am);
 alter table bk_gruppen enable row level security;
+revoke all on bk_gruppen from public, anon, authenticated;
+grant select, insert, update, delete on bk_gruppen to service_role;
 drop trigger if exists bk_gruppen_stempel on bk_gruppen;
 create trigger bk_gruppen_stempel before update on bk_gruppen for each row execute function bk_abgleich_stempel();
 

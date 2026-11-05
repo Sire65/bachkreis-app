@@ -15,6 +15,8 @@ import { wochenStand } from "./ueben.js";
 import { startseiteVerbinden, ANO, anordnenHtml, anordnenLeiste, nachDemZeichnen, laufbandHtml, laufbandStarten, countdownHtml, schnellstartHtml, schnellstartAn, vorschlagPruefen, nuTagZaehlen, ansichtFrage, tagesinfoBeimStart, kachelOffenHinten, drehZeichen } from "./startseite.js";
 import { gbvPruefen } from "./bedienung.js";
 import { kindAnsicht, kinderStartHtml, kindGross } from "./kinderstart.js";
+import { bueroDa } from "./buero.js";
+import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
 import { offeneUebeAufgaben } from "./uebebuehne.js";
 import { austauschProjekte, anfragenOffen } from "./vereinsleben.js";
@@ -66,6 +68,7 @@ const offeneGenehmigungen = () => istEltern() ? liste("genehmigungen", (g) => ki
 const mitfahrSuchende = () => { const bis = Date.now() + 14 * 86400000; return liste("termine", (t) => new Date(t.beginn) > new Date() && new Date(t.beginn) < bis).reduce((s, t) => s + mitfahrtZahlen(t).suchen, 0); };
 export const KACHELN = {
   bachkreis: [
+    { id: "buero", sym: "🏢", t: "Büro", u: "Ordner · Vorlagen · Briefe · Protokolle", v: "buero", nur: () => bueroDa() },
     { id: "cockpit", sym: "🧭", t: "Cockpit", u: "Was braucht meine Aufmerksamkeit?", v: "cockpit", nur: () => istLehrkraft() || istVorstand(), zahl: () => cockpit(db, S.ich.id).filter((c) => c.dring >= 2).length },
     { id: "termine", sym: "📅", t: "Termine", u: "Proben · Konzerte · Zu- & Absagen", v: "termine", zahl: () => offeneAntworten() },
     { id: "sos", sym: "🆘", t: "SOS – Notfall", u: "Notruf · Kontakte im Notfall", v: "sos", klasse: "sos" },
@@ -203,6 +206,7 @@ function rasterBlock() {
 VIEWS.start = {
   render() {
     if (kindAnsicht()) return kinderStartHtml(); // 🧒 0.32.0 eigene Kinder-Startseite
+    if (elternAnsicht()) return elternStartHtml(); // 👪 0.33.0 Eltern-Übersicht
     const e = einst();
     if (!registerSichtbar().find(([r]) => r === S.register)) S.register = registerSichtbar()[0][0];
     // Der Kopf (kopf.js) ist ein dauerhaftes Element – hier nur sein Platz
@@ -215,11 +219,12 @@ VIEWS.start = {
       <div class="karte"><h3>Heute wichtig${istLehrkraft() || istVorstand() ? ' <button type="button" class="knopf klein" data-a="tagesinfo">📋 Übersicht</button>' : ""}</h3>${heuteWichtig()}</div>
       <button class="knopf breit ansicht-knopf" data-a="ansichtWechseln">${e.einfach ? "🔧 Erweiterte Ansicht" : "🟢 Einfache Ansicht"}</button>
       ${istSchueler() && kindGross() ? '<button class="knopf breit ansicht-knopf" data-a="kindMehr" data-x="">🧒 Einfache Kinder-Ansicht</button>' : ""}
+      ${istEltern() ? '<button class="knopf breit ansicht-knopf" data-a="elternAlle" data-x="">👪 Eltern-Übersicht</button>' : ""}
       <div class="fusszeile">Bachkreis-App v${APP_VERSION} ${APP_STUFE} · ${esc(datenInfo().hinweis || "")}</div></section>`;
   },
   nach() {
     kopfEinsetzen(document.getElementById("kopfPlatz"));
-    if (kindAnsicht()) { setTimeout(gbvPruefen, 1500); return; }
+    if (kindAnsicht() || elternAnsicht()) { setTimeout(gbvPruefen, 1500); return; }
     nachDemZeichnen(); nuTagZaehlen();
     clearTimeout(START_FRAGEN); START_FRAGEN = setTimeout(() => { if (S.view === "start" && !ansichtFrage()) tagesinfoBeimStart(); }, 1200);
     clearTimeout(START_VORSCHLAG); START_VORSCHLAG = setTimeout(vorschlagPruefen, 25000);

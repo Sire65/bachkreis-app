@@ -34,7 +34,7 @@ try {
   const s = await sicht(p);
   assert.equal(s.info.art, "supabase"); assert.equal(s.zugaenge, 0); assert.equal(s.spenden, 0);
   assert.ok(s.mitAdresse <= 6, "nur eigene Familie mit Anschrift: " + s.mitAdresse);
-  await p.click('#raster .kachel[data-id="termine"]'); await p.waitForSelector('[data-a="antworten"]');
+  await p.click('#raster .kachel[data-id="meinetermine"]'); await p.waitForSelector('[data-a="antworten"]');
   await p.click('[data-a="antworten"][data-x$="|ja"]'); await p.waitForTimeout(2500);
   const l = await seite();
   await l.goto(B + "/index.html?k=" + info.codes.leitung.code); await l.waitForSelector(".kachel", { timeout: 20000 });

@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -99,7 +99,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "uebe_ergebnisse": return ctx.meine.has(z.person_id); // ⭐ eigene bzw. die der Kinder
     case "gastgeber": return z.person_id === ctx.ich; // 🏠 eigenes Angebot
     case "gaeste": return ctx.meineGastgeber.has(z.gastgeber_id); // 🧳 nur die eigenen Gäste
-    case "dokumente": return z.sichtbar === "alle" || !z.sichtbar || (z.sichtbar === "eltern" && ctx.person?.typ === "eltern") || (z.sichtbar === "schueler" && ctx.person?.typ === "schueler") || (z.sichtbar === "verwaltung" && ctx.istVerwalter);
+    case "dokumente": return z.sichtbar === "alle" || !z.sichtbar || (z.sichtbar === "eltern" && ctx.person?.typ === "eltern") || (z.sichtbar === "schueler" && ctx.person?.typ === "schueler") || (z.sichtbar === "verwaltung" && ctx.istVerwalter) || ((z.sichtbar === "leitung" || z.sichtbar === "vorstand") && bueroDarf(z.sichtbar, ctx.rollen));
     case "gesundheit": return ctx.meine.has(z.person_id) || (ctx.begleitKinder?.has(z.person_id) && !(z.loeschen_am && z.loeschen_am < new Date().toISOString().slice(0, 10)));
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
@@ -170,6 +170,7 @@ export function filtern(tab, zeilen, ctx) {
 function privatZeile(tab, z, ctx) {
   if (tab === "unterhaltungen") return PRIVAT_CHAT.has(z.art);
   if (tab === "nachrichten") return PRIVAT_CHAT.has(ctx.uMap?.get(z.unterhaltung_id)?.art) || (z.von !== ctx.ich && !nachrichtFrei(z));
+  if (tab === "dokumente") return !bueroDarf(z.sichtbar, ctx.rollen); // 🏢 Büro-Dokumente: auch Instrumenten-/Notenwart sehen sie nicht
   return false;
 }
 // 📎 Anhänge: nur Dateien, die man selbst hochgeladen hat oder als Noten sehen darf; Noten auch als Verweis ohne Datei
@@ -240,6 +241,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
     // Geschützte Felder nur mit passender Rolle ändern (sonst alten Wert behalten)
     const z = { ...(alt || {}), ...neu };
     for (const f of TABELLEN[tab].felder.filter((f) => f.geschuetzt)) if (!hatRolle(ctx, GESCHUETZT_ROLLEN)) z[f.k] = alt ? alt[f.k] : null;
+    if (tab === "dokumente" && (!bueroDarf(z.sichtbar, ctx.rollen) || (alt && !bueroDarf(alt.sichtbar, ctx.rollen)))) return { ok: false, grund: "BUERO_NICHT_ERLAUBT" }; // 🏢 0.33.0
     if (tab === "startnachrichten" && !z.geloescht_am) { // 📣 Absender und Zeit setzt der Server; Text 1–1000 Zeichen
       const t = String(z.text ?? "").trim();
       if (!t || [...t].length > 1000) return { ok: false, grund: "TEXT_UNGUELTIG" };

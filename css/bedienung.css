@@ -156,3 +156,16 @@
 #v-start.ansicht-kind .hero { min-height: 0; padding-bottom: 14px; }
 .kind-sos { margin-top: 10px; background: #c62828; color: #fff; border: none; font-weight: 900; }
 .kind-ich .ifz { color: var(--text); background: var(--karte); border: 1px solid var(--linie); } .kind-ich .ifz small { color: var(--text); opacity: .8; }
+/* 0.33.0 – 👪 Eltern-Ansicht und 🏢 Büro */
+#v-start.ansicht-eltern .hero .statusleiste, #v-start.ansicht-eltern .hero .info, #v-start.ansicht-eltern .hero .ipunkte, #v-start.ansicht-eltern .hero .kopf-pfeil, #v-start.ansicht-eltern .hero .ipfeil { display: none; }
+#v-start.ansicht-eltern .hero { min-height: 0; padding-bottom: 14px; }
+.eltern-kinder { margin: 10px 0; } .eltern-todo .badge { margin-left: 6px; }
+@media (min-width: 520px) { .eltern-raster { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.eltern-raster .kind-kachel { min-height: 96px; } .eltern-raster .kind-kachel .sym { font-size: 2.1rem; } .eltern-raster .kind-kachel b { font-size: 1rem; }
+.bu-gruss { font-size: 1.1rem; font-weight: 800; margin: 4px 0 8px; }
+.bu-schnell { margin: 6px 0 10px; }
+.bu-regal { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 12px; border-radius: 16px; background: linear-gradient(#8a6d4e, #6b5238); box-shadow: inset 0 -8px 0 rgba(0,0,0,.18); }
+.bu-ordner { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 92px; padding: 10px 10px 10px 18px; border: none; border-radius: 6px 10px 10px 6px; background: var(--of, #5d6f82); color: #fff; font: inherit; text-align: left; cursor: pointer; box-shadow: 2px 3px 0 rgba(0,0,0,.25); }
+.bu-ordner::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 4px; border-radius: 2px; background: rgba(255,255,255,.35); }
+.bu-ordner .bu-rueck { font-size: 1.6rem; } .bu-ordner b { font-size: .95rem; } .bu-ordner small { color: #fff; opacity: .9; font-weight: 700; }
+.bu-text { white-space: normal; line-height: 1.55; padding: 12px; border-radius: 12px; background: var(--karte2, rgba(0,0,0,.04)); margin: 8px 0 12px; overflow-wrap: anywhere; }

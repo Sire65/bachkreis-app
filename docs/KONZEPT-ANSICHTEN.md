@@ -1,6 +1,6 @@
 # Konzept: Eigene Ansichten für Kinder, Eltern, Lehrkräfte und Vorstand
 
-Stand: 05.11.2026 · freigegeben von Hansi am 05.11.2026 · Teil 2 (Kinder) umgesetzt in 0.32.0
+Stand: 05.11.2026 · freigegeben von Hansi am 05.11.2026 · Teil 2 (Kinder) umgesetzt in 0.32.0, Teil 3 (Eltern) und 🏢 Büro in 0.33.0
 
 ## 1. Ausgangslage
 
@@ -142,6 +142,11 @@ Ein Arbeitsplatz. Die heutige erweiterte Ansicht mit Registern bleibt, wird aber
 
 - **„Heute“-Karte oben:** nächste Probe mit Zusagen je Register, „📋 Anwesenheit abhaken“, „Wer fehlt unentschuldigt?“.
 - **Probenmodus** (Idee für später): ein Knopf während der Probe – Anwesenheit, Metronom, Stimmton, Sitzplan auf einen Blick.
+
+### 4.1 🏢 Büro (umgesetzt in 0.33.0, Wunsch Hansi 05.11.2026)
+Wie in der Club App: oben der 📥 Eingangskorb (Cockpit-Punkte), darunter ein Regal mit Ordnern – Protokolle, Noten & Bearbeitungen, Grafik & Design,
+Vorlagen, Elternbriefe, Konzerte & Programme, Verträge, Presse, Förderverein & Finanzen (auch Vorstand), Schule & Organisation, Archiv.
+Briefe entstehen aus Vorlagen und werden gedruckt, als Rundschreiben gesendet oder abgelegt. Gespeichert in der vorhandenen Dokumente-Ablage.
 
 ## 5. 💛 Vorstand / Förderverein
 

@@ -89,6 +89,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F79 | 📣 Startnachricht der Leitung mit Ja/Später/Nein, Rückfrage, Antworten-Übersicht; ausdrückliche Tabellenrechte für service_role | ✅ | tests/startnachricht.test.mjs, e2e rundgang |
 | BK-F80 | 🔑 Zugang & Organisation wie KC 2.859: Installations-Einladung & -Hilfe, Zugang im Blick (Anmeldeversuche/Sperren/Installiert?), Link-Hilfe, Umfrage mit freier Antwort, Tipps mit 👍/👎, Bachkreis in Zahlen | ✅ | tests/zugang.test.mjs, e2e rundgang, echtbetrieb, axe |
 | BK-F81 | 🧒 Kinder-Ansicht (Termin mit Zusage, Übe-Aufgaben, 8 Kacheln, Kinder-Fußleiste, „Mehr“ ab Klasse 9) und 🧠 Quiz mit Sternen, Übe-Serie, Abzeichen | ✅ | tests/quiz.test.mjs, e2e rundgang, echtbetrieb, axe |
+| BK-F82 | 🏢 Büro für Leitung/Lehrkräfte/Vorstand: Ordner-Regal, Eingangskorb, Vorlagen → Brief (Druck/Rundschreiben/Ablage), Protokolle; geschützte Büro-Sichtbarkeit | ✅ | tests/buero.test.mjs, e2e rundgang, axe |
+| BK-F83 | 👪 Eltern-Ansicht: Bitte erledigen, Kinder-Umschalter, nächste Termine, 10 Kacheln | ✅ | e2e rundgang, echtbetrieb, axe |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

@@ -634,6 +634,16 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "dok-4", titel: "Leihvertrag Instrumente", art: "vorlage", beschreibung: "Wird in der App als Genehmigung bestätigt (Genehmigungen › Leihvertrag)", sichtbar: "eltern", sort: 4 },
     { id: "dok-5", titel: "Vorstandssitzung – Protokoll (Beispiel)", art: "protokoll", fassung: isoTag(tag(jetzt, -14)), sichtbar: "verwaltung", sort: 5 },
   ];
+  // 🏢 Büro (0.33.0): Vorlagen und ein paar Beispiel-Dokumente (alles erkennbar Beispiel)
+  const J = jetzt.getFullYear();
+  d.dokumente.push(
+    { id: "bu-v1", titel: "Elternbrief: Probenfahrt", ordner: "vorlagen", art: "vorlage", jahr: J, sichtbar: "leitung", beschreibung: "Einladung zur Probenfahrt", inhalt: "Liebe Eltern,\n\nauch in diesem Jahr fährt das {orchester} zur Probenfahrt. Alle Infos und die Anmeldung finden Sie in der Bachkreis-App unter Termine.\n\nNächster Termin: {termin}\n\nBitte geben Sie die Einverständniserklärung bis zum … in der App frei.\n\nMusikalische Grüße\n{leitung}" },
+    { id: "bu-v2", titel: "Einladung zum Konzert", ordner: "vorlagen", art: "vorlage", jahr: J, sichtbar: "leitung", beschreibung: "Herzliche Einladung zu unserem Konzert", inhalt: "Liebe {vorname},\n\nwir laden Sie und Ihre Familie herzlich zu unserem Konzert ein:\n{termin}\n\nDer Eintritt ist frei – wir freuen uns über eine Spende für den Förderverein.\n\nMusikalische Grüße\n{leitung}" },
+    { id: "bu-v3", titel: "Urkunde: Danke fürs Mitspielen", ordner: "vorlagen", art: "vorlage", jahr: J, sichtbar: "leitung", beschreibung: "Urkunde", inhalt: "URKUNDE\n\n{vorname} hat im Schuljahr mit großem Einsatz im {orchester} mitgespielt.\n\nHerzlichen Dank!\n\nBergkamen, {datum}\n{leitung}" },
+    { id: "bu-p1", titel: "Protokoll Lehrkräfte-Besprechung (Beispiel)", ordner: "protokolle", art: "protokoll", jahr: J, sichtbar: "leitung", beschreibung: "Planung Herbstkonzert", inhalt: "Besprechung (Beispiel)\nAnwesend: Leitung, Lehrkräfte\n\nTOP 1 – Herbstkonzert: Programm steht, Generalprobe Samstag\nTOP 2 – Probenfahrt: Jugendherberge angefragt\n\nAufgaben:\n- Plakat entwerfen (Grafik & Design)\n- Elternbrief verschicken" },
+    { id: "bu-f1", titel: "Haushaltsplan Förderverein (Beispiel)", ordner: "finanzen", art: "info", jahr: J, sichtbar: "vorstand", beschreibung: "Entwurf für die Mitgliederversammlung", inhalt: "Einnahmen: Beiträge, Spenden, Konzerte\nAusgaben: Noten, Instrumente, Probenfahrt\n(Beispielzahlen folgen)" },
+    { id: "bu-g1", titel: "Logo und Farben", ordner: "grafik", art: "info", jahr: J, sichtbar: "leitung", beschreibung: "Bachkreis-Logo, Schwarz-Gold", inhalt: "Farben: Gold #d4a017, Schwarz #1a1500, Weiß.\nLogo: icons/logo.png (Bachkreis-Kreis)." },
+  );
   // 🎓 Kompositions- und Dirigierversuche im Herbstkonzert
   const zugabe = d.programm.find((x) => x.art === "zugabe"), dirig = mitglieder("g-a").find((id) => d.personen.find((x) => x.id === id)?.jahrgang >= 11);
   if (zugabe && dirig) zugabe.dirigent_id = dirig;

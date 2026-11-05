@@ -81,7 +81,7 @@ function ueberHtml() {
 // ================= 📂 Dokumente =================
 VIEWS.dokumente = {
   render() {
-    const l = liste("dokumente").sort((a, b) => (a.sort ?? 99) - (b.sort ?? 99) || a.titel.localeCompare(b.titel, "de"));
+    const l = liste("dokumente", (d) => !d.ordner).sort((a, b) => (a.sort ?? 99) - (b.sort ?? 99) || a.titel.localeCompare(b.titel, "de"));
     const arten = Object.keys(DOKUMENT_ARTEN).filter((a) => l.some((d) => d.art === a)).concat(l.some((d) => !d.art) ? [""] : []);
     return kopf("📂 Dokumente", vorstandOderLeitung() ? '<button class="knopf klein" data-a="dokNeu">＋ Dokument</button>' : "")
       + (arten.map((a) => `<div class="karte"><h3>${esc(DOKUMENT_ARTEN[a] || "📄 Sonstiges")}</h3><ul class="liste">${l.filter((d) => (d.art || "") === a).map((d) => `<li><div class="fl"><div class="zeile-titel">${esc(d.titel)}</div>

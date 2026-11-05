@@ -1,15 +1,25 @@
 {
-  "version": "0.32.0",
+  "version": "0.33.0",
   "datum": "2026-11-05",
   "stufe": "DEV",
   "neu": [
-    "🧒 Neue Kinder-Ansicht: oben die nächste Probe mit „Ich komme / Kann nicht“ und was mitzubringen ist, darunter deine Übe-Aufgaben und 8 große Kacheln – ohne Register",
-    "🧠 Quiz: Instrumente (auch zum Anhören), Noten lesen, Rhythmus, Hören (höher/tiefer, Dur/Moll), Musik-Wörter und Unser Bachkreis – leicht oder schwer",
-    "⭐ Sterne, 🔥 Übe-Serie und 🏅 Abzeichen – nur für dich, ohne Rangliste",
-    "🙂 „Ich“: Mein Gesicht, Leihinstrument, Abzeichen, Übe-Tagebuch und Einstellungen an einem Ort · 🆘 SOS-Knopf unten",
-    "🔧 Ab Klasse 9 kannst du unten auf „Mehr anzeigen“ umschalten"
+    "🏢 Büro für Leitung, Lehrkräfte und Vorstand: Regal mit Ordnern – Protokolle, Noten & Bearbeitungen, Grafik & Design, Vorlagen, Elternbriefe, Konzerte, Verträge, Presse, Finanzen, Schule, Archiv",
+    "📥 Eingangskorb im Büro: alles, was gerade wartet, mit einem Tipp erledigen",
+    "✉️ Briefe aus Vorlagen: Platzhalter werden gefüllt – drucken mit Briefkopf, als Rundschreiben senden oder in „Elternbriefe“ ablegen · 🗒️ Protokoll mit fester Gliederung",
+    "👪 Neue Eltern-Übersicht: oben „Bitte erledigen“ (Zusagen, Genehmigungen, Notfallbogen, Leihinstrument), Umschalter zwischen den Kindern, die nächsten Termine und 10 Kacheln"
   ],
   "verlauf": [
+    {
+      "version": "0.32.0",
+      "datum": "2026-11-05",
+      "neu": [
+        "🧒 Neue Kinder-Ansicht: oben die nächste Probe mit „Ich komme / Kann nicht“ und was mitzubringen ist, darunter deine Übe-Aufgaben und 8 große Kacheln – ohne Register",
+        "🧠 Quiz: Instrumente (auch zum Anhören), Noten lesen, Rhythmus, Hören (höher/tiefer, Dur/Moll), Musik-Wörter und Unser Bachkreis – leicht oder schwer",
+        "⭐ Sterne, 🔥 Übe-Serie und 🏅 Abzeichen – nur für dich, ohne Rangliste",
+        "🙂 „Ich“: Mein Gesicht, Leihinstrument, Abzeichen, Übe-Tagebuch und Einstellungen an einem Ort · 🆘 SOS-Knopf unten",
+        "🔧 Ab Klasse 9 kannst du unten auf „Mehr anzeigen“ umschalten"
+      ]
+    },
     {
       "version": "0.31.0",
       "datum": "2026-11-04",

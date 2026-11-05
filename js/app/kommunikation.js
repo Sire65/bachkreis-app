@@ -20,8 +20,8 @@ VIEWS.rundschreiben = {
     return kopf("📣 Rundschreiben") + `<div class="karte" id="rsForm">
       <div class="feld"><label>An (automatische Zielgruppe)</label><select name="verteiler" data-c="rsVorschau">${v.map((x) => `<option value="${x.key}" ${x.key === p.verteiler ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select><div class="hinweis" id="rsAnzahl"></div></div>
       <div class="feld"><label>Vorlage</label><select data-c="rsVorlage">${vorlagen.map(([k, t]) => `<option value="${k}">${t}</option>`).join("")}</select></div>
-      <div class="feld"><label>Betreff</label><input name="betreff" id="rsBetreff"></div>
-      <div class="feld"><label>Text</label><textarea name="text" id="rsText" rows="6"></textarea><div class="hinweis">Platzhalter: {vorname}</div></div>
+      <div class="feld"><label>Betreff</label><input name="betreff" id="rsBetreff" value="${esc(p.betreff || "")}"></div>
+      <div class="feld"><label>Text</label><textarea name="text" id="rsText" rows="6">${esc(p.text || "")}</textarea><div class="hinweis">Platzhalter: {vorname}</div></div>
       <div class="feld"><label>Kanäle</label><div class="wahlen">${Object.entries(KANAELE).filter(([k]) => k !== "whatsapp").map(([k, t]) => `<label><input type="checkbox" name="kanaele" data-mehr="1" value="${k}" checked> ${t}</label>`).join("")}</div></div>
       <label class="schalter"><span>Rückmeldung erbitten (Ja / Nein / Gelesen)</span><input type="checkbox" name="rueckmeldung"></label>
       <div class="knopfreihe"><button class="knopf haupt" data-a="rsSenden">📨 Senden</button><button class="knopf" data-a="rsWhatsapp">🟢 Als WhatsApp-Text</button></div>

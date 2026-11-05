@@ -42,6 +42,7 @@ export const KACHEL_RUECK = {
   anfragen: [["＋", "Neue Anfrage", ZS("anfragen", AK("anNeu"))], ["📨", "Alle Anfragen", ZS("anfragen")]],
   dokumente: [["📂", "Dokumente", ZS("dokumente")], ["＋", "Dokument hochladen", ZS("dokumente", AK("dokNeu")), () => lehrt() || istVorstand()]],
   einstellungen: [["🧩", "Startseite & Ansicht", ZS("einstellungen")], ["🌗", "Hell / Dunkel", AK("themaUmschalten")]],
+  buero: [["✉️", "Elternbrief schreiben", ZS("buero", AK("buBriefNeu"))], ["🗒️", "Protokoll schreiben", ZS("buero", AK("buProtokollNeu"))], ["📄", "Vorlagen", ZS("buero", null, { ordner: "vorlagen" })]],
   startnachricht: [["✏️", "Neue schreiben", ZS("startnachricht")], ["📊", "Antworten ansehen", ZS("startnachricht")]],
   uhrtakt: [["🥁", "Metronom", AK("uhrWerkzeug", "metronom")], ["⏲️", "Timer", AK("uhrWerkzeug", "timer")], ["⏱️", "Stoppuhr", AK("uhrWerkzeug", "stopp")]],
   kalender: [["📆", "Kalender-Abo", ZS("kalender")], ["🗓️", "Meine Termine", ZS("termine", null, { filter: "meine" })]],

@@ -269,6 +269,22 @@ for (let i = 0; i < 5; i++) { await p.waitForSelector(".quiz-opt:not([disabled])
 await p.waitForSelector(".quiz-ende", { timeout: 4000 }).catch(() => fehler.push("Quiz: Runde endet nicht"));
 await p.screenshot({ path: `${BILDER}quiz-ende.png` });
 await p.click('.fuss-leiste [data-x="kindich"]'); await p.waitForSelector(".quiz-stand");
+// 👪 0.33.0 Eltern-Ansicht: „Bitte erledigen“, Kinder-Umschalter, 10 Kacheln · 🏢 Büro: Regal, Brief aus Vorlage ablegen, Vorstand sieht nur Finanzen
+await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));
+if (!(await p.$(".eltern-todo")) || (await p.$$(".eltern-raster .kachel")).length !== 10) fehler.push("Eltern-Ansicht: Erledigen-Liste oder Kacheln fehlen");
+if ((await p.$$(".eltern-kinder button")).length >= 2) { await p.click(".eltern-kinder button >> nth=0"); await p.waitForSelector(".eltern-kinder button.an >> nth=0"); await p.click('.eltern-kinder [data-x=""]'); }
+await p.screenshot({ path: `${BILDER}eltern-start.png`, fullPage: true });
+await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("buero")); await p.waitForSelector(".bu-regal");
+if ((await p.$$(".bu-ordner")).length < 10) fehler.push("Büro: Regal unvollständig");
+await p.screenshot({ path: `${BILDER}buero.png`, fullPage: true });
+await p.click('.bu-schnell [data-a="buBriefNeu"]'); await p.waitForSelector("#briefText");
+if (!/Probenfahrt/.test(await p.inputValue("#briefText"))) fehler.push("Büro: Vorlage füllt den Brief nicht");
+await p.click('[data-a="buBriefAblegen"]'); await p.waitForSelector(".bu-text");
+await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("buero", { ordner: "elternbriefe" })); await p.waitForSelector(".liste li").catch(() => fehler.push("Büro: Brief nicht in „Elternbriefe“"));
+await p.selectOption("#demoleiste select", "vorstand"); await p.waitForTimeout(500);
+await p.evaluate(async () => { document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()); (await import("/js/app/zustand.js")).zeige("buero"); }); await p.waitForSelector(".bu-regal");
+if ((await p.$$eval(".bu-ordner b", (l) => l.map((x) => x.textContent))).join() !== "Förderverein & Finanzen") fehler.push("Büro: Vorstand sieht Leitungs-Ordner");
 // 🛡️ Schutz (0.20.0): Eltern füllen 🩺 Gesundheit aus · Leitung: 📷 Foto-Liste, 📋 Anwesenheit im Termin abhaken, Fehlzeiten
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("gesundheit")); await p.waitForSelector("#gsForm");

@@ -49,7 +49,25 @@ export const ANFRAGE_STATUS = { neu: "🆕 neu", pruefung: "🔎 in Prüfung", z
 export const ANFRAGE_BESETZUNG = { a: "A-Orchester", b: "B-Orchester", beide: "A- und B-Orchester", ensemble: "kleines Ensemble", streicher: "Streicher-Ensemble", blaeser: "Bläser-Ensemble", kammer: "Kammermusik" };
 export const CHRONIK_ARTEN = { gruendung: "🎉 Gründung", konzert: "🎼 Konzert", reise: "✈️ Reise / Tournee", austausch: "🤝 Austausch", cd: "💿 CD / Aufnahme", urauffuehrung: "🆕 Uraufführung", partner: "🏛️ Partnerschaft", auszeichnung: "🏆 Auszeichnung", sonstiges: "📌 Sonstiges" };
 export const DOKUMENT_ARTEN = { satzung: "📜 Satzung", flyer: "📰 Flyer", formular: "📝 Formular / Antrag", vorlage: "📄 Vorlage", info: "ℹ️ Information", protokoll: "🗒️ Protokoll" };
-export const DOKUMENT_SICHT = { alle: "alle", eltern: "nur Eltern", schueler: "nur Schüler", verwaltung: "nur Leitung & Verwaltung" };
+export const DOKUMENT_SICHT = { alle: "alle", eltern: "nur Eltern", schueler: "nur Schüler", verwaltung: "nur Leitung & Verwaltung", leitung: "🏢 Büro: nur Leitung & Lehrkräfte", vorstand: "🏢 Büro: Vorstand & Leitung" };
+// 🏢 Büro (0.33.0, wie KC-CLUB-BUERO-RAUM): Ordner im Regal – Registry, nichts fest verdrahtet. sicht = Vorgabe für neue Dokumente im Ordner.
+export const BUERO_ORDNER = {
+  protokolle: { sym: "🗒️", t: "Protokolle", farbe: "#5d6f82", sicht: "leitung", u: "Besprechungen, Elternabende, Vorstand" },
+  noten: { sym: "🎼", t: "Noten & Bearbeitungen", farbe: "#677662", sicht: "leitung", u: "Arrangements, Stimmen, Probenpläne" },
+  grafik: { sym: "🎨", t: "Grafik & Design", farbe: "#806548", sicht: "leitung", u: "Logo, Plakate, Programmhefte, Fotos" },
+  vorlagen: { sym: "📄", t: "Vorlagen", farbe: "#6e6a5c", sicht: "leitung", u: "Briefbogen, Elternbrief, Einladung, Urkunde" },
+  elternbriefe: { sym: "✉️", t: "Elternbriefe", farbe: "#7d6b7f", sicht: "leitung", u: "Geschriebene und verschickte Briefe" },
+  konzerte: { sym: "🎭", t: "Konzerte & Programme", farbe: "#816753", sicht: "leitung", u: "Programme, Abläufe, Bühnenpläne" },
+  vertraege: { sym: "📑", t: "Verträge", farbe: "#55606b", sicht: "leitung", u: "Leihverträge, Vereinbarungen, Mieten" },
+  presse: { sym: "📰", t: "Presse", farbe: "#62716b", sicht: "leitung", u: "Artikel, Pressetexte, Fotos für die Presse" },
+  finanzen: { sym: "💶", t: "Förderverein & Finanzen", farbe: "#696d50", sicht: "vorstand", u: "Haushalt, Spenden, Kassenprüfung" },
+  schule: { sym: "🏫", t: "Schule & Organisation", farbe: "#4f6d7a", sicht: "leitung", u: "Absprachen mit der Schule, Räume, Fristen" },
+  archiv: { sym: "🗄️", t: "Archiv", farbe: "#5f5a57", sicht: "leitung", u: "Ältere Unterlagen" },
+};
+// Wer darf ein Büro-Dokument sehen und ändern? (gleiche Regel in App und Server)
+export const BUERO_ROLLEN = { leitung: ["admin", "leitung", "lehrkraft"], vorstand: ["admin", "leitung", "vorstand"] };
+export const bueroDarf = (sichtbar, rollen = []) => !BUERO_ROLLEN[sichtbar] || BUERO_ROLLEN[sichtbar].some((r) => rollen.includes(r));
+export const bueroZugang = (rollen = []) => ["admin", "leitung", "lehrkraft", "vorstand"].some((r) => rollen.includes(r));
 export const PARTNER_ARTEN = { musikschule: "🎓 Musikschule", orchester: "🎻 Orchester", austausch: "🤝 Austausch-Partner", schule: "🏫 Schule", kirche: "⛪ Kirche / Chor", stadt: "🏛️ Stadt / Kreis", presse: "📰 Presse", sonstige: "📌 Sonstige" }; // Übe-Aufnahmen der Kinder werden nach 30 Tagen gelöscht
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
@@ -542,8 +560,11 @@ export const TABELLEN = {
       { k: "fassung", t: "Fassung / Stand", typ: "text" },
       { k: "sichtbar", t: "Sichtbar für", typ: "wahl", werte: DOKUMENT_SICHT },
       { k: "sort", t: "Reihenfolge", typ: "zahl" },
+      { k: "ordner", t: "🏢 Büro-Ordner", typ: "wahl", werte: Object.fromEntries(Object.entries(BUERO_ORDNER).map(([k, o]) => [k, `${o.sym} ${o.t}`])) },
+      { k: "jahr", t: "Jahr", typ: "zahl" },
+      { k: "inhalt", t: "Text (geschriebenes Dokument / Vorlage)", typ: "lang" },
     ],
-    liste: ["titel", "art", "fassung", "sichtbar"],
+    liste: ["titel", "ordner", "art", "jahr", "sichtbar"],
     anzeige: (z) => z.titel,
   },
   // 🤝 Partner (0.27.0): Musikschule, Partnerorchester, Austausch-Orchester, Kirchen, Presse

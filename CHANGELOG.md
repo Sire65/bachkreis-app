@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.33.0 DEV – 05.11.2026
+- 🏢 Büro (Wunsch Hansi 05.11. „wie Club App mit Ordnern wie Protokolle, Noten, Grafik und Design mit Vorlagen, Elternbriefe“; nach KC-CLUB-BUERO-RAUM): js/app/buero.js – Regal mit 11 Ordnern (Registry `BUERO_ORDNER` in schema.js), 📥 Eingangskorb aus dem Cockpit, Suche, Ordner nach Jahren, Dokument schreiben/hochladen/verlinken
+- Kein zweiter Speicher: Büro-Dokumente liegen in `dokumente` mit neuen Feldern `ordner`, `jahr`, `inhalt` und den Sichtbarkeiten „Büro: Leitung & Lehrkräfte“ / „Büro: Vorstand & Leitung“ (`bueroDarf`); der Server filtert auch für Rollen, die Dokumente sonst ganz lesen (Instrumenten-/Notenwart), und lehnt fremde Büro-Sichtbarkeiten beim Schreiben ab (`BUERO_NICHT_ERLAUBT`); geschützter Datei-Abruf wie bisher
+- ✉️ Brief aus Vorlage ({vorname} {datum} {orchester} {termin} {leitung}) → 🖨️ Druck mit Briefkopf · 📣 Rundschreiben (Betreff/Text vorausgefüllt) · 💾 „Elternbriefe“ · 🗒️ Protokoll-Vorlage; Vorführdaten mit 3 Vorlagen und Beispielen
+- 📂 Dokumente für Mitglieder zeigt nur noch Dokumente ohne Büro-Ordner
+- 👪 Eltern-Ansicht (docs/KONZEPT-ANSICHTEN.md Teil 3): js/app/elternstart.js – „✅ Bitte erledigen“, Kinder-Umschalter, nächste Termine mit Antwort je Kind, 10 Kacheln, schmaler Kopf, „🔧 Alle Bereiche“ ↔ „👪 Eltern-Übersicht“
+- Migration 20261105000000_bk_buero.sql; tests/buero.test.mjs; Rundgang (Eltern, Büro, Vorstand), Echtbetrieb angepasst
+
 ## 0.32.0 DEV – 05.11.2026
 - 🧒 Kinder-Ansicht (docs/KONZEPT-ANSICHTEN.md, Teil 2): js/app/kinderstart.js – nächster Termin mit Mitbringen und Zusage (Kinder sagen selbst zu), „Meine Übe-Aufgaben“ mit Stand, wichtige Pinnwand-Zettel als Karte, 8 Kacheln (Termine, Üben, Noten, Quiz, Instrumente, Orchester, Nachrichten, Ich), schmaler Kopf ohne Info-Feld, Kinder-Fußleiste (Start · Termine · Üben · Nachrichten · Ich), SOS-Knopf
 - 🔧 Ab Klasse 9 (`konfig.ansicht_kind_ab_klasse`, PC-Verwaltung › Einstellungen) „Mehr anzeigen“ ↔ „🧒 Einfache Kinder-Ansicht“; Rechte unverändert (Server)

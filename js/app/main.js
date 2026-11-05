@@ -30,6 +30,8 @@ import { beimStart } from "./einstellungen.js";
 import { snPruefen } from "./startnachricht.js";
 import { linkHilfeHtml, installEinladungPruefen } from "./zugang.js";
 import "./bedienung.js";
+import "./quiz.js";
+import "./kinderstart.js";
 import { buehneLaeuft } from "./buehne.js";
 
 window.addEventListener("error", (e) => fehlerMerken(e.error || e.message));

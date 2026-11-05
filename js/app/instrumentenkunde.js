@@ -232,6 +232,8 @@ VIEWS.instrumentenkunde = {
   },
 };
 AKTIONEN.lehreOeffnen = (id) => { if (AUDIO) { try { AUDIO.close(); } catch {} AUDIO = null; } zeige("instrumentenkunde", { id }, { ersetzen: S.view === "instrumentenkunde" && !!S.params.id }); };
+// 🧠 für das Quiz (0.32.0): Klang eines Instruments abspielen
+export const lehreKlang = (id, art = "melodie") => { const l = LEHRE.find((y) => y.id === id); if (l) abspielen(l, art); };
 AKTIONEN.lehreSpielen = (x) => { const [id, art] = String(x).split("|"), l = LEHRE.find((y) => y.id === id); if (l) abspielen(l, art); };
 AKTIONEN.lehreInventar = (typ) => { try { sessionStorage.setItem("bk_inst_filter", JSON.stringify({ q: "", status: "aktiv", gruppe: "", typ, standort: "", zustand: "" })); } catch {} zeige("instrumente"); };
 // Aus anderen Bereichen (Orchester, Instrumente): passendes Kapitel zu einem Instrumenten- oder Registernamen

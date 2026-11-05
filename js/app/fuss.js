@@ -6,8 +6,9 @@ import { AKTIONEN, esc } from "../kern/ui.js";
 import { ungelesen, nachrichtStufe, NACHRICHT_STUFE_TEXT } from "./start.js";
 import { kopfVorne } from "./buehne.js";
 import { onlineZahl } from "./online.js";
+import { kindAnsicht } from "./kinderstart.js";
 
-const KNOEPFE = () => [
+const KNOEPFE = () => kindAnsicht() ? [["start", "🏠", "Start"], ["termine", "📅", "Termine"], ["kindueben", "🎻", "Üben"], ["nachrichten", "💬", "Nachrichten"], ["kindich", "🙂", "Ich"]] : [
   ["start", "🏠", "Start"],
   ["termine", "📅", "Termine"],
   ["nachrichten", "💬", "Nachrichten"],
@@ -37,6 +38,8 @@ AKTIONEN.fuss = (v) => {
     try { scrollTo({ top: 0, behavior: "smooth" }); } catch {}
     return;
   }
+  if (v === "kindueben") return zeige("buehne", { modus: "ueben" }); // 🧒 Kinder-Fußleiste
+  if (v === "termine" && kindAnsicht()) return zeige("termine", { filter: "meine" });
   zeige(v);
 };
 document.addEventListener("bk-ansicht", () => setTimeout(fussZeichnen, 0));

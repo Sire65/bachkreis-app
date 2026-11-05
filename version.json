@@ -1,15 +1,26 @@
 {
-  "version": "0.31.0",
-  "datum": "2026-11-04",
+  "version": "0.32.0",
+  "datum": "2026-11-05",
   "stufe": "DEV",
   "neu": [
-    "📲 Mach die Bachkreis-App zu einer echten App: im Browser kommt ab und zu eine freundliche Einladung zum Installieren – mit „Jetzt installieren“ und „Zeig mir wie“",
-    "🔗 Link funktioniert nicht? Die Anmeldeseite erklärt jetzt freundlich, woran es liegen kann und was hilft",
-    "✏️ Umfragen im Chat mit eigener Antwort – und „Mehrere Antworten erlauben“ funktioniert jetzt richtig",
-    "💡 Tipp des Tages mit 👍 / 👎 – „Kenne ich schon“ blendet ihn aus",
-    "📊 Bachkreis in Zahlen (Leitung, Lehrkräfte, Vorstand) · 🛡️ Zugang im Blick für die Leitung: Anmeldeversuche, Sperren und wer die App installiert hat"
+    "🧒 Neue Kinder-Ansicht: oben die nächste Probe mit „Ich komme / Kann nicht“ und was mitzubringen ist, darunter deine Übe-Aufgaben und 8 große Kacheln – ohne Register",
+    "🧠 Quiz: Instrumente (auch zum Anhören), Noten lesen, Rhythmus, Hören (höher/tiefer, Dur/Moll), Musik-Wörter und Unser Bachkreis – leicht oder schwer",
+    "⭐ Sterne, 🔥 Übe-Serie und 🏅 Abzeichen – nur für dich, ohne Rangliste",
+    "🙂 „Ich“: Mein Gesicht, Leihinstrument, Abzeichen, Übe-Tagebuch und Einstellungen an einem Ort · 🆘 SOS-Knopf unten",
+    "🔧 Ab Klasse 9 kannst du unten auf „Mehr anzeigen“ umschalten"
   ],
   "verlauf": [
+    {
+      "version": "0.31.0",
+      "datum": "2026-11-04",
+      "neu": [
+        "📲 Mach die Bachkreis-App zu einer echten App: im Browser kommt ab und zu eine freundliche Einladung zum Installieren – mit „Jetzt installieren“ und „Zeig mir wie“",
+        "🔗 Link funktioniert nicht? Die Anmeldeseite erklärt jetzt freundlich, woran es liegen kann und was hilft",
+        "✏️ Umfragen im Chat mit eigener Antwort – und „Mehrere Antworten erlauben“ funktioniert jetzt richtig",
+        "💡 Tipp des Tages mit 👍 / 👎 – „Kenne ich schon“ blendet ihn aus",
+        "📊 Bachkreis in Zahlen (Leitung, Lehrkräfte, Vorstand) · 🛡️ Zugang im Blick für die Leitung: Anmeldeversuche, Sperren und wer die App installiert hat"
+      ]
+    },
     {
       "version": "0.30.0",
       "datum": "2026-11-04",

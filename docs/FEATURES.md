@@ -88,6 +88,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F78 | 🧩 Bedienung wie KC 2.858: 🔄-Zeichen, Kachel-Effekte, Schatten/Ecken, Tippflächen, Kopf-Pfeil blinkt, Online-Namen, Einstellungs-Übersicht, Pinnwand-Nadeln & nie automatisch, Geburtstags-Vogel, Stundenuhren, Uhr & Takt, Impressum | ✅ | e2e rundgang, echtbetrieb, axe |
 | BK-F79 | 📣 Startnachricht der Leitung mit Ja/Später/Nein, Rückfrage, Antworten-Übersicht; ausdrückliche Tabellenrechte für service_role | ✅ | tests/startnachricht.test.mjs, e2e rundgang |
 | BK-F80 | 🔑 Zugang & Organisation wie KC 2.859: Installations-Einladung & -Hilfe, Zugang im Blick (Anmeldeversuche/Sperren/Installiert?), Link-Hilfe, Umfrage mit freier Antwort, Tipps mit 👍/👎, Bachkreis in Zahlen | ✅ | tests/zugang.test.mjs, e2e rundgang, echtbetrieb, axe |
+| BK-F81 | 🧒 Kinder-Ansicht (Termin mit Zusage, Übe-Aufgaben, 8 Kacheln, Kinder-Fußleiste, „Mehr“ ab Klasse 9) und 🧠 Quiz mit Sternen, Übe-Serie, Abzeichen | ✅ | tests/quiz.test.mjs, e2e rundgang, echtbetrieb, axe |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

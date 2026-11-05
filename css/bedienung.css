@@ -115,3 +115,44 @@
 .tipp-rueck { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0; }
 .uf-frei { margin-top: 6px; } .uf-frei-a { font-size: .88rem; padding: 3px 0; overflow-wrap: anywhere; }
 .uf-frei-eingabe { display: flex; gap: 6px; margin-top: 4px; } .uf-frei-eingabe input { flex: 1; min-width: 0; min-height: 40px; border-radius: 10px; border: 1px solid var(--linie); padding: 0 10px; background: var(--karte); color: var(--text); font: inherit; }
+/* 0.32.0 – 🧒 Kinder-Ansicht und 🧠 Quiz */
+.ansicht-kind .kind-karte { border-radius: 20px; }
+.kind-karte h3 { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 0 8px; }
+.kind-sterne { font-size: .95rem; font-weight: 800; white-space: nowrap; }
+.kind-termin { display: grid; gap: 2px; width: 100%; text-align: left; border: none; background: none; color: inherit; font: inherit; padding: 0; cursor: pointer; }
+.kind-termin b { font-size: 1.3rem; } .kind-termin span { font-size: 1.05rem; color: var(--grau); font-weight: 700; }
+.kind-mit { margin: 8px 0; font-size: .95rem; }
+.kind-antwort { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } .kind-antwort .knopf { min-height: 52px; font-size: 1.05rem; }
+.kind-aufgaben { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+.kind-aufgaben li { display: grid; grid-template-columns: 24px 1fr; gap: 0 6px; padding: 8px 10px; border-radius: 12px; background: var(--karte2, rgba(0,0,0,.04)); }
+.kind-aufgaben li small { grid-column: 2; color: var(--grau); font-weight: 700; } .kind-aufgaben li.fertig b { text-decoration: line-through; opacity: .7; }
+.kind-zettel p { font-weight: 700; margin: 4px 0; }
+.kind-raster { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (min-width: 520px) { .kind-raster { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.kind-kachel { min-height: 112px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 6px; }
+.kind-kachel .sym { font-size: 2.6rem; } .kind-kachel b { font-size: 1.15rem; margin: 0; }
+.quiz-stand { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; gap: 6px; }
+.quiz-stand b { display: block; font-size: 1.5rem; } .quiz-stand small { color: var(--grau); font-weight: 700; }
+.quiz-bereiche { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 10px 0 14px; }
+.quiz-bereich { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 10px 14px; border: none; border-radius: var(--radius); background: var(--karte); color: var(--text); box-shadow: var(--schatten); font: inherit; font-size: 1.02rem; text-align: left; cursor: pointer; }
+.quiz-bereich span { font-size: 1.8rem; }
+.abzeichen { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.abz { display: grid; justify-items: center; text-align: center; gap: 2px; padding: 10px; border-radius: 14px; background: var(--karte); }
+.abz:not(.hat) span { opacity: .35; filter: grayscale(1); }
+.abz.hat { box-shadow: 0 0 0 2px #d4a017; } .abz span { font-size: 2rem; } .abz small { color: var(--grau); font-size: .78rem; font-weight: 700; }
+.abz.neu { animation: abzNeu 1s ease 2; } @keyframes abzNeu { 50% { transform: scale(1.08); } }
+.quiz-fortschritt { display: flex; gap: 6px; margin: 0 0 10px; } .quiz-fortschritt i { flex: 1; height: 8px; border-radius: 4px; background: var(--linie); } .quiz-fortschritt i.fertig { background: #2e9d5b; } .quiz-fortschritt i.jetzt { background: #d4a017; }
+.quiz-frage small { color: var(--grau); font-weight: 800; } .quiz-frage h2 { margin: 6px 0 10px; font-size: 1.3rem; }
+.quiz-note { display: block; width: min(320px, 100%); margin: 6px auto 12px; color: var(--text); }
+.quiz-zeichen { font-size: 4rem; text-align: center; line-height: 1.2; }
+.quiz-optionen { display: grid; gap: 8px; margin-top: 10px; }
+.quiz-opt { min-height: 54px; padding: 8px 14px; border: 2px solid var(--linie); border-radius: 14px; background: var(--karte); color: var(--text); font: inherit; font-size: 1.08rem; font-weight: 800; text-align: left; cursor: pointer; }
+.quiz-opt.richtig { border-color: #1e7a43; background: #e3f5e9; color: #10381f; } .quiz-opt.falsch { border-color: #c62828; background: #fdecea; color: #5c1010; }
+.quiz-opt:disabled { cursor: default; opacity: 1; }
+.quiz-erkl { font-weight: 700; margin: 12px 0; }
+.quiz-ende { text-align: center; } .quiz-sterne { font-size: 3rem; letter-spacing: 6px; }
+/* 🧒 schmaler Kopf in der Kinder-Ansicht: Begrüßung, Gesicht/Logo, Tag/Nacht – ohne Info-Feld, Statusleiste und Pfeile (alles steht darunter groß) */
+#v-start.ansicht-kind .hero .statusleiste, #v-start.ansicht-kind .hero .info, #v-start.ansicht-kind .hero .ipunkte, #v-start.ansicht-kind .hero .kopf-pfeil, #v-start.ansicht-kind .hero .ipfeil { display: none; }
+#v-start.ansicht-kind .hero { min-height: 0; padding-bottom: 14px; }
+.kind-sos { margin-top: 10px; background: #c62828; color: #fff; border: none; font-weight: 900; }
+.kind-ich .ifz { color: var(--text); background: var(--karte); border: 1px solid var(--linie); } .kind-ich .ifz small { color: var(--text); opacity: .8; }

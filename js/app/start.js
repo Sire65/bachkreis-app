@@ -14,6 +14,7 @@ import { mitfahrtZahlen } from "./extras.js";
 import { wochenStand } from "./ueben.js";
 import { startseiteVerbinden, ANO, anordnenHtml, anordnenLeiste, nachDemZeichnen, laufbandHtml, laufbandStarten, countdownHtml, schnellstartHtml, schnellstartAn, vorschlagPruefen, nuTagZaehlen, ansichtFrage, tagesinfoBeimStart, kachelOffenHinten, drehZeichen } from "./startseite.js";
 import { gbvPruefen } from "./bedienung.js";
+import { kindAnsicht, kinderStartHtml, kindGross } from "./kinderstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
 import { offeneUebeAufgaben } from "./uebebuehne.js";
 import { austauschProjekte, anfragenOffen } from "./vereinsleben.js";
@@ -70,6 +71,7 @@ export const KACHELN = {
     { id: "sos", sym: "🆘", t: "SOS – Notfall", u: "Notruf · Kontakte im Notfall", v: "sos", klasse: "sos" },
     { id: "nachrichten", sym: "💬", t: "Nachrichten", u: "Gruppen · Rundschreiben", v: "nachrichten", zahl: () => ungelesen() },
     { id: "orchester", sym: "🎼", t: "Orchester", u: "Sitzplan · Gesichter · Besetzung", v: "orchester", nur: () => !istEltern() },
+    { id: "quiz", sym: "🧠", t: "Quiz", u: "Instrumente · Noten · Rhythmus · Hören", v: "quiz" },
     { id: "instrumentenkunde", sym: "🎺", t: "Instrumentenkunde", u: "Halten · Hören · Worauf achten", v: "instrumentenkunde" },
     { id: "buehne", sym: "🎭", t: "Bühne", u: "Das Orchester spielt · Konzertaufnahmen · Üben", v: "buehne" },
     { id: "pinnwand", sym: "📌", t: "Pinnwand", u: "Post-its · wichtig · für alle oder privat", v: "pinnwand", zahl: () => pwOffenZahl() },
@@ -200,6 +202,7 @@ function rasterBlock() {
 }
 VIEWS.start = {
   render() {
+    if (kindAnsicht()) return kinderStartHtml(); // 🧒 0.32.0 eigene Kinder-Startseite
     const e = einst();
     if (!registerSichtbar().find(([r]) => r === S.register)) S.register = registerSichtbar()[0][0];
     // Der Kopf (kopf.js) ist ein dauerhaftes Element – hier nur sein Platz
@@ -211,10 +214,12 @@ VIEWS.start = {
       ${e.einfach || ANO.an ? "" : `<div class="wischhinweis">‹ wischen für weitere Bereiche · doppelt tippen dreht eine Kachel um · lange drücken ordnet an ›</div>`}
       <div class="karte"><h3>Heute wichtig${istLehrkraft() || istVorstand() ? ' <button type="button" class="knopf klein" data-a="tagesinfo">📋 Übersicht</button>' : ""}</h3>${heuteWichtig()}</div>
       <button class="knopf breit ansicht-knopf" data-a="ansichtWechseln">${e.einfach ? "🔧 Erweiterte Ansicht" : "🟢 Einfache Ansicht"}</button>
+      ${istSchueler() && kindGross() ? '<button class="knopf breit ansicht-knopf" data-a="kindMehr" data-x="">🧒 Einfache Kinder-Ansicht</button>' : ""}
       <div class="fusszeile">Bachkreis-App v${APP_VERSION} ${APP_STUFE} · ${esc(datenInfo().hinweis || "")}</div></section>`;
   },
   nach() {
     kopfEinsetzen(document.getElementById("kopfPlatz"));
+    if (kindAnsicht()) { setTimeout(gbvPruefen, 1500); return; }
     nachDemZeichnen(); nuTagZaehlen();
     clearTimeout(START_FRAGEN); START_FRAGEN = setTimeout(() => { if (S.view === "start" && !ansichtFrage()) tagesinfoBeimStart(); }, 1200);
     clearTimeout(START_VORSCHLAG); START_VORSCHLAG = setTimeout(vorschlagPruefen, 25000);

@@ -88,6 +88,7 @@ await p.evaluate(() => document.querySelector("#raster > .kachel").scrollIntoVie
   const z = await (await p.$("#raster > .kachel:nth-child(4)")).boundingBox(); await p.mouse.move(z.x + 40, z.y + 40, { steps: 8 }); await p.mouse.up(); await p.waitForTimeout(300);
   if ((await p.$eval("#raster > .kachel:nth-child(1)", (e) => e.dataset.id)) === erste) fehler.push("Startseite: Ziehen verschiebt nicht");
   await p.screenshot({ path: `${BILDER}start-anordnen.png`, fullPage: true });
+  await p.evaluate(() => document.querySelector('#raster > .kachel[data-id="buehne"]')?.scrollIntoView({ block: "center" })); await p.waitForTimeout(150);
   await p.click('#raster > .kachel[data-id="buehne"] .kweg', { force: true }); await p.click('[data-a="kaFertig"]', { force: true }); await p.waitForTimeout(200);
   if (await p.$('#raster > .kachel[data-id="buehne"]')) fehler.push("Startseite: ✕ blendet nicht aus");
   await p.click('[data-a="kaNurAus"][data-x="1"]'); await p.click('[data-a="kaAnordnen"] >> nth=0'); await p.waitForTimeout(200);
@@ -257,6 +258,17 @@ for (const rolle of ["leitung", "lehrkraft", "vorstand", "schueler", "eltern"]) 
     }
   }
 }
+// 🧒 0.32.0 Kinder-Ansicht: 8 Kacheln, keine Register, Kinder-Fußleiste, Zusage direkt · 🧠 Quiz-Runde bis zum Ende
+await p.selectOption("#demoleiste select", "schueler"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));
+if ((await p.$$(".kind-kachel")).length !== 8 || (await p.$("#register"))) fehler.push("Kinder-Ansicht: nicht 8 Kacheln bzw. Register sichtbar");
+if (!(await p.$('.fuss-leiste [data-x="kindueben"]'))) fehler.push("Kinder-Ansicht: Fußleiste ohne 🎻 Üben");
+if (await p.$('.kind-antwort [data-x$="|ja"]')) { await p.click('.kind-antwort [data-x$="|ja"]'); await p.waitForTimeout(400); }
+await p.screenshot({ path: `${BILDER}kind-start.png`, fullPage: true });
+await p.click('[data-a="kindKachel"][data-x="quiz"]'); await p.waitForSelector(".quiz-bereich"); await p.click('[data-a="quizStart"][data-x="woerter"]');
+for (let i = 0; i < 5; i++) { await p.waitForSelector(".quiz-opt:not([disabled])"); await p.click(".quiz-opt >> nth=0"); await p.click('[data-a="quizWeiter"]'); }
+await p.waitForSelector(".quiz-ende", { timeout: 4000 }).catch(() => fehler.push("Quiz: Runde endet nicht"));
+await p.screenshot({ path: `${BILDER}quiz-ende.png` });
+await p.click('.fuss-leiste [data-x="kindich"]'); await p.waitForSelector(".quiz-stand");
 // 🛡️ Schutz (0.20.0): Eltern füllen 🩺 Gesundheit aus · Leitung: 📷 Foto-Liste, 📋 Anwesenheit im Termin abhaken, Fehlzeiten
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("gesundheit")); await p.waitForSelector("#gsForm");

@@ -1,6 +1,6 @@
 # Konzept: Eigene Ansichten für Kinder, Eltern, Lehrkräfte und Vorstand
 
-Stand: 05.11.2026 · Bachkreis-App 0.31.0 · Entwurf zur Freigabe
+Stand: 05.11.2026 · freigegeben von Hansi am 05.11.2026 · Teil 2 (Kinder) umgesetzt in 0.32.0
 
 ## 1. Ausgangslage
 
@@ -171,7 +171,16 @@ Keine Übe-Aufgaben, Gesundheit oder Kinder-Details, nur das, was der Vorstand o
 | 0.33.0 | 👪 Eltern-Ansicht mit Erledigen-Liste und Kinder-Umschalter |
 | 0.34.0 | 🎼 Lehrkraft-Arbeitsplatz („Heute“), 💛 Vorstand, Ansichten in der PC-Verwaltung, Quiz der Woche |
 
-## 8. Bitte entscheiden
+## 8. Entscheidungen (Hansi, 05.11.2026)
+
+1. Altersgrenze für „Mehr anzeigen“: **ab Klasse 9** (einstellbar in der PC-Verwaltung).
+2. **Kinder sagen selbst zu und ab.**
+3. Nachrichten für Kinder: **wie bisher** (Kinderschutz-Regeln aus 0.20.0).
+4. Pinnwand für Kinder: **nur wichtige Zettel als Karte oben**.
+5. Quiz-Punkte: **privat**; Lehrkräfte sehen Punkte nur beim „Quiz der Woche“ (kommt mit 0.34.0).
+6. **Sterne und Abzeichen ja, keine Ranglisten.**
+
+## 9. Ursprüngliche Fragen
 
 1. **Altersgrenze** für „Mehr anzeigen“ bei Kindern – Vorschlag: ab Klasse 9.
 2. **Dürfen Kinder selbst zu- und absagen**, oder nur die Eltern? (Heute: Kinder dürfen.)

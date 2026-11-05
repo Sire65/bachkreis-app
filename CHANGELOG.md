@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.32.0 DEV – 05.11.2026
+- 🧒 Kinder-Ansicht (docs/KONZEPT-ANSICHTEN.md, Teil 2): js/app/kinderstart.js – nächster Termin mit Mitbringen und Zusage (Kinder sagen selbst zu), „Meine Übe-Aufgaben“ mit Stand, wichtige Pinnwand-Zettel als Karte, 8 Kacheln (Termine, Üben, Noten, Quiz, Instrumente, Orchester, Nachrichten, Ich), schmaler Kopf ohne Info-Feld, Kinder-Fußleiste (Start · Termine · Üben · Nachrichten · Ich), SOS-Knopf
+- 🔧 Ab Klasse 9 (`konfig.ansicht_kind_ab_klasse`, PC-Verwaltung › Einstellungen) „Mehr anzeigen“ ↔ „🧒 Einfache Kinder-Ansicht“; Rechte unverändert (Server)
+- 🧠 Quiz: js/kern/quiz.js (reine Logik, testbar) + js/app/quiz.js – 6 Bereiche, leicht/schwer (Standard nach Klasse), 5 Fragen je Runde, Erklärung nach jeder Antwort, Noten als selbst gezeichnetes Notenbild, Klänge aus der Instrumentenkunde (`lehreKlang`) bzw. WebAudio
+- ⭐ Sterne je Runde, 🔥 Übe-Serie (aus Übe-Tagebuch und Übe-Ergebnissen), 🏅 8 Abzeichen – nur auf dem Gerät, keine Ranglisten
+- 🙂 Seite „Ich“ (kindich) · Kachel 🧠 Quiz auch für alle anderen im Register Bachkreis
+- Entscheidungen Hansi 05.11.: Kinder sagen selbst zu; Altersgrenze Klasse 9; Nachrichten wie bisher (Kinderschutz-Regeln); Pinnwand nur als Karte „wichtig“; Quiz-Punkte privat (Lehrkraft sieht sie nur beim späteren „Quiz der Woche“); Sterne/Abzeichen ja, Ranglisten nein
+- tests/quiz.test.mjs; Rundgang prüft Kinder-Ansicht, Zusage, Quiz-Runde, „Ich“
+
 ## 0.31.0 DEV – 04.11.2026
 - 🔑 Zugang & Organisation wie die KC Club App 2.859 – neues Modul js/app/zugang.js
 - 📲 Einladung zum Installieren (KC-CLUB-INSTALL-EINLADUNG): nur Handy/Tablet im Browser, ab dem 3. Öffnen, höchstens alle 3 Tage, „leise“; Knöpfe Jetzt installieren / Zeig mir wie / Nicht mehr fragen; Hilfe-Kapitel und App-Installation mit Knöpfen (KC-CLUB-HILFE-INSTALL); Kachel „📲 App installieren“

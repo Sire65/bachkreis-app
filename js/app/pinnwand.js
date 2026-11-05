@@ -30,6 +30,8 @@ const meine = () => liste("pinnwand", (z) => z.von === ich());
 // wichtig und noch offen (eigene Zettel „nur für mich“ zählen mit – sie sind ein Merkzettel)
 const pwOffen = (z) => z.wichtig && !erledigtAm(z) && (z.von !== ich() || z.fuer === "ich");
 // Zahl auf der Kachel: fremde Zettel, die ich noch nicht abgehakt habe
+// 🧒 Kinder-Ansicht: wichtige, noch nicht abgehakte Zettel als Karte oben (0.32.0)
+export const pwWichtigFuerMich = () => (S.ich ? pwZettel().filter((z) => z.von !== ich() && pwOffen(z)) : []);
 export const pwOffenZahl = () => (S.ich ? pwZettel().filter((z) => z.von !== ich() && z.fuer !== "ich" && !erledigtAm(z)).length : 0);
 const freieFarbe = () => { const belegt = new Set(meine().map((z) => Number(z.farbe))); return [1, 2, 3, 4].find((n) => !belegt.has(n)) ?? 1; };
 const fristen = () => {

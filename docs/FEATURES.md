@@ -91,6 +91,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F81 | 🧒 Kinder-Ansicht (Termin mit Zusage, Übe-Aufgaben, 8 Kacheln, Kinder-Fußleiste, „Mehr“ ab Klasse 9) und 🧠 Quiz mit Sternen, Übe-Serie, Abzeichen | ✅ | tests/quiz.test.mjs, e2e rundgang, echtbetrieb, axe |
 | BK-F82 | 🏢 Büro für Leitung/Lehrkräfte/Vorstand: Ordner-Regal, Eingangskorb, Vorlagen → Brief (Druck/Rundschreiben/Ablage), Protokolle; geschützte Büro-Sichtbarkeit | ✅ | tests/buero.test.mjs, e2e rundgang, axe |
 | BK-F83 | 👪 Eltern-Ansicht: Bitte erledigen, Kinder-Umschalter, nächste Termine, 10 Kacheln | ✅ | e2e rundgang, echtbetrieb, axe |
+| BK-F84 | 🎻 Echte Instrumentenklänge (VSCO 2 CE, CC0) für Instrumentenkunde, Bühne, Übe-Bühne, Notenblatt, Quiz; Laden bei Bedarf, Synth als Ersatz | ✅ | tests/klangproben.test.mjs, e2e rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

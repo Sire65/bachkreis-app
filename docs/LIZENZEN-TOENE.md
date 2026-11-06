@@ -14,4 +14,24 @@ Die gleichen Angaben stehen in der App unter ⚙️ Einstellungen › ✨ Effekt
 | uhr-berlin.mp3 | Geläut des Berliner Doms (2016) | Morn | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Berlin_Cathedral_bells,_2016.wav |
 | uhr-freiburg.mp3 | Glockenspiel am Neuen Rathaus Freiburg | Andreas Schwarzkopf | CC BY-SA 4.0 | https://commons.wikimedia.org/wiki/File:Neues_Rathaus_Freiburg,_Glockenspiel.mp3 |
 
-Selbst erzeugt (WebAudio, keine Aufnahme): Ersatzglocken der Stundenuhren, Metronom-Klick, Timer-Gong, „Happy Birthday“ (Melodie gemeinfrei).
+## 🎻 Instrumentenklänge (0.34.0) – Ordner `ton/instrumente/`
+
+Alle 149 Dateien stammen aus **VS Chamber Orchestra 2 – Community Edition** von Versilian Studios
+(aufgenommen von Sam Gossner & Simon Dalzell, Schnitt Elan Hickler/Soundemote; Klavier: Simon Dalzell / Ivy Audio),
+Quelle: https://github.com/sgossner/VSCO-2-CE · Lizenz: **CC0 1.0** (gemeinfrei – Weitergabe und Änderung ohne Bedingungen; Nennung erwünscht).
+Bearbeitet: Stille am Anfang entfernt, auf 2,5–3 s gekürzt, ausgeblendet, Lautheit angeglichen (−18 LUFS), mono MP3.
+
+| Ordner | Instrument (VSCO-Ordner) |
+|---|---|
+| violine | Solo Violin, Arco Vib, forte |
+| viola | Viola Section, sustain vibrato |
+| cello | Cello Section, sustain vibrato |
+| bass | Solo Contrabass, sustain vibrato |
+| floete · oboe · klarinette · fagott | Flute susvib · Oboe Vib · Clarinet susLong · Bassoon vib |
+| trompete · horn · posaune · tuba | Trumpet susvib · F Horn sus · Tenor Trombone sus · Tuba sus |
+| harfe · klavier · glockenspiel | Harp · Upright Piano (dyn2) · Glock |
+| pauke · trommel | Timpani Hit · Snare (VSCO 1 Percussion) · Crash-Becken |
+
+Neu erzeugen: `VSCO=~/vsco python3 tools/klangproben/bauen.py` (braucht ffmpeg und einen Teil-Klon des VSCO-Repositorys) – schreibt die Dateien und `js/kern/klangproben.js`.
+
+Selbst erzeugt (WebAudio, keine Aufnahme): Ersatzklang der Instrumente (offline/vor dem Laden), Ersatzglocken der Stundenuhren, Metronom-Klick, Timer-Gong, „Happy Birthday“ (Melodie gemeinfrei).

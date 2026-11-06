@@ -196,7 +196,9 @@ for (const x of ["register", "besetzung", "sitzplan"]) { await p.click(`[data-a=
 if (!(await p.$(".sitzplan"))) fehler.push("Orchester: Sitzplan fehlt");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("instrumentenkunde")); await p.waitForSelector(".lehre-kachel");
 await p.click('.lehre-kachel[data-x="violine"]'); await p.waitForSelector(".lehre-figur svg");
-await p.click('[data-a="lehreSpielen"][data-x="violine|tonleiter"]'); await p.waitForTimeout(300);
+await p.click('[data-a="lehreSpielen"][data-x="violine|tonleiter"]'); await p.waitForTimeout(1500);
+{ const n = await p.evaluate(() => performance.getEntriesByType("resource").filter((e) => e.name.includes("/ton/instrumente/violine/")).length); // 🎻 0.34.0 echte Aufnahmen
+  if (n < 5) fehler.push(`🎻 Echte Violinen-Aufnahmen nicht geladen (${n})`); }
 // Kopf bleibt beim Spielen über dem Körper (Wipp-Animation darf die Position nicht überschreiben)
 { const k = await p.$eval(".figur-svg .kopf", (e) => { const r = e.getBoundingClientRect(), s = e.ownerSVGElement.getBoundingClientRect(); return (r.left + r.width / 2 - s.left) / s.width; });
   if (k < 0.38 || k > 0.62) fehler.push(`Instrumentenkunde: Kopf beim Spielen verschoben (${k.toFixed(2)})`); }

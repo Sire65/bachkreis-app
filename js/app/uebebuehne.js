@@ -8,7 +8,7 @@ import { liste, hole, speichere, loesche } from "../kern/daten.js";
 import { kinderVon, registerVon, tagIso, einwilligung, aufgabeGiltFuer, aufgabeKinder, uebeZielErreicht, uebeStand } from "../kern/logik.js";
 import { UEBE_ARTEN, UEBE_STUECKE, UEBE_TONARTEN, UEBE_SPIELE, UEBE_AUFNAHME_TAGE, istMinderjaehrig } from "../kern/schema.js";
 import { stimmeErzeugen, notenSvg, INSTRUMENTE, instrumentVon, transVz } from "../kern/notensatz.js";
-import { instrumentSpielen, STUECKE, midi } from "../kern/musik.js";
+import { instrumentSpielen, STUECKE, midi, klaengeLaden } from "../kern/musik.js";
 import { tonleiterSt, stelleSt, taktZahl, notenName, hatTonumfang } from "../kern/uebematerial.js";
 import { musterLesen, musterText, musterPruefen, einsaetze, rhythmusSt, bewerten, tippUrteil, RHYTHMUS_STUFEN, NOTENWERTE } from "../kern/rhythmus.js";
 import { griff, griffSvg } from "../kern/griffe.js";
@@ -57,6 +57,7 @@ function audioNeu() {
   const K = window.AudioContext || window.webkitAudioContext;
   if (!K) { toast("Dieses Gerät kann keine Musik erzeugen"); return null; }
   AC = new K(); AC.resume?.();
+  klaengeLaden(AC, ["klavier", "trommel", INSTRUMENTE[inst()]?.klang].filter(Boolean)); // 🎻 echte Aufnahmen (0.34.0), im Hintergrund
   return AC;
 }
 function audioStopp() {

@@ -58,6 +58,60 @@ export const STUECKE = [
     melodieSek: ["tr", "hr"], bassArt: "schlaege", pauke: true },
 ];
 
+// ---------- 🎻 Echte Instrumentenklänge (0.34.0) ----------
+// Kurze Aufnahmen aus VS Chamber Orchestra 2 – Community Edition (Versilian Studios, CC0) in ton/instrumente/<art>/<midi>.mp3.
+// Je Ton wird die nächstgelegene Aufnahme genommen und umgestimmt (playbackRate). Geladen wird je Instrument erst beim ersten Gebrauch;
+// fehlt eine Aufnahme (offline, noch nicht geladen, Schalter aus), klingt der selbst erzeugte Ton wie bisher – nie Stille.
+import { KLANGPROBEN } from "./klangproben.js";
+export const KLANG_ECHT = { an: true, basis: "ton/instrumente/" };
+const PROBEN = {}; // art → { laden: Promise, puffer: Map(midi → AudioBuffer) }
+// Synth-Klangfarbe → Aufnahme
+const PROBE_VON = { streicher: "violine", violine: "violine", bratsche: "viola", viola: "viola", cello: "cello", bass: "bass", floete: "floete", oboe: "oboe", klarinette: "klarinette",
+  fagott: "fagott", horn: "horn", trompete: "trompete", blech: "trompete", posaune: "posaune", tuba: "tuba", harfe: "harfe", klavier: "klavier", pauke: "pauke", glockenspiel: "glockenspiel", trommel: "trommel" };
+// Lautstärke je Aufnahme-Instrument (Aufnahmen sind auf gleiche Lautheit gebracht; leise Instrumente etwas zurück, damit es zum Synth-Pegel passt)
+const PEGEL = { violine: 0.55, viola: 0.5, cello: 0.55, bass: 0.6, floete: 0.5, oboe: 0.45, klarinette: 0.5, fagott: 0.55, horn: 0.5, trompete: 0.45, posaune: 0.5, tuba: 0.6, harfe: 0.6, klavier: 0.55, pauke: 0.7, glockenspiel: 0.45, trommel: 0.6 };
+const GEHALTEN = new Set(["violine", "viola", "cello", "bass", "floete", "oboe", "klarinette", "fagott", "horn", "trompete", "posaune", "tuba"]);
+const probenDateien = (art) => (art === "trommel" ? ["schlag", "becken"] : KLANGPROBEN[art] || []);
+let DEKODER = null;
+function dekoder(ctx) { return ctx || DEKODER || (DEKODER = typeof OfflineAudioContext !== "undefined" ? new OfflineAudioContext(1, 1, 44100) : null); }
+// Lädt die Aufnahmen der genannten Klangfarben; Rückgabe-Promise ist erfüllt, wenn alles da ist (oder fehlgeschlagen – dann bleibt der Synth)
+export function klaengeLaden(ctx, arten = []) {
+  if (!KLANG_ECHT.an || typeof fetch === "undefined") return Promise.resolve(false);
+  return Promise.all([...new Set(arten.map((a) => PROBE_VON[a] || a))].filter((a) => probenDateien(a).length).map((art) => {
+    const P = PROBEN[art] || (PROBEN[art] = { laden: null, puffer: new Map() });
+    if (!P.laden) P.laden = Promise.all(probenDateien(art).map((n) => fetch(KLANG_ECHT.basis + art + "/" + n + ".mp3").then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(r.status)))
+      .then((buf) => new Promise((ja, nein) => { const r = dekoder(ctx).decodeAudioData(buf, ja, nein); r?.catch?.(() => {}); })).then((ab) => P.puffer.set(n, ab)).catch(() => null))).then(() => P.puffer.size > 0);
+    return P.laden;
+  })).then((l) => l.every(Boolean)).catch(() => false);
+}
+// Mit Zeitlimit: für Knöpfe, die sofort klingen sollen (höchstens ms warten, sonst Synth)
+export const klaengeBereit = (ctx, arten, ms = 2500) => Promise.race([klaengeLaden(ctx, arten), new Promise((r) => setTimeout(() => r(false), ms))]);
+function probe(art, m) {
+  const P = PROBEN[art]; if (!KLANG_ECHT.an || !P?.puffer.size) return null;
+  if (art === "trommel") return P.puffer.get(m) ? { buf: P.puffer.get(m), rate: 1 } : null;
+  let best = null; for (const k of P.puffer.keys()) if (best === null || Math.abs(k - m) < Math.abs(best - m)) best = k;
+  if (best === null || Math.abs(best - m) > 7) return null;
+  return { buf: P.puffer.get(best), rate: Math.pow(2, (m - best) / 12) };
+}
+// Spielt eine Aufnahme; false = keine passende da (dann Synth). dauer = gehaltene Länge (Streicher/Bläser), sonst klingt es natürlich aus
+function probeSpielen(ctx, ziel, artRoh, m, start, dauer, staerke = 1) {
+  const art = PROBE_VON[artRoh] || artRoh, pr = probe(art, m);
+  if (!pr) { if (KLANG_ECHT.an && probenDateien(art).length && !PROBEN[art]) klaengeLaden(ctx, [art]); return false; }
+  const q = ctx.createBufferSource(), g = ctx.createGain(), v = (PEGEL[art] || 0.5) * staerke;
+  q.buffer = pr.buf; q.playbackRate.value = pr.rate;
+  g.gain.setValueAtTime(v, start);
+  if (GEHALTEN.has(art)) {
+    const ende = start + Math.max(0.12, dauer), verfuegbar = pr.buf.duration / pr.rate - 0.45;
+    if (ende - start > verfuegbar && pr.buf.duration > 1.6) { q.loop = true; q.loopStart = 0.7; q.loopEnd = pr.buf.duration - 0.45; } // lange Töne: Mitte wiederholen
+    g.gain.setValueAtTime(v, ende); g.gain.exponentialRampToValueAtTime(0.0001, ende + 0.22);
+    q.connect(g); g.connect(ziel); q.start(start); q.stop(ende + 0.3);
+    return true;
+  }
+  q.connect(g); g.connect(ziel); q.start(start);
+  return true;
+}
+const midiVon = (f) => 69 + 12 * Math.log2(f / 440);
+
 // ---------- Klangerzeugung ----------
 function hall(ctx) {
   const lang = 2.2, n = ctx.sampleRate * lang, buf = ctx.createBuffer(2, n, ctx.sampleRate);
@@ -84,6 +138,7 @@ const KLANG = {
 };
 // Gezupft (Harfe, Kontrabass pizzicato) und Klavier: kurzer Anschlag, langes Ausklingen
 function zupf(ctx, ziel, frequenz, start, staerke = 1, klavier = false) {
+  if (probeSpielen(ctx, ziel, klavier ? "klavier" : "harfe", midiVon(frequenz), start, 0, staerke)) return;
   const g = ctx.createGain(), f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = klavier ? 3200 : 2400;
   g.gain.setValueAtTime(0.0001, start); g.gain.exponentialRampToValueAtTime((klavier ? 0.22 : 0.26) * staerke, start + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, start + (klavier ? 1.6 : 1.4));
   f.connect(g); g.connect(ziel);
@@ -92,6 +147,7 @@ function zupf(ctx, ziel, frequenz, start, staerke = 1, klavier = false) {
   }
 }
 function trommel(ctx, ziel, start, staerke = 1, becken = false) {
+  if (probeSpielen(ctx, ziel, "trommel", becken ? "becken" : "schlag", start, 0, staerke)) return;
   const n = ctx.sampleRate * (becken ? 1.2 : 0.25), buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
   for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, becken ? 2 : 4);
   const q = ctx.createBufferSource(); q.buffer = buf;
@@ -122,9 +178,10 @@ export function instrumentSpielen(ctx, art, folge, { schlag = 0.42, lautstaerke 
 }
 const ton_ = (...a) => ton(...a);
 const VERSATZ = { fl: 12, hr: -12 }; // Oktavlage je Instrument relativ zur Melodie
-const KLANG_VON_SEK = { v1: "streicher", v2: "streicher", fl: "floete", ob: "oboe", kl: "oboe", hr: "blech", tr: "blech", pos: "blech" };
+const KLANG_VON_SEK = { v1: "streicher", v2: "streicher", fl: "floete", ob: "oboe", kl: "klarinette", hr: "horn", tr: "trompete", pos: "posaune" };
 
 function ton(ctx, ziel, art, frequenz, start, dauer, staerke = 1) {
+  if (probeSpielen(ctx, ziel, art, Math.round(midiVon(frequenz) * 100) / 100, start, dauer, staerke)) return;
   const k = KLANG[art];
   const env = ctx.createGain(); env.gain.value = 0;
   const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = k.filter; f.Q.value = 0.7;
@@ -143,6 +200,7 @@ function ton(ctx, ziel, art, frequenz, start, dauer, staerke = 1) {
   for (const o of oscs) { o.start(start); o.stop(ende + k.aus + 0.05); }
 }
 function pauke(ctx, ziel, frequenz, start, staerke = 1) {
+  if (probeSpielen(ctx, ziel, "pauke", midiVon(frequenz), start, 0, staerke)) return;
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.type = "sine"; o.frequency.setValueAtTime(frequenz * 1.5, start); o.frequency.exponentialRampToValueAtTime(frequenz, start + 0.08);
   g.gain.setValueAtTime(0.0001, start); g.gain.exponentialRampToValueAtTime(0.5 * staerke, start + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, start + 1.2);
@@ -158,6 +216,8 @@ export function applaus(ctx, ziel, start, dauer = 3.5) {
 }
 
 // Spielt ein Stück. onEreignis({sek:[…], t}) für die Animation, onTakt(schlag) für den Dirigenten, onEnde().
+// Alle Klangfarben, die ein Stück auf der Bühne braucht (zum Vorladen)
+export const stueckKlaenge = (stueck) => [...new Set([...(stueck.melodieSek || []).map((s) => KLANG_VON_SEK[s] || "streicher"), "bass", "bratsche", "pauke"])];
 export function spielen(ctx, stueck, { tempoFaktor = 1, lautstaerke = 0.8, onEreignis = () => {}, onTakt = () => {}, onEnde = () => {}, mitApplaus = true } = {}) {
   const master = ctx.createGain(); master.gain.value = lautstaerke;
   const trocken = ctx.createGain(); trocken.gain.value = 0.8;

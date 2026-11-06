@@ -5,7 +5,7 @@ import { S, VIEWS, zeige, zeichne, kopf, einst, einstSetzen } from "./zustand.js
 import { esc, AKTIONEN, toast, herunterladen } from "../kern/ui.js";
 import { hole } from "../kern/daten.js";
 import { stimmeErzeugen, notenSvg, tonartName, transVz } from "../kern/notensatz.js";
-import { instrumentSpielen } from "../kern/musik.js";
+import { instrumentSpielen, klaengeBereit } from "../kern/musik.js";
 
 export const istDemoNoten = (s) => !!s?.datei?.startsWith("demo:");
 const NB = { audio: null, spielt: 0 }; // spielt = laufende Wiedergabe-Nummer (0 = aus)
@@ -46,7 +46,7 @@ function stoppen() {
   NB.audio = null;
   document.querySelectorAll(".nb-svg .an").forEach((e) => e.classList.remove("an"));
 }
-AKTIONEN.nbSpielen = () => {
+AKTIONEN.nbSpielen = async () => {
   if (NB.spielt) { stoppen(); return zeichne(); }
   const d = stimmeVon(S.params.sid);
   if (!d) return;
@@ -54,6 +54,7 @@ AKTIONEN.nbSpielen = () => {
   if (!AC) return toast("Dieses Gerät kann keine Musik erzeugen");
   NB.audio = new AC(); NB.audio.resume?.();
   const nr = (NB.spielt = Date.now()), schlag = 60 / d.st.tempo;
+  zeichne(); await klaengeBereit(NB.audio, d.st.zeilen.map((z) => z.klang)); if (NB.spielt !== nr) return; // 🎻 echte Aufnahmen (0.34.0)
   let dauer = 0;
   d.st.zeilen.forEach((z, zi) => {
     const idx = z.noten.map((n, i) => (n.ton == null ? -1 : i)).filter((i) => i >= 0);

@@ -4,7 +4,7 @@
 import { S, VIEWS, kopf, istLehrkraft, zeige } from "./zustand.js";
 import { esc, AKTIONEN, toast, datumKurz, herunterladen } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
-import { STUECKE, spielen, baender } from "../kern/musik.js";
+import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
 
 const B = { ctx: null, lauf: null, audio: null, quelle: null, analyser: null, raf: 0, modus: "melodien", stueck: STUECKE[0].id, tempo: 1, laut: 0.8, applaus: true, mitschnitt: null, blobUrl: null, tipp: 0 };
@@ -218,12 +218,13 @@ AKTIONEN.bwTempo = (v) => { B.tempo = Number(v); };
 AKTIONEN.bwLaut = (v) => { B.laut = Number(v); B.lauf?.lautstaerke(B.laut); if (B.audio) B.audio.volume = B.laut; };
 AKTIONEN.bwApplaus = (_, el) => { B.applaus = el.checked; };
 AKTIONEN.bwStopp = () => buehneStopp();
-AKTIONEN.bwSpielen = () => {
+AKTIONEN.bwSpielen = async () => {
   if (!(window.AudioContext || window.webkitAudioContext)) { toast("Dieses Gerät kann keine Musik erzeugen"); return; }
   buehneStopp(true);
   const st = STUECKE.find((x) => x.id === B.stueck) || STUECKE[0];
   vorhang(true); titel(`${st.titel} – ${st.komponist}`);
-  const ctx = kontext();
+  const ctx = kontext(), nr = (B.startNr = (B.startNr || 0) + 1);
+  await klaengeBereit(ctx, stueckKlaenge(st), 3000); if (B.startNr !== nr) return; // 🎻 echte Aufnahmen, während der Vorhang aufgeht (0.34.0)
   B.lauf = spielen(ctx, st, {
     tempoFaktor: B.tempo, lautstaerke: B.laut, mitApplaus: B.applaus,
     onEreignis: (e) => { sekAn(e.sek, e.dauer); if (e.sek.some((s) => st.melodieSek.includes(s)) && Math.random() < 0.45) note(e.sek[0]); },

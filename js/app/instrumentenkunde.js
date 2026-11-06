@@ -3,7 +3,7 @@
 import { S, VIEWS, db, zeige, kopf, name, istVerwalter } from "./zustand.js";
 import { esc, AKTIONEN, toast } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
-import { instrumentSpielen, midi } from "../kern/musik.js";
+import { instrumentSpielen, midi, klaengeBereit, klaengeLaden } from "../kern/musik.js";
 import { INSTRUMENT_GRUPPEN, INVENTAR_ABGANG } from "../kern/schema.js";
 import { merkmale, gesichtSvg, gesicht } from "./gesichter.js";
 
@@ -175,9 +175,10 @@ function folge(l, art) {
   return out; // umfang: vom tiefsten zum höchsten Ton in Oktaven
 }
 let AUDIO = null, laeuftBis = 0;
-function abspielen(l, art) {
+async function abspielen(l, art) {
   try {
     AUDIO = AUDIO || new (window.AudioContext || window.webkitAudioContext)(); AUDIO.resume?.();
+    await klaengeBereit(AUDIO, [l.klang]); // 🎻 echte Aufnahme (0.34.0) – sonst nach 2,5 s der erzeugte Klang
     const fig = document.getElementById("lehreFigur");
     const dauer = instrumentSpielen(AUDIO, l.klang, folge(l, art), { schlag: l.klang === "bass" || l.klang === "tuba" ? 0.48 : 0.4, onTon: () => notenFlug(fig) });
     fig?.classList.add("spielt"); laeuftBis = Date.now() + dauer * 1000;
@@ -231,7 +232,8 @@ VIEWS.instrumentenkunde = {
         ${istVerwalter() && b.inv.length ? `<p>🏷️ Leihinstrumente: <b>${b.frei} frei</b> von ${b.inv.length} <button type="button" class="knopf klein" data-a="lehreInventar" data-x="${esc(b.typen[0] || "")}">Ansehen ›</button></p>` : ""}</div>`;
   },
 };
-AKTIONEN.lehreOeffnen = (id) => { if (AUDIO) { try { AUDIO.close(); } catch {} AUDIO = null; } zeige("instrumentenkunde", { id }, { ersetzen: S.view === "instrumentenkunde" && !!S.params.id }); };
+AKTIONEN.lehreOeffnen = (id) => { const l0 = LEHRE.find((y) => y.id === id); if (l0) klaengeLaden(null, [l0.klang]); // 🎻 schon beim Öffnen holen
+  if (AUDIO) { try { AUDIO.close(); } catch {} AUDIO = null; } zeige("instrumentenkunde", { id }, { ersetzen: S.view === "instrumentenkunde" && !!S.params.id }); };
 // 🧠 für das Quiz (0.32.0): Klang eines Instruments abspielen
 export const lehreKlang = (id, art = "melodie") => { const l = LEHRE.find((y) => y.id === id); if (l) abspielen(l, art); };
 AKTIONEN.lehreSpielen = (x) => { const [id, art] = String(x).split("|"), l = LEHRE.find((y) => y.id === id); if (l) abspielen(l, art); };

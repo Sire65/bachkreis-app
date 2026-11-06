@@ -3,6 +3,7 @@
 // ⏱️ Timer · Stoppuhr · 🥁 Metronom (KC-CLUB-UHR-WECKER, fürs Üben). Alles nur auf diesem Gerät – nichts geht an den Server.
 import { S, einst, einstSetzen, zeige } from "./zustand.js";
 import { esc, AKTIONEN, blatt, toast } from "../kern/ui.js";
+import { KLANG_ECHT } from "../kern/musik.js";
 
 const ruhig = () => einst().effekte === false || matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("spar");
 
@@ -15,6 +16,7 @@ export function bedienungAnwenden() {
   const ecken = Number(e.ecken);
   if (e.ecken !== undefined && e.ecken !== null && e.ecken !== "" && ecken >= 2 && ecken <= 32) r.style.setProperty("--radius", ecken + "px"); else r.style.removeProperty("--radius");
   r.classList.toggle("tipp-gross", e.tippGross !== false);
+  KLANG_ECHT.an = e.echteKlaenge !== false; // 🎻 0.34.0 echte Instrumentenklänge
 }
 if (typeof document !== "undefined") { document.addEventListener("bk-einst", bedienungAnwenden); bedienungAnwenden(); }
 AKTIONEN.schattenWahl = (x) => { einstSetzen("schatten", x || null); neuEinst(); };

@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.34.0 DEV – 06.11.2026
+- 🎻 Echte Instrumentenklänge (Wunsch Hansi 06.11. „Instrumente noch originalgetreuer klingen lassen – evtl. gibt es dafür im Netz Töne“): 149 kurze Aufnahmen aus **VS Chamber Orchestra 2 – Community Edition** (Versilian Studios, **CC0** – frei, ohne Namensnennungspflicht; Nennung trotzdem in docs/LIZENZEN-TOENE.md) in `ton/instrumente/<art>/<midi>.mp3`, je Instrument 4–16 Töne im Abstand von 3–5 Halbtönen, dazwischen umgestimmt
+- js/kern/musik.js: `klaengeLaden`/`klaengeBereit`, Aufnahme statt Synth in `ton`, `zupf`, `pauke`, `trommel` – damit klingen Instrumentenkunde, Bühnen-Orchester (jede Sektion mit eigenem Instrument: Klarinette, Horn, Trompete, Posaune statt „Blech“), Übe-Bühne, Notenblatt und Quiz echt; lange Töne wiederholen die Mitte der Aufnahme
+- Laden erst beim ersten Gebrauch, nicht im Offline-Speicher (Updates bleiben klein); offline oder vor dem Laden klingt der bisherige Synth – nie Stille; Schalter „🎻 Echte Instrumentenklänge“ unter ⚙️ › ✨ Effekte
+- Tonhöhe jeder Aufnahme beim Bau gemessen (Oktav-Versatz der Bibliothek berücksichtigt, Ausreißer verworfen); Werkzeug tools/klangproben/ (Python + ffmpeg, außerhalb der App)
+- tests/klangproben.test.mjs; Rundgang prüft, dass die Violinen-Aufnahmen geladen werden
+
 ## 0.33.0 DEV – 05.11.2026
 - 🏢 Büro (Wunsch Hansi 05.11. „wie Club App mit Ordnern wie Protokolle, Noten, Grafik und Design mit Vorlagen, Elternbriefe“; nach KC-CLUB-BUERO-RAUM): js/app/buero.js – Regal mit 11 Ordnern (Registry `BUERO_ORDNER` in schema.js), 📥 Eingangskorb aus dem Cockpit, Suche, Ordner nach Jahren, Dokument schreiben/hochladen/verlinken
 - Kein zweiter Speicher: Büro-Dokumente liegen in `dokumente` mit neuen Feldern `ordner`, `jahr`, `inhalt` und den Sichtbarkeiten „Büro: Leitung & Lehrkräfte“ / „Büro: Vorstand & Leitung“ (`bueroDarf`); der Server filtert auch für Rollen, die Dokumente sonst ganz lesen (Instrumenten-/Notenwart), und lehnt fremde Büro-Sichtbarkeiten beim Schreiben ab (`BUERO_NICHT_ERLAUBT`); geschützter Datei-Abruf wie bisher

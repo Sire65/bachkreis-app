@@ -1,14 +1,23 @@
 {
-  "version": "0.33.0",
-  "datum": "2026-11-05",
+  "version": "0.34.0",
+  "datum": "2026-11-06",
   "stufe": "DEV",
   "neu": [
-    "🏢 Büro für Leitung, Lehrkräfte und Vorstand: Regal mit Ordnern – Protokolle, Noten & Bearbeitungen, Grafik & Design, Vorlagen, Elternbriefe, Konzerte, Verträge, Presse, Finanzen, Schule, Archiv",
-    "📥 Eingangskorb im Büro: alles, was gerade wartet, mit einem Tipp erledigen",
-    "✉️ Briefe aus Vorlagen: Platzhalter werden gefüllt – drucken mit Briefkopf, als Rundschreiben senden oder in „Elternbriefe“ ablegen · 🗒️ Protokoll mit fester Gliederung",
-    "👪 Neue Eltern-Übersicht: oben „Bitte erledigen“ (Zusagen, Genehmigungen, Notfallbogen, Leihinstrument), Umschalter zwischen den Kindern, die nächsten Termine und 10 Kacheln"
+    "🎻 Die Instrumente klingen jetzt echt: Aufnahmen von Violine, Bratsche, Cello, Kontrabass, Flöte, Oboe, Klarinette, Fagott, Trompete, Horn, Posaune, Tuba, Harfe, Klavier, Pauke und Trommel",
+    "🎭 Auch das Orchester auf der Bühne, die Übe-Bühne und das Notenblatt spielen mit den echten Klängen",
+    "📶 Jedes Instrument wird erst beim ersten Abspielen geladen (etwa 0,2 MB) – ohne Internet klingt es wie bisher; ausschaltbar unter ⚙️ › ✨ Effekte"
   ],
   "verlauf": [
+    {
+      "version": "0.33.0",
+      "datum": "2026-11-05",
+      "neu": [
+        "🏢 Büro für Leitung, Lehrkräfte und Vorstand: Regal mit Ordnern – Protokolle, Noten & Bearbeitungen, Grafik & Design, Vorlagen, Elternbriefe, Konzerte, Verträge, Presse, Finanzen, Schule, Archiv",
+        "📥 Eingangskorb im Büro: alles, was gerade wartet, mit einem Tipp erledigen",
+        "✉️ Briefe aus Vorlagen: Platzhalter werden gefüllt – drucken mit Briefkopf, als Rundschreiben senden oder in „Elternbriefe“ ablegen · 🗒️ Protokoll mit fester Gliederung",
+        "👪 Neue Eltern-Übersicht: oben „Bitte erledigen“ (Zusagen, Genehmigungen, Notfallbogen, Leihinstrument), Umschalter zwischen den Kindern, die nächsten Termine und 10 Kacheln"
+      ]
+    },
     {
       "version": "0.32.0",
       "datum": "2026-11-05",

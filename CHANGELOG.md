@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.35.0 DEV – 07.11.2026
+- 🧪 Vorführdaten nach einem Update ergänzen (Wunsch Hansi 07.11.: Link vor 2 Wochen weitergegeben – wer ihn damals geöffnet hat, sah neue Bereiche wie das Büro ohne Beispiele): `demoErgaenzen` in js/kern/adapter-lokal.js – beim ersten Start einer neuen Version kommen nur Beispiel-Zeilen dazu, deren ID dieser Browser nie gesehen hat (Merkliste `bekannt` in __meta); Eingetragenes bleibt, Gelöschtes kommt nicht zurück, fehlende Einstellungen werden ergänzt; Fehler blockieren nie den Start
+- tests/demo-ergaenzen.test.mjs
+
 ## 0.34.0 DEV – 06.11.2026
 - 🎻 Echte Instrumentenklänge (Wunsch Hansi 06.11. „Instrumente noch originalgetreuer klingen lassen – evtl. gibt es dafür im Netz Töne“): 149 kurze Aufnahmen aus **VS Chamber Orchestra 2 – Community Edition** (Versilian Studios, **CC0** – frei, ohne Namensnennungspflicht; Nennung trotzdem in docs/LIZENZEN-TOENE.md) in `ton/instrumente/<art>/<midi>.mp3`, je Instrument 4–16 Töne im Abstand von 3–5 Halbtönen, dazwischen umgestimmt
 - js/kern/musik.js: `klaengeLaden`/`klaengeBereit`, Aufnahme statt Synth in `ton`, `zupf`, `pauke`, `trommel` – damit klingen Instrumentenkunde, Bühnen-Orchester (jede Sektion mit eigenem Instrument: Klarinette, Horn, Trompete, Posaune statt „Blech“), Übe-Bühne, Notenblatt und Quiz echt; lange Töne wiederholen die Mitte der Aufnahme

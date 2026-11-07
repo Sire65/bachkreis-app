@@ -1,13 +1,20 @@
 {
-  "version": "0.34.0",
-  "datum": "2026-11-06",
+  "version": "0.35.0",
+  "datum": "2026-11-07",
   "stufe": "DEV",
   "neu": [
-    "🎻 Die Instrumente klingen jetzt echt: Aufnahmen von Violine, Bratsche, Cello, Kontrabass, Flöte, Oboe, Klarinette, Fagott, Trompete, Horn, Posaune, Tuba, Harfe, Klavier, Pauke und Trommel",
-    "🎭 Auch das Orchester auf der Bühne, die Übe-Bühne und das Notenblatt spielen mit den echten Klängen",
-    "📶 Jedes Instrument wird erst beim ersten Abspielen geladen (etwa 0,2 MB) – ohne Internet klingt es wie bisher; ausschaltbar unter ⚙️ › ✨ Effekte"
+    "🧪 Vorführversion: Nach einem Update kommen neue Beispieldaten (z. B. Büro-Vorlagen, Startnachricht) von selbst dazu – was du eingetragen oder gelöscht hast, bleibt so"
   ],
   "verlauf": [
+    {
+      "version": "0.34.0",
+      "datum": "2026-11-06",
+      "neu": [
+        "🎻 Die Instrumente klingen jetzt echt: Aufnahmen von Violine, Bratsche, Cello, Kontrabass, Flöte, Oboe, Klarinette, Fagott, Trompete, Horn, Posaune, Tuba, Harfe, Klavier, Pauke und Trommel",
+        "🎭 Auch das Orchester auf der Bühne, die Übe-Bühne und das Notenblatt spielen mit den echten Klängen",
+        "📶 Jedes Instrument wird erst beim ersten Abspielen geladen (etwa 0,2 MB) – ohne Internet klingt es wie bisher; ausschaltbar unter ⚙️ › ✨ Effekte"
+      ]
+    },
     {
       "version": "0.33.0",
       "datum": "2026-11-05",

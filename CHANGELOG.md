@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.37.0 DEV – 07.11.2026
+- 🏢 Büro-Raum wie die Club App (Wunsch Hansi 07.11. „Büro komplett nachbauen – Ordner, Ordnerschrank mit Jalousien mit Bachkreis-Logo, Schreibtisch usw.“), js/app/bueroraum.js nach KC teile/buero.js:
+  - 🗄️ Aktenschrank: Einklapp-Zeile mit Anzahl Ordner, 🔓/🔒 Schloss, Jalousie mit 28 Lamellen „Bachkreis Bergkamen“, Logo + „seit 1969“, runder Pfeilschalter; Lamellen klappen auf und die Jalousie fährt zur Seite (ohne Effekte: sofort). Regal mit Ordnerrücken: alle Büro-Ordner (mit Zahl) + Wege zu Chronik & Orte, Auftrittsanfragen, Projekte, Partner, Dokumente
+  - 🪑 Schreibtisch: Pinnwand (Nächster Termin, Eingang), Lampe mit T/N/A, Bildschirm mit Uhr und Lagezeilen + goldenes Namensschild, Kalender, Eingangskorb (Cockpit-Punkte), Drucker, Handy (Nachricht/Anrufen/WhatsApp), Telefon, Kaffee → ☕ Pause mit Bildschirmschoner (an Geburtstagen 🎂 Glückwunschkarte), Füller (Brief, Protokoll, Pinnwand, Chronik), Tastatur (Person, Rundschreiben, Startnachricht), 🧮 Rechner (ohne eval)
+  - ✏️ Einrichten: ziehen/tauschen, fein verschieben, 🛒 Katalog (Tischuhr, Metronom, Stimmgabel a′, Notenpult, Kopierer, Pflanze, Bild, Locher), Grundaufstellung – gespeichert auf dem Gerät
+  - Kinder sind bei Handy/Telefon nicht wählbar (Kinderschutz: über die Eltern). ☰ Liste bleibt als zweite Ansicht (Bildschirm antippen), Ordner öffnen sich „aufgeschlagen“
+- js/kern/buerotisch.js, tests/bueroraum.test.mjs
+
+
 ## 0.36.0 DEV – 07.11.2026
 - 🗺️ Chronik der Auftrittsorte (Wunsch Frau Jacka 07.11.: „wo wir seit der Gründung überall gespielt haben“): neuer Reiter „Orte“ in der Chronik – Weltkarte (Natural Earth 1:50m, gemeinfrei, bilder/weltkarte.json, erst beim Öffnen geladen), Zoom Welt/Europa/Deutschland, Zahlen Orte/Länder/Kontinente, Liste nach Ländern mit Flagge, Punkt/Zeile antippen zeigt die Einträge. js/kern/orte.js: Ortsverzeichnis ohne Netz-Abfrage, `ortVon` (eigene Koordinaten > Stadt > Stadtname im Feld „Ort“; unbekannt = nicht auf der Karte, nie geraten)
 - 📥 Auftrittsorte laut Schul-Website (Deutschland, Polen, Frankreich, USA, Israel, Kolumbien, Russland, Großbritannien, Norwegen, Portugal, Italien, China, Österreich + Austausch-Länder) mit festen ids – Knopf „übernehmen“ für Leitung/Vorstand legt nur Fehlendes an, Gelöschtes kommt nicht zurück; in der Vorführversion schon drin

@@ -280,13 +280,15 @@ await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(50
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("buero")); await p.waitForSelector(".bu-regal");
 if ((await p.$$(".bu-ordner")).length < 10) fehler.push("Büro: Regal unvollständig");
 await p.screenshot({ path: `${BILDER}buero.png`, fullPage: true });
-await p.click('.bu-schnell [data-a="buBriefNeu"]'); await p.waitForSelector("#briefText");
+// 0.37.0 Büro-Raum: Aktenschrank mit Jalousie, Schreibtisch – Brief über den ✒️ Füller
+if (!(await p.$("#buSchrank .bu-jalousie")) || !(await p.$('#buPlatte [data-a="buRechner"]'))) fehler.push("Büro: Aktenschrank/Schreibtisch fehlt");
+await p.click('#buPlatte [data-a="buFueller"]'); await p.waitForSelector('[data-a="buWahl"][data-x="buBriefNeu"]'); await p.click('[data-a="buWahl"][data-x="buBriefNeu"]'); await p.waitForSelector("#briefText");
 if (!/Probenfahrt/.test(await p.inputValue("#briefText"))) fehler.push("Büro: Vorlage füllt den Brief nicht");
 await p.click('[data-a="buBriefAblegen"]'); await p.waitForSelector(".bu-text");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("buero", { ordner: "elternbriefe" })); await p.waitForSelector(".liste li").catch(() => fehler.push("Büro: Brief nicht in „Elternbriefe“"));
 await p.selectOption("#demoleiste select", "vorstand"); await p.waitForTimeout(500);
 await p.evaluate(async () => { document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()); (await import("/js/app/zustand.js")).zeige("buero"); }); await p.waitForSelector(".bu-regal");
-if ((await p.$$eval(".bu-ordner b", (l) => l.map((x) => x.textContent))).join() !== "Förderverein & Finanzen") fehler.push("Büro: Vorstand sieht Leitungs-Ordner");
+if ((await p.$$eval(".bu-ordner[data-a=buOrdner] .bu-otext", (l) => l.map((x) => x.textContent))).join() !== "Förderverein & Finanzen") fehler.push("Büro: Vorstand sieht Leitungs-Ordner");
 // 🛡️ Schutz (0.20.0): Eltern füllen 🩺 Gesundheit aus · Leitung: 📷 Foto-Liste, 📋 Anwesenheit im Termin abhaken, Fehlzeiten
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("gesundheit")); await p.waitForSelector("#gsForm");

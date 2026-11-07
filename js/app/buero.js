@@ -9,6 +9,7 @@ import { liste, hole, speichere, loesche, konfig } from "../kern/daten.js";
 import { BUERO_ORDNER, DOKUMENT_ARTEN, DOKUMENT_SICHT, bueroDarf, bueroZugang } from "../kern/schema.js";
 import { cockpit, termineFuer } from "../kern/logik.js";
 import { hochladen, dateiOeffnen } from "../kern/dateien.js";
+import { raumAn, raumHtml, einrichtenAn } from "./bueroraum.js";
 
 export const bueroDa = () => bueroZugang(rollen());
 const sichtErlaubt = () => Object.keys(DOKUMENT_SICHT).filter((k) => bueroDarf(k, rollen()));
@@ -32,12 +33,18 @@ VIEWS.buero = {
     const docs = bueroDokumente(), q = BU.suche.trim().toLowerCase();
     const treffer = q ? docs.filter((d) => `${d.titel} ${d.beschreibung || ""} ${d.inhalt || ""}`.toLowerCase().includes(q)) : [];
     const n = (k) => docs.filter((d) => d.ordner === k).length;
-    return kopf("🏢 Büro", '<button class="knopf klein haupt" data-a="buNeu">＋ Neu</button>') + `<p class="bu-gruss">${gruss()}, ${esc(S.ich.vorname || "")}!</p>
+    // 🏠 0.37.0 Büro-Raum wie die Club App (Aktenschrank mit Jalousie, Schreibtisch) – ☰ Liste bleibt als zweite Ansicht
+    if (raumAn()) return kopf("🏢 Büro", `<button class="knopf klein${einrichtenAn() ? " haupt" : ""}" data-a="bueStart" aria-label="Schreibtisch einrichten">✏️</button><button class="knopf klein" data-a="buAnsicht" aria-label="Als Liste zeigen">☰</button><button class="knopf klein haupt" data-a="buNeu">＋ Neu</button>`)
+      + `<p class="bu-gruss">${gruss()}, ${esc(S.ich.vorname || "")}!</p>
+      <input class="einst-suche" type="search" placeholder="🔍 Im Büro suchen …" value="${esc(BU.suche)}" data-c="buSuche" aria-label="Im Büro suchen">
+      ${q ? `<div class="karte"><h3>🔍 ${treffer.length} Treffer</h3>${dokListe(treffer)}</div>` : ""}${raumHtml({ docZahl: n })}
+      <p class="hinweis">🔐 Ordner im Büro sehen nur Leitung und Lehrkräfte – „Förderverein & Finanzen“ auch der Vorstand. Bildschirm antippen: Büro als Liste.</p>`;
+    return kopf("🏢 Büro", '<button class="knopf klein" data-a="buAnsicht" aria-label="Als Raum zeigen">🏠</button><button class="knopf klein haupt" data-a="buNeu">＋ Neu</button>') + `<p class="bu-gruss">${gruss()}, ${esc(S.ich.vorname || "")}!</p>
       ${eingangHtml()}
       <div class="knopfreihe bu-schnell"><button type="button" class="knopf" data-a="buBriefNeu">✉️ Brief / Elternbrief</button><button type="button" class="knopf" data-a="buProtokollNeu">🗒️ Protokoll schreiben</button><button type="button" class="knopf" data-a="buDateiNeu">⬆️ Datei ablegen</button></div>
       <input class="einst-suche" type="search" placeholder="🔍 Im Büro suchen …" value="${esc(BU.suche)}" data-c="buSuche" aria-label="Im Büro suchen">
       ${q ? `<div class="karte"><h3>🔍 ${treffer.length} Treffer</h3>${dokListe(treffer)}</div>` : ""}
-      <h3>🗄️ Regal</h3><div class="bu-regal">${ordnerSichtbar().map(([k, o]) => `<button type="button" class="bu-ordner" style="--of:${o.farbe}" data-a="buOrdner" data-x="${k}"><span class="bu-rueck" aria-hidden="true">${o.sym}</span><b>${esc(o.t)}</b><small>${n(k)} ${n(k) === 1 ? "Dokument" : "Dokumente"}</small></button>`).join("")}</div>
+      <h3>🗄️ Regal</h3><div class="bul-regal">${ordnerSichtbar().map(([k, o]) => `<button type="button" class="bul-ordner" style="--of:${o.farbe}" data-a="buOrdner" data-x="${k}"><span class="bu-rueck" aria-hidden="true">${o.sym}</span><b>${esc(o.t)}</b><small>${n(k)} ${n(k) === 1 ? "Dokument" : "Dokumente"}</small></button>`).join("")}</div>
       <p class="hinweis">🔐 Ordner im Büro sehen nur Leitung und Lehrkräfte – „Förderverein & Finanzen“ auch der Vorstand. Für Eltern und Schüler gibt es weiter 📂 Dokumente.</p>`;
   },
 };
@@ -49,11 +56,13 @@ function dokListe(l) {
 function ordnerHtml(k) {
   const o = BUERO_ORDNER[k]; if (!o) return kopf("🏢 Büro") + '<p class="hinweis">Diesen Ordner gibt es nicht.</p>';
   const l = bueroDokumente(k);
-  return kopf(`${o.sym} ${o.t}`, `<button class="knopf klein haupt" data-a="buNeu" data-x="${k}">＋ Neu</button>`) + `<p class="hinweis">${esc(o.u)}</p>
+  return kopf(`${o.sym} ${o.t}`, `<button class="knopf klein haupt" data-a="buNeu" data-x="${k}">＋ Neu</button>`) + `<div class="bu-aufgeschlagen" style="--of:${o.farbe}"><div class="bu-auf-kopf"><span aria-hidden="true">${o.sym}</span><b>${esc(o.t)}</b><button type="button" class="knopf klein" data-a="buZurueckBuero">‹ Zurück ins Büro</button></div><div class="bu-auf-blatt"><p class="hinweis">${esc(o.u)}</p>
     ${k === "vorlagen" ? '<div class="knopfreihe"><button type="button" class="knopf" data-a="buBriefNeu">✉️ Brief aus Vorlage</button></div>' : ""}${k === "protokolle" ? '<div class="knopfreihe"><button type="button" class="knopf" data-a="buProtokollNeu">🗒️ Neues Protokoll</button></div>' : ""}
     ${k === "noten" ? '<div class="knopfreihe"><button type="button" class="knopf" data-a="kachel" data-x="noten">📚 Zum Notenarchiv</button></div>' : ""}
-    <div class="karte">${dokListe(l)}</div>`;
+    ${dokListe(l)}</div></div>`;
 }
+AKTIONEN.buZurueckBuero = () => zeige("buero");
+AKTIONEN.buDruckText = (betreff, text) => briefDrucken(betreff, text);
 // ---------- Dokument ansehen ----------
 VIEWS.buerodok = {
   render({ id }) {

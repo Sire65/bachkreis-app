@@ -53,3 +53,8 @@ test("Server: Chronik-Eintrag ohne Jahr mit Stadt/Land speichern (Leitung)", asy
   assert.equal(r.gespeichert?.[0]?.stadt, "Unna", JSON.stringify(r.konflikte));
   assert.equal(r.gespeichert[0].jahr, null);
 });
+
+test("Veröffentlichung: der Ordner bilder/ kommt mit auf die Internetseite (sonst fehlt die Weltkarte)", () => {
+  const y = readFileSync(new URL("../.github/workflows/pages.yml", import.meta.url), "utf8");
+  assert.match(y, /WEB="[^"]*\bbilder\b/);
+});

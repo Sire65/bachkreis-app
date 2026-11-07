@@ -93,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261108000000_bk_chat_plus.sql": { titel: "💬 Nachrichten wie KC 2.882: Weiterleiten, @Erwähnungen, Anheften, 🔕 stumm/📦 Archiv/⭐ Favorit je Person, 🔖 Merkliste (0.38.0)", tabellen: ["unterhaltungen", "nachrichten", "chat_einstellungen", "chat_merker"] },
   "20261107000000_bk_chronik_orte.sql": { titel: "🗺️ Chronik mit Auftrittsorten (Stadt, Land, Koordinaten), Jahr nicht mehr Pflicht (0.36.0)", tabellen: ["chronik"], extra: ["alter table bk_chronik alter column jahr drop not null;"] },
   "20261105000000_bk_buero.sql": { titel: "🏢 Büro: Dokumente mit Ordner, Jahr, Text und den Sichtbarkeiten Leitung/Vorstand (0.33.0)", tabellen: ["dokumente"] },
   "20261104000000_bk_zugang.sql": { titel: "Umfrage mit freier Antwort, 📲 wie läuft die App (installiert/Browser/PC) für die Liste „Installiert?“ (0.31.0)", tabellen: ["nachrichten"], extra: ["alter table bk_online add column if not exists modus text;", "alter table bk_online add column if not exists modus_am timestamptz;", "alter table bk_online drop constraint if exists bk_online_modus_check;", "alter table bk_online add constraint bk_online_modus_check check (modus is null or modus in ('installiert', 'browser', 'pc'));"] },

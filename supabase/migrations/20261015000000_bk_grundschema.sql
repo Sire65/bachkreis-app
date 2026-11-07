@@ -940,6 +940,7 @@ create table if not exists bk_unterhaltungen (
   art text check (art is null or art in ('gruppe', 'einzel', 'runde', 'verteiler')),
   verteiler text,
   mitglieder text[],
+  angeheftet jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -964,6 +965,8 @@ create table if not exists bk_nachrichten (
   wichtig boolean,
   express boolean,
   antwort_auf text,
+  weitergeleitet_von text,
+  erwaehnt text[],
   kanaele text[],
   geplant_um timestamptz,
   wiederholung text check (wiederholung is null or wiederholung in ('einmal', 'taeglich', 'werktags', 'woechentlich', 'monatlich')),
@@ -1089,6 +1092,47 @@ revoke all on bk_startnachrichten from public, anon, authenticated;
 grant select, insert, update, delete on bk_startnachrichten to service_role;
 drop trigger if exists bk_startnachrichten_stempel on bk_startnachrichten;
 create trigger bk_startnachrichten_stempel before update on bk_startnachrichten for each row execute function bk_abgleich_stempel();
+
+-- Chat-Einstellungen je Person
+create table if not exists bk_chat_einstellungen (
+  id text primary key default gen_random_uuid()::text,
+  unterhaltung_id text not null,
+  person_id text not null,
+  stumm_bis timestamptz,
+  archiviert boolean,
+  favorit boolean,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_chat_einstellungen_geaendert on bk_chat_einstellungen (geaendert_am);
+alter table bk_chat_einstellungen enable row level security;
+revoke all on bk_chat_einstellungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_chat_einstellungen to service_role;
+drop trigger if exists bk_chat_einstellungen_stempel on bk_chat_einstellungen;
+create trigger bk_chat_einstellungen_stempel before update on bk_chat_einstellungen for each row execute function bk_abgleich_stempel();
+
+-- Gemerkte Nachrichten
+create table if not exists bk_chat_merker (
+  id text primary key default gen_random_uuid()::text,
+  nachricht_id text not null,
+  person_id text not null,
+  aktiv boolean,
+  am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_chat_merker_geaendert on bk_chat_merker (geaendert_am);
+alter table bk_chat_merker enable row level security;
+revoke all on bk_chat_merker from public, anon, authenticated;
+grant select, insert, update, delete on bk_chat_merker to service_role;
+drop trigger if exists bk_chat_merker_stempel on bk_chat_merker;
+create trigger bk_chat_merker_stempel before update on bk_chat_merker for each row execute function bk_abgleich_stempel();
 
 -- Startnachricht: Antworten
 create table if not exists bk_startnachricht_antworten (
@@ -1733,6 +1777,10 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnw
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_person_id_fk') then alter table bk_uebungen add constraint bk_uebungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_werk_id_fk') then alter table bk_uebungen add constraint bk_uebungen_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_startnachrichten_von_fk') then alter table bk_startnachrichten add constraint bk_startnachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chat_einstellungen_unterhaltung_id_fk') then alter table bk_chat_einstellungen add constraint bk_chat_einstellungen_unterhaltung_id_fk foreign key (unterhaltung_id) references bk_unterhaltungen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chat_einstellungen_person_id_fk') then alter table bk_chat_einstellungen add constraint bk_chat_einstellungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chat_merker_nachricht_id_fk') then alter table bk_chat_merker add constraint bk_chat_merker_nachricht_id_fk foreign key (nachricht_id) references bk_nachrichten(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chat_merker_person_id_fk') then alter table bk_chat_merker add constraint bk_chat_merker_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_startnachricht_antworten_nachricht_id_fk') then alter table bk_startnachricht_antworten add constraint bk_startnachricht_antworten_nachricht_id_fk foreign key (nachricht_id) references bk_startnachrichten(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_startnachricht_antworten_person_id_fk') then alter table bk_startnachricht_antworten add constraint bk_startnachricht_antworten_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnwand_gelesen_zettel_id_fk') then alter table bk_pinnwand_gelesen add constraint bk_pinnwand_gelesen_zettel_id_fk foreign key (zettel_id) references bk_pinnwand(id) on delete restrict; end if; end $$;

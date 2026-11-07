@@ -125,12 +125,19 @@ async function speichern(db, s, body) {
   if (tab === "zugaenge") cols.push("code_hash");
   const gespeichert = [], konflikte = [];
   // ✓✓-Status braucht die Nachricht (Absender, Unterhaltung, Express) – einmal für alle Zeilen holen
-  if (tab === "nachricht_status") {
+  if (tab === "nachricht_status" || tab === "chat_merker") {
     const ids = [...new Set(zeilen.map((z) => String(z?.nachricht_id || "")))];
     ctx.nMap = new Map((await db.q(`select to_jsonb(n) as z from bk_nachrichten n where id = any($1::text[])`, [ids])).map((r) => [r.z.id, r.z]));
   }
   // 📎 Anhänge: welche der genannten Dateien hat diese Person hochgeladen bzw. darf sie als Noten weitergeben?
   if (tab === "nachrichten") {
+    // ↪️ 0.38.0 Weiterleiten: Quell-Nachrichten (Sichtbarkeit prüft regeln.js) – ihre Anhänge dürfen mit
+    const qIds = [...new Set(zeilen.map((z) => String(z?.weiter_von || "")).filter(Boolean))];
+    ctx.quellen = new Map((qIds.length ? await db.q(`select to_jsonb(n) as z from bk_nachrichten n where id = any($1::text[])`, [qIds]) : []).map((r) => [r.z.id, r.z]));
+    ctx.quellAnlagen = new Set([...ctx.quellen.values()].filter((q) => ctx.unterhaltungen.has(q.unterhaltung_id) && !q.zurueckgezogen_am).flatMap((q) => (q.anlagen || []).map((a) => a.id).filter(Boolean)));
+    // ↩️ Zurückholen: hat schon jemand anderes gelesen?
+    const zIds = zeilen.filter((z) => z?.zurueckholen).map((z) => String(z.id || ""));
+    ctx.gelesenVonAnderen = new Set(zIds.length ? (await db.q(`select nachricht_id from bk_nachricht_status where nachricht_id = any($1::text[]) and gelesen_am is not null and person_id <> $2`, [zIds, ctx.ich])).map((r) => r.nachricht_id) : []);
     const ids = [...new Set(zeilen.flatMap((z) => (Array.isArray(z?.anlagen) ? z.anlagen : []).map((a) => String(a?.id || "")).filter(Boolean)))];
     ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime, groesse from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
     ctx.notenDateien = new Set();

@@ -197,6 +197,8 @@ create table if not exists bk_nachrichten (
   wichtig boolean,
   express boolean,
   antwort_auf text,
+  weitergeleitet_von text,
+  erwaehnt text[],
   kanaele text[],
   geplant_um timestamptz,
   wiederholung text check (wiederholung is null or wiederholung in ('einmal', 'taeglich', 'werktags', 'woechentlich', 'monatlich')),
@@ -233,6 +235,8 @@ alter table bk_nachrichten add column if not exists rueckmeldung boolean;
 alter table bk_nachrichten add column if not exists wichtig boolean;
 alter table bk_nachrichten add column if not exists express boolean;
 alter table bk_nachrichten add column if not exists antwort_auf text;
+alter table bk_nachrichten add column if not exists weitergeleitet_von text;
+alter table bk_nachrichten add column if not exists erwaehnt text[];
 alter table bk_nachrichten add column if not exists kanaele text[];
 alter table bk_nachrichten add column if not exists geplant_um timestamptz;
 alter table bk_nachrichten add column if not exists wiederholung text;

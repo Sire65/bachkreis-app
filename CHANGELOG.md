@@ -1,5 +1,19 @@
 # Änderungen
 
+## 0.38.0 DEV – 07.11.2026
+- 💬 Nachrichten wie KC Club App 2.882 (Wunsch Hansi 07.11. „Club App checken und anpassen, z. B. das Nachrichtenmodul“), js/app/chatplus.js:
+  - ↪️ Weiterleiten (KC-CLUB-WEITERLEITEN) mit Vermerk „Weitergeleitet von …“ und Anhängen – den Namen setzt der Server, nur Sichtbares lässt sich weiterleiten
+  - 📌 Anheften (KC-CLUB-ANHEFTEN): bis zu 3 Nachrichten oben im Chat; in Gruppen/Rundschreiben die Leitung, in Einzelchats und Runden alle
+  - @Erwähnungen (KC-CLUB-ERWAEHNUNG): Vorschläge beim Tippen, Hervorhebung (gelb, wenn du gemeint bist); erwähnte Personen bekommen Bescheid auch bei 🔕
+  - ⋮ Chat-Menü + 🔍 im Chat-Kopf (KC-CLUB-CHAT-KOPF, KC-CLUB-CHATSUCHE): suchen mit Treffer vor/zurück, 🔕 stumm (8 Std./1 Woche/immer – ❗, 🏎️ und @ kommen durch), ⭐ Favorit, 📦 Archiv (Neues holt den Chat zurück)
+  - 🔖 Merkliste (KC-CLUB-MERKEN), 👁 „Wer hat noch nicht gelesen?“ für eigene Nachrichten mit 7/14/30 Tagen und „💬 Erinnern“ (KC-CLUB-UNGELESEN-LEITUNG), 📬 Lesestand in der Übersicht (KC-CLUB-CHAT-LESESTAND)
+  - ↩️ Zurückholen (KC-CLUB-ZURUECKHOLEN): eigene, noch von niemandem gelesene Nachricht (bis 24 Std.) verschwindet bei allen, der Text kommt zurück ins Feld
+  - ❗ nachträglich wichtig, 📤 Anhang teilen, 👉 nach rechts wischen = antworten (KC-CLUB-WISCHEN), ⬇️ Sprungknopf mit Punkt bei Neuem (KC-CLUB-NACH-UNTEN)
+  - Datenschutz: Chat-Einstellungen und Merkliste sieht nur die Person selbst – auch nicht die Leitung. Neue Tabellen bk_chat_einstellungen, bk_chat_merker (Migration 20261108000000_bk_chat_plus.sql mit Rechten für service_role)
+- 🌙 Farbige Namen in Gruppen-Chats im Nachtmodus besser lesbar (Kontrast)
+- tests/chatplus.test.mjs
+
+
 ## 0.37.0 DEV – 07.11.2026
 - 🏢 Büro-Raum wie die Club App (Wunsch Hansi 07.11. „Büro komplett nachbauen – Ordner, Ordnerschrank mit Jalousien mit Bachkreis-Logo, Schreibtisch usw.“), js/app/bueroraum.js nach KC teile/buero.js:
   - 🗄️ Aktenschrank: Einklapp-Zeile mit Anzahl Ordner, 🔓/🔒 Schloss, Jalousie mit 28 Lamellen „Bachkreis Bergkamen“, Logo + „seit 1969“, runder Pfeilschalter; Lamellen klappen auf und die Jalousie fährt zur Seite (ohne Effekte: sofort). Regal mit Ordnerrücken: alle Büro-Ordner (mit Zahl) + Wege zu Chronik & Orte, Auftrittsanfragen, Projekte, Partner, Dokumente

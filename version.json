@@ -1,14 +1,25 @@
 {
-  "version": "0.37.0",
+  "version": "0.38.0",
   "datum": "2026-11-07",
   "stufe": "DEV",
   "neu": [
-    "🏢 Das Büro ist jetzt ein Raum wie in der Club App: Aktenschrank mit Jalousie, Bachkreis-Logo und „seit 1969“, Ordner im Regal, Schloss zum Feststellen",
-    "🪑 Schreibtisch mit Pinnwand, Lampe (Tag/Nacht/Automatik), Bildschirm mit Uhr und Namensschild, Kalender, Eingangskorb, Drucker, Handy, Telefon, Füller, Tastatur und Rechner",
-    "✏️ Schreibtisch selbst einrichten – Teile verschieben, aus dem Katalog Tischuhr, Metronom, Stimmgabel, Notenpult und mehr dazustellen",
-    "☕ Kaffeetasse = Pause mit Bildschirmschoner"
+    "↪️ Nachrichten weiterleiten · 📌 wichtige Nachrichten oben anheften · @Namen erwähnen",
+    "🔕 Chats stumm schalten (8 Std., 1 Woche, immer) · ⭐ Favoriten oben · 📦 Archiv",
+    "🔍 Im Chat suchen · 🔖 Nachrichten merken · ↩️ Ungelesenes zurückholen",
+    "👁 Wer hat meine Nachricht noch nicht gelesen? – mit „Erinnern“ · 📬 Lesestand in der Übersicht",
+    "👉 Nach rechts wischen = antworten · ⬇️ Knopf nach unten · ❗ nachträglich wichtig · 📤 Anhang teilen"
   ],
   "verlauf": [
+    {
+      "version": "0.37.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🏢 Das Büro ist jetzt ein Raum wie in der Club App: Aktenschrank mit Jalousie, Bachkreis-Logo und „seit 1969“, Ordner im Regal, Schloss zum Feststellen",
+        "🪑 Schreibtisch mit Pinnwand, Lampe (Tag/Nacht/Automatik), Bildschirm mit Uhr und Namensschild, Kalender, Eingangskorb, Drucker, Handy, Telefon, Füller, Tastatur und Rechner",
+        "✏️ Schreibtisch selbst einrichten – Teile verschieben, aus dem Katalog Tischuhr, Metronom, Stimmgabel, Notenpult und mehr dazustellen",
+        "☕ Kaffeetasse = Pause mit Bildschirmschoner"
+      ]
+    },
     {
       "version": "0.36.0",
       "datum": "2026-11-07",

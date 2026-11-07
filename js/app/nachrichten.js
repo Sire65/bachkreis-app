@@ -24,6 +24,8 @@ import { onlineLeisteHtml } from "./online.js";
 import { textHtml, erkennen, terminErkennen, NA_FARBEN } from "../kern/chattext.js";
 import { kinderVon as kinderVonL, termineFuer, antwortVon, tagIso } from "../kern/logik.js";
 import { terminVorlage, eigenTerminVorlage } from "./termine.js";
+import { erwaehnteIn } from "../kern/schema.js";
+import { stummAn, archiviert, favorit, archivAufwachen, angeheftetHtml, darfAnheften, gemerkt, zurueckholbar, erwaehnungVorschlag, erwaehnungenMarkieren, chatGestenVerdrahten, runterNeu } from "./chatplus.js";
 
 const ich = () => S.ich?.id;
 const jetztIso = () => new Date().toISOString();
@@ -110,19 +112,26 @@ function abschnittVon(e, art) {
   const h = new Date(); h.setHours(0, 0, 0, 0); const tage = Math.floor((h - new Date(z).setHours(0, 0, 0, 0)) / 86400000);
   return tage <= 0 ? ["heute", "Heute"] : tage === 1 ? ["gestern", "Gestern"] : tage < 7 ? ["woche", "Diese Woche"] : tage < 14 ? ["vorwoche", "Letzte Woche"] : [`m${z.getFullYear()}-${z.getMonth()}`, z.toLocaleDateString("de-DE", { month: "long", year: "numeric" })];
 }
+// 📬 0.38.0 Lesestand der eigenen letzten Nachricht (KC-CLUB-CHAT-LESESTAND): „an 17 · ✓✓ 10 angekommen · 👁 4 gelesen“
+function lesestandHtml(n) {
+  if (!n || n.von !== ich() || n.zurueckgezogen_am || !(n.anzahl > 1)) return "";
+  const st = statusVon(n), ank = st.filter((s) => s.zugestellt_am || s.gelesen_am).length, gel = st.filter((s) => s.gelesen_am).length;
+  return `<div class="lesestand">an ${n.anzahl} · 📬 ${ank} angekommen${einst().lesebestaetigung === false ? "" : ` · 👁 ${gel} gelesen`}</div>`;
+}
 function chatZeile({ u, letzte, neu, plan, expressNeu }) {
   const vorschau = letzte ? (letzte.zurueckgezogen_am ? "🚫 Nachricht gelöscht" : `${letzte.von === ich() ? "" : u.art === "einzel" ? "" : esc(vorn(letzte.von)) + ": "}${letzte.express ? "🏎️ " : letzte.wichtig ? "❗ " : ""}${esc(nachrichtKurz(letzte).slice(0, 70))}`) : "noch keine Nachricht";
   return `<li class="klick${neu ? " hat-neu" : ""}" data-a="oeffne" data-x="unterhaltung|${esc(u.id)}">${chatBild(u)}
-    <div class="fl"><div class="zeile-titel">${esc(chatTitel(u))}</div><div class="zeile-unter">${letzte?.von === ich() ? hakenHtml(letzte) + " " : ""}${vorschau}${plan ? ` · <span title="geplant">⏰ ${plan}</span>` : ""}</div></div>
+    <div class="fl"><div class="zeile-titel">${favorit(u.id) ? '<span title="Favorit">⭐</span> ' : ""}${esc(chatTitel(u))}${stummAn(u.id) ? ' <span title="stumm" aria-label="stumm">🔕</span>' : ""}</div><div class="zeile-unter">${letzte?.von === ich() ? hakenHtml(letzte) + " " : ""}${vorschau}${plan ? ` · <span title="geplant">⏰ ${plan}</span>` : ""}</div>${lesestandHtml(letzte)}</div>
     <div class="chat-rechts"><div class="hinweis${neu ? " neu" : ""}">${letzte ? zeitListe(letzte.zeit) : ""}</div>${neu ? `<span class="chat-zahl${expressNeu ? " express" : ""}">${neu}</span>` : ""}</div></li>`;
 }
 VIEWS.nachrichten = {
   render() {
     const q = C.suche.toLowerCase(), f = C.listFilter || "alle", art = einst().chatGliederung || "zeit";
-    const alle = chatEintraege(), zahl = { alle: alle.length, neu: alle.filter((e) => e.neu).length, gruppen: alle.filter((e) => e.u.art !== "einzel").length, einzel: alle.filter((e) => e.u.art === "einzel").length };
+    // 📦 archivierte Chats stehen unten (eine neue Nachricht holt sie zurück), ⭐ Favoriten oben
+    const roh = chatEintraege(), imArchiv = roh.filter((e) => archiviert(e.u.id) && !archivAufwachen(e.u.id, e.letzte?.zeit) && !e.neu), alle = roh.filter((e) => !imArchiv.includes(e)), zahl = { alle: alle.length, neu: alle.filter((e) => e.neu).length, gruppen: alle.filter((e) => e.u.art !== "einzel").length, einzel: alle.filter((e) => e.u.art === "einzel").length };
     const l = alle.filter(({ u, letzte, neu }) => (!q || chatTitel(u).toLowerCase().includes(q) || String(letzte?.text || "").toLowerCase().includes(q))
       && (f === "alle" || (f === "neu" && neu) || (f === "gruppen" && u.art !== "einzel") || (f === "einzel" && u.art === "einzel")));
-    const rechts = `${spracheMoeglich() && einst().sprachsteuerung !== false ? `<button class="knopf klein" data-a="sprachsteuerung" title="Sprachsteuerung" aria-label="Sprachsteuerung">🎤</button>` : ""}<button class="knopf haupt klein" data-a="chatNeu" title="Neue Nachricht" aria-label="Neue Nachricht">＋ Neu</button>${istVerwalter() ? '<button class="knopf klein" data-a="kachel" data-x="rundschreiben" title="Rundschreiben" aria-label="Rundschreiben">📣</button>' : ""}`;
+    const rechts = `${spracheMoeglich() && einst().sprachsteuerung !== false ? `<button class="knopf klein" data-a="sprachsteuerung" title="Sprachsteuerung" aria-label="Sprachsteuerung">🎤</button>` : ""}<button class="knopf klein" data-a="merklisteAuf" title="Gemerkte Nachrichten" aria-label="Gemerkte Nachrichten">🔖</button><button class="knopf klein" data-a="ungelesenAuf" title="Wer hat meine Nachrichten noch nicht gelesen?" aria-label="Wer hat noch nicht gelesen">👁</button><button class="knopf haupt klein" data-a="chatNeu" title="Neue Nachricht" aria-label="Neue Nachricht">＋ Neu</button>${istVerwalter() ? '<button class="knopf klein" data-a="kachel" data-x="rundschreiben" title="Rundschreiben" aria-label="Rundschreiben">📣</button>' : ""}`;
     const netz = netzSymbolHtml(); // 📡 statt 💬 vorn, wenn das Verbindungs-Symbol an ist
     const chips = `<div class="chat-filter" role="group" aria-label="Chats filtern">${[["alle", "Alle"], ["neu", "🔴 Ungelesen"], ["gruppen", "👥 Gruppen"], ["einzel", "💬 Einzeln"]].map(([k, t]) => `<button type="button" class="${f === k ? "an" : ""}" data-a="chatListFilter" data-x="${k}" aria-pressed="${f === k}">${t} <small>${zahl[k]}</small></button>`).join("")}
       <select data-c="chatGliederung" aria-label="Gliederung">${Object.entries(GLIED).map(([k, t]) => `<option value="${k}" ${art === k ? "selected" : ""}>${k === "aus" ? "ohne Abschnitte" : "nach " + t}</option>`).join("")}</select></div>`;
@@ -132,17 +141,20 @@ VIEWS.nachrichten = {
     else {
       const o = gliedOffen(), teile = new Map(), ungelesen = l.filter((e) => e.neu);
       if (ungelesen.length) teile.set("neu", ["🔴 Ungelesen", ungelesen]);
-      for (const e of l.filter((x) => !x.neu)) { const [k, t] = abschnittVon(e, art); if (!teile.has(k)) teile.set(k, [t, []]); teile.get(k)[1].push(e); }
+      const fav = l.filter((x) => !x.neu && favorit(x.u.id)); if (fav.length) teile.set("fav", ["⭐ Favoriten", fav]);
+      for (const e of l.filter((x) => !x.neu && !favorit(x.u.id))) { const [k, t] = abschnittVon(e, art); if (!teile.has(k)) teile.set(k, [t, []]); teile.get(k)[1].push(e); }
       if (art === "name") for (const v of teile.values()) v[1].sort((a, b) => chatTitel(a.u).localeCompare(chatTitel(b.u), "de"));
       inhalt = [...teile].map(([k, [t, es]]) => { const auf = o[k] !== false;
         return `<div class="chat-abschnitt"><button type="button" class="chat-abschnitt-kopf" data-a="gliedUm" data-x="${esc(k)}" aria-expanded="${auf}"><span>${auf ? "▾" : "▸"} ${esc(t)}</span><small>${es.length}</small></button>${auf ? `<ul class="liste">${es.map(chatZeile).join("")}</ul>` : ""}</div>`; }).join("");
     }
     return kopf(netz ? "Nachrichten" : "💬 Nachrichten", rechts).replace("<h2>", netz + "<h2>") + onlineLeisteHtml() + `<input class="chat-suche" type="search" id="chatSuche" placeholder="🔍 Chats und Nachrichten durchsuchen" value="${esc(C.suche)}" aria-label="Chats durchsuchen">${chips}
-      <div class="karte chatliste">${inhalt}</div>`;
+      <div class="karte chatliste">${inhalt}</div>
+      ${imArchiv.length && !q ? `<div class="chat-abschnitt"><button type="button" class="chat-abschnitt-kopf" data-a="archivListe" aria-expanded="${!!C.archivAuf}"><span>${C.archivAuf ? "▾" : "▸"} 📦 Archiviert</span><small>${imArchiv.length}</small></button>${C.archivAuf ? `<div class="karte chatliste"><ul class="liste">${imArchiv.map(chatZeile).join("")}</ul></div>` : ""}</div>` : ""}`;
   },
   nach(w) { w.querySelector("#chatSuche")?.addEventListener("input", (e) => { C.suche = e.target.value; const pos = e.target.selectionStart; zeichne(); const f = document.getElementById("chatSuche"); f?.focus(); try { f?.setSelectionRange(pos, pos); } catch {} }); },
 };
 AKTIONEN.chatListFilter = (k) => { C.listFilter = k; zeichne(); };
+AKTIONEN.archivListe = () => { C.archivAuf = !C.archivAuf; zeichne(); };
 AKTIONEN.chatGliederung = (v) => { einstSetzen("chatGliederung", v); zeichne(); };
 AKTIONEN.gliedUm = (k) => { const o = gliedOffen(); o[k] = o[k] === false; try { localStorage.setItem("bk_glied_offen", JSON.stringify(o)); } catch {} zeichne(); };
 
@@ -223,10 +235,11 @@ function blaseHtml(n, u, gruppe) {
   return `<div class="blase ${eigen ? "ich" : "du"}${n.wichtig && !weg ? " wichtig" : ""}${n.express && !weg ? " express" : ""}${gruppe && !eigen ? " farbig" : ""}" id="msg-${esc(n.id)}" data-a="naMenue" data-x="${esc(n.id)}"${gruppe && !eigen ? ` style="--pf:${farbeVon(n.von)}"` : ""}>
     ${weg ? "" : (n.wichtig ? '<div class="wichtig-marke">❗ WICHTIG</div>' : "") + (n.express ? '<div class="express-marke">🏎️ EXPRESS</div>' : "")}
     ${gruppe && !eigen ? `<div class="von">${esc(name(n.von))}</div>` : ""}
+    ${n.weitergeleitet_von && !weg ? `<div class="weiter-marke">↪️ Weitergeleitet von ${esc(n.weitergeleitet_von)}</div>` : ""}
     ${bezug && !weg ? `<div class="zitat" data-a="zuNachricht" data-x="${esc(bezug.id)}"><b>${esc(bezug.von === ich() ? "Du" : name(bezug.von))}</b><span>${esc(bezug.zurueckgezogen_am ? "🚫 gelöscht" : String(bezug.text).slice(0, 90))}</span></div>` : ""}
-    ${weg ? '<div class="txt weg">🚫 Diese Nachricht wurde gelöscht</div>' : (n.text ? `<div class="txt">${textHtml(n.text)}</div>` : "") + anlagenHtml(n) + umfrageHtml(n)}
+    ${weg ? '<div class="txt weg">🚫 Diese Nachricht wurde gelöscht</div>' : (n.text ? `<div class="txt">${erwaehnungenMarkieren(textHtml(n.text), n)}</div>` : "") + anlagenHtml(n) + umfrageHtml(n)}
     ${weg ? "" : hinweiseHtml(n)}${rueck}${express}
-    <div class="fuss">${n.loescht_am && !weg ? `<span class="sl-marke" title="Löscht sich selbst – bei allen">⏳ ${esc(restText(n.loescht_am))}</span> ` : ""}${n.bearbeitet_am && !weg ? '<span class="bearb">bearbeitet</span> ' : ""}${uhr(n.zeit)}${eigen ? " " + hakenHtml(n) : ""}</div>${reHtml}</div>`;
+    <div class="fuss">${gemerkt(n.id) ? '<span title="gemerkt">🔖</span> ' : ""}${(u?.angeheftet || []).includes(n.id) && !weg ? '<span title="angeheftet">📌</span> ' : ""}${n.loescht_am && !weg ? `<span class="sl-marke" title="Löscht sich selbst – bei allen">⏳ ${esc(restText(n.loescht_am))}</span> ` : ""}${n.bearbeitet_am && !weg ? '<span class="bearb">bearbeitet</span> ' : ""}${uhr(n.zeit)}${eigen ? " " + hakenHtml(n) : ""}</div>${reHtml}</div>`;
 }
 function rueckmeldungHtml(n) {
   const r = n.rueckmeldungen || {}, meine = r[ich()], zahl = (w) => Object.values(r).filter((x) => x === w).length;
@@ -440,8 +453,9 @@ VIEWS.unterhaltung = {
     if (!u || !meineUnterhaltungen().some((x) => x.id === id)) return kopf("Nachrichten") + '<div class="leer">Nicht gefunden.</div>';
     const l = empfaengerVon(db, u), p = chatPartnerVon(u);
     const unter = p ? ({ schueler: "Schüler/in", eltern: "Eltern", lehrkraft: "Lehrkraft", leitung: "Leitung" }[hole("personen", p)?.typ] || "Bachkreis") : u.art === "verteiler" ? `📣 Rundschreiben · ${l.length} Empfänger` : `${u.art === "runde" ? "Runde" : "Gruppe"} · ${l.length} Mitglieder`;
-    return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${esc(chatTitel(u))}</h2><div class="hinweis">${esc(unter)}</div></div></div>
-      <div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat" id="chatVerlauf">${verlaufHtml(u)}</div>${eingabeHtml(u)}`;
+    return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${stummAn(id) ? '<span title="stumm" aria-label="stumm">🔕</span> ' : ""}${esc(chatTitel(u))}</h2><div class="hinweis">${esc(unter)}</div></div>
+      <button type="button" class="chat-kopf-knopf" data-a="chatSucheAuf" data-x="${esc(id)}" aria-label="Im Chat suchen">🔍</button><button type="button" class="chat-kopf-knopf" data-a="chatMenue" data-x="${esc(id)}" aria-label="Mehr zum Chat">⋮</button></div>
+      ${angeheftetHtml(u)}<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat" id="chatVerlauf">${verlaufHtml(u)}</div>${eingabeHtml(u)}`;
   },
   nach(w, { id }) {
     if (C.filterChat !== id) { C.filter = "alle"; C.filterChat = id; }
@@ -454,15 +468,16 @@ VIEWS.unterhaltung = {
     if (tr && !C.gesprungen?.[id]) { (C.gesprungen ||= {})[id] = true; tr.scrollIntoView({ block: "start" }); } else window.scrollTo(0, document.body.scrollHeight);
     nachrichtenVorlesen(id);
     setTimeout(() => gelesenMarkieren(id), 400);
+    chatGestenVerdrahten(id);
   },
 };
 // Platz für die feste Eingabe unten (KC-CLUB-CHAT-ABSTAND)
 function abstand() { const e = document.getElementById("chatEingabe"), v = document.getElementById("chatVerlauf"); if (e && v) v.style.paddingBottom = e.offsetHeight + 24 + "px"; }
-function verlaufNeu(id, stehen = false) {
+export function verlaufNeu(id, stehen = false) {
   const v = document.getElementById("chatVerlauf"), u = hole("unterhaltungen", id); if (!v || !u || S.view !== "unterhaltung" || S.params.id !== id) return;
   const unten = innerHeight + scrollY >= document.body.scrollHeight - 160, y = scrollY;
   v.innerHTML = verlaufHtml(u); abstand(); bilderLaden(v); filterAnwenden();
-  if (stehen) window.scrollTo(0, y); else if (unten) window.scrollTo(0, document.body.scrollHeight);
+  if (stehen) window.scrollTo(0, y); else if (unten) window.scrollTo(0, document.body.scrollHeight); else runterNeu();
 }
 function nachrichtenVorlesen(uid) {
   if (einst().vorlesen !== true || !("speechSynthesis" in globalThis)) return;
@@ -572,7 +587,7 @@ function eingabeVerdrahten(id, fokus) {
   const stand = () => { e?.classList.toggle("hat-text", !!t.value.trim() || C.anlagen.length > 0);
     document.getElementById("versandLeiste")?.classList.toggle("versteckt", !(einst().versandImmer || t.value.trim() || C.anlagen.length || C.wichtig || C.express)); };
   const hoehe = () => { t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, innerHeight * 0.36) + "px"; abstand(); };
-  t.addEventListener("input", () => { entwurfSetzen(id, t.value); hoehe(); stand(); });
+  t.addEventListener("input", () => { entwurfSetzen(id, t.value); hoehe(); stand(); erwaehnungVorschlag(t, id); });
   t.addEventListener("keydown", (ev) => { if (ev.key === "Enter" && !ev.shiftKey && einst().enterSendet === true) { ev.preventDefault(); AKTIONEN.chatSenden(id); } });
   hoehe(); stand();
   if (fokus) { t.focus(); try { t.setSelectionRange(t.value.length, t.value.length); } catch {} }
@@ -592,7 +607,15 @@ async function nachrichtBauen(uid, text, extra = {}) {
   return { id: neueId(), unterhaltung_id: uid, von: ich(), text, zeit: jetztIso(), gelesen_von: [ich()], rueckmeldung: false, rueckmeldungen: {}, reaktionen: {},
     wichtig: !!C.wichtig, express: !!C.express, antwort_auf: C.antwort || null, kanaele: zustellKanaele(), anzahl: empfaenger(u).length,
     anlagen: C.anlagen.filter((a) => a.status === "fertig").map(({ id, name, mime, groesse, art, dauer, stimme_id, werk_id }) => ({ id, name, mime, groesse, art, dauer, stimme_id, werk_id })),
-    loescht_am: C.ablauf ? new Date(Date.now() + C.ablauf * 3600000).toISOString() : null, ...extra };
+    loescht_am: C.ablauf ? new Date(Date.now() + C.ablauf * 3600000).toISOString() : null,
+    erwaehnt: erwaehnteIn(text, empfaenger(u).map((p) => hole("personen", p)).filter(Boolean)), ...extra };
+}
+// ↪️ 0.38.0 ohne Eingabefeld senden (Weiterleiten): sofort speichern und Bescheid geben
+export async function nachrichtDirekt(uid, text, extra = {}) {
+  const u = hole("unterhaltungen", uid); if (!u) throw new Error("Chat nicht gefunden");
+  const n = { id: neueId(), unterhaltung_id: uid, von: ich(), text, zeit: jetztIso(), gelesen_von: [ich()], rueckmeldung: false, rueckmeldungen: {}, reaktionen: {}, wichtig: false, express: false,
+    antwort_auf: null, kanaele: [], anzahl: empfaenger(u).length, anlagen: [], erwaehnt: [], ...extra };
+  await speichere("nachrichten", n); await bescheid(n, u); return n;
 }
 function eingabeZuruecksetzen(uid) {
   entwurfSetzen(uid, ""); C.anlagen = []; C.ablauf = null; C.antwort = null; C.wichtig = false; C.express = false; C.zustell = { push: false, mail: false, whatsapp: false }; C.zustellOffen = false; C.emoji = false; C.format = false; C.gruss = false;
@@ -651,6 +674,12 @@ AKTIONEN.naMenue = (id) => {
     ${n.text ? `<button class="knopf" data-a="naKopieren" data-x="${esc(id)}">📋 Kopieren</button>` : ""}
     ${(n.anlagen || []).filter((a) => a.id).map((a, i) => `<button class="knopf" data-a="anhangOeffnen" data-x="${esc(id)}|${(n.anlagen || []).indexOf(a)}">⬇️ ${esc(a.art === "sprache" ? "Sprachnachricht" : a.name)} öffnen / speichern</button>`).join("")}
     ${bearbeitbar ? `<button class="knopf" data-a="naBearbeiten" data-x="${esc(id)}">✏️ Bearbeiten (noch ${Math.max(1, Math.ceil((bearbeitenMin() * 60000 - (Date.now() - Date.parse(n.zeit))) / 60000))} Min.)</button>` : ""}
+    <button class="knopf" data-a="naWeiterleiten" data-x="${esc(id)}">↪️ Weiterleiten</button>
+    <button class="knopf" data-a="naMerken" data-x="${esc(id)}">🔖 ${gemerkt(id) ? "Nicht mehr merken" : "Merken"}</button>
+    ${darfAnheften(hole("unterhaltungen", n.unterhaltung_id)) ? `<button class="knopf" data-a="naAnheften" data-x="${esc(id)}">📌 ${(hole("unterhaltungen", n.unterhaltung_id)?.angeheftet || []).includes(id) ? "Lösen" : "Anheften"}</button>` : ""}
+    ${(n.anlagen || []).filter((a) => a.id && navigator.canShare).map((a) => `<button class="knopf" data-a="anhangTeilen" data-x="${esc(id)}|${(n.anlagen || []).indexOf(a)}">📤 ${esc(a.art === "sprache" ? "Sprachnachricht" : a.name)} teilen</button>`).join("")}
+    ${eigen ? `<button class="knopf" data-a="naWichtig" data-x="${esc(id)}">❗ ${n.wichtig ? "Nicht mehr wichtig" : "Nachträglich als wichtig markieren"}</button>` : ""}
+    ${zurueckholbar(n) ? `<button class="knopf" data-a="naZurueckholen" data-x="${esc(id)}">↩️ Zurückholen – noch niemand hat sie gelesen</button>` : ""}
     <button class="knopf" data-a="naVorlesen" data-x="${esc(id)}">🔊 Vorlesen</button>
     <button class="knopf" data-a="naInfo" data-x="${esc(id)}">ℹ️ Details – wann gesendet, angekommen, gelesen</button>
     ${eigen || istLeitung() ? `<button class="knopf rot" data-a="naLoeschen" data-x="${esc(id)}">🗑️ Für alle löschen</button>` : ""}</div>`);

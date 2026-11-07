@@ -96,6 +96,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F86 | 🗺️ Chronik der Auftrittsorte: Weltkarte, Länderliste, Übernahme von der Schul-Website, Jahr optional | ✅ | tests/chronik-orte.test.mjs |
 | BK-F87 | 💾 Speicher im Blick (Warnung ab 80 %) · 🧹 Löschfrist Änderungsprotokoll · 💤 Wach-Aufruf | ✅ | tests/zugang.test.mjs |
 | BK-F88 | 🏢 Büro-Raum wie die Club App: Aktenschrank mit Jalousie & Logo, Schreibtisch, Einrichten, Pause, Rechner | ✅ | tests/bueroraum.test.mjs |
+| BK-F89 | 💬 Nachrichten wie KC 2.882: Weiterleiten, Anheften, @Erwähnung, Stumm, Archiv/Favoriten, Chatsuche, Merkliste, Zurückholen, Wer hat nicht gelesen, Wischen | ✅ | tests/chatplus.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

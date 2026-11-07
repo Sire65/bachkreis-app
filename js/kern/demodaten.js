@@ -516,6 +516,13 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 💬 0.38.0: Leitung hat „Lehrkräfte“ als ⭐ Favorit und „B-Orchester“ für 8 Std. 🔕 stumm, eine Nachricht gemerkt und eine angeheftet
+  d.unterhaltungen.find((u) => u.id === "u-a").angeheftet = ["n-1"];
+  d.chat_einstellungen = [
+    { id: "ce-u-lk-p-leitung", unterhaltung_id: "u-lk", person_id: "p-leitung", favorit: true, archiviert: false, stumm_bis: null },
+    { id: "ce-u-b-p-leitung", unterhaltung_id: "u-b", person_id: "p-leitung", favorit: false, archiviert: false, stumm_bis: iso(new Date(jetzt.getTime() + 8 * 3600000)) },
+  ];
+  d.chat_merker = [{ id: "cm-n-1-p-leitung", nachricht_id: "n-1", person_id: "p-leitung", aktiv: true, am: iso(tag(jetzt, -1, 9)) }];
   d.aufgaben = [
     { id: "au-1", titel: "Neue Anschrift melden", art: "aenderung", status: "offen", von_id: demoEltern?.id || null, zustaendig_id: "p-leitung", text: "Wir sind umgezogen: Am Römerberg 12, 59192 Bergkamen.", frist: isoTag(tag(jetzt, 7)) },
     { id: "au-2", titel: "Pressetext Herbstkonzert schreiben", art: "aufgabe", status: "in_arbeit", zustaendig_id: "p-lk2", von_id: "p-leitung", frist: isoTag(tag(konzertTag, -14)) },

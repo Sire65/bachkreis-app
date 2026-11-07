@@ -187,6 +187,20 @@ export const SN_AN = { alle: "alle", gruppen: "bestimmte Orchester", personen: "
 export const SN_ANTWORTEN = { gelesen: "✓ gelesen", ja: "✅ Ja", spaeter: "⏰ Später", nein: "✖ Nein" };
 export const SN_SPAETER_STD = 24;
 export const snAntwortId = (nid, pid) => `sna-${nid}-${pid}`;
+// 💬 0.38.0 (wie KC-CLUB-STUMM / -CHAT-ARCHIV / -CHAT-FAVORITEN / -MERKEN): je Person und Chat bzw. Nachricht – feste ids, damit nichts doppelt entsteht
+export const ceId = (uid, pid) => `ce-${uid}-${pid}`;
+export const cmId = (nid, pid) => `cm-${nid}-${pid}`;
+export const STUMM_IMMER = "2999-12-31T00:00:00.000Z";
+export const ANGEHEFTET_MAX = 3;
+// @Erwähnungen: „@Vorname“ oder „@Vorname Nachname“ im Text → Personen-ids (nur unter den Kandidaten)
+export function erwaehnteIn(text, personen = []) {
+  const t = String(text || ""), aus = new Set(), esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const hat = (x) => new RegExp(`(?:^|[\\s(„"'])${esc(x)}(?![\\p{L}])`, "iu").test(t);
+  const zahl = {}; for (const p of personen) if (p.vorname) zahl[p.vorname.toLowerCase()] = (zahl[p.vorname.toLowerCase()] || 0) + 1;
+  // „@Vorname Nachname“ immer; „@Vorname“ allein nur, wenn der Vorname eindeutig ist
+  for (const p of personen) if (p.vorname && (hat(`@${p.vorname} ${p.nachname || ""}`.trim()) || (zahl[p.vorname.toLowerCase()] === 1 && hat(`@${p.vorname}`)))) aus.add(p.id);
+  return [...aus];
+}
 // gruppen = Gruppen der Person und ihrer Kinder (Eltern bekommen die Nachricht an das Orchester ihres Kindes)
 export function snFuerMich(z, ich, gruppen, heute = new Date().toISOString().slice(0, 10)) {
   if (!z || z.geloescht_am || !ich || z.von === ich) return false;
@@ -828,6 +842,7 @@ export const TABELLEN = {
       { k: "verteiler", t: "Verteiler (automatisch)", typ: "text" },
       { k: "mitglieder", t: "Mitglieder", typ: "refs", ref: "personen" },
     ],
+    intern: [{ k: "angeheftet", typ: "json" }], // 📌 0.38.0 bis zu 3 angeheftete Nachrichten (KC-CLUB-ANHEFTEN)
     liste: ["titel", "art", "verteiler"],
     anzeige: (z) => z.titel,
   },
@@ -845,6 +860,8 @@ export const TABELLEN = {
       { k: "wichtig", t: "❗ wichtig", typ: "ja" },
       { k: "express", t: "🏎️ Express", typ: "ja" },
       { k: "antwort_auf", t: "Antwort auf", typ: "text" },
+      { k: "weitergeleitet_von", t: "↪️ weitergeleitet von", typ: "text" }, // 0.38.0 KC-CLUB-WEITERLEITEN (Name setzt der Server)
+      { k: "erwaehnt", t: "@ erwähnt", typ: "refs", ref: "personen" }, // 0.38.0 KC-CLUB-ERWAEHNUNG (kommt auch bei 🔕 stumm durch)
       { k: "kanaele", t: "Benachrichtigen über", typ: "liste", werte: KOM_KANAELE },
       { k: "geplant_um", t: "⏰ senden um", typ: "zeit" },
       { k: "wiederholung", t: "Wiederholung", typ: "wahl", werte: { einmal: "einmal", taeglich: "jeden Tag", werktags: "werktags", woechentlich: "jede Woche", monatlich: "jeden Monat" } },
@@ -921,6 +938,29 @@ export const TABELLEN = {
     ],
     liste: ["zeit", "text", "an", "wichtig"],
     anzeige: (z) => String(z.text || "").slice(0, 60),
+  },
+  // 💬 0.38.0 Chat-Einstellungen je Person (🔕 stumm bis, 📦 archiviert, ⭐ Favorit) – sieht und ändert nur die Person selbst
+  chat_einstellungen: {
+    titel: "Chat-Einstellungen je Person", sym: "🔕", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "unterhaltung_id", t: "Unterhaltung", typ: "ref", ref: "unterhaltungen", pflicht: true },
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "stumm_bis", t: "🔕 stumm bis", typ: "zeit" },
+      { k: "archiviert", t: "📦 archiviert", typ: "ja" },
+      { k: "favorit", t: "⭐ Favorit", typ: "ja" },
+    ],
+    liste: ["unterhaltung_id", "person_id", "stumm_bis", "archiviert", "favorit"],
+  },
+  // 🔖 0.38.0 Merkliste (KC-CLUB-MERKEN): private Lesezeichen auf Nachrichten
+  chat_merker: {
+    titel: "Gemerkte Nachrichten", sym: "🔖", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "nachricht_id", t: "Nachricht", typ: "ref", ref: "nachrichten", pflicht: true },
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "aktiv", t: "gemerkt", typ: "ja" },
+      { k: "am", t: "am", typ: "zeit" },
+    ],
+    liste: ["nachricht_id", "person_id", "aktiv", "am"],
   },
   startnachricht_antworten: {
     titel: "Startnachricht: Antworten", sym: "✅", gruppe: "Kommunikation", lesen: L, schreiben: [],

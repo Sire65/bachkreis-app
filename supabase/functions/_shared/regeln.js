@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen"]);
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -116,6 +116,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "aufgaben": return ctx.meine.has(z.von_id);
     case "startnachrichten": return z.von === ctx.ich || snFuerMich(z, ctx.ich, ctx.gruppen, "0000-00-00"); // 📣 an mich (auch abgelaufene – für den Abgleich)
     case "startnachricht_antworten": return z.person_id === ctx.ich || ctx.snMap?.get(z.nachricht_id)?.von === ctx.ich;
+    case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich; // 0.38.0: privat – nur die Person selbst
     case "pinnwand": return pwSichtbar(z, ctx.ich);
     case "pinnwand_gelesen": {
       if (z.person_id === ctx.ich) return true;
@@ -183,7 +184,7 @@ function anlagenPruefen(roh, ctx) {
     const x = { art: a.art, name: String(a.name || "Datei").slice(0, 120) };
     if (a.id) {
       const d = ctx.dateien?.get(String(a.id));
-      if (!d || (d.von !== ctx.ich && !ctx.notenDateien?.has(d.id))) return { grund: "ANLAGE_NICHT_ERLAUBT" };
+      if (!d || (d.von !== ctx.ich && !ctx.notenDateien?.has(d.id) && !ctx.quellAnlagen?.has(d.id))) return { grund: "ANLAGE_NICHT_ERLAUBT" };
       Object.assign(x, { id: d.id, mime: d.mime, groesse: d.groesse });
     } else if (a.art !== "noten" || !a.stimme_id) return { grund: "ANLAGEN_UNGUELTIG" };
     if (a.stimme_id) x.stimme_id = String(a.stimme_id).slice(0, 80);
@@ -303,7 +304,15 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         if (express && geplant) return { ok: false, grund: "EXPRESS_NICHT_GEPLANT" };
         if (express && !hatRolle(ctx, CHAT.expressUnbegrenzt) && (ctx.expressHeute ?? 0) >= (ctx.expressMax ?? CHAT.expressMax)) return { ok: false, grund: "EXPRESS_GRENZE" };
         if (express) ctx.expressHeute = (ctx.expressHeute ?? 0) + 1;
-        return { ok: true, zeile: { ...nur(neu, ["id", "unterhaltung_id"]), text: String(neu.text ?? "").trim(), von: ctx.ich, zeit: geplant || jetzt, gelesen_von: [ctx.ich],
+        // ↪️ 0.38.0 Weiterleiten (KC-CLUB-WEITERLEITEN): nur, was man selbst sehen darf; den Vermerk setzt der Server
+        let weiter = null;
+        if (neu.weiter_von) {
+          const q = ctx.quellen?.get(String(neu.weiter_von));
+          if (!q || q.geloescht_am || q.zurueckgezogen_am || !ctx.unterhaltungen.has(q.unterhaltung_id) || !nachrichtFrei(q)) return { ok: false, grund: "QUELLE_NICHT_SICHTBAR" };
+          const p = (ctx.personen || []).find((x) => x.id === q.von); weiter = q.weitergeleitet_von || (p ? `${p.vorname} ${p.nachname}`.trim() : "Bachkreis");
+        }
+        const erwaehnt = [...new Set((Array.isArray(neu.erwaehnt) ? neu.erwaehnt : []).map(String))].filter((id) => id !== ctx.ich && ctx.personenIds?.has(id)).slice(0, 30);
+        return { ok: true, zeile: { ...nur(neu, ["id", "unterhaltung_id"]), text: String(neu.text ?? "").trim(), von: ctx.ich, zeit: geplant || jetzt, gelesen_von: [ctx.ich], weitergeleitet_von: weiter, erwaehnt,
           anlagen: an.liste, umfrage: um, umfrage_stimmen: {}, umfrage_frei: {}, loescht_am: geplant ? null : loescht,
           rueckmeldung: ctx.istVerwalter && !!neu.rueckmeldung, rueckmeldungen: {}, reaktionen: {}, wichtig: !!neu.wichtig, express,
           antwort_auf: neu.antwort_auf ? String(neu.antwort_auf).slice(0, 80) : null, kanaele: kanaele(neu.kanaele),
@@ -319,6 +328,13 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         const g = planZeit(neu.geplant_um); if (!g) return { ok: false, grund: "ZEIT_UNGUELTIG" };
         return { ok: true, zeile: { ...alt, text: String(neu.text).trim(), geplant_um: g, zeit: g, wiederholung: WIEDERHOLUNG.includes(neu.wiederholung) ? neu.wiederholung : "einmal", wichtig: !!neu.wichtig, kanaele: kanaele(neu.kanaele) } };
       }
+      // ↩️ 0.38.0 Zurückholen (KC-CLUB-ZURUECKHOLEN): eigene Nachricht, die noch niemand gelesen hat, verschwindet bei allen (bis 24 Std.)
+      if (neu.zurueckholen && !alt.geloescht_am) {
+        if (!eigen) return { ok: false, grund: "NUR_EIGENE" };
+        if (alt.zurueckgezogen_am || Date.now() - Date.parse(alt.zeit) > 24 * 3600000) return { ok: false, grund: "ZURUECKHOLEN_ZU_SPAET" };
+        if ((alt.gelesen_von || []).some((p) => p !== ctx.ich) || ctx.gelesenVonAnderen?.has(alt.id)) return { ok: false, grund: "SCHON_GELESEN" };
+        return { ok: true, zeile: { ...alt, geloescht_am: jetzt } };
+      }
       if (neu.geloescht_am && !alt.geloescht_am) return { ok: false, grund: "NUR_ZURUECKZIEHEN" };
       // Zurückziehen („Diese Nachricht wurde gelöscht“): Absender – oder die Leitung als Moderation
       if (neu.zurueckgezogen_am && !alt.zurueckgezogen_am) {
@@ -333,6 +349,8 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         const f = textPruefen(neu.text); if (f) return { ok: false, grund: f };
         z = { ...z, text: String(neu.text).trim(), bearbeitet_am: jetzt };
       }
+      // ❗ 0.38.0 nachträglich wichtig (KC-CLUB-WICHTIG-NACHTRAEGLICH): nur der Absender, kein neuer Bescheid
+      if (eigen && typeof neu.wichtig === "boolean" && neu.wichtig !== !!alt.wichtig && !alt.zurueckgezogen_am) z = { ...z, wichtig: neu.wichtig };
       // Mitlesende (und Absender): nur eigene Einträge – gelesen, Rückmeldung, Reaktion
       const gelesen = new Set(alt.gelesen_von || []); if ((neu.gelesen_von || []).includes(ctx.ich)) gelesen.add(ctx.ich);
       const rm = { ...(alt.rueckmeldungen || {}) }, meine = neu.rueckmeldungen?.[ctx.ich];
@@ -371,6 +389,13 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         express_bestaetigt_am: n.express ? zeit("express_bestaetigt_am") : null } };
     }
     case "unterhaltungen":
+      // 📌 0.38.0 Anheften (KC-CLUB-ANHEFTEN): höchstens 3 Nachrichten; in Gruppen/Rundschreiben die Leitung, in Einzelchats und Runden alle Mitglieder
+      if (alt && neu.angeheftet !== undefined) {
+        if (!ctx.unterhaltungen.has(alt.id)) return { ok: false, grund: "UNTERHALTUNG_NICHT_SICHTBAR" };
+        if (!["einzel", "runde"].includes(alt.art) && !ctx.istVerwalter) return { ok: false, grund: "NUR_LEITUNG" };
+        const ids = [...new Set((Array.isArray(neu.angeheftet) ? neu.angeheftet : []).map((x) => String(x).slice(0, 80)))].slice(0, ANGEHEFTET_MAX);
+        return { ok: true, zeile: { ...alt, angeheftet: ids } };
+      }
       if (alt) return { ok: false, grund: "NUR_NEU" };
       return { ok: false, grund: "ART_UNGUELTIG" };
     case "genehmigungen":
@@ -502,6 +527,21 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "chat_einstellungen": {
+      // 🔕 📦 ⭐ 0.38.0 nur die eigenen, nur für sichtbare Chats
+      if (!ctx.unterhaltungen.has(String(neu.unterhaltung_id || alt?.unterhaltung_id))) return { ok: false, grund: "UNTERHALTUNG_NICHT_SICHTBAR" };
+      if (neu.person_id !== ctx.ich || (alt && alt.person_id !== ctx.ich)) return { ok: false, grund: "NUR_EIGENE" };
+      const id = ceId(neu.unterhaltung_id, ctx.ich); if (neu.id !== id) return { ok: false, grund: "ID_UNGUELTIG" };
+      const t = neu.stumm_bis ? Date.parse(neu.stumm_bis) : NaN, stumm = Number.isFinite(t) && t > Date.now() ? new Date(Math.min(t, Date.parse(STUMM_IMMER))).toISOString() : null;
+      return { ok: true, zeile: { ...(alt || {}), id, unterhaltung_id: neu.unterhaltung_id, person_id: ctx.ich, stumm_bis: stumm, archiviert: !!neu.archiviert, favorit: !!neu.favorit } };
+    }
+    case "chat_merker": {
+      const n = ctx.nMap?.get(String(neu.nachricht_id || alt?.nachricht_id));
+      if (!n || n.geloescht_am || !ctx.unterhaltungen.has(n.unterhaltung_id) || !(n.von === ctx.ich || nachrichtFrei(n))) return { ok: false, grund: "NACHRICHT_NICHT_SICHTBAR" };
+      if (neu.person_id !== ctx.ich || (alt && alt.person_id !== ctx.ich)) return { ok: false, grund: "NUR_EIGENE" };
+      const id = cmId(n.id, ctx.ich); if (neu.id !== id) return { ok: false, grund: "ID_UNGUELTIG" };
+      return { ok: true, zeile: { ...(alt || {}), id, nachricht_id: n.id, person_id: ctx.ich, aktiv: neu.aktiv !== false, am: jetzt } };
     }
     case "startnachricht_antworten": {
       // 📣 Antwort auf eine Startnachricht: nur die eigene, nur wenn sie an mich ging; Zeit und „später“ setzt der Server

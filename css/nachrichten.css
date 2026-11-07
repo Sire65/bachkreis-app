@@ -221,3 +221,23 @@ button.tag-trenner { border: none; background: none; font: inherit; cursor: poin
 @keyframes naBlink { 50% { opacity: .35; } }
 :root.ohne-effekt .fuss-leiste button[class*="alt-"] .zaehler, :root.ohne-effekt .kachel[class*="na-"] .zahl, :root.ohne-effekt .mini.mini-neu b { animation: none; }
 @media (prefers-reduced-motion: reduce) { .fuss-leiste button[class*="alt-"] .zaehler, .kachel[class*="na-"] .zahl, .mini.mini-neu b { animation: none; } }
+/* ===== 0.38.0 Nachrichten wie KC 2.882 ===== */
+.chat-kopf-knopf { flex: none; width: 44px; height: 44px; border: none; border-radius: 12px; background: transparent; color: inherit; font-size: 1.2rem; cursor: pointer; }
+.chat-kopf-knopf:focus-visible { outline: 3px solid var(--akzent); }
+.chat-angeheftet { position: sticky; top: 64px; z-index: 5; display: grid; gap: 2px; margin: 0 0 6px; }
+.chat-pin { display: flex; gap: 6px; align-items: center; width: 100%; border: none; border-left: 4px solid var(--gold, #f2b705); border-radius: 10px; background: var(--karte); color: var(--text); padding: 8px 10px; font: inherit; font-size: .88rem; text-align: left; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
+.chat-pin span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+.chat-suche-leiste { position: sticky; top: 64px; z-index: 6; display: flex; gap: 6px; align-items: center; padding: 6px; border-radius: 12px; background: var(--karte); box-shadow: 0 2px 8px rgba(0,0,0,.15); margin-bottom: 6px; }
+.chat-suche-leiste input { flex: 1; min-width: 0; }
+.blase.treffer { outline: 2px dashed #d4a017; } .blase.treffer-an { outline: 3px solid #d4a017; box-shadow: 0 0 0 6px rgba(242,183,5,.3); }
+.weiter-marke { font-size: .78rem; font-style: italic; opacity: .85; margin-bottom: 2px; }
+mark.erw { background: rgba(31,79,143,.14); color: inherit; border-radius: 4px; padding: 0 2px; font-weight: 700; } mark.erw.ich { background: #ffe38a; color: #1a1500; }
+:root.dunkel mark.erw { background: rgba(140,187,232,.25); } :root.dunkel mark.erw.ich { background: #6b5200; color: #fff; }
+.erw-vorschlag { display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 8px; } .erw-vorschlag button { border: 1px solid var(--linie); border-radius: 99px; background: var(--karte2); color: var(--text); padding: 6px 12px; font: inherit; font-weight: 700; cursor: pointer; min-height: 40px; }
+.lesestand { font-size: .76rem; color: var(--grau); margin-top: 1px; }
+.chat-runter { position: fixed; right: 16px; bottom: 150px; z-index: 30; width: 48px; height: 48px; border-radius: 50%; border: none; background: var(--karte); box-shadow: 0 3px 10px rgba(0,0,0,.3); font-size: 1.3rem; cursor: pointer; }
+.chat-runter.neu::after { content: ""; position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; border-radius: 50%; background: #c62828; }
+.ug-kopf { display: grid; gap: 2px; width: 100%; border: none; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; } .ug-kopf span { color: var(--grau); font-size: .88rem; }
+.blase { transition: transform .12s ease; }
+@media (prefers-reduced-motion: reduce) { .blase { transition: none; } }
+:root.dunkel .blase .von { color: color-mix(in srgb, var(--pf, var(--blau)) 45%, #ffffff); } /* 0.38.0: farbige Namen im Nachtmodus gut lesbar */

@@ -23,7 +23,13 @@ export async function nachrichtBescheid(db, n, { ausloeser = "", kanaele = null,
   const korrelation = `nachricht:${n.id}`;
   if ((await db.q(`select 1 from bk_versand where korrelation = $1 limit 1`, [korrelation])).length) return { ok: true, schon: true, auftraege: 0 };
   const u = (await db.q(`select to_jsonb(u) as z from bk_unterhaltungen u where id = $1`, [n.unterhaltung_id]))[0]?.z;
-  const an = (await unterhaltungEmpfaenger(db, u, mdb)).filter((p) => p !== n.von);
+  let an = (await unterhaltungEmpfaenger(db, u, mdb)).filter((p) => p !== n.von);
+  // 🔕 0.38.0 stumm geschaltete Chats (KC-CLUB-STUMM): kein Push, keine Mail – außer ❗ wichtig, 🏎️ Express oder @erwähnt
+  if (!n.wichtig && !n.express && an.length) {
+    const stumm = new Set((await db.q(`select person_id from bk_chat_einstellungen where unterhaltung_id = $1 and stumm_bis > now() and geloescht_am is null`, [n.unterhaltung_id])).map((r) => r.person_id));
+    const erw = new Set(n.erwaehnt || []);
+    an = an.filter((p) => !stumm.has(p) || erw.has(p));
+  }
   const von = (await db.q(`select vorname, nachname from bk_personen where id = $1`, [n.von]))[0];
   const wer = von ? `${von.vorname} ${von.nachname}`.trim() : ausloeser || "Bachkreis";
   const kopf = n.express ? `🏎️ EXPRESS von ${wer}` : n.wichtig ? `❗ Wichtig: ${wer}` : wer;

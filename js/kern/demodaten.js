@@ -516,6 +516,18 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 🗳️ 0.39.0 Terminumfragen: Elternabend B-Orchester (Eltern stimmen ab) und ein Planungstreffen im Team
+  const tuTag = (n, h) => iso(tag(jetzt, n, h));
+  const elternB = [...new Set(d.eltern_kind.filter((e) => d.gruppe_zuordnung.some((z) => z.gruppe_id === "g-b" && z.person_id === e.kind_id)).map((e) => e.eltern_id))];
+  d.terminumfragen = [
+    { id: "tu-1", titel: "Elternabend B-Orchester", beschreibung: "Wir besprechen die Probenfahrt und das Herbstkonzert. Bitte alle Tage ankreuzen, die passen.", von: "p-leitung", an: "eltern", fuer_alle: false, gruppen: ["g-b"],
+      art_id: "ta-sonst", ort: "Aula Gymnasium", dauer_min: 90, optionen: [{ id: "o1", beginn: tuTag(10, 19) }, { id: "o2", beginn: tuTag(12, 19) }, { id: "o3", beginn: tuTag(17, 18) }], frist: isoTag(tag(jetzt, 6)), status: "offen" },
+    { id: "tu-2", titel: "Planungstreffen Weihnachtskonzert", von: "p-leitung", an: "verwaltung", fuer_alle: false, gruppen: [], art_id: "ta-sonst", ort: "Musikraum", dauer_min: 60,
+      optionen: [{ id: "o1", beginn: tuTag(5, 17) }, { id: "o2", beginn: tuTag(6, 16) }], frist: isoTag(tag(jetzt, 3)), status: "offen" },
+  ];
+  const stimme = ["ja", "vielleicht", "nein"];
+  d.terminumfrage_antworten = elternB.slice(0, 5).filter((p) => p !== demoEltern?.id).map((p, i) => ({ id: `tua-tu-1-${p}`, umfrage_id: "tu-1", person_id: p, stimmen: { o1: stimme[i % 3], o2: "ja", o3: stimme[(i + 1) % 3] }, am: iso(tag(jetzt, -1, 20)) }))
+    .concat([{ id: "tua-tu-2-p-lk1", umfrage_id: "tu-2", person_id: "p-lk1", stimmen: { o1: "ja", o2: "nein" }, am: iso(tag(jetzt, 0, 8)) }]);
   // 💬 0.38.0: Leitung hat „Lehrkräfte“ als ⭐ Favorit und „B-Orchester“ für 8 Std. 🔕 stumm, eine Nachricht gemerkt und eine angeheftet
   d.unterhaltungen.find((u) => u.id === "u-a").angeheftet = ["n-1"];
   d.chat_einstellungen = [

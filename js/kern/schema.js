@@ -192,6 +192,25 @@ export const ceId = (uid, pid) => `ce-${uid}-${pid}`;
 export const cmId = (nid, pid) => `cm-${nid}-${pid}`;
 export const STUMM_IMMER = "2999-12-31T00:00:00.000Z";
 export const ANGEHEFTET_MAX = 3;
+// 🗳️ 0.39.0 Terminumfrage (wie KC Terminumfrage / Doodle): mögliche Termine ankreuzen, die Leitung entscheidet → daraus wird ein Termin
+export const TU_AN = { mitglieder: "👥 Mitglieder der Orchester (Kinder sagen selbst)", eltern: "👪 Eltern", verwaltung: "🧑‍🏫 Leitung, Lehrkräfte & Vorstand" };
+export const TU_STIMMEN = { ja: "✅ passt", vielleicht: "🤔 notfalls", nein: "❌ geht nicht" };
+export const TU_PLANER = ["admin", "leitung", "lehrkraft", "vorstand", "terminplaner"];
+export const tuAntwortId = (uid, pid) => `tua-${uid}-${pid}`;
+// Auszählung: je Option ja/vielleicht/nein; beste = meiste „ja“, dann wenigste „nein“, dann meiste „vielleicht“
+export function tuAuszaehlen(umfrage, antworten = []) {
+  const opt = (umfrage?.optionen || []).map((o) => ({ ...o, ja: 0, vielleicht: 0, nein: 0 }));
+  for (const a of antworten) for (const o of opt) { const s = a.stimmen?.[o.id]; if (s in TU_STIMMEN) o[s]++; }
+  const rang = [...opt].sort((a, b) => b.ja - a.ja || a.nein - b.nein || b.vielleicht - a.vielleicht);
+  return { optionen: opt, beste: rang[0] && rang[0].ja > 0 ? rang[0].id : null, antworten: antworten.length };
+}
+// Für wen ist die Umfrage? (gleiche Regel in App und Server)
+export function tuFuerMich(u, { gruppen = new Set(), eigeneGruppen = new Set(), kinder = new Set(), verwalter = false } = {}) {
+  if (!u || u.geloescht_am) return false;
+  if (u.an === "verwaltung") return verwalter;
+  const trifft = (gs) => (u.fuer_alle ? gs.size > 0 : (u.gruppen || []).some((g) => gs.has(g)));
+  return u.an === "eltern" ? kinder.size > 0 && trifft(gruppen) : trifft(eigeneGruppen);
+}
 // @Erwähnungen: „@Vorname“ oder „@Vorname Nachname“ im Text → Personen-ids (nur unter den Kandidaten)
 export function erwaehnteIn(text, personen = []) {
   const t = String(text || ""), aus = new Set(), esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -938,6 +957,38 @@ export const TABELLEN = {
     ],
     liste: ["zeit", "text", "an", "wichtig"],
     anzeige: (z) => String(z.text || "").slice(0, 60),
+  },
+  terminumfragen: {
+    titel: "Terminumfragen", sym: "🗳️", gruppe: "Termine", lesen: L, schreiben: [],
+    felder: [
+      { k: "titel", t: "Worum geht es?", typ: "text", pflicht: true },
+      { k: "beschreibung", t: "Hinweise", typ: "lang" },
+      { k: "von", t: "angelegt von", typ: "ref", ref: "personen" },
+      { k: "an", t: "Wer stimmt ab?", typ: "wahl", werte: TU_AN },
+      { k: "fuer_alle", t: "Ganzer Bachkreis", typ: "ja" },
+      { k: "gruppen", t: "Orchester", typ: "refs", ref: "gruppen" },
+      { k: "art_id", t: "Terminart (für den Termin)", typ: "ref", ref: "terminarten" },
+      { k: "ort", t: "Ort", typ: "text" },
+      { k: "dauer_min", t: "Dauer (Minuten)", typ: "zahl" },
+      { k: "optionen", t: "Mögliche Termine", typ: "json" },
+      { k: "frist", t: "Abstimmen bis", typ: "datum" },
+      { k: "status", t: "Status", typ: "wahl", werte: { offen: "läuft", entschieden: "entschieden", abgebrochen: "abgebrochen" } },
+      { k: "gewaehlt", t: "Gewählter Termin", typ: "text" },
+      { k: "termin_id", t: "Angelegter Termin", typ: "ref", ref: "termine" },
+    ],
+    liste: ["titel", "an", "frist", "status"],
+    anzeige: (z) => z.titel,
+  },
+  terminumfrage_antworten: {
+    titel: "Terminumfragen: Antworten", sym: "🗳️", gruppe: "Termine", lesen: L, schreiben: [],
+    felder: [
+      { k: "umfrage_id", t: "Umfrage", typ: "ref", ref: "terminumfragen", pflicht: true },
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "stimmen", t: "Stimmen", typ: "json" },
+      { k: "kommentar", t: "Kommentar", typ: "text" },
+      { k: "am", t: "am", typ: "zeit" },
+    ],
+    liste: ["umfrage_id", "person_id", "am"],
   },
   // 💬 0.38.0 Chat-Einstellungen je Person (🔕 stumm bis, 📦 archiviert, ⭐ Favorit) – sieht und ändert nur die Person selbst
   chat_einstellungen: {

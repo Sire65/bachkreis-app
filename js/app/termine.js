@@ -1,6 +1,7 @@
 // Termine: Liste/Kalender, Zu-/Absage (auch Eltern für ihre Kinder), Besetzungsampel, Nachfassen, Serientermine,
 // Abwesenheit (Zeitraum auf einmal absagen), Kalender-Export (.ics). Vorbild: KC Club „treffen“/„teilnahme“.
 import { mitfahrtHtml, mitfahrtZahlen } from "./extras.js";
+import { offeneFuerMich } from "./terminumfrage.js";
 import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istLehrkraft, istLeitung, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
@@ -105,13 +106,15 @@ VIEWS.termine = {
     chips = `<div class="inst-chips t-filter">${(planer ? [["alle", "📋 Alle Termine"], ["meine_alle", "🙋 Meine"], ...(stand ? [] : [["meine_eigene", "🙋 Eigene"]]), ["vergangen", "🕰️ Vergangen"]] : [])
       .concat(stand || !planer ? [["meine_offen", `❔ Noch antworten`, stand?.offen], ["meine_orchester", "🎻 Mein Orchester", stand?.orchester], ["meine_global", "🌍 Für alle", stand?.global], ["meine_eigene", "🙋 Eigene", stand?.eigen]] : [])
       .map(([k, n, z]) => `<button type="button" class="${filter === k || (k === "meine_alle" && filter === "meine") ? "an" : ""}${k === "meine_offen" && z ? " t-offen" : ""}" data-a="termineFilter" data-x="${k}">${n}${z != null ? ` <b>${z}</b>` : ""}</button>`).join("")}${stand && filter !== "meine_alle" && filter !== "meine" && !planer ? `<button type="button" data-a="termineFilter" data-x="meine_alle">✕</button>` : ""}</div>`;
-    const knoepfe = `<button class="knopf klein" data-a="eigenNeu" title="Eigenen Termin eintragen (z. B. Üben)">＋ Eigener</button>${planer ? `<button class="knopf haupt klein" data-a="terminNeu">＋ Termin</button>` : ""}`;
+    const knoepfe = `<button class="knopf klein" data-a="kachel" data-x="terminumfragen" title="Terminumfragen – wann passt es?" aria-label="Terminumfragen">🗳️</button><button class="knopf klein" data-a="eigenNeu" title="Eigenen Termin eintragen (z. B. Üben)">＋ Eigener</button>${planer ? `<button class="knopf haupt klein" data-a="terminNeu">＋ Termin</button>` : ""}`;
     const modusKn = `<div class="umschalter">${[["liste", "☰ Liste"], ["kalender", "🗓️ Kalender"]].map(([k, n]) => `<button class="${modus === k ? "an" : ""}" data-a="termineModus" data-x="${k}">${n}</button>`).join("")}</div>`;
     const hinweis = stand?.offen && !["meine_offen"].includes(filter) && !planer ? `<button type="button" class="karte t-hinweis" data-a="termineFilter" data-x="meine_offen">❔ <b>${stand.offen} ${stand.offen === 1 ? "Termin wartet" : "Termine warten"} auf ${istEltern() ? "eure" : "deine"} Antwort</b><span>antippen ›</span></button>` : "";
     const inhalt = modus === "kalender" ? monatsKalender(ts, p.monat)
       : ts.length ? abschnitte(ts).map((a) => `<h3 class="t-abschnitt">${esc(a.k)}</h3>${a.l.map((t) => terminKarte(t)).join("")}`).join("")
       : `<div class="leer">${f === "eigene" ? "Noch keine eigenen Termine.<br><button class=\"knopf haupt\" data-a=\"eigenNeu\">＋ Eigenen Termin eintragen</button>" : f === "offen" ? "🎉 Alles beantwortet!" : "Keine Termine."}</div>`;
-    return kopf("📅 Termine", knoepfe) + modusKn + chips + hinweis + inhalt;
+    const tu = offeneFuerMich(); // 🗳️ 0.39.0 offene Terminumfragen für mich
+    const tuHinweis = tu.length ? `<button type="button" class="karte t-hinweis tu-hinweis" data-a="${tu.length === 1 ? "oeffne" : "kachel"}" data-x="${tu.length === 1 ? `terminumfrage|${esc(tu[0].id)}` : "terminumfragen"}">🗳️ <b>${tu.length === 1 ? `Wann passt es? „${esc(tu[0].titel)}“` : `${tu.length} Terminumfragen warten`}</b> – bitte abstimmen ›</button>` : "";
+    return kopf("📅 Termine", knoepfe) + modusKn + tuHinweis + chips + hinweis + inhalt;
   },
 };
 function monatsKalender(ts, monat) {

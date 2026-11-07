@@ -110,23 +110,7 @@ VIEWS.sicherheit = {
     return kopf("🛡️ Sicherheits-Check") + `<div class="karte"><ul class="liste">${p.join("")}</ul></div><p class="hinweis">Grün = geprüft und ok · Rot = Problem · Grau = unbekannt (nie „ok“).</p>`;
   },
 };
-VIEWS.hilfe = {
-  render() {
-    const t = [
-      ["📲 Die App auf den Startbildschirm legen", `Einmal installieren – dann startet die App schneller, du bleibst angemeldet und Benachrichtigungen kommen zuverlässig.<span class="knopfreihe" style="display:flex;margin-top:8px"><button type="button" class="knopf klein" data-a="installieren">📲 Jetzt installieren</button><button type="button" class="knopf klein" data-a="installAnleitung">🖼️ Mit Bildern</button></span>`],
-      ["🔗 Mein Link funktioniert nicht", "Den Link direkt aus der Nachricht antippen (nicht abtippen). Nach vielen Fehlversuchen ist die Anmeldung 15 Minuten gesperrt. Die Leitung schickt dir gern einen neuen persönlichen Link – der alte gilt dann nicht mehr."],
-      ["📅 Zu- oder absagen", "Termine › bei jedem Termin ✅ Zusage, 🤔 Vielleicht oder ❌ Absage antippen. Eltern sagen für ihre Kinder zu."],
-      ["🏖️ Längere Abwesenheit", "Meins › Abwesenheit: Zeitraum wählen – alle Termine darin werden auf einmal abgesagt."],
-      ["🎼 Meine Noten", "Meins › Meine Noten zeigt automatisch die Stimmen für dein Instrument und deine Gruppe."],
-      ["🔀 Gruppen A–D", "Stammgruppe gilt dauerhaft, temporäre Zuordnungen (z. B. Aushilfe) laufen automatisch aus."],
-      ["🧭 Cockpit (Leitung)", "Zeigt sortiert nach Dringlichkeit, was heute ansteht und wo Antworten, Genehmigungen oder Freigaben fehlen."],
-      ["💻 PC-Verwaltung", "Adressen, Instrumente, Gruppen, Zugänge und Import/Export werden bequem am PC oder Notebook gepflegt (Technik › PC-Verwaltung)."],
-      ["🟢 WhatsApp", "Die App öffnet WhatsApp mit fertigem Text – du wählst Kontakt oder Gruppe und drückst selbst auf Senden."],
-      ["🧪 Vorführversion", "Alle Personen sind erfunden. Daten liegen nur in diesem Browser. Oben „Ansicht als“ wechselt die Rolle."],
-    ];
-    return kopf("❓ Hilfe & Tipps") + t.map(([a, b]) => `<details class="karte"><summary><b>${a}</b></summary><p>${b}</p></details>`).join("");
-  },
-};
+// ❓ VIEWS.hilfe: seit 0.39.0 das Hilfe-Zentrum in js/app/hilfezentrum.js
 VIEWS.ueber = {
   render() {
     const i = datenInfo();

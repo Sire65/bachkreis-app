@@ -239,6 +239,8 @@ function ilMeldungen() {
   const beantw = naechste.find(({ t, p }) => antwortVon(db, t.id, p));
   if (beantw) { const tage = Math.round((new Date(beantw.t.beginn).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
     if (tage >= 1 && tage <= 14) add({ id: "countdown:" + beantw.t.id, stufe: "gold", sym: "⏳", t: tage === 1 ? `Morgen: ${beantw.t.titel}` : `Noch ${tage} Tage bis ${beantw.t.titel}`, u: `${datum(beantw.t.beginn)}, ${uhr(beantw.t.beginn)} Uhr`, ziel: ["oeffne", "termin|" + beantw.t.id] }); }
+  // 🗳️ 0.39.0 Terminumfrage: bitte abstimmen
+  for (const u of (SV.tuOffen?.() || []).slice(0, 2)) add({ id: "tu:" + u.id, stufe: "orange", sym: "🗳️", t: `Wann passt es? „${u.titel}“`, u: "Bitte in der Terminumfrage abstimmen", ziel: ["oeffne", `terminumfrage|${u.id}`] });
   const pw = SV.pwOffen?.() || 0;
   if (pw) add({ id: "pinnwand", stufe: "gold", sym: "📌", t: `${pw} neue${pw === 1 ? "r" : ""} Zettel an der Pinnwand`, u: "Antippen zum Lesen", ziel: ["kachel", "pinnwand"] });
   // ⚪ schöne Infos

@@ -6,6 +6,7 @@ import { S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN,
 import { setzeEmpfaengerGeraet, pushAbonnieren } from "../kern/versand.js";
 import "./start.js";
 import "./termine.js";
+import "./terminumfrage.js"; // 🗳️ 0.39.0
 import "./kommunikation.js";
 import { pinnwandStart } from "./pinnwand.js";
 import { nachrichtenStart, expressPruefen } from "./nachrichten.js";
@@ -24,6 +25,7 @@ import { termineStart } from "./termine.js";
 import { onlineStart } from "./online.js";
 import "./kalender.js";
 import "./meins.js";
+import "./hilfezentrum.js"; // ❓🔍 0.39.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";

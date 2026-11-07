@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.39.0 DEV – 07.11.2026
+- Abgleich mit der KC Club App 2.882, Teil 2 (Wunsch Hansi „Club App checken und anpassen“):
+  - 🗳️ Terminumfrage (wie KC Terminumfrage): Planer (Leitung, Lehrkräfte, Vorstand, Terminplaner) schlagen Termine vor, für Eltern, Mitglieder (Kinder stimmen selbst) oder das Team; abstimmen ✅/🤔/❌ mit Kommentar bis zur Frist; Auszählung mit „am besten“, „📅 Festlegen“ legt den Termin an und gibt allen Bescheid, „📣 Erinnern“ nur an die, die noch fehlen. Fremde Antworten sehen nur Ersteller und Leitung. Hinweis in Termine und „Für dich“. Migration 20261109000000_bk_terminumfrage.sql
+  - ❓ Hilfe-Zentrum (KC-CLUB-HILFEZENTRUM): 9 Themen, 43 Hilfen mit Kapitelnummern, Suche, „✨ Neu seit deinem letzten Besuch“, „👉 Zeig mir wo“ mit Leiste „↩️ Zurück zur Hilfe“; Hilfen je Rolle
+  - 🔍 Lupe (KC-CLUB-LUPE, KC-CLUB-SUCHE-UNSCHARF): runde Knöpfe 🔍 und ? unten rechts (abschaltbar), Suche über Funktionen, Hilfen, Chats, Termine, Personen, Noten, Dokumente – mit Tippfehlern und Wortanfängen
+- js/kern/suche.js, js/kern/hilfe.js, js/app/hilfezentrum.js, js/app/terminumfrage.js; tests/terminumfrage.test.mjs, tests/hilfe-suche.test.mjs
+
+
 ## 0.38.0 DEV – 07.11.2026
 - 💬 Nachrichten wie KC Club App 2.882 (Wunsch Hansi 07.11. „Club App checken und anpassen, z. B. das Nachrichtenmodul“), js/app/chatplus.js:
   - ↪️ Weiterleiten (KC-CLUB-WEITERLEITEN) mit Vermerk „Weitergeleitet von …“ und Anhängen – den Namen setzt der Server, nur Sichtbares lässt sich weiterleiten

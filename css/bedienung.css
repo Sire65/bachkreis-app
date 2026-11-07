@@ -329,3 +329,30 @@
 .bu-auf-blatt { padding: 10px 12px 12px; }
 @media (prefers-reduced-motion: reduce) { .bu-einrichten [data-ding], .bu-schoner-logo { animation: none; } .bu-obj svg, .bu-ordner { transition: none; } }
 :root.ohne-effekt .bu-einrichten [data-ding], :root.ohne-effekt .bu-schoner-logo { animation: none; }
+/* 0.39.0 – 🗳️ Terminumfrage */
+.tu-option { padding: 10px 0; border-bottom: 1px solid var(--linie); } .tu-option:last-of-type { border-bottom: none; }
+.tu-knoepfe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+.tu-k { min-height: 46px; border: 2px solid var(--linie); border-radius: 12px; background: var(--karte); color: var(--text); font: inherit; font-weight: 700; font-size: .88rem; cursor: pointer; }
+.tu-k.ja.an { background: #e3f2e8; border-color: #25683f; color: #14401f; } .tu-k.vielleicht.an { background: #fbf0d6; border-color: #8a6400; color: #4a3500; } .tu-k.nein.an { background: #fbe3e3; border-color: #a8322a; color: #5c1712; }
+.tu-zeile { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--linie); } .tu-zeile.beste b { color: var(--gruen); } .tu-zeile.gewaehlt { background: rgba(242,183,5,.15); border-radius: 10px; padding-inline: 8px; }
+.tu-balken { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--linie); margin: 4px 0; } .tu-balken i.ja { background: #2e9d5b; } .tu-balken i.vielleicht { background: #d9a21b; } .tu-balken i.nein { background: #c62828; }
+.tu-mini { white-space: nowrap; font-size: .9rem; } .tu-fest { font-size: 1.05rem; } .tu-bitte { border: 2px solid var(--gold, #f2b705); }
+.tu-opt-zeile { display: flex; gap: 6px; margin-bottom: 6px; } .tu-opt-zeile input { flex: 1; min-width: 0; }
+/* 0.39.0 – ❓ Hilfe-Zentrum + 🔍 Lupe */
+.hilfe-knoepfe { position: fixed; right: 12px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); z-index: 40; display: flex; gap: 8px; }
+.hilfe-knoepfe[hidden] { display: none; }
+.hilfe-knoepfe button { width: 46px; height: 46px; border-radius: 50%; border: 2px solid #f2b705; background: #1a1500; color: #ffd23f; font: 800 1.2rem/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 3px 10px rgba(0,0,0,.3); }
+.hilfe-knoepfe button:focus-visible { outline: 3px solid #f2b705; outline-offset: 2px; }
+.hz-suche { border: 2px solid var(--gold, #f2b705); } .hz-suche label { display: block; margin-bottom: 6px; font-size: 1.05rem; } .hz-suche input { width: 100%; font-size: 1.05rem; }
+.hz-themen { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.hz-thema { display: grid; gap: 4px; justify-items: start; text-align: left; padding: 14px 12px; border: 1px solid var(--linie); border-radius: 16px; background: var(--karte); color: var(--text); font: inherit; cursor: pointer; box-shadow: var(--schatten); }
+.hz-tsym { font-size: 1.8rem; } .hz-thema small { color: var(--grau); font-weight: 700; }
+.hz-nr { display: inline-block; min-width: 2.2em; color: var(--grau); font-weight: 800; } .hz-wo { font-size: .8rem; color: var(--grau); font-weight: 700; margin-bottom: 4px; }
+.hz-eintrag.hervor { outline: 3px solid var(--gold, #f2b705); } .hz-kapitel { margin: 6px 0 10px; font-size: 1.2rem; } .hz-neu { border: 2px solid #d9a21b; }
+.hz-schalter { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+.hz-leiste { position: fixed; top: 8px; right: 8px; z-index: 9000; display: flex; gap: 6px; } .hz-leiste button { border: none; border-radius: 99px; padding: 10px 14px; font: inherit; font-weight: 800; cursor: pointer; background: #1a1500; color: #ffd23f; box-shadow: 0 3px 10px rgba(0,0,0,.3); min-height: 44px; }
+.lupe-gruppe { margin: 12px 0 4px; font-size: .9rem; color: var(--grau); } .lupe-liste { display: grid; gap: 4px; }
+.lupe-zeile { display: flex; gap: 10px; align-items: center; width: 100%; border: none; border-radius: 10px; background: var(--karte2); color: var(--text); padding: 10px 12px; font: inherit; text-align: left; cursor: pointer; min-height: 48px; }
+.lupe-zeile .fl { display: grid; min-width: 0; } .lupe-zeile small { color: var(--grau); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body:has(#hilfeKnoepfe:not([hidden])) #inhalt { padding-bottom: 64px; } /* die runden Knöpfe verdecken nichts */
+.tu-zeile .knopf { flex: none; white-space: nowrap; }

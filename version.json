@@ -1,15 +1,24 @@
 {
-  "version": "0.38.0",
+  "version": "0.39.0",
   "datum": "2026-11-07",
   "stufe": "DEV",
   "neu": [
-    "↪️ Nachrichten weiterleiten · 📌 wichtige Nachrichten oben anheften · @Namen erwähnen",
-    "🔕 Chats stumm schalten (8 Std., 1 Woche, immer) · ⭐ Favoriten oben · 📦 Archiv",
-    "🔍 Im Chat suchen · 🔖 Nachrichten merken · ↩️ Ungelesenes zurückholen",
-    "👁 Wer hat meine Nachricht noch nicht gelesen? – mit „Erinnern“ · 📬 Lesestand in der Übersicht",
-    "👉 Nach rechts wischen = antworten · ⬇️ Knopf nach unten · ❗ nachträglich wichtig · 📤 Anhang teilen"
+    "🗳️ Terminumfrage: Wann passt es? Vorschläge ankreuzen (✅ passt · 🤔 notfalls · ❌ geht nicht) – die Leitung legt den Termin mit einem Tipp fest",
+    "❓ Neues Hilfe-Zentrum: Themen, Suche, „Zeig mir wo“ und „neu“ seit deinem letzten Besuch",
+    "🔍 Lupe unten rechts: die ganze App durchsuchen – Funktionen, Hilfen, Personen, Termine, Chats, Noten – auch mit Tippfehlern"
   ],
   "verlauf": [
+    {
+      "version": "0.38.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "↪️ Nachrichten weiterleiten · 📌 wichtige Nachrichten oben anheften · @Namen erwähnen",
+        "🔕 Chats stumm schalten (8 Std., 1 Woche, immer) · ⭐ Favoriten oben · 📦 Archiv",
+        "🔍 Im Chat suchen · 🔖 Nachrichten merken · ↩️ Ungelesenes zurückholen",
+        "👁 Wer hat meine Nachricht noch nicht gelesen? – mit „Erinnern“ · 📬 Lesestand in der Übersicht",
+        "👉 Nach rechts wischen = antworten · ⬇️ Knopf nach unten · ❗ nachträglich wichtig · 📤 Anhang teilen"
+      ]
+    },
     {
       "version": "0.37.0",
       "datum": "2026-11-07",

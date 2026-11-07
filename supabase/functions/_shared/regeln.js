@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -46,6 +46,9 @@ export function kontext(person, alle) {
   ctx.pw = new Map((alle.pinnwand || []).map((z) => [z.id, z]));
   ctx.personen = alle.personen || [];
   ctx.snMap = new Map((alle.startnachrichten || []).map((z) => [z.id, z])); // 📣 Startnachrichten (Antworten prüfen)
+  // 🗳️ 0.39.0 Terminumfragen: eigene Orchester (ohne die der Kinder) für „Mitglieder stimmen selbst ab“
+  ctx.eigeneGruppen = new Set((alle.gruppe_zuordnung || []).filter((z) => z.person_id === ich && !z.geloescht_am).map((z) => z.gruppe_id));
+  ctx.tuMap = new Map((alle.terminumfragen || []).map((z) => [z.id, z]));
   ctx.elternKind = ek;
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
   // 🎙️ Übe-Aufnahmen: für welche (eigenen) Kinder haben die Eltern zuletzt „erteilt“ (Zweck uebeaufnahmen)?
@@ -69,6 +72,7 @@ export function kontext(person, alle) {
 }
 
 const hatRolle = (ctx, liste) => (liste || []).some((r) => ctx.rollen.includes(r));
+const tuCtx = (ctx) => ({ gruppen: ctx.gruppen, eigeneGruppen: ctx.eigeneGruppen || new Set(), kinder: ctx.kinder, verwalter: ctx.istVerwalter });
 export const darfAlleLesen = (tab, ctx) => hatRolle(ctx, TABELLEN[tab]?.lesen);
 export const darfAlleSchreiben = (tab, ctx) => !SERVER_ONLY.has(tab) && !TABELLEN[tab]?.nurLesen && hatRolle(ctx, TABELLEN[tab]?.schreiben);
 
@@ -116,7 +120,9 @@ function zeileSichtbar(tab, z, ctx) {
     case "aufgaben": return ctx.meine.has(z.von_id);
     case "startnachrichten": return z.von === ctx.ich || snFuerMich(z, ctx.ich, ctx.gruppen, "0000-00-00"); // 📣 an mich (auch abgelaufene – für den Abgleich)
     case "startnachricht_antworten": return z.person_id === ctx.ich || ctx.snMap?.get(z.nachricht_id)?.von === ctx.ich;
-    case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich; // 0.38.0: privat – nur die Person selbst
+    case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich;
+    case "terminumfragen": return z.von === ctx.ich || hatRolle(ctx, TU_PLANER) || tuFuerMich(z, tuCtx(ctx));
+    case "terminumfrage_antworten": { const u = ctx.tuMap?.get(z.umfrage_id); return z.person_id === ctx.ich || (!!u && u.von === ctx.ich) || hatRolle(ctx, MODERATION); } // 0.38.0: privat – nur die Person selbst
     case "pinnwand": return pwSichtbar(z, ctx.ich);
     case "pinnwand_gelesen": {
       if (z.person_id === ctx.ich) return true;
@@ -527,6 +533,35 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "terminumfragen": {
+      // 🗳️ 0.39.0 anlegen: Leitung, Lehrkräfte, Vorstand, Terminplaner · ändern/entscheiden: wer sie angelegt hat oder die Leitung
+      if (!alt && !hatRolle(ctx, TU_PLANER)) return { ok: false, grund: "NUR_PLANER" };
+      if (alt && alt.von !== ctx.ich && !hatRolle(ctx, MODERATION)) return { ok: false, grund: "NUR_EIGENE" };
+      const titel = String(neu.titel ?? "").trim().slice(0, 120); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
+      const optionen = []; const ids = new Set();
+      for (const o of Array.isArray(neu.optionen) ? neu.optionen.slice(0, 20) : []) { const t = Date.parse(o?.beginn), id = String(o?.id || "").slice(0, 40);
+        if (!id || ids.has(id) || !Number.isFinite(t)) return { ok: false, grund: "OPTION_UNGUELTIG" }; ids.add(id); optionen.push({ id, beginn: new Date(t).toISOString() }); }
+      if (optionen.length < 2) return { ok: false, grund: "MINDESTENS_ZWEI_TERMINE" };
+      const an = ["mitglieder", "eltern", "verwaltung"].includes(neu.an) ? neu.an : "mitglieder";
+      const gruppen = an === "verwaltung" || neu.fuer_alle ? [] : [...new Set((neu.gruppen || []).map(String))];
+      if (an !== "verwaltung" && !neu.fuer_alle && !gruppen.length) return { ok: false, grund: "EMPFAENGER_FEHLT" };
+      const status = ["offen", "entschieden", "abgebrochen"].includes(neu.status) ? neu.status : "offen";
+      const gewaehlt = status === "entschieden" ? (ids.has(String(neu.gewaehlt)) ? String(neu.gewaehlt) : null) : null;
+      if (status === "entschieden" && !gewaehlt) return { ok: false, grund: "TERMIN_NICHT_GEWAEHLT" };
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), titel, beschreibung: String(neu.beschreibung ?? "").trim().slice(0, 1000) || null, von: alt?.von || ctx.ich, an, fuer_alle: an !== "verwaltung" && !!neu.fuer_alle, gruppen,
+        art_id: neu.art_id || null, ort: String(neu.ort ?? "").trim().slice(0, 120) || null, dauer_min: Math.max(15, Math.min(1440, Math.round(Number(neu.dauer_min) || 120))), optionen,
+        frist: /^\d{4}-\d{2}-\d{2}$/.test(String(neu.frist || "")) ? neu.frist : null, status, gewaehlt, termin_id: status === "entschieden" ? neu.termin_id || alt?.termin_id || null : null } };
+    }
+    case "terminumfrage_antworten": {
+      const u = ctx.tuMap?.get(String(neu.umfrage_id || alt?.umfrage_id));
+      if (!u || u.geloescht_am || !tuFuerMich(u, tuCtx(ctx))) return { ok: false, grund: "UMFRAGE_NICHT_FUER_MICH" };
+      if (u.status !== "offen") return { ok: false, grund: "UMFRAGE_BEENDET" };
+      if (u.frist && jetzt.slice(0, 10) > u.frist) return { ok: false, grund: "FRIST_VORBEI" };
+      if (neu.person_id !== ctx.ich || (alt && alt.person_id !== ctx.ich)) return { ok: false, grund: "NUR_EIGENE" };
+      const id = tuAntwortId(u.id, ctx.ich); if (neu.id !== id) return { ok: false, grund: "ID_UNGUELTIG" };
+      const stimmen = {}; for (const o of u.optionen || []) { const s = neu.stimmen?.[o.id]; if (s in TU_STIMMEN) stimmen[o.id] = s; }
+      return { ok: true, zeile: { ...(alt || {}), id, umfrage_id: u.id, person_id: ctx.ich, stimmen, kommentar: String(neu.kommentar ?? "").trim().slice(0, 300) || null, am: jetzt } };
     }
     case "chat_einstellungen": {
       // 🔕 📦 ⭐ 0.38.0 nur die eigenen, nur für sichtbare Chats

@@ -42,6 +42,9 @@ Server-Teil. Dieser ist **fertig gebaut und getestet**; er wird nur noch im Supa
   - Jede Änderung wird im Änderungsprotokoll festgehalten.
 - **Versand:** Der BK Communicator nimmt Benachrichtigungen an, legt Aufträge in `bk_versand` an und stellt sie über Web-Push und E-Mail zu. Die Edge Function `bk-kom` wartet jede Minute (siehe `KOMMUNIKATION.md`).
 
+- **💤 Wach halten (0.36.0):** Kostenlose Supabase-Projekte schlafen nach 7 Tagen ohne Nutzung ein (z. B. in den Sommerferien). `.github/workflows/wach.yml` ruft montags und donnerstags `bk-api` mit `{"aktion":"wach"}` auf (eine Mini-Abfrage, gibt nichts preis) – nur wenn das Secret `SUPABASE_PROJECT_REF` eingetragen ist. GitHub pausiert geplante Abläufe nach 60 Tagen ohne Änderung am Repository: dann unter Actions › „Supabase wach halten“ einmal „Enable workflow“ drücken.
+- **💾 Speicher (0.36.0):** „Zugang im Blick“ zeigt der Leitung Datenbank- und Dateigröße gegen die Tarif-Grenzen (Standard 500 MB / 1024 MB, Einstellungen `grenze_db_mb` / `grenze_dateien_mb`), Warnung ab 80 %. Das Änderungsprotokoll räumt die Wartung nach `aenderungen_monate` (Standard 12) auf.
+
 Getestet wird in `tests/server.test.mjs` (16 Tests gegen PostgreSQL/PGlite, dazu 12 in `tests/nachrichten.test.mjs`) und `tests/e2e/echtbetrieb.mjs` (Browser).
 Lokal ausprobieren: `node tests/e2e/server-lokal.mjs` startet App und Server mit Demodaten. Die Zugangscodes erscheinen
 in der Konsole.

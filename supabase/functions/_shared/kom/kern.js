@@ -389,6 +389,10 @@ export async function wartung(db, adapter, umg = {}) {
   }
   if (ua.length) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${ua.length} abgelaufene Übe-Aufnahmen gelöscht` });
   await db.q(`delete from bk_kom_ereignisse where zeit < now() - interval '90 days'`);
+  // 🧹 0.36.0 Änderungsprotokoll klein halten (sonst wächst es ohne Ende): älter als konfig.aenderungen_monate (Standard 12, mindestens 3)
+  { const k = (await db.q(`select wert from bk_konfig where schluessel = 'aenderungen_monate'`))[0]?.wert, m = Math.max(3, Number(k) || 12);
+    const ae = await db.q(`delete from bk_aenderungen where zeit < now() - ($1 || ' months')::interval returning id`, [String(m)]);
+    if (ae.length > 1000) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${ae.length} alte Einträge im Änderungsprotokoll gelöscht (älter als ${m} Monate)` }); }
   await db.q(`delete from bk_versand where zeit < now() - interval '365 days' and status <> all($1::text[])`, [OFFEN]);
   if (h.length) await protokoll(db, { art: "wartung", code: "HAENGER", text: `${h.length} hängende Aufträge erneut eingeplant` });
   return { haenger: h.length, zustellung: z, eskaliert, nachEskalation: z2, geloescht: gs.length };

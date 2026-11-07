@@ -1,11 +1,21 @@
 {
-  "version": "0.35.0",
+  "version": "0.36.0",
   "datum": "2026-11-07",
   "stufe": "DEV",
   "neu": [
-    "🧪 Vorführversion: Nach einem Update kommen neue Beispieldaten (z. B. Büro-Vorlagen, Startnachricht) von selbst dazu – was du eingetragen oder gelöscht hast, bleibt so"
+    "🗺️ Chronik › Orte: Weltkarte mit allen Orten, an denen der Bachkreis seit 1969 gespielt hat – über 45 Orte in 19 Ländern laut Schul-Website, nach Ländern sortiert; Punkt antippen zeigt, was dort war",
+    "📜 Chronik-Einträge mit Stadt und Land, Jahr darf fehlen (wer es weiß, trägt es nach)",
+    "💾 Leitung: Speicher im Blick (Datenbank und Dateien, Warnung ab 80 %)",
+    "🧹 Änderungsprotokoll räumt sich nach 12 Monaten selbst auf · 💤 Server schläft in den Ferien nicht ein"
   ],
   "verlauf": [
+    {
+      "version": "0.35.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🧪 Vorführversion: Nach einem Update kommen neue Beispieldaten (z. B. Büro-Vorlagen, Startnachricht) von selbst dazu – was du eingetragen oder gelöscht hast, bleibt so"
+      ]
+    },
     {
       "version": "0.34.0",
       "datum": "2026-11-06",

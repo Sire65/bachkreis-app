@@ -117,7 +117,7 @@ export const KACHELN = {
   ],
   technik: [
     { id: "update", sym: "🔄", t: "Update prüfen", u: () => `Installiert: v${APP_VERSION} ${APP_STUFE}`, aktion: "updatePruefen" },
-    { id: "zugang", sym: "🛡️", t: "Zugang im Blick", u: "Anmeldeversuche · Sperren · 📲 Installiert?", v: "zugang", nur: () => istLeitung() },
+    { id: "zugang", sym: "🛡️", t: "Zugang im Blick", u: "💾 Speicher · Anmeldeversuche · 📲 Installiert?", v: "zugang", nur: () => istLeitung() },
     { id: "installieren", sym: "📲", t: "App installieren", u: "Auf den Startbildschirm – startet schneller", aktion: "installieren" },
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },

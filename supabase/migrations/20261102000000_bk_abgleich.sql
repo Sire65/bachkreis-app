@@ -240,11 +240,14 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_anfra
 -- Chronik
 create table if not exists bk_chronik (
   id text primary key default gen_random_uuid()::text,
-  jahr integer not null,
+  jahr integer,
   datum date,
   titel text not null,
   art text check (art is null or art in ('gruendung', 'konzert', 'reise', 'austausch', 'cd', 'urauffuehrung', 'partner', 'auszeichnung', 'sonstiges')),
   ort text,
+  stadt text,
+  land text,
+  koordinaten text,
   beschreibung text,
   programm text,
   projekt_id text,
@@ -271,6 +274,9 @@ alter table bk_chronik add column if not exists art text;
 alter table bk_chronik drop constraint if exists bk_chronik_art_check;
 alter table bk_chronik add constraint bk_chronik_art_check check (art is null or art in ('gruendung', 'konzert', 'reise', 'austausch', 'cd', 'urauffuehrung', 'partner', 'auszeichnung', 'sonstiges'));
 alter table bk_chronik add column if not exists ort text;
+alter table bk_chronik add column if not exists stadt text;
+alter table bk_chronik add column if not exists land text;
+alter table bk_chronik add column if not exists koordinaten text;
 alter table bk_chronik add column if not exists beschreibung text;
 alter table bk_chronik add column if not exists programm text;
 alter table bk_chronik add column if not exists projekt_id text;

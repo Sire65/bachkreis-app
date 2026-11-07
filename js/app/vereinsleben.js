@@ -3,45 +3,90 @@
 // 📨 Auftrittsanfragen (Zusage legt den Termin an) · 🤝 Partner. Rechte setzt der Server (regeln.js); hier steht die Oberfläche.
 import { S, VIEWS, zeichne, kopf, name, istEltern, hatRolle, istVerwalter } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz, frage, zuLokal, vonLokal, herunterladen } from "../kern/ui.js";
-import { liste, hole, speichere, loesche, konfig } from "../kern/daten.js";
+import { liste, listeMitGeloeschten, hole, speichere, loesche, konfig } from "../kern/daten.js";
 import { tagIso, csvAus, anfrageZuTermin, auftrittsArt, repertoire as repertoireVon } from "../kern/logik.js";
 import { db } from "./zustand.js";
 import { CHRONIK_ARTEN, DOKUMENT_ARTEN, DOKUMENT_SICHT, PARTNER_ARTEN, ANFRAGE_STATUS, ANFRAGE_BESETZUNG, GASTGEBER_STATUS } from "../kern/schema.js";
 import { hochladen, dateiOeffnen } from "../kern/dateien.js";
 import { senden } from "../kern/versand.js";
+import { orteSammeln, ortVon, flagge, landName, stadtFinden, koordinatenLesen, ORTE, LAENDER, websiteFehlend, projektion } from "../kern/orte.js";
 
 const leitet = () => hatRolle("admin", "leitung", "lehrkraft");
 const vorstandOderLeitung = () => leitet() || hatRolle("vorstand");
 const opt = (o, w) => Object.entries(o).map(([k, t]) => `<option value="${k}" ${k === w ? "selected" : ""}>${esc(t)}</option>`).join("");
 const feld = (t, inhalt) => `<div class="feld"><label>${t}</label>${inhalt}</div>`;
 const uhrzeit = (iso) => (iso ? new Date(iso).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "");
-const V = { tab: "chronik", suche: "", anfrageFilter: "offen" };
+const V = { tab: "chronik", suche: "", anfrageFilter: "offen", zoom: "welt", karte: null, karteFehler: null, ort: null };
 
 // ================= 📜 Chronik · 🎼 Repertoire · ℹ️ Über uns =================
 VIEWS.chronik = {
   render(p = {}) {
     if (p.tab) { V.tab = p.tab; delete p.tab; }
-    const tabs = [["chronik", "📜 Chronik"], ["repertoire", "🎼 Repertoire"], ["ueber", "ℹ️ Über uns"]];
+    const tabs = [["chronik", "📜 Chronik"], ["orte", "🗺️ Orte"], ["repertoire", "🎼 Repertoire"], ["ueber", "ℹ️ Über uns"]];
     return kopf("📜 Chronik", vorstandOderLeitung() && V.tab === "chronik" ? '<button class="knopf klein" data-a="chNeu">＋ Eintrag</button>' : "")
-      + `<div class="umschalter">${tabs.map(([k, t]) => `<button type="button" class="${V.tab === k ? "an" : ""}" data-a="chTab" data-x="${k}">${t}</button>`).join("")}</div>`
-      + (V.tab === "repertoire" ? repertoireHtml() : V.tab === "ueber" ? ueberHtml() : chronikHtml());
+      + `<div class="umschalter vier">${tabs.map(([k, t]) => `<button type="button" class="${V.tab === k ? "an" : ""}" data-a="chTab" data-x="${k}">${t}</button>`).join("")}</div>`
+      + (V.tab === "repertoire" ? repertoireHtml() : V.tab === "ueber" ? ueberHtml() : V.tab === "orte" ? orteHtml() : chronikHtml());
   },
+  nach() { if (V.tab === "orte" && !V.karte && !V.karteFehler) karteLaden(); },
 };
 AKTIONEN.chTab = (k) => { V.tab = k; zeichne(); };
-function chronikHtml() {
-  const l = liste("chronik").sort((a, b) => b.jahr - a.jahr || String(b.datum || "").localeCompare(String(a.datum || "")));
-  if (!l.length) return '<div class="leer">Noch keine Einträge.</div>';
-  const jahrzehnte = [...new Set(l.map((c) => Math.floor(c.jahr / 10) * 10))];
-  return jahrzehnte.map((jz) => `<div class="karte"><h3>${jz}er</h3><ol class="vl-zeitleiste">${l.filter((c) => Math.floor(c.jahr / 10) * 10 === jz).map((c) => `<li>
-      <span class="vl-jahr">${c.jahr}</span><div class="fl"><div class="zeile-titel">${esc(CHRONIK_ARTEN[c.art]?.split(" ")[0] || "📌")} ${esc(c.titel)}</div>
-      <div class="zeile-unter">${[c.datum ? datumKurz(c.datum) : "", c.ort, c.partner_id ? hole("partner", c.partner_id)?.name : ""].filter(Boolean).map(esc).join(" · ")}</div>
+const chZeile = (c) => `<li>
+      <span class="vl-jahr">${c.jahr || "–"}</span><div class="fl"><div class="zeile-titel">${esc(CHRONIK_ARTEN[c.art]?.split(" ")[0] || "📌")} ${esc(c.titel)}</div>
+      <div class="zeile-unter">${[c.datum ? datumKurz(c.datum) : "", c.stadt ? `${flagge(c.land || ORTE[stadtFinden(c.stadt)]?.[0])} ${c.stadt}` : "", c.ort, c.partner_id ? hole("partner", c.partner_id)?.name : ""].filter(Boolean).map(esc).join(" · ")}</div>
       ${c.beschreibung ? `<p class="vl-text">${esc(c.beschreibung)}</p>` : ""}${c.programm ? `<p class="vl-text">🎼 ${esc(c.programm).replace(/\n/g, " · ")}</p>` : ""}
       ${c.quelle ? `<small class="hinweis">Quelle: ${esc(c.quelle)}</small>` : ""}</div>
-      ${vorstandOderLeitung() ? `<button type="button" class="knopf klein" data-a="chBearbeiten" data-x="${c.id}" aria-label="Bearbeiten">✏️</button>` : ""}</li>`).join("")}</ol></div>`).join("");
+      ${vorstandOderLeitung() ? `<button type="button" class="knopf klein" data-a="chBearbeiten" data-x="${c.id}" aria-label="Bearbeiten">✏️</button>` : ""}</li>`;
+function chronikHtml() {
+  const alle = liste("chronik"), l = alle.filter((c) => c.jahr).sort((a, b) => b.jahr - a.jahr || String(b.datum || "").localeCompare(String(a.datum || ""))), ohne = alle.filter((c) => !c.jahr).sort((a, b) => String(a.stadt || a.titel).localeCompare(String(b.stadt || b.titel), "de"));
+  if (!alle.length) return '<div class="leer">Noch keine Einträge.</div>';
+  const jahrzehnte = [...new Set(l.map((c) => Math.floor(c.jahr / 10) * 10))];
+  return jahrzehnte.map((jz) => `<div class="karte"><h3>${jz}er</h3><ol class="vl-zeitleiste">${l.filter((c) => Math.floor(c.jahr / 10) * 10 === jz).map(chZeile).join("")}</ol></div>`).join("")
+    + (ohne.length ? `<details class="karte"><summary><b>📌 Ohne Jahresangabe (${ohne.length})</b> – z. B. Auftrittsorte von der Schul-Website</summary><ol class="vl-zeitleiste">${ohne.map(chZeile).join("")}</ol>
+      ${vorstandOderLeitung() ? '<p class="hinweis">Wer das Jahr weiß: ✏️ antippen und eintragen – dann rutscht der Eintrag in die Zeitleiste.</p>' : ""}</details>` : "");
 }
+
+// ================= 🗺️ Orte: wo wir seit 1969 gespielt haben =================
+// Weltkarte: bilder/weltkarte.json (Natural Earth, gemeinfrei) wird erst beim Öffnen geladen (≈ 90 KB) – ohne Netz bleibt die Liste.
+const ZOOM = { welt: ["🌍 Welt", "0 0 1440 580"], europa: ["🇪🇺 Europa", "672 52 216 152"], deutschland: ["🇩🇪 Deutschland", "736 114 52 42"] };
+async function karteLaden() {
+  try { const r = await fetch("bilder/weltkarte.json"); if (!r.ok) throw new Error(r.status); V.karte = await r.json(); } catch (e) { V.karteFehler = e.message || "nicht geladen"; }
+  if (V.tab === "orte" && S.view === "chronik") zeichne();
+}
+function orteHtml() {
+  const { orte, laender, kontinente } = orteSammeln(liste("chronik")), fehlend = websiteFehlend(listeMitGeloeschten("chronik")).length;
+  const ohneOrt = liste("chronik", (c) => (c.stadt || c.ort) && !ortVon(c)).length;
+  const [, vb] = ZOOM[V.zoom], b = Number(vb.split(" ")[2]), r = b / 70; // ≈ 5 Pixel bei jedem Zoom
+  const karte = V.karte ? `<svg class="ch-karte" viewBox="${vb}" role="img" aria-label="Weltkarte mit ${orte.length} Auftrittsorten in ${laender.length} Ländern"><rect x="0" y="0" width="${V.karte.w}" height="${V.karte.h}" class="ch-meer"/><path d="${V.karte.pfad}" class="ch-land"/>
+      ${orte.map((o) => { const [x, y] = projektion(o.breite, o.laenge, V.karte.k, V.karte.nord); return `<circle cx="${x}" cy="${y}" r="${(r * (o.stadt === "Bergkamen" ? 1.5 : 1)).toFixed(2)}" class="ch-punkt${o.stadt === "Bergkamen" ? " heim" : ""}${V.ort === `${o.land}|${o.stadt}` ? " an" : ""}" data-a="chOrt" data-x="${esc(`${o.land}|${o.stadt}`)}"><title>${esc(o.stadt)}</title></circle>`; }).join("")}</svg>`
+    : V.karteFehler ? '<p class="hinweis">🗺️ Karte gerade nicht ladbar (kein Netz?) – die Liste unten ist vollständig.</p>' : '<p class="hinweis">🗺️ Karte wird geladen …</p>';
+  const gruppen = [...new Set(orte.map((o) => o.land))].sort((a, b) => (a === "DE" ? -1 : b === "DE" ? 1 : landName(a).localeCompare(landName(b), "de")));
+  return `<div class="karte"><h3>🗺️ Hier hat der Bachkreis gespielt</h3>
+      <div class="ch-zahlen"><div><b>${orte.length}</b><span>Orte</span></div><div><b>${laender.length}</b><span>Länder</span></div><div><b>${kontinente.length}</b><span>Kontinente</span></div></div>
+      <div class="umschalter klein">${Object.entries(ZOOM).map(([k, [t]]) => `<button type="button" class="${V.zoom === k ? "an" : ""}" data-a="chZoom" data-x="${k}">${t}</button>`).join("")}</div>
+      ${karte}<p class="hinweis">Punkt antippen zeigt, was dort war. Größter Punkt: Bergkamen. Karte: Natural Earth (gemeinfrei).</p>
+      ${vorstandOderLeitung() && fehlend ? `<div class="vl-knoepfe"><button class="knopf haupt" data-a="chWebsite">📥 ${fehlend} Auftrittsorte von der Schul-Website übernehmen</button></div>` : ""}
+      ${vorstandOderLeitung() && ohneOrt ? `<p class="hinweis">⚠️ ${ohneOrt} Einträge mit Ort, den die App nicht kennt – im Eintrag Stadt und Land oder Koordinaten ergänzen.</p>` : ""}</div>
+    ${gruppen.map((l) => { const lo = orte.filter((o) => o.land === l).sort((a, b) => a.stadt.localeCompare(b.stadt, "de")); return `<div class="karte"><h3>${flagge(l)} ${esc(landName(l))} <span class="badge">${lo.length} ${lo.length === 1 ? "Ort" : "Orte"}</span></h3><ul class="liste">${lo.map((o) => `<li>
+      <button type="button" class="ch-ortzeile" data-a="chOrt" data-x="${esc(`${o.land}|${o.stadt}`)}"><span class="fl"><span class="zeile-titel">${esc(o.stadt)}</span><span class="zeile-unter">${esc([...new Set(o.eintraege.map((c) => c.ort).filter(Boolean))].join(" · ") || o.eintraege[0].titel)}</span></span>
+      <span class="badge">${o.jahre.length ? esc(o.jahre.join(", ")) : `${o.eintraege.length}×`}</span></button></li>`).join("")}</ul></div>`; }).join("") || '<div class="leer">Noch keine Orte – in der Chronik bei den Einträgen die Stadt eintragen.</div>'}`;
+}
+AKTIONEN.chZoom = (k) => { V.zoom = ZOOM[k] ? k : "welt"; zeichne(); };
+AKTIONEN.chOrt = (key) => {
+  const o = orteSammeln(liste("chronik")).orte.find((x) => `${x.land}|${x.stadt}` === key); if (!o) return;
+  V.ort = key;
+  blatt(`${flagge(o.land)} ${esc(o.stadt)}`, `<p class="hinweis">${esc(landName(o.land))}${o.jahre.length ? ` · ${o.jahre.join(", ")}` : ""}</p><ol class="vl-zeitleiste">${o.eintraege.sort((a, b) => (a.jahr || 9999) - (b.jahr || 9999)).map(chZeile).join("")}</ol>`);
+};
+AKTIONEN.chWebsite = async () => {
+  const neu = websiteFehlend(listeMitGeloeschten("chronik")); if (!neu.length) return toast("Schon alles übernommen");
+  if (!(await frage(`${neu.length} Auftrittsorte von der Schul-Website in die Chronik übernehmen? (meist ohne Jahr – das könnt ihr später ergänzen)`))) return;
+  for (const c of neu) await speichere("chronik", { ...c });
+  toast(`📥 ${neu.length} Orte übernommen`); zeichne();
+};
 function chronikForm(c = {}) {
-  blatt(c.id ? "📜 Eintrag bearbeiten" : "📜 Neuer Chronik-Eintrag", `<div id="chForm" class="vl-form"><div class="vl-raster">${feld("Jahr *", `<input type="number" name="jahr" value="${esc(c.jahr ?? new Date().getFullYear())}" min="1900" max="2100">`)}${feld("Datum (wenn bekannt)", `<input type="date" name="datum" value="${esc(c.datum || "")}">`)}${feld("Art", `<select name="art">${opt(CHRONIK_ARTEN, c.art || "konzert")}</select>`)}</div>
-    ${feld("Was *", `<input name="titel" value="${esc(c.titel || "")}" placeholder="z. B. Frühlingskonzert mit Partnerorchester">`)}${feld("Ort", `<input name="ort" value="${esc(c.ort || "")}">`)}
+  blatt(c.id ? "📜 Eintrag bearbeiten" : "📜 Neuer Chronik-Eintrag", `<div id="chForm" class="vl-form"><div class="vl-raster">${feld("Jahr", `<input type="number" name="jahr" value="${esc(c.id ? c.jahr ?? "" : c.jahr ?? new Date().getFullYear())}" min="1900" max="2100">`)}${feld("Datum (wenn bekannt)", `<input type="date" name="datum" value="${esc(c.datum || "")}">`)}${feld("Art", `<select name="art">${opt(CHRONIK_ARTEN, c.art || "konzert")}</select>`)}</div>
+    ${feld("Was *", `<input name="titel" value="${esc(c.titel || "")}" placeholder="z. B. Frühlingskonzert mit Partnerorchester">`)}<div class="vl-raster">${feld("Stadt", `<input name="stadt" value="${esc(c.stadt || "")}" list="chStaedte" placeholder="z. B. Unna">`)}${feld("Land", `<select name="land"><option value="">– automatisch –</option>${Object.entries(LAENDER).map(([k, [n]]) => `<option value="${k}" ${k === c.land ? "selected" : ""}>${flagge(k)} ${esc(n)}</option>`).join("")}</select>`)}${feld("Saal / Ort", `<input name="ort" value="${esc(c.ort || "")}" placeholder="z. B. Stadthalle">`)}</div>
+    <datalist id="chStaedte">${Object.keys(ORTE).map((s) => `<option value="${esc(s)}"></option>`).join("")}</datalist>
+    ${feld("Koordinaten (nur wenn die Stadt nicht erkannt wird – „Breite, Länge“, z. B. aus der Karten-App)", `<input name="koordinaten" value="${esc(c.koordinaten || "")}" placeholder="51.62, 7.64" inputmode="decimal">`)}
     ${feld("Beschreibung", `<textarea name="beschreibung" rows="3">${esc(c.beschreibung || "")}</textarea>`)}${feld("Programm (ein Werk je Zeile: Komponist – Werk)", `<textarea name="programm" rows="3">${esc(c.programm || "")}</textarea>`)}
     ${feld("Projekt in der App", `<select name="projekt_id"><option value="">–</option>${liste("projekte").map((p) => `<option value="${p.id}" ${p.id === c.projekt_id ? "selected" : ""}>${esc(p.titel)}</option>`).join("")}</select>`)}
     <div class="vl-knoepfe"><button class="knopf haupt" data-a="chSpeichern" data-x="${esc(c.id || "")}">💾 Speichern</button>${c.id ? `<button class="knopf rot" data-a="chWeg" data-x="${c.id}">🗑 Löschen</button>` : ""}</div></div>`);
@@ -49,10 +94,13 @@ function chronikForm(c = {}) {
 AKTIONEN.chNeu = () => chronikForm();
 AKTIONEN.chBearbeiten = (id) => chronikForm(hole("chronik", id));
 AKTIONEN.chSpeichern = async (id) => {
-  const f = formWerte(document.getElementById("chForm")), jahr = Number(f.jahr);
-  if (!f.titel || !(jahr >= 1900 && jahr <= 2100)) return toast("Bitte Jahr und „Was“ angeben");
-  await speichere("chronik", { ...(id ? hole("chronik", id) : {}), jahr, datum: f.datum || null, titel: f.titel, art: f.art, ort: f.ort || null, beschreibung: f.beschreibung || null, programm: f.programm || null, projekt_id: f.projekt_id || null });
-  blattZu(); toast("📜 Gespeichert"); zeichne();
+  const f = formWerte(document.getElementById("chForm")), jahr = f.jahr ? Number(f.jahr) : null;
+  if (!f.titel) return toast("Bitte „Was“ angeben");
+  if (jahr !== null && !(jahr >= 1900 && jahr <= 2100)) return toast("Jahr bitte zwischen 1900 und 2100 – oder leer lassen");
+  if (f.koordinaten && !koordinatenLesen(f.koordinaten)) return toast("Koordinaten bitte als „Breite, Länge“, z. B. 51.62, 7.64");
+  const bekannt = stadtFinden(f.stadt), land = f.land || (bekannt ? ORTE[bekannt][0] : null);
+  await speichere("chronik", { ...(id ? hole("chronik", id) : {}), jahr, datum: f.datum || null, titel: f.titel, art: f.art, ort: f.ort || null, stadt: f.stadt || null, land, koordinaten: f.koordinaten || null, beschreibung: f.beschreibung || null, programm: f.programm || null, projekt_id: f.projekt_id || null });
+  blattZu(); toast(f.stadt && !bekannt && !f.koordinaten ? "📜 Gespeichert – Stadt unbekannt, für die Karte bitte Koordinaten ergänzen" : "📜 Gespeichert"); zeichne();
 };
 AKTIONEN.chWeg = async (id) => { if (await frage("Eintrag löschen?")) { await loesche("chronik", id); blattZu(); zeichne(); } };
 

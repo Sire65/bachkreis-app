@@ -532,11 +532,15 @@ export const TABELLEN = {
   chronik: {
     titel: "Chronik", sym: "📜", gruppe: "Orchester", lesen: ALLE_VERWALTER, schreiben: [...LL, "vorstand"],
     felder: [
-      { k: "jahr", t: "Jahr", typ: "zahl", pflicht: true },
+      { k: "jahr", t: "Jahr (wenn bekannt)", typ: "zahl" },
       { k: "datum", t: "Datum (wenn bekannt)", typ: "datum" },
       { k: "titel", t: "Was", typ: "text", pflicht: true },
       { k: "art", t: "Art", typ: "wahl", werte: CHRONIK_ARTEN },
-      { k: "ort", t: "Ort", typ: "text" },
+      { k: "ort", t: "Ort / Saal", typ: "text" },
+      // 🗺️ 0.36.0 Auftrittsorte: Stadt + Land (Kürzel DE, PL …) für die Weltkarte; Koordinaten nur, wenn die Stadt nicht im Ortsverzeichnis steht
+      { k: "stadt", t: "Stadt", typ: "text" },
+      { k: "land", t: "Land (Kürzel, z. B. DE)", typ: "text" },
+      { k: "koordinaten", t: "Koordinaten („Breite, Länge“ – nur wenn nötig)", typ: "text" },
       { k: "beschreibung", t: "Beschreibung", typ: "lang" },
       { k: "programm", t: "Programm (ein Werk je Zeile: Komponist – Werk)", typ: "lang" },
       { k: "projekt_id", t: "Projekt in der App", typ: "ref", ref: "projekte" },
@@ -544,8 +548,8 @@ export const TABELLEN = {
       { k: "partner_id", t: "Partner", typ: "ref", ref: "partner" },
       { k: "quelle", t: "Quelle (z. B. Schul-Website)", typ: "text" },
     ],
-    liste: ["jahr", "titel", "art", "ort"],
-    anzeige: (z) => `${z.jahr}: ${z.titel}`,
+    liste: ["jahr", "titel", "art", "stadt", "ort"],
+    anzeige: (z) => `${z.jahr || "o. J."}: ${z.titel}${z.stadt ? ` (${z.stadt})` : ""}`,
   },
   // 📂 Dokumente (0.27.0): Satzung, Flyer, Beitrittserklärung, Vorlagen – als Datei (geschützt) oder Link
   dokumente: {

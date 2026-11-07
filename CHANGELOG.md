@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.36.0 DEV – 07.11.2026
+- 🗺️ Chronik der Auftrittsorte (Wunsch Frau Jacka 07.11.: „wo wir seit der Gründung überall gespielt haben“): neuer Reiter „Orte“ in der Chronik – Weltkarte (Natural Earth 1:50m, gemeinfrei, bilder/weltkarte.json, erst beim Öffnen geladen), Zoom Welt/Europa/Deutschland, Zahlen Orte/Länder/Kontinente, Liste nach Ländern mit Flagge, Punkt/Zeile antippen zeigt die Einträge. js/kern/orte.js: Ortsverzeichnis ohne Netz-Abfrage, `ortVon` (eigene Koordinaten > Stadt > Stadtname im Feld „Ort“; unbekannt = nicht auf der Karte, nie geraten)
+- 📥 Auftrittsorte laut Schul-Website (Deutschland, Polen, Frankreich, USA, Israel, Kolumbien, Russland, Großbritannien, Norwegen, Portugal, Italien, China, Österreich + Austausch-Länder) mit festen ids – Knopf „übernehmen“ für Leitung/Vorstand legt nur Fehlendes an, Gelöschtes kommt nicht zurück; in der Vorführversion schon drin
+- 📜 Chronik: Felder Stadt, Land, Koordinaten; Jahr nicht mehr Pflicht („Ohne Jahresangabe“ eingeklappt unter der Zeitleiste). Migration 20261107000000_bk_chronik_orte.sql (mit Rechten für service_role)
+- 💾 Speicher im Blick (Zugang im Blick, nur Leitung): Datenbank- und Dateigröße gegen die Grenzen des kostenlosen Tarifs (Standard 500 MB / 1024 MB, änderbar in der PC-Verwaltung), gelb ab 80 %, rot ab 95 %, unbekannt grau; größte Tabellen; Server-Aktion `speicher_lage` (nur Zahlen, keine Inhalte)
+- 🧹 Löschfrist Änderungsprotokoll: die tägliche Wartung löscht Einträge älter als `aenderungen_monate` (Standard 12, mindestens 3)
+- 💤 .github/workflows/wach.yml: montags und donnerstags ein Mini-Aufruf (`aktion: wach`), damit das kostenlose Supabase-Projekt in den Ferien nicht nach 7 Tagen einschläft; ohne Secret tut er nichts
+- tests/chronik-orte.test.mjs, tests/zugang.test.mjs (+3)
+
 ## 0.35.0 DEV – 07.11.2026
 - 🧪 Vorführdaten nach einem Update ergänzen (Wunsch Hansi 07.11.: Link vor 2 Wochen weitergegeben – wer ihn damals geöffnet hat, sah neue Bereiche wie das Büro ohne Beispiele): `demoErgaenzen` in js/kern/adapter-lokal.js – beim ersten Start einer neuen Version kommen nur Beispiel-Zeilen dazu, deren ID dieser Browser nie gesehen hat (Merkliste `bekannt` in __meta); Eingetragenes bleibt, Gelöschtes kommt nicht zurück, fehlende Einstellungen werden ergänzt; Fehler blockieren nie den Start
 - tests/demo-ergaenzen.test.mjs

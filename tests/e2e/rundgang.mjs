@@ -349,7 +349,7 @@ if (!(await p.evaluate(async () => (await import("/js/kern/daten.js")).liste("ue
 await p.click('[data-a="ubFortschritt"]'); await p.waitForSelector(".ub-fort");
 // 🏫 Abgleich Internetseite (0.27.0): Chronik/Repertoire/Über uns, Dokumente, Austausch (Eltern bieten an, Leitung ordnet zu), Anfragen → Termin, Partner
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
-for (const tab of ["chronik", "repertoire", "ueber"]) { await p.evaluate(async (t) => (await import("/js/app/zustand.js")).zeige("chronik", { tab: t }), tab); await p.waitForTimeout(150); if (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth > 2)) fehler.push(`Chronik ${tab}: zu breit`); }
+for (const tab of ["chronik", "orte", "repertoire", "ueber"]) { await p.evaluate(async (t) => (await import("/js/app/zustand.js")).zeige("chronik", { tab: t }), tab); await p.waitForTimeout(150); if (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth > 2)) fehler.push(`Chronik ${tab}: zu breit`); }
 if (!(await p.$(".vl-fakten"))) fehler.push("Über uns: Fakten fehlen");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("dokumente")); await p.waitForSelector(".karte .liste");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("austausch")); await p.waitForSelector(".vl-bedarf");

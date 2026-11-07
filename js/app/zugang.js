@@ -62,14 +62,35 @@ const ZG = { daten: null, fehler: null, laedt: false, filter: "alle" };
 async function zgLaden() {
   if (ZG.laedt) return; ZG.laedt = true;
   try { const r = await serverAktion("zugang_lage", {}); if (r?.ok) { ZG.daten = r; ZG.fehler = null; } else ZG.fehler = r?.fehler || "nicht möglich"; } catch (e) { ZG.fehler = e.message; }
+  try { const r = await serverAktion("speicher_lage", {}); ZG.speicher = r?.ok ? r : { fehler: r?.fehler || "nicht möglich" }; } catch (e) { ZG.speicher = { fehler: e.message }; }
   ZG.laedt = false; if (S.view === "zugang") zeichne();
+}
+// 💾 0.36.0 Speicher im Blick: Datenbank und Dateien gegen die Grenzen des kostenlosen Tarifs – ab 80 % gelb, ab 95 % rot; unbekannt = grau (nie „ok“)
+const MB = (b) => b / 1048576;
+export function speicherStufen(s) {
+  if (!s || s.fehler) return [];
+  const datBytes = (s.dateien || []).reduce((a, d) => a + (d.ablage === "storage" ? d.bytes : 0), 0), inDb = (s.dateien || []).reduce((a, d) => a + (d.ablage !== "storage" ? d.bytes : 0), 0);
+  const stufe = (p) => (p >= 95 ? "rot" : p >= 80 ? "gelb" : "gruen");
+  const db = MB(s.dbBytes), dat = MB(datBytes);
+  return [{ id: "db", t: "Datenbank", mb: db, grenze: s.grenzen.db_mb, p: Math.round((db / s.grenzen.db_mb) * 100), stufe: stufe((db / s.grenzen.db_mb) * 100), extra: inDb > 0 ? `davon Dateien in der Datenbank: ${MB(inDb).toFixed(1)} MB – besser in den Dateispeicher (BK_ABLAGE=storage)` : "" },
+    { id: "dateien", t: "Dateispeicher (Noten, Fotos, Dokumente)", mb: dat, grenze: s.grenzen.dateien_mb, p: Math.round((dat / s.grenzen.dateien_mb) * 100), stufe: stufe((dat / s.grenzen.dateien_mb) * 100), extra: "" }];
+}
+function speicherHtml() {
+  const s = ZG.speicher;
+  if (!s) return '<div class="karte"><h3>💾 Speicher</h3><p class="hinweis">Wird gemessen …</p></div>';
+  if (s.fehler) return `<div class="karte"><h3>💾 Speicher</h3><p><span class="badge b-grau">❔ Unbekannt – ${esc(s.fehler)}</span></p></div>`;
+  const st = speicherStufen(s), warn = st.filter((x) => x.stufe !== "gruen");
+  return `<div class="karte"><h3>💾 Speicher (kostenloser Tarif)</h3>${warn.length ? `<p><span class="badge ${warn.some((x) => x.stufe === "rot") ? "b-rot" : "b-gelb"}">⚠️ ${warn.map((x) => `${x.t}: ${x.p} %`).join(" · ")} – bald aufräumen oder größeren Tarif wählen</span></p>` : '<p><span class="badge b-gruen">🟢 Genug Platz</span></p>'}
+    ${st.map((x) => `<div class="sp-zeile"><div class="sp-text"><b>${esc(x.t)}</b><span>${x.mb.toFixed(1)} von ${x.grenze} MB · ${x.p} %</span></div><div class="sp-balken" role="img" aria-label="${x.p} Prozent belegt"><i class="${x.stufe}" style="width:${Math.min(100, x.p)}%"></i></div>${x.extra ? `<small class="hinweis">${esc(x.extra)}</small>` : ""}</div>`).join("")}
+    <details><summary>Größte Tabellen</summary><ul class="liste">${(s.tabellen || []).map((t) => `<li><div class="fl">${esc(t.tabelle.replace(/^bk_/, ""))}</div><b>${MB(t.bytes).toFixed(1)} MB</b></li>`).join("")}</ul></details>
+    <p class="hinweis">Gemessen ${esc(vorZeit(s.gemessen))}. Das Änderungsprotokoll wird nach ${esc(String(konfig().aenderungen_monate || 12))} Monaten automatisch aufgeräumt. Grenzen änderbar in der PC-Verwaltung (Einstellungen).</p></div>`;
 }
 VIEWS.zugang = {
   render() {
     if (!istLeitung()) return kopf("🛡️ Zugang im Blick") + '<p class="hinweis">Nur für die Leitung.</p>';
     const ich = `<p class="hinweis">Dieses Gerät: ${MODUS[installModus()].join(" ")}</p>`;
     if (!istEchtbetrieb()) return kopf("🛡️ Zugang im Blick") + `<div class="karte"><p>Anmeldeversuche, Sperren und „📲 Installiert?“ zeigt der Server – in der <b>Vorführversion</b> gibt es keinen.</p>${ich}
-      <p class="hinweis">Im Echtbetrieb: Anmeldeversuche der letzten 14 Tage (gelungen/fehlgeschlagen), wie viele Anschlüsse gerade gesperrt sind (nach ${20} Fehlversuchen in 15 Minuten) und je Mitglied, ob die App installiert ist.</p></div>`;
+      <p class="hinweis">Im Echtbetrieb: 💾 Speicher (Datenbank und Dateien gegen die Grenzen des kostenlosen Tarifs, Warnung ab 80 %), Anmeldeversuche der letzten 14 Tage (gelungen/fehlgeschlagen), wie viele Anschlüsse gerade gesperrt sind (nach ${20} Fehlversuchen in 15 Minuten) und je Mitglied, ob die App installiert ist.</p></div>`;
     if (!ZG.daten && !ZG.fehler) { zgLaden(); return kopf("🛡️ Zugang im Blick") + '<p class="hinweis">Wird geladen …</p>'; }
     if (ZG.fehler) return kopf("🛡️ Zugang im Blick") + `<div class="karte"><p class="badge b-grau">❔ Unbekannt – ${esc(ZG.fehler)}</p><button class="knopf" data-a="zgNeu">↻ Nochmal</button></div>`;
     const d = ZG.daten, fehl14 = d.tage.reduce((s, t) => s + t.fehl, 0), ok14 = d.tage.reduce((s, t) => s + t.ok, 0), max = Math.max(1, ...d.tage.map((t) => t.ok + t.fehl));
@@ -77,7 +98,7 @@ VIEWS.zugang = {
     const g = d.geraete.map((x) => ({ ...x, m: x.modus || null })), zahl = (m) => g.filter((x) => (m ? x.m === m : !x.m)).length;
     const gl = g.filter((x) => ZG.filter === "alle" || (ZG.filter === "nie" ? !x.m : x.m === ZG.filter));
     const chip = (k, t) => `<button type="button" class="chip-wahl${ZG.filter === k ? " an" : ""}" data-a="zgFilter" data-x="${k}" aria-pressed="${ZG.filter === k}">${t}</button>`;
-    return kopf("🛡️ Zugang im Blick", '<button class="knopf klein" data-a="zgNeu">↻</button>') + `<div class="karte"><h3>🔑 Anmeldeversuche (14 Tage)</h3><p><span class="badge ${ampel[0]}">${ampel[1]}</span></p>
+    return kopf("🛡️ Zugang im Blick", '<button class="knopf klein" data-a="zgNeu">↻</button>') + speicherHtml() + `<div class="karte"><h3>🔑 Anmeldeversuche (14 Tage)</h3><p><span class="badge ${ampel[0]}">${ampel[1]}</span></p>
       <p>${ok14} gelungen · ${fehl14} fehlgeschlagen · 24 Std.: ${d.fehl24} Fehlversuche</p>
       <div class="zg-balken">${d.tage.map((t) => `<div title="${esc(t.tag)}: ${t.ok} gelungen, ${t.fehl} fehlgeschlagen"><i class="ok" style="height:${(t.ok / max) * 60}px"></i><i class="fehl" style="height:${(t.fehl / max) * 60}px"></i><small>${esc(t.tag.slice(8))}.</small></div>`).join("") || '<p class="hinweis">Keine Anmeldungen.</p>'}</div>
       <p class="hinweis">Gesperrt wird ein Anschluss nach ${d.max} Fehlversuchen in 15 Minuten. Gespeichert ist nur eine Prüfsumme der Adresse – niemand kann daraus ablesen, wer es war.</p></div>
@@ -86,7 +107,7 @@ VIEWS.zugang = {
       <p class="hinweis">🌐 = öffnet die App im Browser – am besten einmal installieren lassen (Benachrichtigungen kommen dann zuverlässig).</p></div>`;
   },
 };
-AKTIONEN.zgNeu = () => { ZG.daten = null; ZG.fehler = null; zeichne(); };
+AKTIONEN.zgNeu = () => { ZG.daten = null; ZG.fehler = null; ZG.speicher = null; zeichne(); };
 AKTIONEN.zgFilter = (x) => { ZG.filter = x; zeichne(); };
 
 // ---------- 📊 Bachkreis in Zahlen (Leitung, Lehrkräfte, Vorstand) – nur aus den Daten, die man ohnehin sieht ----------

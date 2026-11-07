@@ -15,6 +15,19 @@ import * as kom from "./kom/kern.js";
 const SITZUNG_TAGE = 180;
 const MAX_FEHLVERSUCHE = 20; // je IP in 15 Minuten
 export const INSTALL_MODI = ["installiert", "browser", "pc"];
+// 💾 0.36.0 Speicher im Blick (nur Leitung): Datenbankgröße, Dateien (Datenbank/Speicher), größte Tabellen – mit den Grenzen des kostenlosen Tarifs
+// (Konfiguration grenze_db_mb / grenze_dateien_mb, Standard Supabase Free: 500 MB / 1024 MB). Nur Zahlen, keine Inhalte.
+export const GRENZEN_STANDARD = { db_mb: 500, dateien_mb: 1024 };
+async function speicherLage(db, s) {
+  if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
+  const k = Object.fromEntries((await db.q(`select schluessel, wert from bk_konfig where schluessel in ('grenze_db_mb', 'grenze_dateien_mb')`)).map((r) => [r.schluessel, Number(r.wert)]));
+  const dbBytes = Number((await db.q(`select pg_database_size(current_database())::bigint as n`))[0].n);
+  const dat = await db.q(`select coalesce(ablage, 'datenbank') as ablage, count(*)::int as anzahl, coalesce(sum(groesse), 0)::bigint as bytes from bk_dateien where geloescht_am is null group by 1`);
+  const tab = (await db.q(`select relname as tabelle, pg_total_relation_size(c.oid)::bigint as bytes from pg_class c join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r' and relname like 'bk\\_%' order by 2 desc limit 8`)).map((r) => ({ tabelle: r.tabelle, bytes: Number(r.bytes) }));
+  return { status: 200, json: { ok: true, dbBytes, dateien: dat.map((r) => ({ ...r, bytes: Number(r.bytes) })), tabellen: tab,
+    grenzen: { db_mb: k.grenze_db_mb > 0 ? k.grenze_db_mb : GRENZEN_STANDARD.db_mb, dateien_mb: k.grenze_dateien_mb > 0 ? k.grenze_dateien_mb : GRENZEN_STANDARD.dateien_mb }, gemessen: new Date().toISOString() } };
+}
 // 🛡️ 0.31.0 Zugang im Blick (nur Leitung/Admin): Anmeldeversuche der letzten 14 Tage je Tag, gerade gesperrte Anschlüsse (nur Anzahl –
 // keine IP, die ist ohnehin nur als Prüfsumme gespeichert), Zugänge nie benutzt, und wie die App bei jedem läuft (📲 installiert?)
 async function zugangLage(db, s) {
@@ -341,6 +354,9 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
   try {
     const aktion = String(body?.aktion || "");
     if (aktion === "anmelden") return await anmelden(db, body, meta);
+    // 💤 0.36.0 Wach-Aufruf (GitHub, einmal pro Woche): eine Mini-Abfrage, damit das kostenlose Supabase-Projekt in den Ferien nicht einschläft.
+    // Ohne Anmeldung, gibt nichts preis außer „ok“.
+    if (aktion === "wach") { await db.q(`select 1`); return { status: 200, json: { ok: true } }; }
     const s = await sitzungPruefen(db, meta.token);
     if (!s) return fehler(401, "NICHT_ANGEMELDET");
     if (aktion === "laden") return await laden(db, s, body);
@@ -374,6 +390,7 @@ export async function verarbeiten(db, body, meta = {}, dienste = {}) {
     if (aktion === "kalender_link") return await kalenderLink(db, s, body, dienste);
     if (aktion === "online") return await online(db, s, body);
     if (aktion === "zugang_lage") return await zugangLage(db, s);
+    if (aktion === "speicher_lage") return await speicherLage(db, s);
     if (aktion === "anklopfen") return await anklopfen(db, s, body, dienste);
     if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
       const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);

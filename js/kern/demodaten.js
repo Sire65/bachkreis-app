@@ -4,6 +4,7 @@
 
 import { KOM_STANDARD } from "./kom-standard.js";
 import { pwAppPerson, pwEmpfaenger, pwGelesenId } from "./schema.js";
+import { CHRONIK_WEBSITE } from "./orte.js";
 function zufall(seed) {
   let s = seed >>> 0;
   return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -617,15 +618,17 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.startnachricht_antworten = snAn.slice(0, 2).map((pid, i) => ({ id: `sna-sn-demo-${pid}`, nachricht_id: "sn-demo", person_id: pid, antwort: i ? "spaeter" : "ja", rueckfrage: i ? null : "Gilt das auch für Geschwister?", am: iso(tag(jetzt, -1, 19)), spaeter_bis: i ? iso(tag(jetzt, 0, 19)) : null }));
   const quelle = "Schul-Website (Bachkreis)";
   d.chronik = [
-    { id: "ch-1969", jahr: 1969, titel: "Gründung des Bachkreises", art: "gruendung", beschreibung: "Gegründet vom Musiklehrer Horst Römer – eines der ersten Jugendorchester, die nach 1945 in Deutschland entstanden.", quelle },
+    { id: "ch-1969", jahr: 1969, titel: "Gründung des Bachkreises", art: "gruendung", stadt: "Bergkamen", land: "DE", ort: "Städtisches Gymnasium", beschreibung: "Gegründet vom Musiklehrer Horst Römer – eines der ersten Jugendorchester, die nach 1945 in Deutschland entstanden.", quelle },
     { id: "ch-1980", jahr: 1980, datum: "1980-05-20", titel: "Gründung des Fördervereins", art: "gruendung", beschreibung: "Mitglieder des Bachkreises, Eltern und Freunde gründen den Förderverein des Bachkreises Bergkamen e.V.", quelle },
-    { id: "ch-1985", jahr: 1985, titel: "Europäisches Musikfest der Jugend", art: "konzert", ort: "Olympiahalle München", quelle },
+    { id: "ch-1985", jahr: 1985, titel: "Europäisches Musikfest der Jugend", art: "konzert", stadt: "München", land: "DE", ort: "Olympiahalle", quelle },
     { id: "ch-1997", jahr: 1997, titel: "Uraufführung der „Umweltkantate“ (Prof. Bimberg)", art: "urauffuehrung", beschreibung: "April 1997.", quelle },
-    { id: "ch-2000", jahr: 2000, titel: "Auftritt auf der EXPO 2000", art: "konzert", ort: "Hannover", quelle },
-    { id: "ch-2009", jahr: 2009, titel: "10. Europäisches Jugendmusikfestival", art: "konzert", ort: "Linz (Kulturhauptstadt 2009)", quelle },
-    { id: "ch-2010", jahr: 2010, titel: "Eröffnung der Heldenausstellung (RUHR.2010)", art: "konzert", ort: "Hattingen", quelle },
+    { id: "ch-2000", jahr: 2000, titel: "Auftritt auf der EXPO 2000", art: "konzert", stadt: "Hannover", land: "DE", ort: "EXPO-Gelände", quelle },
+    { id: "ch-2009", jahr: 2009, titel: "10. Europäisches Jugendmusikfestival", art: "konzert", stadt: "Linz", land: "AT", ort: "Kulturhauptstadt 2009", quelle },
+    { id: "ch-2010", jahr: 2010, titel: "Eröffnung der Heldenausstellung (RUHR.2010)", art: "konzert", stadt: "Hattingen", land: "DE", quelle },
     { id: "ch-2011", jahr: 2011, titel: "Start der Orchesterklasse", art: "sonstiges", beschreibung: "Seit dem Schuljahr 2011/12 lernt jedes Kind der Erprobungsstufe im Klassenverband ein Orchesterinstrument – mit der Musikschule Bergkamen.", partner_id: "pa-musikschule", quelle },
     { id: "ch-2017", jahr: 2017, titel: "Partnerorchester der Neuen Philharmonie Westfalen", art: "partner", partner_id: "pa-npw", quelle },
+    // 🗺️ 0.36.0 Auftrittsorte laut Schul-Website (meist ohne Jahr)
+    ...CHRONIK_WEBSITE.map((c) => ({ ...c })),
   ];
   d.dokumente = [
     { id: "dok-1", titel: "Satzung des Fördervereins", art: "satzung", fassung: "2024", url: WEB, beschreibung: "PDF auf der Schul-Website (Abschnitt Förderverein)", sichtbar: "alle", sort: 1 },

@@ -507,11 +507,14 @@ create trigger bk_anfragen_stempel before update on bk_anfragen for each row exe
 -- Chronik
 create table if not exists bk_chronik (
   id text primary key default gen_random_uuid()::text,
-  jahr integer not null,
+  jahr integer,
   datum date,
   titel text not null,
   art text check (art is null or art in ('gruendung', 'konzert', 'reise', 'austausch', 'cd', 'urauffuehrung', 'partner', 'auszeichnung', 'sonstiges')),
   ort text,
+  stadt text,
+  land text,
+  koordinaten text,
   beschreibung text,
   programm text,
   projekt_id text,

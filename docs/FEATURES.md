@@ -93,6 +93,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F83 | 👪 Eltern-Ansicht: Bitte erledigen, Kinder-Umschalter, nächste Termine, 10 Kacheln | ✅ | e2e rundgang, echtbetrieb, axe |
 | BK-F84 | 🎻 Echte Instrumentenklänge (VSCO 2 CE, CC0) für Instrumentenkunde, Bühne, Übe-Bühne, Notenblatt, Quiz; Laden bei Bedarf, Synth als Ersatz | ✅ | tests/klangproben.test.mjs, e2e rundgang |
 | BK-F85 | 🧪 Vorführversion ergänzt nach Updates neue Beispieldaten, ohne Eingetragenes zu überschreiben | ✅ | tests/demo-ergaenzen.test.mjs |
+| BK-F86 | 🗺️ Chronik der Auftrittsorte: Weltkarte, Länderliste, Übernahme von der Schul-Website, Jahr optional | ✅ | tests/chronik-orte.test.mjs |
+| BK-F87 | 💾 Speicher im Blick (Warnung ab 80 %) · 🧹 Löschfrist Änderungsprotokoll · 💤 Wach-Aufruf | ✅ | tests/zugang.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

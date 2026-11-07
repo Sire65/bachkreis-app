@@ -169,3 +169,18 @@
 .bu-ordner::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 4px; border-radius: 2px; background: rgba(255,255,255,.35); }
 .bu-ordner .bu-rueck { font-size: 1.6rem; } .bu-ordner b { font-size: .95rem; } .bu-ordner small { color: #fff; opacity: .9; font-weight: 700; }
 .bu-text { white-space: normal; line-height: 1.55; padding: 12px; border-radius: 12px; background: var(--karte2, rgba(0,0,0,.04)); margin: 8px 0 12px; overflow-wrap: anywhere; }
+/* 0.36.0 – 💾 Speicher im Blick */
+.sp-zeile { margin: 10px 0; } .sp-text { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; } .sp-text span { color: var(--grau); font-weight: 700; font-size: .88rem; }
+.sp-balken { height: 12px; border-radius: 6px; background: var(--linie); overflow: hidden; margin-top: 4px; } .sp-balken i { display: block; height: 100%; border-radius: 6px; }
+.sp-balken i.gruen { background: #2e9d5b; } .sp-balken i.gelb { background: #d9a21b; } .sp-balken i.rot { background: #c62828; }
+/* 0.36.0 – 🗺️ Auftrittsorte */
+.ch-zahlen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0 10px; text-align: center; }
+.ch-zahlen div { background: var(--karte2); border-radius: 14px; padding: 8px 4px; } .ch-zahlen b { display: block; font-size: 1.5rem; } .ch-zahlen span { color: var(--grau); font-weight: 700; font-size: .85rem; }
+.ch-karte { display: block; width: 100%; height: auto; aspect-ratio: 1440 / 580; border-radius: 14px; margin: 6px 0; background: #cfe3f2; touch-action: manipulation; }
+.ch-meer { fill: #cfe3f2; } .ch-land { fill: #efe6cf; stroke: #a89a73; stroke-width: .6; vector-effect: non-scaling-stroke; }
+.ch-punkt { fill: #c62828; stroke: #fff; stroke-width: 1.2; vector-effect: non-scaling-stroke; cursor: pointer; } .ch-punkt.heim { fill: #8a6400; } .ch-punkt.an { fill: #1f4f8f; }
+.umschalter.klein button { padding: 7px 4px; font-size: .85rem; }
+.ch-ortzeile { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; }
+.ch-ortzeile .fl { display: flex; flex-direction: column; }
+:root.dunkel .ch-karte, :root.dunkel .ch-meer { fill: #1d2a36; background: #1d2a36; } :root.dunkel .ch-land { fill: #3a362a; stroke: #6b6455; }
+.umschalter.vier button { font-size: .82rem; hyphens: auto; -webkit-hyphens: auto; overflow-wrap: normal; word-break: normal; }

@@ -38,3 +38,22 @@ test("🛡️ Zugang im Blick: nur Leitung; zählt Fehlversuche, zeigt Gerät-Ar
   assert.equal(r.geraete.find((g) => g.person_id === dp.eltern)?.modus ?? null, null, "unbekannte Art wird nicht gespeichert");
   assert.ok(!JSON.stringify(r).includes("9.9.9.9") && !JSON.stringify(r).includes("ip_hash"), "keine Adresse");
 });
+
+test("💤 Wach-Aufruf ohne Anmeldung: nur „ok“, keine Daten", async () => {
+  const r = await rufe({ aktion: "wach" });
+  assert.equal(r.status, 200); assert.deepEqual(r.json, { ok: true });
+});
+test("💾 Speicher-Lage: nur Leitung; Datenbankgröße, Dateien, größte Tabellen, Grenzen des Gratis-Tarifs", async () => {
+  assert.equal((await rufe({ aktion: "speicher_lage" }, await login(dp.eltern))).status, 403);
+  const r = (await rufe({ aktion: "speicher_lage" }, await login(dp.leitung))).json;
+  assert.ok(r.ok && r.dbBytes > 0 && Array.isArray(r.dateien) && r.tabellen.length > 0);
+  assert.deepEqual(r.grenzen, { db_mb: 500, dateien_mb: 1024 });
+  assert.ok(r.tabellen.every((t) => t.tabelle.startsWith("bk_")));
+});
+test("🧹 Wartung räumt das Änderungsprotokoll nach 12 Monaten auf (neuere Einträge bleiben)", async () => {
+  const { wartung } = await import("../supabase/functions/_shared/kom/kern.js");
+  await db.q(`insert into bk_aenderungen (id, zeit, tabelle, zeile_id, aktion) values ('ae-alt', now() - interval '13 months', 'termine', 't1', 'geaendert'), ('ae-neu', now() - interval '2 months', 'termine', 't1', 'geaendert')`);
+  await wartung(db, {}, {});
+  const ids = (await db.q(`select id from bk_aenderungen where id in ('ae-alt', 'ae-neu')`)).map((x) => x.id);
+  assert.deepEqual(ids, ["ae-neu"]);
+});

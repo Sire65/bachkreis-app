@@ -1,0 +1,76 @@
+/* Bühne mit Orchester + Eselsohr (Kopf umdrehen) – Vorbild: Bühne/Eselsohr der KC Club App */
+.buehne-rahmen { position: relative; border-radius: 18px; overflow: hidden; background: #120a06; box-shadow: 0 10px 26px rgba(0, 0, 0, .35); }
+.buehne-svg { display: block; width: 100%; height: auto; }
+.bw-titel { text-align: center; color: #7a5a00; font-weight: 900; font-size: .9rem; padding: 6px 10px 2px; min-height: 1.6em; }
+.hero-rueck .bw-titel { color: #ffe9a8; }
+.vorhang { transition: transform 1.4s cubic-bezier(.6, .05, .3, 1); }
+.offen .vorhang-l, .offen .vorhang-r { transform: scaleX(.12); }
+.vorhang-r { transform-origin: 400px 0; transform-box: view-box; }
+.vorhang-l { transform-origin: 0 0; transform-box: view-box; }
+.spot { opacity: .4; transition: opacity 1s; } .offen .spot { opacity: 1; }
+
+.mus .licht { fill: rgba(255, 220, 120, 0); transition: fill .25s; }
+.mus.aktiv .licht { fill: rgba(255, 220, 120, .38); }
+/* 0.15.0: Spielhaltung – Instrument hoch, Bogen streicht, Kopf nickt; in der Pause sinken Instrument und Bogen */
+.mus .blas, .mus .bogen, .mus .bogen-quer, .mus .zug, .mus .kopf { transform-box: view-box; transition: transform .5s ease; }
+.mus .blas { transform-origin: 0px -18px; } .mus .bogen { transform-origin: 2.6px -10.8px; } .mus .kopf { transform-origin: 0px -19px; }
+.mus:not(.aktiv) .blas { transform: rotate(24deg) translate(1px, 5px); }
+.mus:not(.aktiv) .bogen { transform: translate(2px, 4px) rotate(14deg); }
+.mus:not(.aktiv) .bogen-quer { transform: translate(1px, 2.5px); }
+.mus .koerper, .mus .schlegel { transform-box: fill-box; }
+.mus.aktiv .koerper { animation: bwWiegen 1.3s ease-in-out infinite alternate; transform-origin: 50% 100%; }
+.mus.aktiv .kopf { animation: bwNicken .65s ease-in-out infinite alternate; }
+.mus.aktiv .bogen { animation: bwBogen .55s ease-in-out infinite alternate; }
+.mus.aktiv .bogen-quer { animation: bwQuer .6s ease-in-out infinite alternate; }
+.mus.aktiv .blas { animation: bwBlas 1.2s ease-in-out infinite alternate; }
+.mus.aktiv .zug { animation: bwZug .5s ease-in-out infinite alternate; }
+.mus.aktiv .schlegel { animation: bwSchlag .35s ease-in-out infinite alternate; transform-origin: 50% 0; }
+.mus.aktiv .schlegel.s2 { animation-delay: .17s; }
+@keyframes bwWiegen { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
+@keyframes bwNicken { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+@keyframes bwBogen { from { transform: translate(2.6px, 3px); } to { transform: translate(-2.6px, -3px); } }
+@keyframes bwQuer { from { transform: translateX(-4.5px); } to { transform: translateX(4.5px); } }
+@keyframes bwBlas { from { transform: rotate(-2deg); } to { transform: rotate(2.5deg) translateY(-.6px); } }
+@keyframes bwZug { from { transform: translateX(0); } to { transform: translateX(6px); } }
+@keyframes bwSchlag { from { transform: rotate(-18deg); } to { transform: rotate(8deg); } }
+.taktstock { transition: transform .22s ease-out; transform-box: view-box; }
+.dirigent .koerper { transition: transform .3s; }
+.verbeugung .dirigent .koerper { transform: rotate(18deg) translateY(4px); transform-origin: 0 0; }
+.verbeugung .mus .koerper { animation: bwVerbeugen 1.2s ease-in-out 2 alternate; transform-origin: 50% 100%; }
+@keyframes bwVerbeugen { to { transform: rotate(10deg); } }
+.notenzeichen { fill: #ffe08a; font-size: 13px; font-weight: 900; animation: bwNote 1.8s ease-out forwards; }
+@keyframes bwNote { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-80px) rotate(-15deg); } }
+
+.bw-stuecke { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; margin: 8px 0; }
+.bw-stuecke button { border: 2px solid var(--linie); background: var(--karte); border-radius: 12px; padding: 7px 9px; text-align: left; cursor: pointer; }
+.bw-stuecke button.an { border-color: var(--marke); box-shadow: 0 0 0 2px var(--marke); }
+.bw-stuecke b { display: block; font-size: .88rem; } .bw-stuecke small { color: var(--grau); font-size: .74rem; font-weight: 700; }
+.bw-regler { display: grid; gap: 6px; margin: 6px 0; }
+.bw-regler label { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: .9rem; }
+.bw-regler input[type=range] { flex: 1; accent-color: var(--marke); }
+.bw-haken input { width: 20px; height: 20px; }
+.buehne label.knopf { display: inline-flex; align-items: center; cursor: pointer; }
+
+/* Eselsohr (unten rechts am Kopf) */
+.hero { position: relative; }
+.eselsohr { position: absolute; right: 0; bottom: 0; width: 30px; height: 30px; padding: 0; border: 0; z-index: 6; cursor: pointer; border-bottom-right-radius: 26px;
+  background: linear-gradient(to top left, var(--bg) 0 49%, rgba(0, 0, 0, .3) 49.5%, var(--marke2) 51%, var(--marke) 75%, #8a6400 100%); }
+.eselsohr::after { content: ""; position: absolute; inset: -10px; }
+.eselsohr.hinten { border-bottom-right-radius: 22px; }
+.eselsohr.wink { animation: esWink .7s ease-in-out; }
+@keyframes esWink { 50% { width: 44px; height: 44px; } }
+.hero-rueck { position: relative; background: var(--hero1); border-radius: 26px; padding: 10px 10px 14px; box-shadow: 0 12px 30px rgba(60, 45, 0, .35); color: #f3efe3; }
+.hero-rueck .hr-kopf { display: flex; justify-content: space-between; align-items: center; padding: 2px 6px 8px; }
+.hero-rueck .hinweis { color: #cfc6ad; }
+.hero-rueck .umschalter { background: #2d2a21; } .hero-rueck .umschalter button { color: #f3efe3; } .hero-rueck .umschalter button.an { background: var(--marke); color: #1a1500; }
+.hero-rueck .bw-stuecke button { background: #2d2a21; border-color: #3d392d; color: #f3efe3; }
+.hero-rueck .knopf { background: #2d2a21; color: #f3efe3; } .hero-rueck .knopf.haupt { background: var(--marke); color: #1a1500; }
+.hero-rueck .liste > li { border-color: #3d392d; } .hero-rueck .zeile-unter { color: #cfc6ad; }
+.dreh-weg { animation: drehWeg .23s ease-in forwards; } .dreh-her { animation: drehHer .3s ease-out; }
+@keyframes drehWeg { to { transform: perspective(900px) rotateY(80deg); opacity: .2; } }
+@keyframes drehHer { from { transform: perspective(900px) rotateY(-80deg); opacity: .2; } }
+@media (prefers-reduced-motion: reduce) {
+  .mus.aktiv .koerper, .mus.aktiv .kopf, .mus.aktiv .bogen, .mus.aktiv .bogen-quer, .mus.aktiv .blas, .mus.aktiv .zug, .mus.aktiv .schlegel, .notenzeichen, .dreh-weg, .dreh-her { animation: none; }
+  .vorhang { transition: none; }
+}
+:root.dunkel .bw-titel { color: var(--marke2); }

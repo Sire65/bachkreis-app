@@ -1,0 +1,111 @@
+/* 🏠 Startseite wie KC (0.28.0): Kachel-Rückseite, Anordnen/Ziehen, Kachelgröße, Laufband, Fallblatt, Schnellstart, Tagesübersicht */
+.abschnitt { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.abschnitt .knopf { margin-top: 8px; }
+.karte h3 .knopf { float: right; margin-top: -4px; }
+
+/* 🔄 Rückseite */
+.raster > .kachel { transition: transform .16s ease-in, box-shadow .2s; transform-style: preserve-3d; }
+.raster > .kachel.kr-dreht { transform: perspective(600px) rotateY(90deg); }
+.raster > .kachel.kr-hinten { background: var(--haupt); color: var(--haupt-text); display: flex; flex-direction: column; gap: 6px; padding: 10px; cursor: default; }
+.kachel.kr-hinten::after { display: none; }
+.kr-titel { font-weight: 900; font-size: .9rem; opacity: .9; padding-right: 26px; }
+.kr-akt { display: block; background: rgba(255, 255, 255, .16); border-radius: 10px; padding: 7px 9px; font-weight: 800; font-size: .88rem; cursor: pointer; }
+.kr-akt:hover, .kr-akt:focus-visible { background: rgba(255, 255, 255, .28); outline: none; }
+.kr-zurueck { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .2); cursor: pointer; font-weight: 900; }
+:root.dunkel .kr-akt { background: rgba(0, 0, 0, .14); } :root.dunkel .kr-zurueck { background: rgba(0, 0, 0, .18); }
+
+/* ⭐ zuletzt gewählt · 🔢 hochzählen · lange drücken */
+.raster > .kachel.zuletzt { box-shadow: 0 0 0 2px var(--marke), var(--schatten); transform: scale(1.02); }
+.raster > .kachel.gedrueckt { transform: scale(.97); transition: transform .5s; }
+.kachel .zahl.hoch { animation: zahlHoch .7s ease-out; }
+@keyframes zahlHoch { 0% { transform: scale(1.4); } 100% { transform: scale(1); } }
+
+/* ✥ Anordnen */
+.ka-leiste { position: sticky; top: 4px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; background: var(--gelbbg); color: var(--text); border: 2px solid var(--marke); border-radius: 14px; padding: 8px 10px; margin: 8px 0; font-size: .88rem; }
+.ka-knoepfe { display: flex; gap: 6px; }
+.raster.anordnen > .kachel { cursor: grab; touch-action: none; animation: kaWackeln .35s ease-in-out infinite alternate; }
+.raster.anordnen > .kachel:nth-child(2n) { animation-delay: .17s; }
+@keyframes kaWackeln { from { transform: rotate(-.6deg); } to { transform: rotate(.6deg); } }
+.kachel.bearb { padding-bottom: 46px; }
+.kachel.bearb.aus { opacity: .45; filter: grayscale(1); }
+.kachel.bearb.frisch { box-shadow: 0 0 0 3px var(--marke), var(--schatten); }
+.kweg { position: absolute; right: 6px; top: 6px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--rot); color: #fff; font-weight: 900; cursor: pointer; }
+.kstrg { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; gap: 4px; justify-content: center; }
+.kstrg button { flex: 1; max-width: 44px; height: 32px; border: none; border-radius: 9px; background: var(--karte2); color: var(--text); font-weight: 900; cursor: pointer; }
+.kstrg button:disabled { opacity: .3; cursor: default; }
+.kstrg button.ein { max-width: none; flex: 1; font-size: .82rem; }
+.kachel.platzhalter { opacity: .25; outline: 2px dashed var(--marke); }
+.kachel.geist { box-shadow: 0 16px 34px rgba(0, 0, 0, .35); transform: scale(1.05) rotate(-1.5deg); opacity: .96; }
+.kpfeil4 { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.kpfeil4 b { font-size: 2rem; background: rgba(0, 0, 0, .55); color: #fff; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; }
+.ka-aus-zeile { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 8px 0 0; }
+.ka-ausgeblendet { border: 2px dashed var(--linie); background: none; color: var(--grau); border-radius: 12px; padding: 7px 12px; font-weight: 800; cursor: pointer; }
+.raster.nur-aus > .kachel { outline: 2px dashed var(--grau); }
+.register button.zieht { transform: scale(1.08); box-shadow: 0 8px 18px rgba(0, 0, 0, .3); z-index: 3; }
+@media (prefers-reduced-motion: reduce) { .raster.anordnen > .kachel { animation: none; } .raster > .kachel { transition: none; } }
+:root.ohne-effekt .raster.anordnen > .kachel { animation: none; }
+
+/* 🔲 Kachelgröße */
+.raster.klein3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.raster.klein4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.raster.klein3 > .kachel { min-height: 84px; padding: 10px; } .raster.klein3 .kachel small { display: none; } .raster.klein3 .kachel b { font-size: .88rem; }
+.raster.klein4 > .kachel { min-height: 70px; padding: 8px 6px; text-align: center; } .raster.klein4 .kachel small { display: none; } .raster.klein4 .kachel b { font-size: .74rem; margin-top: 4px; } .raster.klein4 .kachel .sym { font-size: 1.4rem; }
+.raster.klein4 .kachel .zahl { right: 4px; top: 4px; padding: 0 6px; font-size: .72rem; }
+
+/* 📰 Info-Laufband */
+.il { margin: 10px 20px 0; border: 2px solid rgba(255, 255, 255, .45); border-radius: 16px; background: rgba(0, 0, 0, .18); padding: 7px 8px 5px; touch-action: pan-y; }
+.il-inhalt { min-height: 44px; transition: opacity .22s, transform .22s; }
+.il-inhalt.il-weg-anim { opacity: 0; transform: translateX(-12px); }
+.il-eintrag { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 4px 8px; }
+.il-knoepfe { grid-column: 2 / 4; display: flex; gap: 6px; }
+.il-sym { font-size: 1.4rem; flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(255, 255, 255, .16); }
+.il-rot .il-sym { background: #c0392b; } .il-orange .il-sym { background: #d35400; } .il-gold .il-sym { background: #b8860b; }
+.il-text { min-width: 0; display: grid; border: 0; background: none; color: inherit; font: inherit; text-align: left; padding: 0; cursor: pointer; } .il-text:disabled { cursor: default; opacity: 1; } .il-text b { font-size: .9rem; line-height: 1.2; } .il-text small { font-size: .74rem; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.il-knopf { flex: none; border: none; border-radius: 10px; padding: 6px 9px; background: #fff; color: #1a1500; font-weight: 900; cursor: pointer; font-size: .8rem; }
+.il-weg { flex: none; border: none; background: none; color: inherit; opacity: .7; cursor: pointer; font-size: .9rem; padding: 4px; }
+.il-punkte { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+.il-p { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
+.il-p.il-p-rot { background: rgba(255, 120, 100, .7); } .il-p.il-p-orange { background: rgba(255, 170, 80, .7); }
+.il-p.an { background: #fff; transform: scale(1.3); }
+
+/* 🔢 Fallblatt */
+.fb-reihe { display: inline-flex; gap: 2px; vertical-align: middle; }
+.fb-z { position: relative; display: inline-grid; place-items: center; width: .95em; height: 1.25em; border-radius: 4px; background: #1d1d1d; color: #fff; font-family: Georgia, serif; font-weight: 700; box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .15); perspective: 200px; }
+.fb-z::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, .7); }
+.fb-z.kippt span { animation: fbKipp .5s ease-in-out both; animation-delay: var(--v, 0ms); display: inline-block; }
+@keyframes fbKipp { 0% { transform: rotateX(0); } 45% { transform: rotateX(-90deg); } 55% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.fb-einheit { font-size: .7rem; margin-left: 4px; font-weight: 800; }
+
+/* ⚡ Schnellstart */
+.schnell-kopf { display: flex; justify-content: space-between; align-items: center; }
+.schnell-kopf h2 { margin: 0; }
+.schnell-wahl-knopf { border: none; background: rgba(255, 255, 255, .18); color: inherit; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; }
+.schnell-raster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.schnell-raster .mini { border: none; border-radius: 14px; background: rgba(255, 255, 255, .16); color: inherit; padding: 8px 4px; display: grid; justify-items: center; gap: 2px; cursor: pointer; font: inherit; }
+.schnell-raster .mini b { font-size: 1.4rem; } .schnell-raster .mini span { font-size: .72rem; font-weight: 800; }
+.schnell-raster .mini:active { transform: scale(.95); }
+.schnell-wahl { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.schnell-wahl button { position: relative; display: flex; gap: 6px; align-items: center; border: 2px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 12px; padding: 8px 10px; font-weight: 800; cursor: pointer; text-align: left; }
+.schnell-wahl button.an { border-color: var(--marke); background: var(--gelbbg); }
+.schnell-wahl button i { position: absolute; right: 6px; top: 4px; font-style: normal; font-size: .72rem; color: var(--marke-dunkel); }
+
+/* 🟢 Ansicht wählen · 📋 Tagesübersicht */
+.ansicht-wahl { display: grid; gap: 8px; margin: 10px 0; }
+.ansicht-wahl .knopf { display: grid; gap: 2px; text-align: left; padding: 12px 14px; }
+.ansicht-wahl .knopf small { font-weight: 600; opacity: .85; }
+.ti { display: grid; gap: 6px; margin: 8px 0; }
+.ti-zeile { display: flex; gap: 8px; align-items: center; width: 100%; border: 2px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 12px; padding: 9px 10px; text-align: left; cursor: pointer; font: inherit; }
+.ti-zeile span { flex: 1; } .ti-zeile b:last-child { color: var(--grau); }
+
+/* ☑️ Kachel-Auswahl in den Einstellungen */
+.ka-wahl { border: 2px solid var(--linie); border-radius: 12px; padding: 6px 10px; margin: 6px 0; }
+.ka-wahl summary { cursor: pointer; font-weight: 800; display: flex; justify-content: space-between; }
+.ka-wahl-zahl { color: var(--grau); font-size: .82rem; }
+.ka-wahl-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; margin: 8px 0; }
+.ka-wahl-raster label { display: flex; gap: 6px; align-items: center; font-size: .88rem; }
+.ka-wahl-raster input { width: 18px; height: 18px; accent-color: var(--marke); flex: none; }
+/* Fallblatt in der kleinen Kopf-Kachel: die allgemeine Regel „.mini span“ darf die Klappkarten nicht verkleinern */
+.kacheln3 .mini .fb-reihe { display: inline-flex; font-size: 1.15rem; margin: 0; opacity: 1; line-height: 1; }
+.kacheln3 .mini .fb-z { display: inline-grid; font-size: inherit; margin: 0; opacity: 1; }
+.kacheln3 .mini .fb-z span { display: inline-block; font-size: inherit; margin: 0; opacity: 1; line-height: 1; }
+#v-start:has(.raster.anordnen) .wischhinweis { display: none; }

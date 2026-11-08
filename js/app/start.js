@@ -21,6 +21,8 @@ import { offeneAbstimmungen } from "./vorschlaege.js";
 import { darfErstattung, erOffen } from "./erstattung.js";
 import { rmNeu } from "./rueckmeldung.js";
 import { passFuer, meineFahrten } from "./notfallpass.js";
+import { boerseFuerMich, helferOffen } from "./boerse.js";
+import { momenteOffen } from "./jahrbuch.js";
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
@@ -97,6 +99,9 @@ export const KACHELN = {
     { id: "erstattung", sym: "💶", t: "Erstattung", u: "Fahrtkosten · Auslagen mit Beleg", v: "erstattung", nur: () => darfErstattung(), zahl: () => erOffen() },
     { id: "rueckmeldungen", sym: "🆘", t: "Hilfe & Rückmeldung", u: "Klappt etwas nicht? · Idee · Lob", v: "rueckmeldungen", zahl: () => rmNeu() },
     { id: "protokolle", sym: "🗒️", t: "Protokolle", u: "Elternabende · Besprechungen · meine Aufgaben", v: "protokolle", zahl: () => neueProtokolle() },
+    { id: "boerse", sym: "🛍️", t: "Börse & Helfer", u: "Biete · Suche · Helfer gesucht", v: "boerse", nur: () => boerseFuerMich(), zahl: () => helferOffen() },
+    { id: "jahrbuch", sym: "📖", t: "Jahrbuch", u: "Unser Bachkreis-Jahr zum Blättern", v: "jahrbuch", zahl: () => momenteOffen() },
+    { id: "spiele", sym: "🎲", t: "Musik-Spiele", u: "Memory · Noten-Raten · Quiz", v: "spiele" },
     { id: "standorte", sym: "📍", t: "Standorte", u: "Probenorte · Anfahrt · Entfernung", v: "standorte" },
     { id: "chronik", sym: "📜", t: "Chronik & Repertoire", u: "Seit 1969 · Was haben wir gespielt?", v: "chronik" },
     { id: "dokumente", sym: "📂", t: "Dokumente", u: "Satzung · Flyer · Vorlagen", v: "dokumente" },

@@ -261,3 +261,6 @@ button.tag-trenner.auf .kl-pfeil, .kw-kopf .kl-pfeil { width: 26px; height: 26px
 .chat-eingabe.zu { padding: 16px 10px 6px; }
 .chat-eingabe.zu > :not(.schreib-griff) { display: none !important; }
 .chat-eingabe.zu .schreib-griff { position: static; transform: none; display: block; margin: -10px auto 0; height: 34px; }
+/* 🎭 0.47.0 Stimmen-Effekt beim Aufnehmen */
+.stimme-wahl { display: inline-flex; align-items: center; } .stimme-wahl .nur-lesen { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.stimme-wahl select { max-width: 9.5em; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--linie); background: var(--karte); color: var(--text); font: inherit; font-size: .85rem; }

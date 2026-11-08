@@ -122,6 +122,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F112 | 🪪 Notfallpass je Kind + 🧳 Fahrt-Mappe | ✅ | tests/paket2.test.mjs |
 | BK-F113 | 📍 Standorte mit Anfahrt und Entfernung | ✅ | tests/paket2.test.mjs |
 | BK-F114 | 📸 Bildschirmfoto mit Markierung an Rückmeldungen | ✅ | tests/paket2.test.mjs |
+| BK-F115 | 🛍️ Bachkreis-Börse mit Helfer-Listen | ✅ | tests/paket3.test.mjs |
+| BK-F116 | 📖 Jahrbuch mit schönsten Momenten | ✅ | tests/paket3.test.mjs |
+| BK-F117 | 🎲 Musik-Spiele (Memory, Noten-Raten) | ✅ | tests/paket3.test.mjs |
+| BK-F118 | 🎭 Stimmen-Effekte für Sprachnachrichten | ✅ | tests/paket3.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

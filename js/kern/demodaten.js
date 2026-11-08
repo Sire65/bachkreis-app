@@ -519,6 +519,21 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 🛍️ 0.47.0 Börse · 📖 Jahrbuch-Momente (Beispiele)
+  const elternIds = [...new Set(d.eltern_kind.map((e) => e.eltern_id))];
+  d.boerse = [
+    { id: "bo-1", art: "biete", kategorie: "instrument", titel: "Geige 3/4 mit Koffer und Bogen", text: "Gut erhalten, frisch besaitet – unsere Tochter ist auf 4/4 umgestiegen.", preis: 180, von: elternIds[0], status: "offen", helfer: [] },
+    { id: "bo-2", art: "suche", kategorie: "kleidung", titel: "Schwarze Konzerthose Gr. 152", text: "Für das Herbstkonzert – gerne gebraucht.", von: demoEltern?.id || elternIds[1], status: "offen", helfer: [] },
+    { id: "bo-3", art: "helfer", kategorie: "kuchen", titel: "Kuchen fürs Herbstkonzert", text: "Wir brauchen Kuchen für das Buffet in der Pause – bitte eintragen!", von: "p-fv1", status: "offen", helfer_anzahl: 8, helfer: elternIds.slice(2, 5), frist: isoTag(tag(jetzt, 10)) },
+    { id: "bo-4", art: "helfer", kategorie: "aufbau", titel: "Stühle stellen vor dem Konzert", text: "Treffpunkt 15 Uhr im PZ, ca. 45 Minuten.", von: "p-leitung", status: "offen", helfer_anzahl: 6, helfer: elternIds.slice(5, 7) },
+    { id: "bo-5", art: "biete", kategorie: "noten", titel: "Suzuki-Violinschule Band 1–3", verschenken: true, von: elternIds[7] || elternIds[0], status: "reserviert", helfer: [] },
+  ];
+  const sj = (() => { const j = jetzt.getMonth() >= 7 ? jetzt.getFullYear() : jetzt.getFullYear() - 1; return `${j}/${String((j + 1) % 100).padStart(2, "0")}`; })();
+  d.jahrbuch_momente = [
+    { id: "jm-1", schuljahr: sj, text: "Als beim Herbstkonzert alle Celli zusammen die Melodie gespielt haben – Gänsehaut!", von: demoSchueler?.id || "p-leitung", freigegeben: true, freigegeben_von: "p-leitung" },
+    { id: "jm-2", schuljahr: sj, text: "Die Nachtwanderung auf der Probenfreizeit mit Taschenlampen und Gruselgeschichten.", von: elternIds[0], freigegeben: true, freigegeben_von: "p-leitung" },
+    { id: "jm-3", schuljahr: sj, text: "Mein erstes Solo im B-Orchester.", von: d.personen.find((p) => p.typ === "schueler" && p.id !== demoSchueler?.id)?.id || "p-leitung", freigegeben: false },
+  ];
   // 🩺 0.43.0 Fehlerberichte der Geräte (Beispiele – nur technische Meldungen)
   d.fehlerberichte = [
     { id: "fb-1", text: "Cannot read properties of undefined (reading 'titel')", ansicht: "termine", app_version: "0.42.0", geraet: "Android · Chrome", person_id: "p-lk2", anzahl: 3, zuletzt: iso(tag(jetzt, 0, 7, 40)), erledigt: false },

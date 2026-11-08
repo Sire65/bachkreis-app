@@ -1171,6 +1171,57 @@ grant select, insert, update, delete on bk_erstattungen to service_role;
 drop trigger if exists bk_erstattungen_stempel on bk_erstattungen;
 create trigger bk_erstattungen_stempel before update on bk_erstattungen for each row execute function bk_abgleich_stempel();
 
+-- Bachkreis-Börse
+create table if not exists bk_boerse (
+  id text primary key default gen_random_uuid()::text,
+  art text not null check (art is null or art in ('biete', 'suche', 'helfer')),
+  kategorie text check (kategorie is null or kategorie in ('instrument', 'noten', 'kleidung', 'zubehoer', 'kuchen', 'aufbau', 'fahrdienst', 'sonst')),
+  titel text not null,
+  text text,
+  preis numeric(10,2),
+  verschenken boolean,
+  foto text,
+  von text,
+  status text check (status is null or status in ('offen', 'reserviert', 'erledigt')),
+  termin_id text,
+  helfer_anzahl integer,
+  helfer text[],
+  frist date,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_boerse_geaendert on bk_boerse (geaendert_am);
+alter table bk_boerse enable row level security;
+revoke all on bk_boerse from public, anon, authenticated;
+grant select, insert, update, delete on bk_boerse to service_role;
+drop trigger if exists bk_boerse_stempel on bk_boerse;
+create trigger bk_boerse_stempel before update on bk_boerse for each row execute function bk_abgleich_stempel();
+
+-- Jahrbuch: schönste Momente
+create table if not exists bk_jahrbuch_momente (
+  id text primary key default gen_random_uuid()::text,
+  schuljahr text not null,
+  text text not null,
+  foto_id text,
+  von text,
+  freigegeben boolean,
+  freigegeben_von text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_jahrbuch_momente_geaendert on bk_jahrbuch_momente (geaendert_am);
+alter table bk_jahrbuch_momente enable row level security;
+revoke all on bk_jahrbuch_momente from public, anon, authenticated;
+grant select, insert, update, delete on bk_jahrbuch_momente to service_role;
+drop trigger if exists bk_jahrbuch_momente_stempel on bk_jahrbuch_momente;
+create trigger bk_jahrbuch_momente_stempel before update on bk_jahrbuch_momente for each row execute function bk_abgleich_stempel();
+
 -- Vorschläge & Abstimmungen
 create table if not exists bk_vorschlaege (
   id text primary key default gen_random_uuid()::text,
@@ -2003,6 +2054,11 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_rueck
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_termin_id_fk') then alter table bk_erstattungen add constraint bk_erstattungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_bearbeitet_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_bearbeitet_von_fk foreign key (bearbeitet_von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_boerse_von_fk') then alter table bk_boerse add constraint bk_boerse_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_boerse_termin_id_fk') then alter table bk_boerse add constraint bk_boerse_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_foto_id_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_foto_id_fk foreign key (foto_id) references bk_fotos(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_von_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_freigegeben_von_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_freigegeben_von_fk foreign key (freigegeben_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_von_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_vorschlag_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_vorschlag_id_fk foreign key (vorschlag_id) references bk_vorschlaege(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_person_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;

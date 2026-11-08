@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -130,6 +130,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich;
     case "rueckmeldungen": return z.von === ctx.ich || hatRolle(ctx, RM_LEITUNG);
     case "fehlerberichte": return hatRolle(ctx, ["admin"]);
+    case "boerse": return boerseDarf(ctx.person) || z.von === ctx.ich; // 🛍️ 0.47.0 nur Erwachsene
+    case "jahrbuch_momente": return z.von === ctx.ich || z.freigegeben === true || hatRolle(ctx, MODERATION); // 📖 0.47.0
     case "erstattungen": return z.von === ctx.ich || hatRolle(ctx, ER_KASSE);
     case "vorschlaege": return vsSichtbar(z, ctx);
     case "vorschlag_stimmen": { const v = ctx.vsMap?.get(z.vorschlag_id); return !!v && vsSichtbar(v, ctx); }
@@ -559,6 +561,33 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "boerse": {
+      // 🛍️ 0.47.0 Erwachsene bieten/suchen/bitten um Hilfe; ändern nur die eigene Anzeige; andere tragen sich nur selbst als Helfer ein/aus; Leitung räumt auf
+      if (!boerseDarf(ctx.person)) return { ok: false, grund: "NUR_ERWACHSENE" };
+      const art = BOERSE_ARTEN[neu.art] ? neu.art : alt?.art || "biete", foto = /^datei:[\w-]{1,80}$/.test(String(neu.foto || "")) ? neu.foto : null;
+      const sauber = { art, kategorie: BOERSE_KAT[neu.kategorie] ? neu.kategorie : "sonst", titel: String(neu.titel ?? "").trim().slice(0, 100), text: String(neu.text ?? "").trim().slice(0, 1500) || null,
+        preis: neu.preis == null || neu.preis === "" || art === "helfer" ? null : Math.max(0, Math.min(99999, Math.round(Number(neu.preis) * 100) / 100)) || null, verschenken: art === "biete" && !!neu.verschenken, foto,
+        termin_id: neu.termin_id || null, helfer_anzahl: art === "helfer" ? Math.max(1, Math.min(50, Math.round(Number(neu.helfer_anzahl) || 1))) : null, frist: /^\d{4}-\d{2}-\d{2}$/.test(String(neu.frist || "")) ? neu.frist : null };
+      if (!alt) { if (!sauber.titel) return { ok: false, grund: "TITEL_FEHLT" }; return { ok: true, zeile: { ...nur(neu, ["id"]), ...sauber, von: ctx.ich, status: "offen", helfer: [] } }; }
+      if (alt.von === ctx.ich) return { ok: true, zeile: { ...alt, ...sauber, titel: sauber.titel || alt.titel, status: ["offen", "reserviert", "erledigt"].includes(neu.status) ? neu.status : alt.status, helfer: alt.helfer || [], geloescht_am: neu.geloescht_am ? jetzt : null } };
+      if (hatRolle(ctx, MODERATION) && (neu.geloescht_am || neu.status === "erledigt")) return { ok: true, zeile: { ...alt, status: neu.status === "erledigt" ? "erledigt" : alt.status, geloescht_am: neu.geloescht_am ? jetzt : alt.geloescht_am } };
+      // Helfer: nur sich selbst ein- oder austragen, solange offen und Plätze frei
+      const a = new Set(alt.helfer || []), n = new Set(Array.isArray(neu.helfer) ? neu.helfer : [...a]);
+      const diff = [...new Set([...a, ...n])].filter((x) => a.has(x) !== n.has(x));
+      if (alt.art !== "helfer" || diff.length !== 1 || diff[0] !== ctx.ich) return { ok: false, grund: "NUR_EIGENE" };
+      if (n.has(ctx.ich) && (alt.status !== "offen" || a.size >= (alt.helfer_anzahl || 1))) return { ok: false, grund: "VOLL" };
+      return { ok: true, zeile: { ...alt, helfer: [...n] } };
+    }
+    case "jahrbuch_momente": {
+      // 📖 0.47.0 jede/r schreibt eigene Momente (auch Kinder); ins Jahrbuch kommt nur, was die Leitung freigibt; nach Freigabe nicht mehr ändern
+      if (alt && hatRolle(ctx, MODERATION) && alt.von !== ctx.ich) return { ok: true, zeile: { ...alt, freigegeben: !!neu.freigegeben, freigegeben_von: neu.freigegeben ? ctx.ich : null, geloescht_am: neu.geloescht_am ? jetzt : alt.geloescht_am } };
+      if (alt && alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE" };
+      if (alt?.freigegeben && !hatRolle(ctx, MODERATION) && !neu.geloescht_am) return { ok: false, grund: "SCHON_FREIGEGEBEN" };
+      const text = String(neu.text ?? "").trim().slice(0, 500); if (!text) return { ok: false, grund: "TEXT_FEHLT" };
+      const fotoOk = !neu.foto_id || (ctx.fotoSicht?.has(neu.foto_id) ?? true);
+      const frei = hatRolle(ctx, MODERATION) && !!neu.freigegeben;
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), schuljahr: /^\d{4}\/\d{2}$/.test(String(neu.schuljahr || "")) ? neu.schuljahr : alt?.schuljahr || "", text, foto_id: fotoOk ? neu.foto_id || null : null, von: alt?.von || ctx.ich, freigegeben: frei, freigegeben_von: frei ? ctx.ich : null, geloescht_am: neu.geloescht_am ? jetzt : null } };
     }
     case "fehlerberichte": {
       // 🩺 jedes Gerät meldet eigene Fehler (gleicher Text → Anzahl hoch); erledigt setzt der Admin

@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.47.0 DEV – 08.11.2026
+Abgleich mit der KC Club App, Paket 3 „Gemeinschaft“:
+- 🛍️ **Bachkreis-Börse** (wie KC „Helfen, Leihen & Börse“): 🎁 Biete · 🔎 Suche (Instrumente, Noten, Konzertkleidung, Zubehör; Preis, VB oder zu verschenken, Foto) und 🙋 Helfer gesucht (Kuchen, Auf-/Abbau, Fahrdienst) mit Plätzen, Frist und „Ich helfe“; Kontakt über eine Nachricht in der App; Status offen/reserviert/erledigt; nur Erwachsene. Server: ändern nur eigene Anzeigen, als Helfer nur sich selbst, Plätze begrenzt (VOLL), Leitung räumt auf
+- 📖 **Jahrbuch** (wie KC „Unser Clubjahr“ + „Mein Clubmoment“): je Schuljahr ein Buch zum Blättern (Reiter, ‹ ›, Wischen) – Titel mit Zahlen, Konzerte, Fahrten, Fotos aus dem Fotoalbum, 💛 schönste Momente; Momente schreiben alle (auch Kinder), sichtbar erst nach Freigabe durch die Leitung
+- 🎲 **Musik-Spiele** (wie KC „Spiele“): 🃏 Instrumenten-Memory mit Klängen, 🎵 Noten-Raten im Violin- und Bassschlüssel (deutsche Namen mit H, Note anhören), Quiz; Rekorde nur auf dem Gerät
+- 🎭 **Stimmen-Effekte** für Sprachnachrichten (wie KC): 14 Stimmen (Maus, Helium, Ente, Außerirdischer, Roboter, Blechdose, Brummbär, Riese, Gespenst, Radio, Megafon, Echo, Unter Wasser) – Auswahl beim Aufnehmen, verarbeitet im Handy (Web Audio), gesendet als WAV
+- Migration 20261115000000_bk_boerse_jahrbuch.sql (bk_boerse, bk_jahrbuch_momente); tests/paket3.test.mjs
+
+
 ## 0.46.0 DEV – 08.11.2026
 Abgleich mit der KC Club App, Paket 2 „Sicherheit & Notfall“:
 - 🪪 **Notfallpass** (wie KC „Dein Notfallpass im SOS-Bereich“): je Kind eine Karte mit Gesicht, Allergien, Medikamenten, Hinweisen, Ernährung, Schwimmer, Krankenkasse, Arzt, Tetanus, Erlaubnissen und Notfallnummern (Eltern zum Antippen), Stand der Bestätigung (abgelaufen = orange); 🖨️ Drucken; im SOS, unter Meins und in der Lupe. Sichtbar nur, was der Server ohnehin freigibt (Eltern: eigene Kinder; Begleitpersonen: Kinder ihrer Fahrt)

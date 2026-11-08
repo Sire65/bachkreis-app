@@ -245,6 +245,13 @@ export const RM_LEITUNG = ["admin", "leitung"];
 export const ER_ARTEN = { fahrt: "🚗 Fahrtkosten", auslage: "🧾 Auslage (Beleg)" };
 export const ER_STATUS = { eingereicht: "📨 eingereicht", genehmigt: "✅ genehmigt", ausgezahlt: "💶 ausgezahlt", abgelehnt: "✖ abgelehnt" };
 export const ER_KASSE = ["admin", "leitung", "vorstand"];
+// 🛍️ 0.47.0 Bachkreis-Börse (wie KC „Helfen, Leihen & Börse“): Biete · Suche · Helfer gesucht – nur Erwachsene (Kinder nicht, Kinderschutz)
+export const BOERSE_ARTEN = { biete: "🎁 Biete", suche: "🔎 Suche", helfer: "🙋 Helfer gesucht" };
+export const BOERSE_KAT = { instrument: "🎻 Instrument", noten: "🎼 Noten", kleidung: "👔 Konzertkleidung", zubehoer: "🎒 Zubehör", kuchen: "🍰 Kuchen & Buffet", aufbau: "🪑 Auf- & Abbau", fahrdienst: "🚗 Fahrdienst", sonst: "📦 Sonstiges" };
+export const BOERSE_STATUS = { offen: "🟢 offen", reserviert: "🟡 reserviert", erledigt: "✅ erledigt" };
+export const boerseDarf = (p) => !!p && !(p.typ === "schueler" && istMinderjaehrig(p));
+// 📖 0.47.0 Jahrbuch (wie KC „Unser Clubjahr“ + „Mein Clubmoment“): Schuljahr ab 1. August
+export const schuljahrVon = (d = new Date()) => { const x = new Date(d), j = x.getMonth() >= 7 ? x.getFullYear() : x.getFullYear() - 1; return `${j}/${String((j + 1) % 100).padStart(2, "0")}`; };
 export const ER_KM_SATZ = 0.30; // € je km (Standard, änderbar: konfig.km_satz)
 export const erBetrag = (z, satz = ER_KM_SATZ) => (z.art === "fahrt" ? Math.round(Math.max(0, Number(z.km) || 0) * (Number(satz) > 0 ? Number(satz) : ER_KM_SATZ) * 100) / 100 : Math.round(Math.max(0, Number(z.betrag) || 0) * 100) / 100);
 export function vsAuszaehlen(v, stimmen = []) {
@@ -1062,6 +1069,37 @@ export const TABELLEN = {
       { k: "bearbeitet_von", t: "bearbeitet von", typ: "ref", ref: "personen" },
     ],
     liste: ["datum", "von", "zweck", "betrag", "status"],
+  },
+  boerse: {
+    titel: "Bachkreis-Börse", sym: "🛍️", gruppe: "Kommunikation", lesen: [], schreiben: [],
+    felder: [
+      { k: "art", t: "Art", typ: "wahl", werte: BOERSE_ARTEN, pflicht: true },
+      { k: "kategorie", t: "Bereich", typ: "wahl", werte: BOERSE_KAT },
+      { k: "titel", t: "Was?", typ: "text", pflicht: true },
+      { k: "text", t: "Beschreibung", typ: "lang" },
+      { k: "preis", t: "Preis (€, leer = Verhandlungssache)", typ: "geld" },
+      { k: "verschenken", t: "zu verschenken", typ: "ja" },
+      { k: "foto", t: "Foto (datei:…)", typ: "text" },
+      { k: "von", t: "von", typ: "ref", ref: "personen" },
+      { k: "status", t: "Status", typ: "wahl", werte: BOERSE_STATUS },
+      { k: "termin_id", t: "Für Termin", typ: "ref", ref: "termine" },
+      { k: "helfer_anzahl", t: "Wie viele Helfer?", typ: "zahl" },
+      { k: "helfer", t: "Helfer", typ: "refs", ref: "personen" },
+      { k: "frist", t: "bis wann?", typ: "datum" },
+    ],
+    liste: ["art", "titel", "von", "status"],
+  },
+  jahrbuch_momente: {
+    titel: "Jahrbuch: schönste Momente", sym: "📖", gruppe: "Kommunikation", lesen: [], schreiben: [],
+    felder: [
+      { k: "schuljahr", t: "Schuljahr", typ: "text", pflicht: true },
+      { k: "text", t: "Mein schönster Moment", typ: "lang", pflicht: true },
+      { k: "foto_id", t: "Foto aus dem Fotoalbum", typ: "ref", ref: "fotos" },
+      { k: "von", t: "von", typ: "ref", ref: "personen" },
+      { k: "freigegeben", t: "im Jahrbuch", typ: "ja" },
+      { k: "freigegeben_von", t: "freigegeben von", typ: "ref", ref: "personen" },
+    ],
+    liste: ["schuljahr", "von", "freigegeben"],
   },
   vorschlaege: {
     titel: "Vorschläge & Abstimmungen", sym: "💡", gruppe: "Kommunikation", lesen: L, schreiben: [],

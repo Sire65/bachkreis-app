@@ -7,6 +7,7 @@
 //    ℹ️ Details (wann gesendet, angekommen, gelesen – und was der BK Communicator je Weg gemacht hat), Entwürfe.
 // Zustellung über den BK Communicator (Regeln „Neue Nachricht“, „❗ Wichtige Nachricht“, „🏎️ Express-Sendung“).
 // Rechte, Express-Grenze, Bearbeiten-Frist und Kinderschutz erzwingt der Server (supabase/functions/_shared/regeln.js).
+import { STIMMEN, stimmeAnwenden } from "../kern/stimme.js";
 import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, istLeitung, istVerwalter, einst, einstSetzen } from "./zustand.js";
 import { meineUnterhaltungen, gelesenVonMir, lokalGelesen } from "./start.js";
 import { esc, AKTIONEN, toast, uhr, frage, blatt, blattZu, $ } from "../kern/ui.js";
@@ -430,7 +431,7 @@ function eingabeHtml(u) {
     ${C.emoji ? `<div class="chat-emoji">${EMOJIS.map((e) => `<button type="button" data-a="chatEmoji" data-x="${e}" aria-label="Emoji ${e}">${e}</button>`).join("")}</div>` : ""}
     ${hinweis.length ? `<div class="eingabe-hinweis">${hinweis.map(esc).join("<br>")}</div>` : ""}
     ${C.anlagen.length ? `<div class="anhang-chips">${C.anlagen.map((a) => `<span class="anhang-chip ${a.status}">${a.art === "bild" ? "📷" : a.art === "sprache" ? "🎤" : a.art === "noten" ? "🎼" : a.art === "video" ? "🎬" : "📄"} ${esc(a.name.length > 28 ? a.name.slice(0, 26) + "…" : a.name)}${a.status === "laedt" ? " ⏳" : a.status === "fehler" ? " ⚠️" : ""}<button type="button" data-a="anhangWeg" data-x="${a.tmp}" aria-label="Anhang entfernen">✕</button></span>`).join("")}</div>` : ""}
-    ${C.aufnahme ? `<div class="aufnahme-leiste"><span class="rec">●</span><b id="aufZeit">${dauerText(C.aufnahme.sekunden())}</b><span class="hinweis">Sprachnachricht wird aufgenommen …</span><button type="button" class="knopf klein" data-a="aufnahmeWeg">✖ Verwerfen</button><button type="button" class="knopf haupt klein" data-a="aufnahmeSenden">➤ Senden</button></div>` : `${versandLeisteHtml(exp)}${C.format ? formatLeisteHtml() : ""}${C.gruss ? grussLeisteHtml() : ""}<div class="innen${aufnahmeMoeglich() ? " mit-mikro" : ""}">
+    ${C.aufnahme ? `<div class="aufnahme-leiste"><span class="rec">●</span><b id="aufZeit">${dauerText(C.aufnahme.sekunden())}</b><span class="hinweis">Sprachnachricht wird aufgenommen …</span><label class="stimme-wahl"><span class="nur-lesen">🎭 Stimme</span><select data-c="stimmeWahl" aria-label="Stimmen-Effekt">${STIMMEN.map(([k, sym, t]) => `<option value="${k}" ${(einst().stimme || "normal") === k ? "selected" : ""}>${sym} ${t}</option>`).join("")}</select></label><button type="button" class="knopf klein" data-a="aufnahmeWeg">✖ Verwerfen</button><button type="button" class="knopf haupt klein" data-a="aufnahmeSenden">➤ Senden</button></div>` : `${versandLeisteHtml(exp)}${C.format ? formatLeisteHtml() : ""}${C.gruss ? grussLeisteHtml() : ""}<div class="innen${aufnahmeMoeglich() ? " mit-mikro" : ""}">
       <button type="button" class="rund anhang" data-a="anhangMenue" title="Anhang: Foto, Datei, Noten, Umfrage" aria-label="Anhang">📎</button>
       <textarea id="chatText" rows="1" maxlength="${CHAT.zeichen}" placeholder="${C.express ? "🏎️ Express-Sendung schreiben …" : C.wichtig ? "❗ Wichtige Nachricht schreiben …" : "Nachricht schreiben …"}" class="${C.express ? "express" : C.wichtig ? "wichtig" : ""}" aria-label="Nachricht schreiben">${esc(entwurf(u.id))}</textarea>
       <button type="button" class="rund mikro" data-a="aufnahmeStart" title="Sprachnachricht aufnehmen" aria-label="Sprachnachricht aufnehmen">🎙️</button>
@@ -1020,6 +1021,7 @@ AKTIONEN.aufnahmeStart = async () => {
   eingabeNeu();
   clearInterval(aufTakt); aufTakt = setInterval(() => { const z = document.getElementById("aufZeit"); if (z && C.aufnahme) z.textContent = dauerText(C.aufnahme.sekunden()); }, 500);
 };
+AKTIONEN.stimmeWahl = (v) => { einstSetzen("stimme", v); const s = STIMMEN.find(([k]) => k === v); toast(`🎭 ${s?.[1] || ""} ${s?.[2] || ""} – gilt beim Senden`, 1800); };
 AKTIONEN.aufnahmeWeg = () => { clearInterval(aufTakt); C.aufnahme?.abbrechen(); C.aufnahme = null; eingabeNeu(); toast("🗑️ Verworfen"); };
 AKTIONEN.aufnahmeSenden = async () => {
   clearInterval(aufTakt); const a = C.aufnahme; if (!a) return; C.aufnahme = null; eingabeNeu();
@@ -1027,7 +1029,9 @@ AKTIONEN.aufnahmeSenden = async () => {
   if (r.dauer < 1) return toast("🎙️ Zu kurz – bitte länger sprechen.");
   const uid = S.params.id, u = hole("unterhaltungen", uid);
   try {
-    const ext = /mp4/.test(r.blob.type) ? "m4a" : /ogg/.test(r.blob.type) ? "ogg" : "webm";
+    const art = einst().stimme || "normal"; // 🎭 0.47.0 Stimmen-Effekt (läuft im Handy)
+    if (art !== "normal") { try { const e = await stimmeAnwenden(r.blob, art); r.blob = e.blob; r.dauer = Math.round(r.dauer * e.faktor * 10) / 10; } catch (x) { toast("🎭 " + x.message + " – ohne Effekt gesendet", 3500); } }
+    const ext = /wav/.test(r.blob.type) ? "wav" : /mp4/.test(r.blob.type) ? "m4a" : /ogg/.test(r.blob.type) ? "ogg" : "webm";
     const up = await hochladen(r.blob, { name: `Sprachnachricht.${ext}`, art: "sprache" });
     const n = await nachrichtBauen(uid, "", { anlagen: [{ ...up, art: "sprache", dauer: r.dauer }] });
     papierflieger(document.querySelector('[data-a="chatSenden"]'), n.wichtig, n.id, n.express);

@@ -38,6 +38,9 @@ import "./ueberblick.js"; // 🗺️ 0.45.0
 import "./notfallpass.js"; // 🪪 0.46.0
 import "./standorte.js"; // 📍 0.46.0
 import "./bildschirmfoto.js"; // 📸 0.46.0
+import "./boerse.js"; // 🛍️ 0.47.0
+import "./jahrbuch.js"; // 📖 0.47.0
+import "./spiele.js"; // 🎲 0.47.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";

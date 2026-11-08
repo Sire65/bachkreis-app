@@ -1,14 +1,24 @@
 {
-  "version": "0.46.0",
+  "version": "0.47.0",
   "datum": "2026-11-08",
   "stufe": "DEV",
   "neu": [
-    "🪪 Notfallpass je Kind im SOS: Allergien, Medikamente, Notfallnummern zum Antippen – zum Ausdrucken",
-    "🧳 Fahrt-Mappe für Begleitpersonen: alle Notfallpässe einer Fahrt",
-    "📍 Standorte: Probenorte, Auftrittsorte, Treffpunkte mit Anfahrt und Entfernung – „🧭 Anfahrt“ auch beim Termin",
-    "📸 Bildschirmfoto mit Markierung: einkreisen und an die Leitung schicken"
+    "🛍️ Bachkreis-Börse: gebrauchte Instrumente, Noten und Konzertkleidung – und „🙋 Helfer gesucht“ für Kuchen, Aufbau und Fahrdienst",
+    "📖 Jahrbuch zum Blättern – schreib deinen schönsten Bachkreis-Moment hinein",
+    "🎲 Musik-Spiele: Instrumenten-Memory und Noten-Raten",
+    "🎭 Sprachnachrichten mit lustigen Stimmen: Maus, Roboter, Riese, Gespenst …"
   ],
   "verlauf": [
+    {
+      "version": "0.46.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🪪 Notfallpass je Kind im SOS: Allergien, Medikamente, Notfallnummern zum Antippen – zum Ausdrucken",
+        "🧳 Fahrt-Mappe für Begleitpersonen: alle Notfallpässe einer Fahrt",
+        "📍 Standorte: Probenorte, Auftrittsorte, Treffpunkte mit Anfahrt und Entfernung – „🧭 Anfahrt“ auch beim Termin",
+        "📸 Bildschirmfoto mit Markierung: einkreisen und an die Leitung schicken"
+      ]
+    },
     {
       "version": "0.45.0",
       "datum": "2026-11-08",

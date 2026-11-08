@@ -720,6 +720,14 @@ export function erzeugeDemodaten(heute = new Date()) {
     demo_personen: { entwickler: "p-entwickler", leitung: "p-leitung", lehrkraft: "p-lk1", vorstand: "p-fv2", schueler: demoSchueler?.id, eltern: demoEltern?.id },
     notrufe: [["🚑", "Notruf / Rettungsdienst", "112"], ["🚓", "Polizei", "110"], ["🩺", "Ärztlicher Bereitschaftsdienst", "116117"], ["☠️", "Giftnotruf NRW (Bonn)", "0228 19240"]],
     schule_telefon: "02307 964440",
+    // 📍 0.46.0 Standorte (Beispiele, Positionen ungefähr)
+    standorte: [
+      { name: "PZ / Musiksaal", art: "probe", adresse: "Städt. Gymnasium Bergkamen, Hubert-Biernat-Str., 59192 Bergkamen", hinweis: "Eingang über den Schulhof, Musiksaal im Erdgeschoss", lat: 51.6159, lon: 7.6377 },
+      { name: "Musiksaal", art: "probe", adresse: "Städt. Gymnasium Bergkamen, 59192 Bergkamen", hinweis: "B-Orchester – gleicher Eingang wie das PZ", lat: 51.6161, lon: 7.6381 },
+      { name: "PZ Städt. Gymnasium Bergkamen", art: "auftritt", adresse: "Hubert-Biernat-Str., 59192 Bergkamen", hinweis: "Konzerte im Pädagogischen Zentrum – Parkplätze am Rathaus", lat: 51.6158, lon: 7.6372 },
+      { name: "Busparkplatz Rathaus", art: "treffpunkt", adresse: "Rathausplatz 1, 59192 Bergkamen", hinweis: "Abfahrt zu Fahrten und Freizeiten", lat: 51.6164, lon: 7.6353 },
+      { name: "Jugendherberge (Beispiel)", art: "unterkunft", adresse: "Beispielweg 1 (Beispiel)", hinweis: "Probenfreizeit – Adresse folgt" },
+    ],
     freigabe_grenze_eur: 250,
     leih_kaution: 50, leih_gebuehr: 30, abschluss_jahrgang: 12,
     nachfass_tage: 3,

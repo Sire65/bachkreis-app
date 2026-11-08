@@ -1040,6 +1040,7 @@ export const TABELLEN = {
       { k: "geraet", t: "Gerät (automatisch)", typ: "text" },
       { k: "ansicht", t: "Wo in der App?", typ: "text" },
       { k: "rueckruf", t: "Bitte anrufen", typ: "ja" },
+      { k: "bild", t: "📸 Bildschirmfoto (datei:…)", typ: "text" },
       { k: "status", t: "Status", typ: "wahl", werte: RM_STATUS },
       { k: "antwort", t: "Antwort der Leitung", typ: "lang" },
       { k: "beantwortet_am", t: "beantwortet", typ: "zeit" },

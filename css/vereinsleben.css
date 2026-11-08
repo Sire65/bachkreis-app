@@ -40,3 +40,37 @@
 .kachel.modul-aus { opacity: .6; }
 .kachel.modul-aus::after { content: "🚫"; position: absolute; left: 6px; bottom: 6px; font-size: .9rem; }
 .einst-stufe { display: inline-block; margin: 0 0 8px; }
+
+/* 🪪 0.46.0 Notfallpass */
+.np-liste { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); margin-bottom: 12px; }
+.np-karte { background: var(--karte); border: 3px solid #c62828; border-radius: 18px; padding: 12px 14px; box-shadow: var(--schatten); display: grid; gap: 6px; break-inside: avoid; }
+.np-karte.alt { border-color: #b26a00; } .np-karte.leer { border-style: dashed; }
+.np-kopf { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--linie); padding-bottom: 8px; }
+.np-gesicht { width: 54px; height: 54px; flex: none; border-radius: 50%; overflow: hidden; background: var(--karte2); } .np-gesicht svg { width: 100%; height: 100%; }
+.np-titel { font-size: .72rem; font-weight: 900; letter-spacing: .12em; color: #c62828; } :root.dunkel .np-titel { color: #ff8a7a; }
+.np-name { font-size: 1.15rem; display: block; } .np-kopf small { color: var(--grau); }
+.np-zeile { display: grid; grid-template-columns: 8.5em 1fr; gap: 6px; font-size: .92rem; } .np-zeile span { color: var(--grau); }
+.np-zeile.wichtig b { color: #b71c1c; } :root.dunkel .np-zeile.wichtig b { color: #ffb4a9; }
+.np-erlaubt { font-size: .82rem; color: var(--grau); }
+.np-kontakte { display: grid; gap: 6px; }
+.np-tel { display: flex; justify-content: space-between; gap: 8px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--gruenbg); color: var(--text); text-decoration: none; font-weight: 700; }
+.np-tel small { color: var(--grau); font-weight: 600; }
+.np-fuss { font-size: .78rem; color: var(--grau); border-top: 1px solid var(--linie); padding-top: 6px; }
+@media print { body.np-druck * { visibility: hidden; } body.np-druck .np-liste, body.np-druck .np-liste * { visibility: visible; } body.np-druck .np-liste { position: absolute; left: 0; top: 0; width: 100%; grid-template-columns: 1fr 1fr; } body.np-druck .np-karte { box-shadow: none; } }
+/* 📍 0.46.0 Standorte */
+.so-art { margin: 14px 0 6px; }
+.so-kopf { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.so-ort .knopfreihe a.knopf { text-decoration: none; }
+/* 📸 0.46.0 Bildschirmfoto mit Markierung */
+.bf-rahmen { position: fixed; right: 16px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 95; display: grid; justify-items: center; gap: 4px; }
+.bf-ausloeser { width: 68px; height: 68px; border-radius: 50%; border: 4px solid #fff; background: #d32f2f; color: #fff; font-size: 1.6rem; display: grid; place-items: center; line-height: 1; box-shadow: 0 6px 18px rgba(0,0,0,.35); cursor: pointer; touch-action: none; }
+.bf-ausloeser small { font-size: .62rem; font-weight: 800; }
+.bf-ausloeser-weg { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--karte); color: var(--text); font-weight: 900; box-shadow: var(--schatten); cursor: pointer; }
+.bf-blitz { position: fixed; inset: 0; background: #fff; z-index: 99; pointer-events: none; animation: bfBlitz .45s ease-out forwards; }
+@keyframes bfBlitz { from { opacity: .9; } to { opacity: 0; } }
+.bf-flaeche { border: 2px solid var(--linie); border-radius: 12px; overflow: hidden; max-height: 58vh; display: grid; place-items: center; background: var(--karte2); }
+.bf-flaeche canvas { max-width: 100%; max-height: 58vh; touch-action: none; display: block; cursor: crosshair; }
+.bf-stifte { display: flex; gap: 10px; justify-content: center; margin: 10px 0; }
+.bf-stift { width: 34px; height: 34px; border-radius: 50%; background: var(--f); border: 2px solid var(--linie); cursor: pointer; }
+.bf-stift.an { outline: 3px solid var(--gold); outline-offset: 2px; }
+.rm-bild { margin: 6px 0 10px; }

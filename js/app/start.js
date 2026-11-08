@@ -20,6 +20,7 @@ import { adventDa, adventHinweis } from "./advent.js";
 import { offeneAbstimmungen } from "./vorschlaege.js";
 import { darfErstattung, erOffen } from "./erstattung.js";
 import { rmNeu } from "./rueckmeldung.js";
+import { passFuer, meineFahrten } from "./notfallpass.js";
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
@@ -96,6 +97,7 @@ export const KACHELN = {
     { id: "erstattung", sym: "💶", t: "Erstattung", u: "Fahrtkosten · Auslagen mit Beleg", v: "erstattung", nur: () => darfErstattung(), zahl: () => erOffen() },
     { id: "rueckmeldungen", sym: "🆘", t: "Hilfe & Rückmeldung", u: "Klappt etwas nicht? · Idee · Lob", v: "rueckmeldungen", zahl: () => rmNeu() },
     { id: "protokolle", sym: "🗒️", t: "Protokolle", u: "Elternabende · Besprechungen · meine Aufgaben", v: "protokolle", zahl: () => neueProtokolle() },
+    { id: "standorte", sym: "📍", t: "Standorte", u: "Probenorte · Anfahrt · Entfernung", v: "standorte" },
     { id: "chronik", sym: "📜", t: "Chronik & Repertoire", u: "Seit 1969 · Was haben wir gespielt?", v: "chronik" },
     { id: "dokumente", sym: "📂", t: "Dokumente", u: "Satzung · Flyer · Vorlagen", v: "dokumente" },
     { id: "austausch", sym: "🏠", t: "Austausch & Gastfamilien", u: "Gäste aufnehmen · Zuordnung", v: "austausch", nur: () => austauschProjekte().length > 0 && (istEltern() || istLehrkraft()), zahl: () => (istLehrkraft() ? austauschProjekte().reduce((s, p) => s + liste("gaeste", (g) => g.projekt_id === p.id && !g.gastgeber_id).length, 0) : 0) },
@@ -111,6 +113,7 @@ export const KACHELN = {
     { id: "kinder", sym: "👪", t: "Meine Kinder", u: "Gruppe · Instrument · Termine", v: "kinder", nur: () => istEltern() },
     { id: "meinegenehmigungen", sym: "✍️", t: "Genehmigungen", u: "Zustimmen · Ablehnen · Widerrufen", v: "meinegenehmigungen", nur: () => istEltern(), zahl: () => offeneGenehmigungen() },
     { id: "gesundheit", sym: "🩺", t: "Gesundheit & Notfall", u: "Allergien · Medikamente · Notfallkontakt", v: "gesundheit", nur: () => gesundheitFuer().length > 0, zahl: () => gesundheitFuer().filter((k) => !gesundheitVon(k)).length },
+    { id: "notfallpass", sym: "🪪", t: "Notfallpass", u: "Allergien · Medikamente · Notfallnummern", v: "notfallpass", nur: () => passFuer().length > 0 || meineFahrten().length > 0 },
     { id: "ueben", sym: "🎻", t: "Üben", u: () => uebenUntertitel(), v: "ueben", nur: () => istSchueler() || istEltern() },
     { id: "uebebuehne", sym: "🎻", t: "Übe-Bühne", u: "Mitspielen · Griffe · Rhythmus · Stimmgerät", v: "buehne", p: { modus: "ueben" }, nur: () => istSchueler() || istEltern() || hatRolle("leitung", "lehrkraft", "admin"), zahl: () => (istSchueler() ? offeneUebeAufgaben(S.ich.id) : istEltern() ? kinderVon(db, S.ich.id).reduce((s, k) => s + offeneUebeAufgaben(k), 0) : 0) },
     { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin") },
@@ -132,6 +135,7 @@ export const KACHELN = {
     { id: "installieren", sym: "📲", t: "App installieren", u: "Auf den Startbildschirm – startet schneller", aktion: "installieren" },
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
+    { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },
     { id: "ueberblick", sym: "🗺️", t: "Alles auf einen Blick", u: "Jeder Bereich der App", v: "ueberblick" },
     { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt", v: "hilfe" },
     { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter() },

@@ -1,5 +1,6 @@
 // Kommunikation: Rundschreiben mit Rückmeldung an automatische Zielgruppen und SOS. Vorbild: KC Club Communicator, SOS-Kachel.
 // Nachrichten/Chats stehen in nachrichten.js, die Pinnwand in pinnwand.js.
+import { sosPassHtml } from "./notfallpass.js";
 import { gesundheitKurz } from "./schutz.js";
 import { S, VIEWS, db, zeige, kopf, name, istLehrkraft, istEltern } from "./zustand.js";
 import { esc, AKTIONEN, toast, formWerte } from "../kern/ui.js";
@@ -73,6 +74,7 @@ VIEWS.sos = {
     html += `<div class="karte"><h3>Bachkreis-Kontakte</h3><ul class="liste">${leitung ? `<li><div class="fl"><b>${esc(name(leitung))}</b><div class="zeile-unter">Leitung</div></div><a class="knopf klein" href="${tel(leitung.mobil)}">📞</a><button class="knopf klein" data-a="waAn" data-x="${leitung.id}">🟢</button></li>` : ""}
       <li><div class="fl"><b>Schule (Sekretariat)</b></div><a class="knopf klein" href="${tel(k.schule_telefon || "")}">📞</a></li>
       ${istEltern() ? "" : elternKontakteFuerMich()}</ul></div>`;
+    html += sosPassHtml(); // 🪪 0.46.0
     html += `<div class="karte"><h3>📍 Standort senden</h3><p class="hinweis">Schickt deinen aktuellen Standort per WhatsApp – z. B. an die Leitung oder deine Eltern.</p><button class="knopf haupt breit" data-a="sosStandort">📍 Standort per WhatsApp</button></div>`;
     if (istLehrkraft() || liste("projekte", (pr) => (pr.begleiter || []).includes(S.ich.id)).length) { // 🩺 Leitung, Lehrkräfte, Begleitpersonen
       const q = (p.q || "").toLowerCase();

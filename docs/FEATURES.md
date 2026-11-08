@@ -119,6 +119,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F109 | 🗂️ Einstellungen als Kartei | ✅ | tests/ueberblick.test.mjs |
 | BK-F110 | 🗺️ Feiertage je Bundesland | ✅ | tests/ueberblick.test.mjs |
 | BK-F111 | ⏳ Warte-Bilder mit Musik-Motiven, ✨ Blinken einstellbar | ✅ | tests/ueberblick.test.mjs |
+| BK-F112 | 🪪 Notfallpass je Kind + 🧳 Fahrt-Mappe | ✅ | tests/paket2.test.mjs |
+| BK-F113 | 📍 Standorte mit Anfahrt und Entfernung | ✅ | tests/paket2.test.mjs |
+| BK-F114 | 📸 Bildschirmfoto mit Markierung an Rückmeldungen | ✅ | tests/paket2.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

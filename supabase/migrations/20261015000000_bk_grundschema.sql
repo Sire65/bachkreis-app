@@ -1127,6 +1127,7 @@ create table if not exists bk_rueckmeldungen (
   geraet text,
   ansicht text,
   rueckruf boolean,
+  bild text,
   status text check (status is null or status in ('neu', 'in_arbeit', 'erledigt')),
   antwort text,
   beantwortet_am timestamptz,

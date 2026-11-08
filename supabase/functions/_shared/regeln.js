@@ -574,7 +574,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (alt && alt.von !== ctx.ich && !chef) return { ok: false, grund: "NUR_EIGENE" };
       if (!alt) { const text = String(neu.text ?? "").trim().slice(0, 3000); if (!text) return { ok: false, grund: "TEXT_FEHLT" };
         return { ok: true, zeile: { ...nur(neu, ["id"]), art: ["problem", "hilfe", "idee", "lob"].includes(neu.art) ? neu.art : "problem", text, von: ctx.ich, sterne: neu.sterne ? Math.max(1, Math.min(5, Math.round(Number(neu.sterne)))) : null,
-          geraet: String(neu.geraet ?? "").slice(0, 200) || null, ansicht: String(neu.ansicht ?? "").slice(0, 60) || null, rueckruf: !!neu.rueckruf, status: "neu", antwort: null, beantwortet_am: null } }; }
+          geraet: String(neu.geraet ?? "").slice(0, 200) || null, ansicht: String(neu.ansicht ?? "").slice(0, 60) || null, rueckruf: !!neu.rueckruf, bild: /^datei:[\w-]{1,80}$/.test(String(neu.bild || "")) ? neu.bild : null, status: "neu", antwort: null, beantwortet_am: null } }; }
       if (chef) { const antwort = String(neu.antwort ?? "").trim().slice(0, 3000) || null;
         return { ok: true, zeile: { ...alt, status: ["neu", "in_arbeit", "erledigt"].includes(neu.status) ? neu.status : alt.status, antwort, beantwortet_am: antwort && antwort !== alt.antwort ? jetzt : alt.beantwortet_am } }; }
       if (alt.antwort) return { ok: false, grund: "SCHON_BEANTWORTET" };

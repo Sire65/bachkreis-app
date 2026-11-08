@@ -201,7 +201,7 @@ VIEWS.termin = {
     const knoepfe = darfPlanen() ? `<button class="knopf klein" data-a="terminBearbeiten" data-x="${t.id}">✏️</button>` : "";
     let html = kopf(`${a.sym} ${esc(t.titel)}`, knoepfe);
     html += `<div class="karte"><div class="zeile-titel">${datum(t.beginn)}</div><div>${uhr(t.beginn)}${t.ende ? " – " + (tagIso(t.ende) !== tagIso(t.beginn) ? datum(t.ende) + ", " : "") + uhr(t.ende) : ""} Uhr</div>
-      <div>📍 ${esc(t.ort || "–")}</div>${projekt ? `<div class="klick" data-a="oeffne" data-x="projekt|${projekt.id}">🎭 ${esc(projekt.titel)} ›</div>` : ""}
+      <div>📍 ${esc(t.ort || "–")}${t.ort ? ` <button type="button" class="knopf klein" data-a="soAnfahrt" data-x="${esc(t.ort)}">🧭 Anfahrt</button>` : ""}</div>${projekt ? `<div class="klick" data-a="oeffne" data-x="projekt|${projekt.id}">🎭 ${esc(projekt.titel)} ›</div>` : ""}
       <div class="t-marken">${teilnahmeBadge(t)}${t.fuer_alle ? '<span class="badge b-alle">🌍 für alle</span>' : ""}${t.register?.length ? `<span class="badge b-lila">🎼 Registerprobe: ${t.register.map((r) => esc(hole("register", r)?.kurz || "")).join(", ")}</span>` : ""}</div>
       ${t.frist ? `<div class="hinweis">Antwort bis ${datumKurz(t.frist)}</div>` : ""}
       ${t.beschreibung ? `<p>${esc(t.beschreibung).replace(/\n/g, "<br>")}</p>` : ""}

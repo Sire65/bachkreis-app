@@ -1,15 +1,25 @@
 {
-  "version": "0.45.0",
+  "version": "0.46.0",
   "datum": "2026-11-08",
   "stufe": "DEV",
   "neu": [
-    "🗺️ Alles auf einen Blick: jeder Bereich der App geordnet nach Registern (Technik › Alles auf einen Blick)",
-    "🙋 Wie viel Hilfe möchtest du? Viel, ein bisschen oder keine – die App richtet Tipps danach ein",
-    "🗂️ Einstellungen auch als Kartei mit Reitern zum Blättern",
-    "⏳ Neue Warte-Bilder: Geige, Metronom, Noten, Taktstock, Trommel",
-    "🗺️ Feiertage für jedes Bundesland, ✨ Blinken einstellbar"
+    "🪪 Notfallpass je Kind im SOS: Allergien, Medikamente, Notfallnummern zum Antippen – zum Ausdrucken",
+    "🧳 Fahrt-Mappe für Begleitpersonen: alle Notfallpässe einer Fahrt",
+    "📍 Standorte: Probenorte, Auftrittsorte, Treffpunkte mit Anfahrt und Entfernung – „🧭 Anfahrt“ auch beim Termin",
+    "📸 Bildschirmfoto mit Markierung: einkreisen und an die Leitung schicken"
   ],
   "verlauf": [
+    {
+      "version": "0.45.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🗺️ Alles auf einen Blick: jeder Bereich der App geordnet nach Registern (Technik › Alles auf einen Blick)",
+        "🙋 Wie viel Hilfe möchtest du? Viel, ein bisschen oder keine – die App richtet Tipps danach ein",
+        "🗂️ Einstellungen auch als Kartei mit Reitern zum Blättern",
+        "⏳ Neue Warte-Bilder: Geige, Metronom, Noten, Taktstock, Trommel",
+        "🗺️ Feiertage für jedes Bundesland, ✨ Blinken einstellbar"
+      ]
+    },
     {
       "version": "0.44.0",
       "datum": "2026-11-08",

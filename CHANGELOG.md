@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.46.0 DEV – 08.11.2026
+Abgleich mit der KC Club App, Paket 2 „Sicherheit & Notfall“:
+- 🪪 **Notfallpass** (wie KC „Dein Notfallpass im SOS-Bereich“): je Kind eine Karte mit Gesicht, Allergien, Medikamenten, Hinweisen, Ernährung, Schwimmer, Krankenkasse, Arzt, Tetanus, Erlaubnissen und Notfallnummern (Eltern zum Antippen), Stand der Bestätigung (abgelaufen = orange); 🖨️ Drucken; im SOS, unter Meins und in der Lupe. Sichtbar nur, was der Server ohnehin freigibt (Eltern: eigene Kinder; Begleitpersonen: Kinder ihrer Fahrt)
+- 🧳 **Fahrt-Mappe** für Begleitpersonen/Leitung: alle Notfallpässe der angemeldeten Kinder einer Fahrt, kompakt, zum Drucken
+- 📍 **Standorte** (wie KC „Standorte“, „Standort mit Entfernung“, „Wo bin ich“): Probenorte, Auftrittsorte, Treffpunkte, Unterkünfte mit Adresse, Hinweis, 🧭 Anfahrt (Karten-App), 🗺️ Karte (OpenStreetMap), 📏 Entfernung von hier (Position bleibt auf dem Gerät); Pflege durch die Leitung (konfig standorte, „📍 Ich stehe gerade dort“); beim Termin „🧭 Anfahrt“
+- 📸 **Bildschirmfoto mit Markierung** (wie KC-CLUB-BILDSCHIRMFOTO, -MELDUNG, -FARBEN): 📸 antippen → verschiebbarer roter Auslöser → Foto des sichtbaren Bereichs (ohne Auslöser, Meldungen, Unsichtbares) → mit dem Finger einkreisen (6 Farben, Rückgängig) → 🆘 an die Leitung (Rückmeldung mit Bild) oder 💾 aufs Handy; auch direkt im Rückmelde-Formular (Text bleibt erhalten). Bild sehen nur Person und Leitung; Wartung löscht es nicht als verwaist. html2canvas 1.4.1 (MIT) in lib/html2canvas, erst beim ersten Foto geladen
+- Migration 20261114000000_bk_bildschirmfoto.sql (bk_rueckmeldungen.bild); tests/paket2.test.mjs
+
+
 ## 0.45.0 DEV – 08.11.2026
 Abgleich mit der KC Club App, Paket 1 „Ordnung & Bedienung“:
 - 🗺️ **Alles auf einen Blick** (wie KC „Club-App auf einen Blick“): jeder Bereich der App, nach Registern (Bachkreis · Meins · Technik · Admin) in Klappbereichen, nur was die eigene Rolle sieht, auch auf der Startseite ausgeblendete Kacheln (gestrichelt), Suche; Kachel unter Technik

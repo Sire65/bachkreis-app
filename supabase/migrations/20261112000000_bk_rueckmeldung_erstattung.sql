@@ -10,6 +10,7 @@ create table if not exists bk_rueckmeldungen (
   geraet text,
   ansicht text,
   rueckruf boolean,
+  bild text,
   status text check (status is null or status in ('neu', 'in_arbeit', 'erledigt')),
   antwort text,
   beantwortet_am timestamptz,
@@ -35,6 +36,7 @@ alter table bk_rueckmeldungen add column if not exists sterne integer;
 alter table bk_rueckmeldungen add column if not exists geraet text;
 alter table bk_rueckmeldungen add column if not exists ansicht text;
 alter table bk_rueckmeldungen add column if not exists rueckruf boolean;
+alter table bk_rueckmeldungen add column if not exists bild text;
 alter table bk_rueckmeldungen add column if not exists status text;
 alter table bk_rueckmeldungen drop constraint if exists bk_rueckmeldungen_status_check;
 alter table bk_rueckmeldungen add constraint bk_rueckmeldungen_status_check check (status is null or status in ('neu', 'in_arbeit', 'erledigt'));

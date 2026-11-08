@@ -72,6 +72,7 @@ export async function nachrichtenAufraeumen(db, ablage, { limit = 200 } = {}) {
     and not exists (select 1 from bk_uebe_ergebnisse x where x.aufnahme = 'datei:' || d.id and x.geloescht_am is null)
     and not exists (select 1 from bk_aufnahmen x where x.datei = 'datei:' || d.id and x.geloescht_am is null)
     and not exists (select 1 from bk_erstattungen x where x.beleg = 'datei:' || d.id and x.geloescht_am is null)
+    and not exists (select 1 from bk_rueckmeldungen x where x.bild = 'datei:' || d.id and x.geloescht_am is null)
     and not exists (select 1 from bk_fotos x where x.datei = 'datei:' || d.id and x.geloescht_am is null) limit 100`);
   // 📷 Papierkorb: Fotos nach 30 Tagen endgültig weg (die Datei räumt der nächste Lauf auf)
   await db.q(`update bk_fotos set geloescht_am = now(), geaendert_von = 'Papierkorb' where papierkorb_am is not null and papierkorb_am < now() - interval '30 days' and geloescht_am is null`);

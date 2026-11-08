@@ -1,7 +1,7 @@
 // 🆘💬 Rückmeldungen zur App (0.42.0, wie KC-CLUB-UNTERSTUETZUNG-ANFRAGE, KC-CLUB-FEEDBACK, „Klappt etwas nicht?“ KC-CLUB-HILFE-INSTALL):
 // 🆘 Problem melden · 🤝 Hilfe mit der App anfragen (auf Wunsch Rückruf) · 💡 Idee · ⭐ Lob mit Sternen. Die App hängt technische Angaben an
 // (Gerät, Browser, installiert?, Version, wo in der App) – keine Inhalte. Die Leitung antwortet; die Antwort steht bei der Meldung und kommt als Nachricht.
-import { klappe, klappenAlleKnopf } from "../kern/klappen.js";
+import { klappe } from "../kern/klappen.js";
 import { S, VIEWS, zeichne, kopf, name, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
@@ -9,6 +9,8 @@ import { RM_ARTEN, RM_STATUS, RM_LEITUNG, rollenMit } from "../kern/schema.js";
 import { APP_VERSION } from "../kern/version.js";
 import { senden } from "../kern/versand.js";
 import { startseiteVerbinden } from "./startseite.js";
+import { fotoAusloeser } from "./bildschirmfoto.js";
+import { dateiOeffnen } from "../kern/dateien.js";
 
 const chef = () => hatRolle(...RM_LEITUNG);
 export const rmNeu = () => (chef() ? liste("rueckmeldungen", (r) => r.status === "neu").length : 0);
@@ -18,24 +20,30 @@ function geraet() {
   const inst = matchMedia?.("(display-mode: standalone)").matches || navigator.standalone ? "installiert" : "im Browser";
   return `${os} · ${br} · ${inst} · App ${APP_VERSION} · ${innerWidth}×${innerHeight}`;
 }
-const RM = { art: "problem", sterne: 0, vorher: "start" };
-AKTIONEN.rmNeu = (art) => {
-  RM.art = RM_ARTEN[art] ? art : "problem"; RM.sterne = 0; RM.vorher = S.verlauf?.at?.(-1)?.view || S.view;
+const RM = { art: "problem", sterne: 0, vorher: "start", bild: null, text: "" };
+AKTIONEN.rmNeu = (art, _el, _e, extra = {}) => {
+  RM.art = RM_ARTEN[art] ? art : "problem"; RM.sterne = 0; RM.vorher = extra.ansicht || S.verlauf?.at?.(-1)?.view || S.view; RM.bild = extra.bild || null; RM.text = "";
   rmForm();
 };
 function rmForm() {
   blatt("🆘 Rückmeldung an die Leitung", `<div class="umschalter rm-arten" role="group" aria-label="Worum geht es?">${Object.entries(RM_ARTEN).map(([k, t]) => `<button type="button" class="${RM.art === k ? "an" : ""}" aria-pressed="${RM.art === k}" data-a="rmArt" data-x="${k}">${t}</button>`).join("")}</div>
     ${RM.art === "lob" ? `<div class="rm-sterne" role="group" aria-label="Wie gefällt dir die App?">${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="${RM.sterne >= n ? "an" : ""}" aria-pressed="${RM.sterne === n}" aria-label="${n} von 5 Sternen" data-a="rmSterne" data-x="${n}">★</button>`).join("")}</div>` : ""}
-    <div class="feld"><label for="rmText">${RM.art === "problem" ? "Was klappt nicht? Was hast du gemacht, was ist passiert?" : RM.art === "hilfe" ? "Wobei brauchst du Hilfe?" : RM.art === "idee" ? "Deine Idee" : "Was möchtest du uns sagen?"}</label><textarea id="rmText" rows="5" maxlength="3000"></textarea></div>
+    <div class="feld"><label for="rmText">${RM.art === "problem" ? "Was klappt nicht? Was hast du gemacht, was ist passiert?" : RM.art === "hilfe" ? "Wobei brauchst du Hilfe?" : RM.art === "idee" ? "Deine Idee" : "Was möchtest du uns sagen?"}</label><textarea id="rmText" rows="5" maxlength="3000">${esc(RM.text)}</textarea></div>
+    <div class="rm-bild">${RM.bild ? '<span class="badge b-gruen">📸 Bildschirmfoto angehängt</span> <button type="button" class="knopf klein" data-a="rmBildWeg" aria-label="Bildschirmfoto entfernen">✕</button>' : '<button type="button" class="knopf klein" data-a="rmBildMachen">📸 Bildschirmfoto mit Markierung anhängen</button>'}</div>
     ${RM.art === "hilfe" || RM.art === "problem" ? '<label class="rm-rueckruf"><input type="checkbox" id="rmRueckruf"> 📞 Bitte ruft mich an (Nummer aus meinen Daten)</label>' : ""}
     <p class="hinweis">Mitgeschickt werden nur technische Angaben: ${esc(geraet())}.</p>
     <button type="button" class="knopf haupt breit" data-a="rmSenden">📨 Absenden</button>`);
 }
+// 📸 0.46.0 Foto machen: Fenster schließt, Auslöser erscheint – danach kommt das Formular mit Bild und dem schon geschriebenen Text zurück
+AKTIONEN.rmBildMachen = () => { RM.text = document.getElementById("rmText")?.value || ""; fotoAusloeser((bild, ansicht) => { RM.bild = bild; if (ansicht) RM.vorher = ansicht; rmForm(); }); };
+AKTIONEN.rmBildWeg = () => { RM.text = document.getElementById("rmText")?.value || ""; RM.bild = null; rmForm(); };
+AKTIONEN.rmBildAuf = async (id) => { const r = hole("rueckmeldungen", id); if (!r?.bild) return; try { await dateiOeffnen(r.bild.replace(/^datei:/, ""), "Bildschirmfoto", ""); } catch (e) { toast("⚠️ " + e.message); } };
 AKTIONEN.rmArt = (k) => { RM.art = k; const t = document.getElementById("rmText")?.value || ""; rmForm(); const f = document.getElementById("rmText"); if (f) f.value = t; };
 AKTIONEN.rmSterne = (n) => { RM.sterne = Number(n); const t = document.getElementById("rmText")?.value || ""; rmForm(); const f = document.getElementById("rmText"); if (f) f.value = t; };
 AKTIONEN.rmSenden = async () => {
   const text = String(document.getElementById("rmText")?.value || "").trim(); if (!text) return toast("Bitte kurz beschreiben, worum es geht.");
-  await speichere("rueckmeldungen", { id: neueId(), art: RM.art, text, von: S.ich.id, sterne: RM.art === "lob" && RM.sterne ? RM.sterne : null, geraet: geraet(), ansicht: RM.vorher, rueckruf: !!document.getElementById("rmRueckruf")?.checked, status: "neu" });
+  await speichere("rueckmeldungen", { id: neueId(), art: RM.art, text, von: S.ich.id, sterne: RM.art === "lob" && RM.sterne ? RM.sterne : null, geraet: geraet(), ansicht: RM.vorher, rueckruf: !!document.getElementById("rmRueckruf")?.checked, bild: RM.bild, status: "neu" });
+  RM.bild = null; RM.text = "";
   const an = liste("personen", (p) => p.status === "aktiv" && rollenMit(p.rollen).some((r) => RM_LEITUNG.includes(r))).map((p) => p.id).filter((p) => p !== S.ich.id);
   senden({ an, betreff: `${RM_ARTEN[RM.art]} – ${name(S.ich)}`, text: text.slice(0, 300), ereignis: "rundschreiben" }).catch(() => {});
   blattZu(); toast("📨 Danke! Die Leitung hat deine Nachricht bekommen – die Antwort steht unter 🆘 Meine Rückmeldungen.", 4500);
@@ -47,7 +55,7 @@ VIEWS.rueckmeldungen = {
     const meine = liste("rueckmeldungen", (r) => r.von === S.ich?.id).sort((a, b) => String(b.erstellt_am || b.id).localeCompare(String(a.erstellt_am || a.id)));
     const alle = chef() ? liste("rueckmeldungen").filter((r) => F.status === "alle" || r.status === F.status).sort((a, b) => String(b.erstellt_am || b.id).localeCompare(String(a.erstellt_am || a.id))) : [];
     const zeile = (r, leitung) => `<div class="karte rm-karte"><div class="rm-kopf"><b>${esc(RM_ARTEN[r.art] || "")}</b><span class="badge">${esc(RM_STATUS[r.status] || "")}</span>${r.sterne ? `<span class="rm-stern" aria-label="${r.sterne} Sterne">${"★".repeat(r.sterne)}</span>` : ""}</div>
-      ${leitung ? `<p class="hinweis">von ${esc(name(r.von))}${r.rueckruf ? " · 📞 bittet um Rückruf" : ""} · ${esc(r.geraet || "")}${r.ansicht ? ` · in „${esc(r.ansicht)}“` : ""}</p>` : ""}<p>${esc(r.text).replace(/\n/g, "<br>")}</p>
+      ${leitung ? `<p class="hinweis">von ${esc(name(r.von))}${r.rueckruf ? " · 📞 bittet um Rückruf" : ""} · ${esc(r.geraet || "")}${r.ansicht ? ` · in „${esc(r.ansicht)}“` : ""}</p>` : ""}<p>${esc(r.text).replace(/\n/g, "<br>")}</p>${r.bild ? `<button type="button" class="knopf klein" data-a="rmBildAuf" data-x="${esc(r.id)}">📸 Bildschirmfoto ansehen</button>` : ""}
       ${r.antwort ? `<div class="rm-antwort"><b>💬 Antwort der Leitung:</b> ${esc(r.antwort).replace(/\n/g, "<br>")}</div>` : ""}
       ${leitung ? `<button type="button" class="knopf klein" data-a="rmAntworten" data-x="${esc(r.id)}">💬 ${r.antwort ? "Antwort ändern" : "Antworten"}</button>` : ""}</div>`;
     return kopf("🆘 Rückmeldungen", '<button class="knopf haupt klein" data-a="rmNeu" data-x="problem">＋ Neu</button>')

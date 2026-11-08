@@ -108,6 +108,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F98 | 💶 Erstattung Fahrtkosten/Auslagen mit Beleg und Kasse | ✅ | tests/rueckmeldung-erstattung.test.mjs |
 | BK-F99 | 🐞🍀 Marienkäfer und Glücksklee | ✅ | tests/rueckmeldung-erstattung.test.mjs |
 | BK-F100 | 📏 Datenvolumen-Messung im Server | ✅ | tests/zugang.test.mjs |
+| BK-F101 | 🧑‍💻 Rollen Entwickler (bleibt immer) und Admin (ernennt nur der Entwickler) | ✅ | tests/admin-rollen.test.mjs |
+| BK-F102 | 🛡️ Admin-Leitstand mit Wächter-Lämpchen, Verlauf, Datenbank, Nutzung, Fehlerberichten | ✅ | tests/admin-rollen.test.mjs |
+| BK-F103 | 🚧 Wartungsmodus und 🧩 Module freigeben | ✅ | tests/admin-rollen.test.mjs |
+| BK-F104 | ⚙️ Zahnrad nach Kinder, Eltern, Leitungen, Admin, Entwickler | ✅ | tests/admin-rollen.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

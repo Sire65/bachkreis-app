@@ -1,8 +1,8 @@
 // Startseite nach Club-Vorbild: Kopf mit Statusleiste/LEDs, Register (Bachkreis · Meins · Technik · Admin), Kacheln.
 import { S, VIEWS, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istVerwalter, istVorstand, istEltern, istSchueler, hatRolle, vorname, ANSICHTEN, fehlerListe } from "./zustand.js";
 import { esc, AKTIONEN, blatt, datum, uhr } from "../kern/ui.js";
-import { liste, hole, datenInfo } from "../kern/daten.js";
-import { nsId, nachrichtFrei } from "../kern/schema.js";
+import { liste, hole, datenInfo, konfig } from "../kern/daten.js";
+import { nsId, nachrichtFrei, MODULE } from "../kern/schema.js";
 import { cockpit, termineFuer, antwortVon, kinderVon, genehmigungStatus, ausleihenVon } from "../kern/logik.js";
 import { communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
@@ -29,7 +29,7 @@ import { austauschProjekte, anfragenOffen } from "./vereinsleben.js";
 export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
 // eigene Reihenfolge der Register (festhalten und ziehen, KC-CLUB-REGISTER-ZIEHEN)
 const registerSichtbar = () => { const o = einst().registerReihe || [], pos = (r) => { const i = o.indexOf(r[0]); return i < 0 ? 100 + REGISTER_ALLE.indexOf(r) : i; };
-  return REGISTER_ALLE.filter(([r]) => r !== "admin" || istLeitung()).sort((a, b) => pos(a) - pos(b)); };
+  return REGISTER_ALLE.filter(([r]) => r !== "admin" || hatRolle("admin")).sort((a, b) => pos(a) - pos(b)); };
 
 // Zahlen für Kacheln
 function offeneAntworten() {
@@ -163,18 +163,29 @@ export function adminZustaende() {
     backup: [info.server ? "grau" : "grau", info.server ? "Backup-Messung folgt" : "Demo: Export als Datei"],
   };
 }
-const AD_KACHELN = [["daten", "🗄️", "Datenquelle"], ["abgleich", "🔁", "Abgleich"], ["versand", "📡", "Communicator"], ["push", "🔔", "Push"], ["zugaenge", "🔑", "Zugänge"], ["fehler", "🩺", "Fehler"], ["speicher", "💾", "Speicher"], ["version", "📱", "Versionen"], ["backup", "🛟", "Backup / Export"]];
-KACHELN.admin = AD_KACHELN.map(([id, sym, t]) => ({ id: "ad-" + id, sym, t, v: "admin", p: { blatt: id }, u: () => adminZustaende()[id][1], klasse: () => `ad l-${adminZustaende()[id][0]}`, nur: () => istLeitung() }));
+// 🛡️ 0.43.0 Admin-Register wie KC (Leitstand, Datenbank, Nutzung, Wartung, Module, Rollen, Spiegel, Dienste) – nur Admin und Entwickler.
+// Die Lämpchen der neuen Kacheln kommen aus adminbereich.js (letzte Messung); ohne Messung grau.
+const AD_KACHELN = [["lage", "🛡️", "Leitstand"], ["datenbank", "🗄️", "Datenbank"], ["nutzung", "📈", "Nutzung"], ["wartung", "🚧", "Wartung"], ["module", "🧩", "Module"], ["rollen", "👑", "Rollen"],
+  ["spiegel", "🪞", "Spiegel & Sicherung"], ["dienste", "🔗", "Dienste", () => hatRolle("entwickler")],
+  ["daten", "📦", "Datenquelle"], ["abgleich", "🔁", "Abgleich"], ["versand", "📡", "Communicator"], ["push", "🔔", "Push"], ["zugaenge", "🔑", "Zugänge"], ["fehler", "🩺", "Fehler"], ["speicher", "💾", "Speicher"], ["version", "📱", "Versionen"], ["backup", "🛟", "Backup / Export"]];
+const ADMIN_TEILE = ["lage", "datenbank", "nutzung", "wartung", "module", "rollen", "spiegel", "dienste"];
+let adminLeds = () => ({});
+export const adminLedsVerbinden = (f) => { adminLeds = f; };
+const adZustand = (id) => (ADMIN_TEILE.includes(id) ? adminLeds()[id] || ["grau", "noch nicht gemessen"] : adminZustaende()[id]);
+KACHELN.admin = AD_KACHELN.map(([id, sym, t, nur]) => ({ id: "ad-" + id, sym, t, v: ADMIN_TEILE.includes(id) ? "adminbereich" : "admin", p: ADMIN_TEILE.includes(id) ? { teil: id } : { blatt: id }, u: () => adZustand(id)[1], klasse: () => `ad l-${adZustand(id)[0]}`, nur: () => hatRolle("admin") && (!nur || nur()) }));
 
 // 🟢 Einfache Ansicht (wie KC): wenige große Kacheln je nach Rolle – Reihenfolge änderbar (▲▼), es wird nichts gelöscht
 const EINFACH = ["cockpit", "termine", "meinetermine", "nachrichten", "kinder", "meinegenehmigungen", "uebebuehne", "ueben", "meinenoten", "pinnwand", "sos"];
 const wert = (x) => (typeof x === "function" ? x() : x);
 const sortiert = (k, reihe) => (reihe ? [...k].sort((a, b) => (reihe.indexOf(a.id) + 1 || 999) - (reihe.indexOf(b.id) + 1 || 999)) : k);
 // alle Kacheln, die man sehen darf (auch ausgeblendete) – in eigener Reihenfolge
-export const kachelnAlle = (reg) => sortiert(KACHELN[reg].filter((x) => !x.nur || x.nur()), einst().reihenfolge[reg]);
+// 🧩 0.43.0 Module, die der Admin abgeschaltet hat (konfig module_aus), sieht nur noch Admin/Entwickler – zum Prüfen, mit 🚫 am Rand
+export const modulAus = (id) => MODULE[id] !== undefined && (konfig().module_aus || []).includes(id);
+const modulFrei = (x) => !modulAus(x.id) || hatRolle("admin");
+export const kachelnAlle = (reg) => sortiert(KACHELN[reg].filter((x) => (!x.nur || x.nur()) && modulFrei(x)), einst().reihenfolge[reg]);
 export const kachelnFuer = (reg) => kachelnAlle(reg).filter((x) => !einst().kachelnAus.includes(x.id));
 export function einfachKacheln() {
-  const alle = [...KACHELN.bachkreis, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()));
+  const alle = [...KACHELN.bachkreis, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()) && modulFrei(x));
   const l = EINFACH.map((id) => alle.find((x) => x.id === id)).filter(Boolean).filter((x) => !(x.id === "termine" && alle.some((y) => y.id === "meinetermine") && !istLehrkraft()));
   return sortiert(l, einst().reihenfolge.einfach);
 }
@@ -182,7 +193,7 @@ function kachelHtml(k) {
   const z = k.zahl ? wert(k.zahl) : 0;
   const ziel = k.aktion ? `data-a="${k.aktion}"` : `data-a="kachel" data-x="${esc(k.id)}"`;
   const na = k.id === "nachrichten" && z ? nachrichtStufe() : null;
-  return `<button class="kachel ${esc(wert(k.klasse) || "")}${na ? " na-" + na : ""}" ${ziel} data-id="${esc(k.id)}">${z ? `<span class="zahl">${esc(z)}</span>` : ""}<div class="sym">${k.sym}</div><b>${esc(wert(k.t))}</b><small>${esc(wert(k.u) || "")}</small>${drehZeichen(k.id)}</button>`;
+  return `<button class="kachel ${esc(wert(k.klasse) || "")}${na ? " na-" + na : ""}${modulAus(k.id) ? " modul-aus" : ""}" ${ziel} data-id="${esc(k.id)}">${z ? `<span class="zahl">${esc(z)}</span>` : ""}<div class="sym">${k.sym}</div><b>${esc(wert(k.t))}</b><small>${esc(wert(k.u) || "")}</small>${drehZeichen(k.id)}</button>`;
 }
 
 function heuteWichtig() {

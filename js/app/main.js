@@ -2,7 +2,7 @@
 // Ansichten laden, Service Worker mit atomarem Update (AGENTS.md Regel 16).
 import { datenStarten, liste, hole, abonnieren, konfig, speichere, datenInfo, istEchtbetrieb, anmelden, abmelden, beiHinweis } from "../kern/daten.js";
 import { AKTIONEN, aktionenStarten, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
-import { S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
+import { fehlerHookSetzen, S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
 import { setzeEmpfaengerGeraet, pushAbonnieren } from "../kern/versand.js";
 import "./start.js";
 import "./termine.js";
@@ -33,6 +33,7 @@ import "./protokolle.js"; // 🗒️ 0.41.0
 import "./advent.js"; // 🎄 0.41.0
 import "./rueckmeldung.js"; // 🆘 0.42.0
 import "./erstattung.js"; // 💶 0.42.0
+import { fehlerMelden, wartungsHinweis } from "./adminbereich.js"; // 🛡️ 0.43.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";
@@ -51,6 +52,7 @@ AKTIONEN.zurueck = () => zurueck();
 
 function ansichtVonPerson(p) {
   const r = p.rollen || [];
+  if (r.includes("entwickler")) return "entwickler";
   if (r.includes("leitung") || r.includes("admin")) return "leitung";
   if (r.includes("lehrkraft")) return "lehrkraft";
   if (r.includes("vorstand")) return "vorstand";
@@ -130,6 +132,7 @@ async function starten() {
   S.ansicht = ansichtVonPerson(S.ich);
   S.register = einst().startRegister || "bachkreis";
   setzeEmpfaengerGeraet(S.ich.id);
+  fehlerHookSetzen(fehlerMelden); wartungsHinweis();
   if (!istEchtbetrieb()) demoLeiste();
   // Echtbetrieb: Push-Abo dieses Geräts auffrischen, wenn Benachrichtigungen schon erlaubt sind (still im Hintergrund)
   else if (globalThis.Notification?.permission === "granted") pushAbonnieren().catch((e) => console.warn("Push-Abo", e));

@@ -1,6 +1,7 @@
 // Gemeinsamer Zustand der App: angemeldete Person, Ansicht (Rolle), Navigation, Geräte-Einstellungen.
 import * as D from "../kern/daten.js";
 import { esc, $, toast, beschriftungenVerknuepfen } from "../kern/ui.js";
+import { rollenMit } from "../kern/schema.js";
 
 export const db = { liste: D.liste, hole: D.hole, konfig: D.konfig };
 export const S = { ich: null, ansicht: "leitung", view: "start", params: {}, register: "bachkreis", verlauf: [] };
@@ -27,7 +28,8 @@ export function einstAnwenden() {
 // ---------- Personen & Rechte ----------
 export const name = (id) => { const p = typeof id === "object" ? id : D.hole("personen", id); return p ? `${p.vorname} ${p.nachname}`.trim() : "–"; };
 export const vorname = (id) => D.hole("personen", id)?.vorname || "";
-export const rollen = () => S.ich?.rollen || [];
+export const rollen = () => rollenMit(S.ich?.rollen || []); // 🧑‍💻 Entwickler hat alle Admin-Rechte
+export const istEntwickler = () => (S.ich?.rollen || []).includes("entwickler");
 export const hatRolle = (...r) => r.some((x) => rollen().includes(x));
 export const istLeitung = () => hatRolle("leitung", "admin");
 export const istLehrkraft = () => hatRolle("leitung", "admin", "lehrkraft");
@@ -36,7 +38,7 @@ export const istVerwalter = () => hatRolle("leitung", "admin", "lehrkraft", "vor
 export const istEltern = () => S.ich?.typ === "eltern";
 export const istSchueler = () => S.ich?.typ === "schueler";
 
-export const ANSICHTEN = { leitung: "🎼 Leitung", lehrkraft: "👩‍🏫 Lehrkraft", vorstand: "💛 Förderverein", schueler: "🎻 Schüler/in", eltern: "👪 Eltern" };
+export const ANSICHTEN = { entwickler: "🧑‍💻 Entwickler", leitung: "🎼 Leitung", lehrkraft: "👩‍🏫 Lehrkraft", vorstand: "💛 Förderverein", schueler: "🎻 Schüler/in", eltern: "👪 Eltern" };
 export function alsPerson(personId) {
   const p = D.hole("personen", personId);
   if (!p) return false;
@@ -86,5 +88,8 @@ export function fehlerMerken(e) {
     l.push({ zeit: new Date().toISOString(), text: String(e?.message || e), view: S.view });
     localStorage.setItem("bk_fehler", JSON.stringify(l.slice(-50)));
   } catch {}
+  try { fehlerHook?.(e); } catch {}
 }
+let fehlerHook = null; // 🩺 0.43.0 adminbereich.js meldet Fehler an den Server (Fehlerberichte)
+export const fehlerHookSetzen = (f) => { fehlerHook = f; };
 export const fehlerListe = () => { try { return JSON.parse(localStorage.getItem("bk_fehler") || "[]"); } catch { return []; } };

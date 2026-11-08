@@ -93,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261113000000_bk_admin.sql": { titel: "🧑‍💻 Entwickler/Admin, 🩺 Fehlerberichte der Geräte, 📱 App-Version je Gerät (0.43.0)", tabellen: ["fehlerberichte"], extra: ["alter table bk_online add column if not exists version text;"] },
   "20261112000000_bk_rueckmeldung_erstattung.sql": { titel: "🆘 Rückmeldungen zur App, 💶 Erstattungen (Fahrtkosten, Auslagen mit Beleg) (0.42.0)", tabellen: ["rueckmeldungen", "erstattungen"] },
   "20261111000000_bk_vorschlaege.sql": { titel: "💡🗳️ Vorschläge & Abstimmungen (auch geheim), eine Stimme je Person (0.41.0)", tabellen: ["vorschlaege", "vorschlag_stimmen"], extra: ["create unique index if not exists bk_vorschlag_stimmen_einmal on bk_vorschlag_stimmen (vorschlag_id, person_id) where geloescht_am is null;"] },
   "20261110000000_bk_fotoalbum.sql": { titel: "📷 Fotoalbum: Alben (alle / nur Team), Fotos mit markierten Personen (Foto-Einwilligung), Papierkorb (0.40.0)", tabellen: ["fotoalben", "fotos"] },

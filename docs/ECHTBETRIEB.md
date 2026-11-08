@@ -78,9 +78,15 @@ in der Konsole.
    - Personen per CSV-Import einspielen
    - Zugänge und QR-Karten erzeugen
 
-### Erster Zugang (SQL-Vorlage, Code selbst wählen, mindestens 8 Zeichen)
+### Erste Zugänge (SQL-Vorlage, Codes selbst wählen, mindestens 8 Zeichen)
+Rollen (0.43.0): **🧑‍💻 Entwickler** = technische Verantwortung, bleibt immer und hat alle Admin-Rechte; nur er ernennt oder entzieht
+**🛠️ Admins** der Bachkreis-App (Server: `NUR_ENTWICKLER`), niemand kann ihn löschen oder austragen (`ENTWICKLER_GESCHUETZT`).
+Ein eigener Admin für die Bachkreis-App wird später in der App unter Admin › 👑 Rollen ernannt. Bis dahin: Leitung ohne Admin-Rolle.
 ```sql
-insert into bk_personen (id, vorname, nachname, typ, status, rollen) values ('p-leitung', 'Bettina', 'Jacka', 'leitung', 'aktiv', '{leitung,admin}');
+insert into bk_personen (id, vorname, nachname, typ, status, rollen) values ('p-entwickler', 'Hansi', '(Entwickler)', 'unterstuetzer', 'aktiv', '{entwickler}');
+insert into bk_zugaenge (person_id, code_hash, art, aktiv, verwaltung)
+values ('p-entwickler', encode(sha256(upper('MEINCODE0')::bytea), 'hex'), 'link', true, true);
+insert into bk_personen (id, vorname, nachname, typ, status, rollen) values ('p-leitung', 'Bettina', 'Jacka', 'leitung', 'aktiv', '{leitung}');
 insert into bk_zugaenge (person_id, code_hash, art, aktiv, verwaltung)
 values ('p-leitung', encode(sha256(upper('MEINCODE1')::bytea), 'hex'), 'link', true, true);
 ```

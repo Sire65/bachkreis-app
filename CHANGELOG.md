@@ -1,5 +1,21 @@
 # Änderungen
 
+## 0.43.0 DEV – 08.11.2026
+- 🧑‍💻 Rollen **Entwickler** und **Admin** (Strukturen für einen späteren eigenen Admin der Bachkreis-App):
+  - Entwickler = technische Verantwortung, bleibt immer, hat alle Admin-Rechte (`rollenMit`); nur er ernennt/entzieht Admins (Server `NUR_ENTWICKLER`), niemand kann ihn löschen oder austragen (`ENTWICKLER_GESCHUETZT`); Zugänge von Entwickler/Admins verwaltet nur der Entwickler
+  - Admin › 👑 Rollen: Entwickler und Admins anzeigen, Admin ernennen/entziehen (nur Entwickler); Demo-Person „Hansi (Entwickler)“; Vorlage für die ersten Zugänge in docs/ECHTBETRIEB.md
+- 🛡️ Admin-Bereich wie KC (nur Admin/Entwickler, Register „Admin“):
+  - Leitstand mit Wächter-Lämpchen (Datenbank-Größe, Verbindungen, Cache, Zeitpläne pg_cron, Aufrufe pg_net, db_monitor-Prüfung, Communicator, Fehlerberichte, Anmeldungen, Datenvolumen, Spiegel/Sicherung, Wartung) – nicht Messbares bleibt grau
+  - Verlauf 30 Tage (stündlicher Messwert der Server-Wartung, nur Zahlen), Datenbank: Belegung je Tabelle, tote Zeilen, teuerste Abfragen (Abfragetext nur für den Entwickler), Zeitpläne, Prüfung
+  - Nutzung & Versionen der Geräte (Online-Ping meldet die App-Version), Fehlerberichte der Geräte (neue Tabelle, automatisch gemeldet, nur Admin liest)
+  - 🚧 Wartungsmodus: Hinweis oben für alle, speichern dürfen nur Admin/Entwickler (Server 503 `WARTUNG`, Fehlerberichte ausgenommen)
+  - 🧩 Module freigeben: Fotoalbum, Advent, Vorschläge, Erstattung, Protokolle, Quiz, Bühne, Übe-Bühne, Chronik, Mitfahrbörse, Austausch für alle abschalten (Admin sieht sie weiter mit 🚫)
+  - 🪞 Spiegel & Sicherung (vorgesehen, grau bis eingerichtet), 🔗 Dienste (nur Entwickler)
+  - Server-Aktion `admin_lage`; App-weite Schalter (Express-Grenze, Ändern-Minuten, Schüler-Chat, Kinder-Ansicht ab Klasse, Freigabegrenze, km-Satz, Speichergrenzen, Fristen, Wartung, Module) setzt nur noch Admin/Entwickler (`NUR_ADMIN`)
+- ⚙️ Zahnrad nach Stufe: 🧒 Kinder (vereinfacht, ohne Startseiten-Umbau) · 👪 Eltern (+ Familie) · 🎼 Leitungen (+ Leitung) · 🛠️ Admin (+ App-Einstellungen für alle) · 🧑‍💻 Entwickler (+ Technik); oben „Ansicht: …“
+- Migration 20261113000000_bk_admin.sql (bk_fehlerberichte, bk_online.version); tests/admin-rollen.test.mjs
+
+
 ## 0.42.0 DEV – 08.11.2026
 - Abgleich mit der KC Club App 2.882, Teil 5 (letzter Teil der Liste):
   - 🆘 Rückmeldungen zur App (wie KC-CLUB-UNTERSTUETZUNG-ANFRAGE, KC-CLUB-FEEDBACK): 🆘 Problem · 🤝 Hilfe mit der App (auf Wunsch Rückruf) · 💡 Idee · ⭐ Lob mit Sternen; technische Angaben (Gerät, Browser, installiert, Version, Ansicht) automatisch, keine Inhalte. Leitung: Eingang mit Filter, Antwort + Status, Antwort kommt als Nachricht. Fremde Meldungen sieht nur die Leitung. Einstieg: Hilfe-Zentrum und Kachel „🆘 Hilfe & Rückmeldung“

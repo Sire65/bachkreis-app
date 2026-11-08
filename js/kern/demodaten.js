@@ -78,6 +78,8 @@ export function erzeugeDemodaten(heute = new Date()) {
   const schuljahrStart = isoTag(new Date(jetzt.getFullYear() - (jetzt.getMonth() < 7 ? 1 : 0), 7, 15));
   const leitung = { id: "p-leitung", vorname: "Bettina", nachname: "Jacka", typ: "leitung", status: "aktiv", email: "leitung@beispiel.invalid", mobil: "0151 0000001", rollen: ["leitung", "admin"], kontakt_ok: true, foto_ok: true };
   d.personen.push(leitung);
+  // 🧑‍💻 0.43.0 Entwickler (technische Verantwortung, bleibt immer) – hat alle Admin-Rechte; ein eigener Admin der Bachkreis-App kann später dazukommen
+  d.personen.push({ id: "p-entwickler", vorname: "Hansi", nachname: "(Entwickler)", typ: "unterstuetzer", status: "aktiv", email: "entwickler@beispiel.invalid", rollen: ["entwickler"], firma: "Technik der App (Beispiel)" });
   const lehrkraefte = [
     { id: "p-lk1", vorname: "Martin", nachname: "Sommer", typ: "lehrkraft", rollen: ["lehrkraft", "notenwart"] },
     { id: "p-lk2", vorname: "Judith", nachname: "Engel", typ: "lehrkraft", rollen: ["lehrkraft"] },
@@ -166,6 +168,7 @@ export function erzeugeDemodaten(heute = new Date()) {
     if (["partner", "dienstleister", "spender", "unterstuetzer"].includes(p.typ)) continue;
     d.zugaenge.push({ id: `z-${p.id}`, person_id: p.id, code: code(), art: "link", aktiv: p.typ !== "ehemalig" || r() < 0.5, verwaltung: ["leitung", "lehrkraft", "foerderverein"].includes(p.typ), zuletzt: r() < 0.6 ? iso(tag(jetzt, -Math.floor(r() * 20), 8 + Math.floor(r() * 12))) : null });
   }
+  d.zugaenge.push({ id: "z-p-entwickler", person_id: "p-entwickler", code: "ENTW7K2Q", art: "link", aktiv: true, verwaltung: true, zuletzt: null }); // 🧑‍💻 fester Demo-Code (verbraucht keinen Zufall)
 
   // --- Projekte & Termine ---
   const konzertTag = naechsterWochentag(tag(jetzt, 26), 0);
@@ -516,6 +519,11 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 🩺 0.43.0 Fehlerberichte der Geräte (Beispiele – nur technische Meldungen)
+  d.fehlerberichte = [
+    { id: "fb-1", text: "Cannot read properties of undefined (reading 'titel')", ansicht: "termine", app_version: "0.42.0", geraet: "Android · Chrome", person_id: "p-lk2", anzahl: 3, zuletzt: iso(tag(jetzt, 0, 7, 40)), erledigt: false },
+    { id: "fb-2", text: "NetworkError when attempting to fetch resource.", ansicht: "nachrichten", app_version: "0.41.0", geraet: "iPhone/iPad · Safari", person_id: "p-fv1", anzahl: 1, zuletzt: iso(tag(jetzt, -3, 19, 5)), erledigt: true },
+  ];
   // 🆘 0.42.0 Rückmeldungen · 💶 Erstattungen (Beispiele)
   d.rueckmeldungen = [
     { id: "rm-1", art: "problem", text: "Beim Hochladen von Noten auf dem Tablet passiert nichts.", von: demoEltern?.id || "p-lk1", geraet: "Android · Chrome · installiert", ansicht: "noten", status: "in_arbeit", antwort: "Danke! Wir schauen es uns an – bitte bis dahin am Handy hochladen.", beantwortet_am: iso(tag(jetzt, -1, 10)) },
@@ -709,7 +717,7 @@ export function erzeugeDemodaten(heute = new Date()) {
     webseite: "https://www.gymnasium-bergkamen.de/bachkreis/",
     instagram: "",
     leitung_id: "p-leitung",
-    demo_personen: { leitung: "p-leitung", lehrkraft: "p-lk1", vorstand: "p-fv2", schueler: demoSchueler?.id, eltern: demoEltern?.id },
+    demo_personen: { entwickler: "p-entwickler", leitung: "p-leitung", lehrkraft: "p-lk1", vorstand: "p-fv2", schueler: demoSchueler?.id, eltern: demoEltern?.id },
     notrufe: [["🚑", "Notruf / Rettungsdienst", "112"], ["🚓", "Polizei", "110"], ["🩺", "Ärztlicher Bereitschaftsdienst", "116117"], ["☠️", "Giftnotruf NRW (Bonn)", "0228 19240"]],
     schule_telefon: "02307 964440",
     freigabe_grenze_eur: 250,

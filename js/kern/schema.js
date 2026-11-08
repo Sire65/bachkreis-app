@@ -4,7 +4,8 @@
 
 // Rollen. „Verwalter“ dürfen in der PC-Verwaltung arbeiten (Leitung, Vorstand Förderverein, Lehrkräfte, Admin).
 export const ROLLEN = {
-  admin: "Admin",
+  entwickler: "Entwickler (technische Verantwortung, bleibt immer)",
+  admin: "Admin (Bachkreis-App)",
   leitung: "Leitung",
   lehrkraft: "Lehrkraft",
   vorstand: "Vorstand Förderverein",
@@ -15,6 +16,28 @@ export const ROLLEN = {
   schueler: "Schüler",
   eltern: "Eltern",
 };
+// 🧑‍💻 0.43.0 Rollen-Stufen (Wunsch Hansi 08.11.: „vorsehen, dass ich der Entwickler bin und bleibe, aber später ein eigener Admin die Bachkreis-App
+// administriert – wer, ist noch unklar“): Entwickler ⊃ Admin. Der Entwickler hat alle Admin-Rechte plus den technischen Bereich (Server, Datenbank-
+// Überwachung im Detail, Rollen vergeben). Die Rollen „entwickler“ und „admin“ vergibt und entzieht NUR der Entwickler; einen Zugang (Code/Link)
+// für eine Person mit diesen Rollen stellt nur der Entwickler aus. Erzwungen im Server (regeln.js), Anzeige in Zahnrad und Admin-Bereich.
+export const HOCH_ROLLEN = ["entwickler", "admin"];
+export const rollenMit = (r = []) => (Array.isArray(r) && r.includes("entwickler") && !r.includes("admin") ? [...r, "admin"] : Array.isArray(r) ? r : []);
+export const istEntwicklerRolle = (r = []) => (r || []).includes("entwickler");
+// Welche Ansicht des Zahnrads? kinder · eltern · leitung · admin · entwickler (höchste passende)
+export function einstStufe(person, rollen = person?.rollen || [], kindAnsicht = false) {
+  if (rollen.includes("entwickler")) return "entwickler";
+  if (rollen.includes("admin")) return "admin";
+  if (rollen.some((r) => ["leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart", "terminplaner"].includes(r))) return "leitung";
+  if (person?.typ === "eltern" || rollen.includes("eltern")) return "eltern";
+  if (person?.typ === "schueler" || kindAnsicht) return "kinder";
+  return "eltern";
+}
+// 🛠️ App-weite Einstellungen, die nur Admin/Entwickler ändern (Server prüft in konfig_setzen); alles andere darf weiter die Leitung
+export const ADMIN_KONFIG = ["wartung", "wartung_text", "module_aus", "express_max_tag", "bearbeiten_minuten", "chat_schueler_untereinander", "ansicht_kind_ab_klasse",
+  "freigabe_grenze_eur", "km_satz", "grenze_db_mb", "grenze_dateien_mb", "grenze_volumen_gb", "aenderungen_monate", "loeschfrist_monate"];
+// 🚦 Module, die der Admin für alle abschalten kann (wie KC „Freigaben“): abgeschaltet sehen sie nur noch Admin/Entwickler (zum Prüfen)
+export const MODULE = { fotoalbum: "📷 Fotoalbum", advent: "🎄 Adventskalender", vorschlaege: "💡 Vorschläge & Abstimmungen", erstattung: "💶 Erstattung",
+  protokolle: "🗒️ Protokolle", quiz: "🧠 Quiz", buehne: "🎭 Bühne", uebebuehne: "🎤 Übe-Bühne", chronik: "📜 Chronik", mitfahrboerse: "🚗 Mitfahrbörse", austausch: "🏠 Austausch & Gastfamilien" };
 export const VERWALTER = ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"];
 const L = ["admin", "leitung"];
 const LL = ["admin", "leitung", "lehrkraft"];
@@ -990,6 +1013,21 @@ export const TABELLEN = {
     ],
     liste: ["zeit", "text", "an", "wichtig"],
     anzeige: (z) => String(z.text || "").slice(0, 60),
+  },
+  // 🩺 0.43.0 Fehlerberichte der Geräte (wie KC Fehlerprotokoll): nur Fehlermeldung, Ansicht, Version, Gerät – sieht nur Admin/Entwickler
+  fehlerberichte: {
+    titel: "Fehlerberichte", sym: "🩺", gruppe: "System", lesen: ["admin"], schreiben: [],
+    felder: [
+      { k: "text", t: "Fehler", typ: "text", pflicht: true },
+      { k: "ansicht", t: "Ansicht", typ: "text" },
+      { k: "app_version", t: "App-Version", typ: "text" },
+      { k: "geraet", t: "Gerät", typ: "text" },
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen" },
+      { k: "anzahl", t: "Anzahl", typ: "zahl" },
+      { k: "zuletzt", t: "zuletzt", typ: "zeit" },
+      { k: "erledigt", t: "erledigt", typ: "ja" },
+    ],
+    liste: ["text", "ansicht", "version", "anzahl", "zuletzt"],
   },
   rueckmeldungen: {
     titel: "Rückmeldungen zur App", sym: "🆘", gruppe: "Kommunikation", lesen: L, schreiben: [],

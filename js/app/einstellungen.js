@@ -1,9 +1,12 @@
 // ⚙️ Mehr – Einstellungen aufgebaut wie in der KC Club App (Klappbereiche): Das Wichtigste · Benachrichtigungen · Ansagen, Töne & Tipps ·
 // Privatsphäre · Termine im Handy-Kalender · Darstellung (Farbdesign, Themen, Tag/Nacht, Schrift, Chat-Farben, Sparmodus) · Effekte ·
 // Startseite & Ansicht · App-Installation · App-Info. Fast alles gilt nur für dieses Gerät; die Privatsphäre wird beim Server gemerkt.
-import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern, istLehrkraft, istVorstand } from "./zustand.js";
+import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern, istLehrkraft, istVorstand, rollen, name, db } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt } from "../kern/ui.js";
-import { speichere, datenInfo, serverAktion, konfig } from "../kern/daten.js";
+import { speichere, datenInfo, serverAktion, konfig, konfigSetzen } from "../kern/daten.js";
+import { einstStufe, CHAT, ER_KM_SATZ } from "../kern/schema.js";
+import { kinderVon } from "../kern/logik.js";
+import { kindAnsicht } from "./kinderstart.js";
 import { EREIGNISSE, KANAELE, wahlVon } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { KACHELN, REGISTER_ALLE } from "./start.js";
@@ -49,6 +52,49 @@ function themaWahlHtml() {
     <p class="hinweis">${akt ? `Gerade: <b>${akt.sym} ${esc(akt.name)}</b>${akt.quelle === "kalender" ? " – nach Kalender" : ""}. Farbe, Jahreszeit und Sende-Effekt kannst du trotzdem einzeln ändern.` : "Kein Thema – es gelten deine eigenen Einstellungen."}</p>
     ${schalter("themaSchrift", "✍️ Schrift des Themas", "Begrüßung im Kopf in der passenden Schrift (z. B. Weihnachten, Halloween)", D.themaSchriftAn(), "themaSchrift")}`;
 }
+
+// 👪🎼🛠️🧑‍💻 0.43.0 Zahnrad nach Stufe: Kinder · Eltern · Leitungen · Admin · Entwickler (jede Stufe sieht alles der vorherigen, ohne Familie)
+const STUFEN = { kinder: "🧒 Kinder", eltern: "👪 Eltern", leitung: "🎼 Leitung", admin: "🛠️ Admin", entwickler: "🧑‍💻 Entwickler" };
+const RANG = { kinder: 0, eltern: 1, leitung: 2, admin: 3, entwickler: 4 };
+export const meineStufe = () => einstStufe(S.ich, rollen(), S.ich?.typ === "schueler" || kindAnsicht());
+const ab = (st) => RANG[meineStufe()] >= RANG[st];
+const knoepfe = (l) => `<div class="knopfreihe">${l.map(([a, x, t]) => `<button type="button" class="knopf" data-a="${a}" data-x="${esc(x)}">${t}</button>`).join("")}</div>`;
+function familieEinst() {
+  const kinder = kinderVon(db, S.ich?.id || "");
+  return `<p>${kinder.length ? `Ihre Kinder in der App: <b>${kinder.map((k) => esc(name(k))).join(", ")}</b>` : "Noch kein Kind mit Ihnen verknüpft – bitte bei der Leitung melden."}</p>
+    ${knoepfe([["kachel", "kinder", "👧 Meine Kinder"], ["kachel", "meinegenehmigungen", "✍️ Genehmigungen"], ["kachel", "gesundheit", "🩹 Gesundheit & Notfall"], ["kachel", "abwesenheit", "🙋 Kind abmelden"], ["kachel", "meinedaten", "🔐 Gespeicherte Daten & Einwilligungen"]])}
+    <p class="hinweis">Benachrichtigungen für Ihre Kinder kommen bei Ihnen an (🔔 Benachrichtigungen). Was Ihre Kinder in der App sehen, ist kindgerecht vereinfacht.</p>`;
+}
+function leitungEinst() {
+  return `${knoepfe([["kachel", "startnachricht", "📣 Startnachricht"], ["kachel", "zugang", "🔑 Zugang im Blick"], ["kachel", "rueckmeldungen", "🆘 Rückmeldungen"], ["kachel", "zahlen", "📊 Bachkreis in Zahlen"], ["kachel", "verwaltung", "💻 PC-Verwaltung"]])}
+    ${istLehrkraft() || istVorstand() ? schalter("tagesinfo", "📋 Tagesübersicht beim Start", "Einmal am Tag: alles Wichtige für Leitung, Lehrkräfte und Vorstand", einst().tagesinfo !== false) : ""}
+    <p class="hinweis">App-weite Schalter (Wartungsmodus, Module, Express-Grenze, Löschfristen …) stellt der 🛠️ Admin ein.</p>`;
+}
+// 🛠️ App-Einstellungen für alle – nur Admin/Entwickler (Server: konfig_setzen → NUR_ADMIN)
+const AK = [["express_max_tag", "🏎️ Express-Nachrichten je Person und Tag", "zahl", CHAT.expressMax], ["bearbeiten_minuten", "✏️ Nachricht ändern bis (Minuten)", "zahl", CHAT.bearbeitenMin],
+  ["chat_schueler_untereinander", "🧒💬 Schüler dürfen sich privat schreiben", "ja", true], ["ansicht_kind_ab_klasse", "🧒 Große Kinder-Ansicht ab Klasse", "zahl", 9],
+  ["freigabe_grenze_eur", "💶 Freigabe durch Vorstand ab (€)", "zahl", 0], ["km_satz", "🚗 Kilometer-Satz (€ je km)", "zahl", ER_KM_SATZ],
+  ["grenze_db_mb", "🗄️ Grenze Datenbank (MB)", "zahl", 500], ["grenze_dateien_mb", "📁 Grenze Dateien (MB)", "zahl", 1024], ["grenze_volumen_gb", "📏 Grenze Datenvolumen im Monat (GB)", "zahl", 5],
+  ["aenderungen_monate", "🧾 Änderungsprotokoll aufheben (Monate)", "zahl", 12], ["loeschfrist_monate", "🧹 Löschfrist nach Austritt (Monate)", "zahl", 24]];
+function adminEinst() {
+  const k = konfig();
+  return `${knoepfe([["adTeilOeffnen", "lage", "🛡️ Leitstand"], ["adTeilOeffnen", "wartung", `🚧 Wartung${k.wartung === true ? " (AN)" : ""}`], ["adTeilOeffnen", "module", "🧩 Module"], ["adTeilOeffnen", "rollen", "👑 Rollen"]])}
+    <p class="hinweis">Gilt für <b>alle</b> in der App. Leer = Standard.</p>
+    ${AK.map(([key, t, typ, std]) => typ === "ja" ? `<label class="schalter"><span><b>${t}</b><div class="hinweis">Standard: ${std ? "ja" : "nein"}</div></span><input type="checkbox" data-c="akSetzen" data-x="${key}" ${k[key] !== false ? "checked" : ""}></label>`
+      : `<div class="feld ak-feld"><label for="ak-${key}">${t}</label><input id="ak-${key}" type="number" inputmode="decimal" min="0" step="any" value="${esc(k[key] ?? "")}" placeholder="Standard ${esc(std)}" data-c="akSetzen" data-x="${key}"></div>`).join("")}`;
+}
+function entwicklerEinst() {
+  return `<p class="hinweis">🧑‍💻 Du bist Entwickler – du bleibst immer und hast alle Admin-Rechte. Admins ernennst nur du (👑 Rollen).</p>
+    ${knoepfe([["adTeilOeffnen", "datenbank", "🗄️ Datenbank & Last"], ["adTeilOeffnen", "nutzung", "📈 Nutzung & Fehler"], ["adTeilOeffnen", "dienste", "🔗 Dienste"], ["adTeilOeffnen", "spiegel", "🪞 Spiegel & Sicherung"]])}
+    <p class="hinweis">Datenquelle: ${esc(datenInfo().art)} · App v${APP_VERSION} ${APP_STUFE}</p>`;
+}
+AKTIONEN.adTeilOeffnen = (t) => zeige("adminbereich", { teil: t });
+AKTIONEN.akSetzen = async (v, el) => {
+  if (!ab("admin")) return toast("🔒 Nur für Admin");
+  const key = el.dataset.x, wert = el.type === "checkbox" ? !!el.checked : String(v).trim() === "" ? null : Number(String(v).replace(",", "."));
+  if (wert !== null && typeof wert === "number" && !(wert >= 0)) return toast("Bitte eine Zahl ab 0");
+  try { await konfigSetzen(key, wert); toast("💾 Gespeichert – gilt für alle"); } catch (e) { toast("⚠️ " + e.message); }
+};
 
 // 💬 Nachrichten wie KC: Lesebestätigung (blaue Haken), Wichtigkeit fragen, Enter sendet, Entwürfe, Ton, Vorlesen, Standard-Zustellung
 function nachrichtenEinst(e) {
@@ -130,7 +176,6 @@ VIEWS.einstellungen = {
       <h4>🔲 Kachelgröße (erweiterte Ansicht)</h4>${chips([["normal", "Normal (2–3 je Reihe)"], ["klein", "Klein (3 je Reihe)"], ["mini", "Mini (4 je Reihe)"]], e.kachelGroesse || "normal", "kachelGroesseWahl")}
       <h4>⏳ Countdown bis zum nächsten Termin</h4>${chips([["normal", "Normal"], ["fallblatt", "🔢 Fallblatt (Klappzahlen)"]], e.countdown || "normal", "countdownWahl")}
       ${schalter("vorschlaege", "💡 Vorschläge zur Startseite", "Selten ein Vorschlag, z. B. eine lange nicht benutzte Kachel zu verbergen – die App baut nie selbst um. Gezählt wird nur auf diesem Gerät.", e.vorschlaege !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="nuVergessen">🧹 Gemerktes löschen</button></div>
-      ${istLehrkraft() || istVorstand() ? schalter("tagesinfo", "📋 Tagesübersicht beim Start", "Einmal am Tag: alles Wichtige für Leitung, Lehrkräfte und Vorstand", e.tagesinfo !== false) : ""}
       <h4>✥ Kacheln anordnen</h4><p class="hinweis">Auf der Startseite lange auf eine Kachel drücken – dann ziehen, mit den Pfeilen verschieben oder mit ✕ ausblenden. Register lassen sich genauso festhalten und verschieben.</p>
       <div class="knopfreihe"><button type="button" class="knopf" data-a="kaAnordnen">✥ Jetzt anordnen</button><button class="knopf" data-a="kachelnStandard">↺ Alles auf Standard</button></div>
       <h4>☑️ Welche Kacheln möchtest du sehen?</h4>${e.einfach ? '<p class="hinweis">🟢 Du nutzt gerade die einfache Ansicht – die Auswahl gilt für die erweiterte Ansicht.</p>' : ""}
@@ -147,8 +192,10 @@ VIEWS.einstellungen = {
       <p class="hinweis">Den persönlichen Link bitte <b>nicht weitergeben</b> – er ist wie ein Schlüssel.</p>`;
     const info = `<p>Bachkreis-App <b>v${APP_VERSION} ${APP_STUFE}</b> · ${esc(datenInfo().hinweis || "")}</p>
       <div class="knopfreihe"><button class="knopf" data-a="updatePruefen">🔄 Update prüfen</button><button class="knopf" data-a="kachel" data-x="ueber">ℹ️ Über die App</button><button class="knopf" data-a="kachel" data-x="impressum">§ Impressum</button><button class="knopf" data-a="kachel" data-x="hilfe">❓ Hilfe & Tipps</button><button class="knopf" data-a="kachel" data-x="sicherheit">🛡️ Sicherheits-Check</button></div>`;
-    return kopf("⚙️ Mehr – Einstellungen") + `<input class="einst-suche" type="search" placeholder="🔍 Einstellung suchen …" data-c="einstSuche" aria-label="Einstellung suchen">`
-      + `<nav class="eu-raster" aria-label="Übersicht der Einstellungen">${EU_BEREICHE.map(([id, sym, t, u]) => `<button type="button" data-a="einstBereich" data-x="${id}"><span aria-hidden="true">${sym}</span><b>${t}</b><small>${u}</small></button>`).join("")}</nav>`
+    const st = meineStufe(), nurFuer = (id) => (id === "familie" ? st === "eltern" : id === "leitung" ? ab("leitung") : id === "appweit" ? ab("admin") : id === "entwickler" ? st === "entwickler" : id === "startseite" ? st !== "kinder" : true);
+    return kopf("⚙️ Mehr – Einstellungen") + `<span class="badge einst-stufe" title="Welche Einstellungen du siehst, hängt von deiner Rolle ab">Ansicht: ${STUFEN[st]}</span>`
+      + (st === "kinder" ? '<p class="hinweis">🧒 Hier stellst du alles für dich ein – Farben, Töne, Benachrichtigungen. Den Rest machen deine Eltern und die Leitung.</p>' : "") + `<input class="einst-suche" type="search" placeholder="🔍 Einstellung suchen …" data-c="einstSuche" aria-label="Einstellung suchen">`
+      + `<nav class="eu-raster" aria-label="Übersicht der Einstellungen">${EU_BEREICHE.filter(([id]) => nurFuer(id)).map(([id, sym, t, u]) => `<button type="button" data-a="einstBereich" data-x="${id}"><span aria-hidden="true">${sym}</span><b>${t}</b><small>${u}</small></button>`).join("")}</nav>`
       + bereich("wichtig", "⚙️ Das Wichtigste", `<h4>📬 Wie möchtest du Neuigkeiten bekommen?</h4><div class="knopfreihe"><button class="knopf haupt" data-a="pushErlauben">🔔 Push auf diesem Gerät erlauben</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>
         ${schalter("ruhe", "🌙 Nicht stören", `Keine Push-Töne von ${e.ruheVon} bis ${e.ruheBis} Uhr (SOS kommt immer durch)`, !!e.ruhe)}
         <div class="schalter"><span><b>🙂 Mein Gesicht</b><div class="hinweis">Gezeichnetes Gesicht fürs Orchester und die Instrumentenkunde</div></span><button class="knopf klein" data-a="meinGesicht">✏️ Gestalten</button></div>
@@ -165,9 +212,13 @@ VIEWS.einstellungen = {
         ${schalter("uebeHinweis", "🎻 Übe-Erinnerung beim Öffnen", "An Übetagen fragt die App nach der Übezeit einmal: „Heute ist Übetag – schon geübt?“", e.uebeHinweis !== false)}`)
       + bereich("darstellung", "🎨 Darstellung", darstellung)
       + bereich("effekte", "✨ Effekte", effekte)
-      + bereich("startseite", "🧩 Startseite & Ansicht", startseite)
+      + (nurFuer("startseite") ? bereich("startseite", "🧩 Startseite & Ansicht", startseite) : "")
       + bereich("install", "📲 App-Installation", install)
-      + bereich("info", "ℹ️ App-Info", info);
+      + bereich("info", "ℹ️ App-Info", info)
+      + (nurFuer("familie") ? bereich("familie", "👪 Familie", familieEinst()) : "")
+      + (nurFuer("leitung") ? bereich("leitung", "🎼 Leitung", leitungEinst()) : "")
+      + (nurFuer("appweit") ? bereich("appweit", "🛠️ App-Einstellungen für alle (Admin)", adminEinst()) : "")
+      + (nurFuer("entwickler") ? bereich("entwickler", "🧑‍💻 Entwickler", entwicklerEinst()) : "");
   },
   nach(wurzel) {
     wurzel.querySelector(".einst-suche")?.addEventListener("input", (e) => AKTIONEN.einstSuche(e.target.value));
@@ -178,7 +229,8 @@ const neu = () => { const y = scrollY; zeige("einstellungen", {}, { ersetzen: tr
 // 0.30.0 KC-CLUB-EINST-UEBERSICHT: Übersicht oben – ein Tipp öffnet genau diesen Bereich und springt hin
 const EU_BEREICHE = [["wichtig", "⚙️", "Das Wichtigste", "Push · Ruhe · Gesicht"], ["benachrichtigung", "🔔", "Benachrichtigungen", "Was wie kommt"], ["nachrichten", "💬", "Nachrichten", "Haken · Versand · Chat"],
   ["ansagen", "🗣️", "Ansagen & Tipps", "Töne · Vorlesen"], ["online", "🟢", "Wer ist online", "Anklopfen"], ["privat", "🔒", "Privatsphäre", "Geburtstag · Kontakt"], ["kalender", "📆", "Handy-Kalender", "Abo · Übe-Erinnerung"],
-  ["darstellung", "🎨", "Darstellung", "Farben · Schatten · Ecken"], ["effekte", "✨", "Effekte", "Uhren · Vogel · Kacheln"], ["startseite", "🧩", "Startseite", "Kacheln · Laufband"], ["install", "📲", "Installieren", "Auf den Startbildschirm"], ["info", "ℹ️", "App-Info", "Version · Impressum"]];
+  ["darstellung", "🎨", "Darstellung", "Farben · Schatten · Ecken"], ["effekte", "✨", "Effekte", "Uhren · Vogel · Kacheln"], ["startseite", "🧩", "Startseite", "Kacheln · Laufband"], ["install", "📲", "Installieren", "Auf den Startbildschirm"], ["info", "ℹ️", "App-Info", "Version · Impressum"],
+  ["familie", "👪", "Familie", "Kinder · Genehmigungen"], ["leitung", "🎼", "Leitung", "Startnachricht · Zugang"], ["appweit", "🛠️", "Für alle (Admin)", "Grenzen · Fristen · Chat"], ["entwickler", "🧑‍💻", "Entwickler", "Datenbank · Dienste"]];
 AKTIONEN.einstBereich = (id) => {
   offen.add(id); neu();
   requestAnimationFrame(() => { const d = document.querySelector(`details.einst[data-klappe="${CSS.escape(id)}"]`); if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); d.querySelector("summary")?.focus({ preventScroll: true }); } });

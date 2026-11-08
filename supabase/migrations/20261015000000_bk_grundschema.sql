@@ -1093,6 +1093,30 @@ grant select, insert, update, delete on bk_startnachrichten to service_role;
 drop trigger if exists bk_startnachrichten_stempel on bk_startnachrichten;
 create trigger bk_startnachrichten_stempel before update on bk_startnachrichten for each row execute function bk_abgleich_stempel();
 
+-- Fehlerberichte
+create table if not exists bk_fehlerberichte (
+  id text primary key default gen_random_uuid()::text,
+  text text not null,
+  ansicht text,
+  app_version text,
+  geraet text,
+  person_id text,
+  anzahl integer,
+  zuletzt timestamptz,
+  erledigt boolean,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_fehlerberichte_geaendert on bk_fehlerberichte (geaendert_am);
+alter table bk_fehlerberichte enable row level security;
+revoke all on bk_fehlerberichte from public, anon, authenticated;
+grant select, insert, update, delete on bk_fehlerberichte to service_role;
+drop trigger if exists bk_fehlerberichte_stempel on bk_fehlerberichte;
+create trigger bk_fehlerberichte_stempel before update on bk_fehlerberichte for each row execute function bk_abgleich_stempel();
+
 -- Rückmeldungen zur App
 create table if not exists bk_rueckmeldungen (
   id text primary key default gen_random_uuid()::text,
@@ -1973,6 +1997,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnw
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_person_id_fk') then alter table bk_uebungen add constraint bk_uebungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_werk_id_fk') then alter table bk_uebungen add constraint bk_uebungen_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_startnachrichten_von_fk') then alter table bk_startnachrichten add constraint bk_startnachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fehlerberichte_person_id_fk') then alter table bk_fehlerberichte add constraint bk_fehlerberichte_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_rueckmeldungen_von_fk') then alter table bk_rueckmeldungen add constraint bk_rueckmeldungen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_termin_id_fk') then alter table bk_erstattungen add constraint bk_erstattungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;

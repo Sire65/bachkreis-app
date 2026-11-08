@@ -389,6 +389,13 @@ export async function wartung(db, adapter, umg = {}) {
   }
   if (ua.length) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${ua.length} abgelaufene Übe-Aufnahmen gelöscht` });
   await db.q(`delete from bk_kom_ereignisse where zeit < now() - interval '90 days'`);
+  // 📈 0.43.0 Messwerte für den Verlauf im Admin-Bereich (wie KC kc_club_messwerte): einmal pro Stunde nur Zahlen
+  if (!(await db.q(`select 1 from bk_kom_ereignisse where code = 'MESSWERT' and zeit > now() - interval '55 minutes' limit 1`)).length) {
+    const z = async (sql) => { try { return Number((await db.q(sql))[0]?.n) || 0; } catch { return null; } };
+    const m = { db: await z(`select pg_database_size(current_database())::bigint as n`), offen: await z(`select count(*)::int as n from bk_versand where status in ('wartend', 'erneut', 'in_arbeit')`),
+      fehler: await z(`select count(*)::int as n from bk_versand where status in ('fehler', 'tot') and zeit > now() - interval '1 hour'`), aktiv: await z(`select count(*)::int as n from bk_online where zuletzt > now() - interval '1 hour'`) };
+    await db.q(`insert into bk_kom_ereignisse (id, zeit, art, code, text, geaendert_von) values (gen_random_uuid()::text, now(), 'messung', 'MESSWERT', $1, 'Wartung')`, [JSON.stringify(m)]);
+  }
   // 🧹 0.36.0 Änderungsprotokoll klein halten (sonst wächst es ohne Ende): älter als konfig.aenderungen_monate (Standard 12, mindestens 3)
   { const k = (await db.q(`select wert from bk_konfig where schluessel = 'aenderungen_monate'`))[0]?.wert, m = Math.max(3, Number(k) || 12);
     const ae = await db.q(`delete from bk_aenderungen where zeit < now() - ($1 || ' months')::interval returning id`, [String(m)]);

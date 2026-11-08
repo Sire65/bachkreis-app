@@ -4,7 +4,7 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt } from "./schema.js";
+import { rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
@@ -18,8 +18,49 @@ export const INSTALL_MODI = ["installiert", "browser", "pc"];
 // 💾 0.36.0 Speicher im Blick (nur Leitung): Datenbankgröße, Dateien (Datenbank/Speicher), größte Tabellen – mit den Grenzen des kostenlosen Tarifs
 // (Konfiguration grenze_db_mb / grenze_dateien_mb, Standard Supabase Free: 500 MB / 1024 MB). Nur Zahlen, keine Inhalte.
 export const GRENZEN_STANDARD = { db_mb: 500, dateien_mb: 1024, volumen_gb: 5 };
+// 🛡️ 0.43.0 Admin-Lage (wie KC admin_lage / waechter_lage / db_belegung / db_last): alles, was der Admin-Bereich anzeigt – nur Zahlen und Namen.
+// Jede Messung einzeln abgesichert: was die Datenbank nicht kann (z. B. kein pg_cron), kommt als null zurück und wird grau angezeigt (nie „ok“).
+// Abfragetexte aus pg_stat_statements nur für den Entwickler (sie können Tabellen- und Spaltennamen zeigen, nie Inhalte – Konstanten sind ersetzt).
+async function adminLage(db, s) {
+  const rl = rollenMit(s.person.rollen || []); if (!rl.includes("admin")) return fehler(403, "NUR_ADMIN");
+  const entw = rl.includes("entwickler");
+  const versuch = async (f) => { try { return await f(); } catch { return null; } };
+  const eins = async (sql, p = []) => (await db.q(sql, p))[0] || null;
+  const lage = { gemessen: new Date().toISOString(), entwickler: entw };
+  lage.datenbank = await versuch(async () => ({ bytes: Number((await eins(`select pg_database_size(current_database())::bigint as n`)).n),
+    verbindungen: Number((await eins(`select count(*)::int as n from pg_stat_activity where datname = current_database()`)).n),
+    lange: Number((await eins(`select count(*)::int as n from pg_stat_activity where datname = current_database() and state = 'active' and now() - query_start > interval '1 minute'`)).n),
+    cache: Number((await eins(`select round(sum(blks_hit) * 100.0 / nullif(sum(blks_hit + blks_read), 0), 1) as n from pg_stat_database where datname = current_database()`))?.n) || null }));
+  lage.tabellen = await versuch(async () => (await db.q(`select c.relname as t, pg_total_relation_size(c.oid)::bigint as b, coalesce(s.n_live_tup, 0)::bigint as z, coalesce(s.n_dead_tup, 0)::bigint as tot
+    from pg_class c join pg_namespace n on n.oid = c.relnamespace left join pg_stat_user_tables s on s.relid = c.oid where n.nspname = 'public' and c.relkind = 'r' and c.relname like 'bk\\_%' order by 2 desc limit 12`)).map((r) => ({ t: r.t, b: Number(r.b), z: Number(r.z), tot: Number(r.tot) })));
+  lage.cron = await versuch(async () => { if (!(await eins(`select 1 as ja from pg_namespace where nspname = 'cron'`))) return null;
+    const jobs = await db.q(`select j.jobname, j.schedule, d.status, d.start_time, left(coalesce(d.return_message, ''), 120) as meldung from cron.job j
+      left join lateral (select status, start_time, return_message from cron.job_run_details r where r.jobid = j.jobid order by start_time desc limit 1) d on true order by j.jobname`);
+    const fehler24 = Number((await eins(`select count(*)::int as n from cron.job_run_details where status = 'failed' and start_time > now() - interval '24 hours'`)).n);
+    return { jobs, fehler24 }; });
+  lage.netz = await versuch(async () => { if (!(await eins(`select 1 as ja from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'net' and c.relname = '_http_response'`))) return null;
+    return await eins(`select count(*)::int as alle, count(*) filter (where status_code >= 400 or error_msg is not null)::int as fehler from net._http_response where created > now() - interval '24 hours'`); });
+  lage.abfragen = await versuch(async () => { if (!(await eins(`select 1 as ja from pg_extension where extname = 'pg_stat_statements'`))) return null;
+    return (await db.q(`select calls::bigint as n, round(mean_exec_time::numeric, 1) as ms, round(total_exec_time::numeric) as gesamt, left(query, 200) as q from pg_stat_statements
+      where dbid = (select oid from pg_database where datname = current_database()) order by total_exec_time desc limit 8`)).map((r) => ({ n: Number(r.n), ms: Number(r.ms), gesamt: Number(r.gesamt), q: entw ? r.q : null })); });
+  lage.pruefung = await versuch(async () => { if (!(await eins(`select 1 as ja from pg_namespace where nspname = 'db_monitor'`))) return null;
+    const r = (await eins(`select db_monitor.report() as r`)).r; return { status: r.status, kritisch: (r.critical || []).length, warnungen: (r.warnings || []).length, liste: entw ? [...(r.critical || []), ...(r.warnings || [])].slice(0, 20) : null }; });
+  lage.versand = await versuch(async () => Object.fromEntries((await db.q(`select status, count(*)::int as n from bk_versand where zeit > now() - interval '24 hours' group by 1`)).map((r) => [r.status, r.n])));
+  lage.fehler = await versuch(async () => ({ offen: Number((await eins(`select count(*)::int as n from bk_fehlerberichte where not coalesce(erledigt, false) and geloescht_am is null`)).n),
+    tag: Number((await eins(`select count(*)::int as n from bk_fehlerberichte where zuletzt > now() - interval '24 hours' and geloescht_am is null`)).n) }));
+  lage.nutzung = await versuch(async () => ({ heute: Number((await eins(`select count(*)::int as n from bk_online where zuletzt > now() - interval '24 hours'`)).n),
+    woche: Number((await eins(`select count(*)::int as n from bk_online where zuletzt > now() - interval '7 days'`)).n), monat: Number((await eins(`select count(*)::int as n from bk_online where zuletzt > now() - interval '30 days'`)).n),
+    personen: Number((await eins(`select count(*)::int as n from bk_personen where status = 'aktiv' and geloescht_am is null`)).n) }));
+  lage.versionen = await versuch(async () => (await db.q(`select coalesce(version, '?') as v, count(*)::int as n from bk_online where zuletzt > now() - interval '30 days' group by 1 order by 2 desc limit 8`)).map((r) => ({ v: r.v, n: r.n })));
+  lage.anmeldung = await versuch(async () => await eins(`select count(*) filter (where not ok)::int as fehl, count(*) filter (where ok)::int as ok from bk_anmeldeversuche where zeit > now() - interval '24 hours'`));
+  lage.verlauf = await versuch(async () => (await db.q(`select zeit, text from bk_kom_ereignisse where code = 'MESSWERT' and zeit > now() - interval '30 days' order by zeit`)).map((r) => { try { return { zeit: r.zeit, ...JSON.parse(r.text) }; } catch { return null; } }).filter(Boolean));
+  const k = Object.fromEntries((await db.q(`select schluessel, wert from bk_konfig where schluessel in ('wartung', 'wartung_text', 'module_aus')`)).map((r) => [r.schluessel, r.wert]));
+  lage.wartung = { an: k.wartung === true || k.wartung === "true", text: k.wartung_text || null }; lage.module_aus = Array.isArray(k.module_aus) ? k.module_aus : [];
+  const sp = await speicherLage(db, s); if (sp.json?.ok) lage.speicher = sp.json;
+  return { status: 200, json: { ok: true, ...lage } };
+}
 async function speicherLage(db, s) {
-  if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
+  if (!rollenMit(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
   const k = Object.fromEntries((await db.q(`select schluessel, wert from bk_konfig where schluessel in ('grenze_db_mb', 'grenze_dateien_mb', 'grenze_volumen_gb')`)).map((r) => [r.schluessel, Number(r.wert)]));
   const dbBytes = Number((await db.q(`select pg_database_size(current_database())::bigint as n`))[0].n);
   const dat = await db.q(`select coalesce(ablage, 'datenbank') as ablage, count(*)::int as anzahl, coalesce(sum(groesse), 0)::bigint as bytes from bk_dateien where geloescht_am is null group by 1`);
@@ -38,7 +79,7 @@ async function speicherLage(db, s) {
 // 🛡️ 0.31.0 Zugang im Blick (nur Leitung/Admin): Anmeldeversuche der letzten 14 Tage je Tag, gerade gesperrte Anschlüsse (nur Anzahl –
 // keine IP, die ist ohnehin nur als Prüfsumme gespeichert), Zugänge nie benutzt, und wie die App bei jedem läuft (📲 installiert?)
 async function zugangLage(db, s) {
-  if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
+  if (!rollenMit(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
   const tage = await db.q(`select to_char(date_trunc('day', zeit), 'YYYY-MM-DD') as tag, count(*) filter (where ok)::int as ok, count(*) filter (where not ok)::int as fehl
     from bk_anmeldeversuche where zeit > now() - interval '14 days' group by 1 order by 1 desc`);
   const gesperrt = (await db.q(`select count(*)::int as n from (select ip_hash from bk_anmeldeversuche where ok = false and zeit > now() - interval '15 minutes' group by ip_hash having count(*) >= $1) x`, [MAX_FEHLVERSUCHE]))[0].n;
@@ -369,6 +410,7 @@ async function online(db, s, body) {
   await db.q(`insert into bk_online (person_id, zuletzt, sichtbar) values ($1, now(), $2) on conflict (person_id) do update set zuletzt = now(), sichtbar = excluded.sichtbar`, [s.person.id, sichtbar]);
   // 📲 0.31.0 (wie KC-CLUB-INSTALL-STAND): wie läuft die App auf diesem Gerät? Nur die Art – kein Gerätename, keine Kennung
   if (INSTALL_MODI.includes(body.modus)) await db.q(`update bk_online set modus = $2, modus_am = now() where person_id = $1`, [s.person.id, body.modus]);
+  if (/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(String(body.version || ""))) await db.q(`update bk_online set version = $2 where person_id = $1`, [s.person.id, body.version]); // 📱 0.43.0 Versionen der Geräte
   if (!onlineErlaubt(s.person, ctx.konfig)) return { status: 200, json: { ok: true, erlaubt: false, liste: [] } };
   return { status: 200, json: { ok: true, erlaubt: true, liste: await onlineListe(db, s, ctx) } };
 }
@@ -422,6 +464,12 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     const s = await sitzungPruefen(db, meta.token);
     if (!s) return fehler(401, "NICHT_ANGEMELDET");
     if (aktion === "laden") return await laden(db, s, body);
+    // 🛠️ 0.43.0 Wartungsmodus: während der Wartung ändern nur Admin/Entwickler (Fehlerberichte dürfen immer)
+    if (["speichern", "versenden", "datei_hochladen"].includes(aktion) && body.tab !== "fehlerberichte" && !rollenMit(s.person.rollen || []).includes("admin")) {
+      const w = (await db.q(`select wert from bk_konfig where schluessel = 'wartung'`))[0]?.wert;
+      if (w === true || w === "true") return fehler(503, "WARTUNG");
+    }
+    if (aktion === "admin_lage") return await adminLage(db, s);
     if (aktion === "speichern") return await speichern(db, s, body);
     if (aktion === "versenden") return await versenden(db, s, body, dienste);
     if (aktion === "nachricht_zustellung") return await nachrichtZustellung(db, s, body);
@@ -443,8 +491,10 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
       return { status: 200, json: { ok: true, bericht: await kom.wartung(db, dienste.adapter, dienste.umgebung) } };
     }
     if (aktion === "konfig_setzen") {
-      if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
+      const rl = rollenMit(s.person.rollen || []);
+      if (!rl.some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
       const k = String(body.schluessel || "");
+      if (ADMIN_KONFIG.includes(k) && !rl.includes("admin")) return fehler(403, "NUR_ADMIN"); // 🛠️ 0.43.0 App-weite Schalter nur Admin/Entwickler
       if (!/^[a-z_]{2,40}$/.test(k)) return fehler(400, "SCHLUESSEL_UNGUELTIG");
       await db.q(`insert into bk_konfig (schluessel, wert, geaendert_am) values ($1, $2::jsonb, now()) on conflict (schluessel) do update set wert = excluded.wert, geaendert_am = now()`, [k, JSON.stringify(body.wert ?? null)]);
       return { status: 200, json: { ok: true } };

@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "erstattungen"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -21,7 +21,7 @@ const WIEDERHOLUNG = ["einmal", "taeglich", "werktags", "woechentlich", "monatli
 const MODERATION = ["admin", "leitung"]; // dürfen sichtbare fremde Zettel abnehmen und sehen, wer gelesen hat
 
 export function kontext(person, alle) {
-  const rollen = person?.rollen || [];
+  const rollen = rollenMit(person?.rollen || []); // 🧑‍💻 Entwickler hat alle Admin-Rechte
   const ich = person?.id;
   // 👪 Elternrechte nur für minderjährige Kinder – bei Volljährigen nur, wenn das Kind es erlaubt (elternZugriff)
   const pMap = new Map((alle.personen || []).map((p) => [p.id, p]));
@@ -129,6 +129,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "startnachricht_antworten": return z.person_id === ctx.ich || ctx.snMap?.get(z.nachricht_id)?.von === ctx.ich;
     case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich;
     case "rueckmeldungen": return z.von === ctx.ich || hatRolle(ctx, RM_LEITUNG);
+    case "fehlerberichte": return hatRolle(ctx, ["admin"]);
     case "erstattungen": return z.von === ctx.ich || hatRolle(ctx, ER_KASSE);
     case "vorschlaege": return vsSichtbar(z, ctx);
     case "vorschlag_stimmen": { const v = ctx.vsMap?.get(z.vorschlag_id); return !!v && vsSichtbar(v, ctx); }
@@ -252,6 +253,17 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
   if (SERVER_ONLY.has(tab)) return { ok: false, grund: "NUR_SERVER" };
   if (alt?.geloescht_am && !neu.geloescht_am) return { ok: false, grund: "GELOESCHT" };
   if (tab === "unterhaltungen" && !alt && PRIVAT_CHAT.has(neu.art)) return privatChatPruefen(neu, ctx); // gilt auch für Verwalter (Kinderschutz)
+  // 🧑‍💻 0.43.0 Entwickler/Admin: nur der Entwickler vergibt oder entzieht diese Rollen und stellt Zugänge für solche Personen aus
+  if (tab === "personen" && darfAlleSchreiben(tab, ctx)) { // (eigene Einstellungen: Rollen werden dort ohnehin nicht übernommen)
+    const a = new Set(alt?.rollen || []), n = new Set(Array.isArray(neu.rollen) ? neu.rollen : alt?.rollen || []);
+    const hochGeaendert = HOCH_ROLLEN.some((r) => a.has(r) !== n.has(r));
+    if (hochGeaendert && !hatRolle(ctx, ["entwickler"])) return { ok: false, grund: "NUR_ENTWICKLER" };
+    if (alt && a.has("entwickler") && alt.id !== ctx.ich && !hatRolle(ctx, ["entwickler"]) && (neu.geloescht_am || neu.status === "ausgetreten")) return { ok: false, grund: "ENTWICKLER_GESCHUETZT" };
+  }
+  if (tab === "zugaenge") {
+    const p = (ctx.personen || []).find((x) => x.id === (neu.person_id || alt?.person_id));
+    if (p && (p.rollen || []).some((r) => HOCH_ROLLEN.includes(r)) && !hatRolle(ctx, ["entwickler"]) && p.id !== ctx.ich) return { ok: false, grund: "NUR_ENTWICKLER" };
+  }
   if (darfAlleSchreiben(tab, ctx)) {
     // 💶 Freigaben (Reparatur, Einkauf): Förderverein-Vorstand immer, Leitung bis zur Freigabegrenze – sonst nicht (auch nicht Instrumentenwart)
     if ((tab === "reparaturen" || tab === "einkaeufe") && neu.status === "freigegeben" && alt?.status !== "freigegeben") {
@@ -547,6 +559,14 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "fehlerberichte": {
+      // 🩺 jedes Gerät meldet eigene Fehler (gleicher Text → Anzahl hoch); erledigt setzt der Admin
+      if (alt && hatRolle(ctx, ["admin"])) return { ok: true, zeile: { ...alt, erledigt: !!neu.erledigt } };
+      if (alt && alt.person_id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE" };
+      const text = String(neu.text ?? "").slice(0, 300); if (!text) return { ok: false, grund: "TEXT_FEHLT" };
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), text, ansicht: String(neu.ansicht ?? "").slice(0, 40) || null, app_version: String(neu.app_version ?? "").slice(0, 20) || null,
+        geraet: String(neu.geraet ?? "").slice(0, 120) || null, person_id: ctx.ich, anzahl: Math.min(9999, (alt?.anzahl || 0) + 1), zuletzt: jetzt, erledigt: false } };
     }
     case "rueckmeldungen": {
       // 🆘 jede/r meldet (eigener Name); antworten und Status: Leitung/Admin. Eigene Meldung ändern nur, solange keine Antwort da ist.

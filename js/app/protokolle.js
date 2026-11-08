@@ -5,7 +5,7 @@
 import { S, VIEWS, zeige, zeichne, kopf, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, frage } from "../kern/ui.js";
 import { liste, hole, speichere } from "../kern/daten.js";
-import { DOKUMENT_SICHT } from "../kern/schema.js";
+import { DOKUMENT_SICHT, rollenMit } from "../kern/schema.js";
 import { senden } from "../kern/versand.js";
 import { startseiteVerbinden } from "./startseite.js";
 
@@ -60,7 +60,7 @@ AKTIONEN.protokollFreiJetzt = async (x) => {
   if (sicht === "alle" && !(await frage("Wirklich für alle im Bachkreis freigeben – auch für Kinder?"))) return;
   await speichere("dokumente", { ...d, sichtbar: sicht }); blattZu();
   if (sicht !== "leitung") {
-    const an = liste("personen", (p) => p.status === "aktiv" && p.id !== S.ich?.id && (sicht === "alle" || (sicht === "eltern" && p.typ === "eltern") || (sicht === "verwaltung" && (p.rollen || []).some((r) => ["admin", "leitung", "lehrkraft", "vorstand"].includes(r))))).map((p) => p.id);
+    const an = liste("personen", (p) => p.status === "aktiv" && p.id !== S.ich?.id && (sicht === "alle" || (sicht === "eltern" && p.typ === "eltern") || (sicht === "verwaltung" && rollenMit(p.rollen).some((r) => ["admin", "leitung", "lehrkraft", "vorstand"].includes(r))))).map((p) => p.id);
     senden({ an, betreff: `🗒️ Neues Protokoll: ${d.titel}`, text: `Das Protokoll „${d.titel}“ steht in der Bachkreis-App unter 🗒️ Protokolle.`, ereignis: "rundschreiben" }).catch(() => {});
     toast(`📣 Freigegeben – ${an.length} bekommen Bescheid`);
   } else toast("🔒 Nur noch im Büro");

@@ -486,7 +486,7 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
       return { status: 200, json: { ...r, zustellung: z } };
     }
     if (aktion === "kom_wartung") {
-      if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
+      if (!rollenMit(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
       if (!dienste.adapter) return fehler(503, "KEIN_VERSAND");
       return { status: 200, json: { ok: true, bericht: await kom.wartung(db, dienste.adapter, dienste.umgebung) } };
     }

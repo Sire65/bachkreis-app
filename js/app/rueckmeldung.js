@@ -4,7 +4,7 @@
 import { S, VIEWS, zeichne, kopf, name, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
-import { RM_ARTEN, RM_STATUS, RM_LEITUNG } from "../kern/schema.js";
+import { RM_ARTEN, RM_STATUS, RM_LEITUNG, rollenMit } from "../kern/schema.js";
 import { APP_VERSION } from "../kern/version.js";
 import { senden } from "../kern/versand.js";
 import { startseiteVerbinden } from "./startseite.js";
@@ -35,7 +35,7 @@ AKTIONEN.rmSterne = (n) => { RM.sterne = Number(n); const t = document.getElemen
 AKTIONEN.rmSenden = async () => {
   const text = String(document.getElementById("rmText")?.value || "").trim(); if (!text) return toast("Bitte kurz beschreiben, worum es geht.");
   await speichere("rueckmeldungen", { id: neueId(), art: RM.art, text, von: S.ich.id, sterne: RM.art === "lob" && RM.sterne ? RM.sterne : null, geraet: geraet(), ansicht: RM.vorher, rueckruf: !!document.getElementById("rmRueckruf")?.checked, status: "neu" });
-  const an = liste("personen", (p) => p.status === "aktiv" && (p.rollen || []).some((r) => RM_LEITUNG.includes(r))).map((p) => p.id).filter((p) => p !== S.ich.id);
+  const an = liste("personen", (p) => p.status === "aktiv" && rollenMit(p.rollen).some((r) => RM_LEITUNG.includes(r))).map((p) => p.id).filter((p) => p !== S.ich.id);
   senden({ an, betreff: `${RM_ARTEN[RM.art]} – ${name(S.ich)}`, text: text.slice(0, 300), ereignis: "rundschreiben" }).catch(() => {});
   blattZu(); toast("📨 Danke! Die Leitung hat deine Nachricht bekommen – die Antwort steht unter 🆘 Meine Rückmeldungen.", 4500);
 };

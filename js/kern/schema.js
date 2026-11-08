@@ -173,14 +173,14 @@ export const nachrichtFrei = (n, jetzt = new Date().toISOString()) => !n.geplant
 // verwandt = Eltern-Kind-Beziehung zwischen beiden. Verwalter dürfen mit allen App-Nutzern schreiben.
 // 🛡️ Kinderschutz (0.20.0): Erwachsene schreiben Kindern privat nur, wenn sie Leitung oder Lehrkraft sind (nicht Notenwart,
 // Instrumentenwart, Vorstand …) – und bei Minderjährigen sind die Eltern automatisch dabei (elternInKopie, konfig.chat_eltern_kopie).
-const fuehrt = (x) => ["leitung", "lehrkraft"].includes(x.typ) || (x.rollen || []).some((r) => ["admin", "leitung", "lehrkraft"].includes(r));
+const fuehrt = (x) => ["leitung", "lehrkraft"].includes(x.typ) || rollenMit(x.rollen).some((r) => ["admin", "leitung", "lehrkraft"].includes(r));
 export function chatPartnerErlaubt(ich, p, { verwandt = false, schuelerUntereinander = true } = {}) {
   if (!ich || !p || p.id === ich.id || !pwAppPerson(p)) return false;
   if (verwandt) return true;
   const kind = (x) => x.typ === "schueler";
   if (kind(ich) && kind(p)) return schuelerUntereinander !== false;
   if (kind(ich) || kind(p)) return fuehrt(kind(ich) ? p : ich); // Kind ↔ Erwachsener: nur Leitung und Lehrkräfte
-  const verw = (x) => fuehrt(x) || (x.rollen || []).some((r) => VERWALTER.includes(r));
+  const verw = (x) => fuehrt(x) || rollenMit(x.rollen).some((r) => VERWALTER.includes(r));
   if (ich.typ === "ehemalig" && p.typ === "ehemalig") return true; // 🎓 Ehemalige untereinander (0.21.0)
   return verw(ich) || verw(p);
 }
@@ -290,12 +290,12 @@ export const PINNWAND = { max: 4, zeichen: 200, erinnernTage: 3, pauseTage: 7 };
 export const ONLINE_KREISE = { leitung: "Leitung & Lehrkräfte", schueler: "Schülerinnen & Schüler", eltern: "Eltern" };
 export function onlineKreis(p) {
   if (!p) return null;
-  if (["leitung", "lehrkraft"].includes(p.typ) || (p.rollen || []).some((r) => VERWALTER.includes(r))) return "leitung";
+  if (["leitung", "lehrkraft"].includes(p.typ) || rollenMit(p.rollen).some((r) => VERWALTER.includes(r))) return "leitung";
   return p.typ === "schueler" ? "schueler" : p.typ === "eltern" ? "eltern" : null;
 }
 export const onlineFuer = (konfig) => (Array.isArray(konfig?.online_fuer) ? konfig.online_fuer.filter((k) => k in ONLINE_KREISE) : ["leitung"]);
 export const onlineErlaubt = (p, konfig) => { const k = onlineKreis(p); return !!k && onlineFuer(konfig).includes(k); };
-export const pwAppPerson = (p) => !!p && !p.geloescht_am && p.status !== "ausgetreten" && (["schueler", "eltern", "leitung", "lehrkraft", "ehemalig"].includes(p.typ) || (p.rollen || []).some((r) => VERWALTER.includes(r)));
+export const pwAppPerson = (p) => !!p && !p.geloescht_am && p.status !== "ausgetreten" && (["schueler", "eltern", "leitung", "lehrkraft", "ehemalig"].includes(p.typ) || rollenMit(p.rollen).some((r) => VERWALTER.includes(r)));
 export const pwSichtbar = (z, ich) => !!z && (z.von === ich || (z.fuer || "alle") === "alle" || (z.fuer === "personen" && (z.personen || []).includes(ich)));
 export const pwEmpfaenger = (z, personen) => (z.fuer === "ich" ? [] : z.fuer === "personen" ? [...new Set(z.personen || [])].filter((id) => id !== z.von) : personen.filter((p) => pwAppPerson(p) && p.id !== z.von).map((p) => p.id));
 export const pwGelesenId = (zettelId, personId) => `${zettelId}:${personId}`;

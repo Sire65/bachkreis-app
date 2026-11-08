@@ -5,7 +5,7 @@
 import { S, VIEWS, zeige, zeichne, kopf, name, hatRolle, istVerwalter } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
-import { VS_AN, VS_ABSTIMMEN, vsZielgruppe, vsAuszaehlen } from "../kern/schema.js";
+import { VS_AN, VS_ABSTIMMEN, vsZielgruppe, vsAuszaehlen, rollenMit } from "../kern/schema.js";
 import { tagIso } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 import { startseiteVerbinden } from "./startseite.js";
@@ -66,7 +66,7 @@ AKTIONEN.vsZurAbstimmung = (id) => { const v = hole("vorschlaege", id); vsForm({
 AKTIONEN.vsErinnern = async (id) => {
   const v = hole("vorschlaege", id); if (!v) return;
   const schon = new Set(stimmenVon(v).filter((s) => s.wahl && s.person_id).map((s) => s.person_id));
-  const an = liste("personen", (p) => p.status === "aktiv" && p.id !== ich() && vsZielgruppe(v, { typ: p.typ, rollen: p.rollen || [], verwalter: (p.rollen || []).some((r) => ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"].includes(r)) }) && (v.anonym || !schon.has(p.id))).map((p) => p.id);
+  const an = liste("personen", (p) => p.status === "aktiv" && p.id !== ich() && vsZielgruppe(v, { typ: p.typ, rollen: p.rollen || [], verwalter: rollenMit(p.rollen).some((r) => ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"].includes(r)) }) && (v.anonym || !schon.has(p.id))).map((p) => p.id);
   if (!an.length) return toast("👍 Alle haben abgestimmt");
   await senden({ an, betreff: `🗳️ Bitte abstimmen: ${v.titel}`, text: `In der Bachkreis-App unter 💡 Vorschläge & Abstimmungen${v.frist ? ` – bis ${new Date(v.frist + "T12:00").toLocaleDateString("de-DE")}` : ""}.`, ereignis: "rundschreiben" });
   toast(`📣 ${an.length} erinnert${v.anonym ? " (geheim: alle aus der Zielgruppe)" : ""}`);
@@ -96,7 +96,7 @@ AKTIONEN.vsAnlegen = async (x) => {
   if (aus) { const alt = hole("vorschlaege", aus); if (alt) await speichere("vorschlaege", { ...alt, status: "erledigt", ergebnis: `🗳️ Wird abgestimmt: „${v.titel}“` }).catch(() => {}); }
   blattZu(); V.tab = art === "abstimmung" ? "abstimmungen" : "vorschlaege";
   if (art === "abstimmung") {
-    const an = liste("personen", (p) => p.status === "aktiv" && p.id !== ich() && vsZielgruppe(v, { typ: p.typ, rollen: p.rollen || [], verwalter: (p.rollen || []).some((r) => ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"].includes(r)) })).map((p) => p.id);
+    const an = liste("personen", (p) => p.status === "aktiv" && p.id !== ich() && vsZielgruppe(v, { typ: p.typ, rollen: p.rollen || [], verwalter: rollenMit(p.rollen).some((r) => ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"].includes(r)) })).map((p) => p.id);
     senden({ an, betreff: `🗳️ Neue Abstimmung: ${v.titel}`, text: `Bitte in der Bachkreis-App unter 💡 Vorschläge & Abstimmungen abstimmen${v.frist ? ` – bis ${new Date(v.frist + "T12:00").toLocaleDateString("de-DE")}` : ""}.`, ereignis: "rundschreiben" }).catch(() => {});
   }
   toast(art === "abstimmung" ? "🗳️ Abstimmung gestartet" : "💡 Danke für deinen Vorschlag!"); zeige("vorschlaege");

@@ -5,7 +5,7 @@
 import { S, VIEWS, db, zeige, zeichne, kopf, name, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, frage, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
-import { TU_AN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuAuszaehlen, tuFuerMich } from "../kern/schema.js";
+import { TU_AN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuAuszaehlen, tuFuerMich, rollenMit } from "../kern/schema.js";
 import { eingeladene, elternVon, kinderVon, tagIso } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 import { startseiteVerbinden } from "./startseite.js";
@@ -23,7 +23,7 @@ export const fuerMich = (u) => tuFuerMich(u, meinCtx());
 export const meineAntwort = (u) => hole("terminumfrage_antworten", tuAntwortId(u.id, ich()));
 // Wer ist gemeint? (für Benachrichtigung und „noch nicht abgestimmt“)
 export function tuEmpfaenger(u) {
-  if (u.an === "verwaltung") return liste("personen", (p) => p.status === "aktiv" && (p.rollen || []).some((r) => ["admin", "leitung", "lehrkraft", "vorstand"].includes(r))).map((p) => p.id);
+  if (u.an === "verwaltung") return liste("personen", (p) => p.status === "aktiv" && rollenMit(p.rollen).some((r) => ["admin", "leitung", "lehrkraft", "vorstand"].includes(r))).map((p) => p.id);
   const kinderUndMitglieder = eingeladene(db, { fuer_alle: u.fuer_alle, gruppen: u.gruppen, beginn: u.optionen?.[0]?.beginn || new Date().toISOString() });
   if (u.an === "eltern") return [...new Set(kinderUndMitglieder.filter((p) => hole("personen", p)?.typ === "schueler").flatMap((k) => elternVon(db, k)))];
   return kinderUndMitglieder;

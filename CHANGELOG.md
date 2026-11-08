@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.43.1 DEV – 08.11.2026
+- 🧑‍💻 Korrektur: Wer nur die Rolle „Entwickler“ hat (ohne eingetragene Admin-Rolle), gilt jetzt überall als Admin – PC-Verwaltung (Rechte je Tabelle, geschützte Bereiche, Kommunikation), Chat-Regeln und Pinnwand (schema.js), Express ohne Grenze, Communicator-Wartung (Server), Empfängerlisten bei Terminumfrage, Protokollen, Rückmeldungen und Abstimmungen
+- tests/admin-rollen.test.mjs (+ Nur-Entwickler)
+
+
 ## 0.43.0 DEV – 08.11.2026
 - 🧑‍💻 Rollen **Entwickler** und **Admin** (Strukturen für einen späteren eigenen Admin der Bachkreis-App):
   - Entwickler = technische Verantwortung, bleibt immer, hat alle Admin-Rechte (`rollenMit`); nur er ernennt/entzieht Admins (Server `NUR_ENTWICKLER`), niemand kann ihn löschen oder austragen (`ENTWICKLER_GESCHUETZT`); Zugänge von Entwickler/Admins verwaltet nur der Entwickler

@@ -1,13 +1,20 @@
 {
-  "version": "0.43.0",
+  "version": "0.43.1",
   "datum": "2026-11-08",
   "stufe": "DEV",
   "neu": [
-    "⚙️ Das Zahnrad passt sich an: Kinder, Eltern, Leitungen und Admin sehen jeweils ihre eigenen Einstellungen (oben steht „Ansicht: …“)",
-    "👪 Eltern finden unter ⚙️ › Familie alles für ihre Kinder auf einen Blick",
-    "🛡️ Für Admins: Leitstand mit Wächter-Lämpchen, Datenbank-Überwachung, Wartungsmodus und Module zum Abschalten"
+    "🧑‍💻 Der Entwickler hat jetzt überall die vollen Admin-Rechte – auch in der PC-Verwaltung, im Chat und bei Empfängerlisten"
   ],
   "verlauf": [
+    {
+      "version": "0.43.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "⚙️ Das Zahnrad passt sich an: Kinder, Eltern, Leitungen und Admin sehen jeweils ihre eigenen Einstellungen (oben steht „Ansicht: …“)",
+        "👪 Eltern finden unter ⚙️ › Familie alles für ihre Kinder auf einen Blick",
+        "🛡️ Für Admins: Leitstand mit Wächter-Lämpchen, Datenbank-Überwachung, Wartungsmodus und Module zum Abschalten"
+      ]
+    },
     {
       "version": "0.42.0",
       "datum": "2026-11-07",

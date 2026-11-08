@@ -3,7 +3,7 @@
 // Zugänge (Codes/QR-Karten, Sperren, Verwaltungsrecht) werden HIER – außerhalb der App – gepflegt.
 import { werkzeugeRegistrieren, WERKZEUG_ANSICHTEN } from "./werkzeuge.js";
 import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
-import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN } from "../kern/schema.js";
+import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN, rollenMit } from "../kern/schema.js";
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND, senden } from "../kern/versand.js";
@@ -13,8 +13,8 @@ import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 const db = { liste, hole, konfig };
 const V = { ich: null, ansicht: "uebersicht", tab: null, auswahl: null, suche: "", filter: "", sort: null };
 
-const darf = (tab, art) => { const r = V.ich?.rollen || []; return (TABELLEN[tab]?.[art] || []).some((x) => r.includes(x)); };
-const darfGeschuetzt = () => (V.ich?.rollen || []).some((r) => ["leitung", "admin", "lehrkraft"].includes(r));
+const darf = (tab, art) => { const r = rollenMit(V.ich?.rollen); return (TABELLEN[tab]?.[art] || []).some((x) => r.includes(x)); };
+const darfGeschuetzt = () => rollenMit(V.ich?.rollen).some((r) => ["leitung", "admin", "lehrkraft"].includes(r));
 const name = (p) => (p ? `${p.vorname} ${p.nachname}` : "–");
 
 // ---------- Anmeldung ----------
@@ -709,7 +709,7 @@ AKTIONEN.komJetzt = async () => {
 // ---------- Einstellungen (Konfiguration) ----------
 ANSICHTEN.konfig = () => {
   const k = konfig();
-  const darfK = (V.ich?.rollen || []).some((r) => ["leitung", "admin"].includes(r));
+  const darfK = rollenMit(V.ich?.rollen).some((r) => ["leitung", "admin"].includes(r));
   const f = (key, t, typ = "text") => `<div class="feld"><label>${t}</label><input type="${typ}" data-konfig="${key}" value="${esc(k[key] ?? "")}" ${darfK ? "" : "disabled"}></div>`;
   const ja = (key, t, jaT, neinT, hilfe = "") => `<div class="feld"><label>${t}</label><select data-konfig="${key}" ${darfK ? "" : "disabled"}><option value="ja" ${k[key] !== false ? "selected" : ""}>${jaT}</option><option value="nein" ${k[key] === false ? "selected" : ""}>${neinT}</option></select>${hilfe ? `<div class="hinweis">${hilfe}</div>` : ""}</div>`;
   const abschnitt = (titel, inhalt) => `<section class="vw-bereich"><h3>${titel}</h3>${inhalt}</section>`;

@@ -11,7 +11,7 @@ import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, istLeitung, istVerwa
 import { meineUnterhaltungen, gelesenVonMir, lokalGelesen } from "./start.js";
 import { esc, AKTIONEN, toast, uhr, frage, blatt, blattZu, $ } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, konfig, abonnieren, neueId, istEchtbetrieb, jetztAbgleichen, serverAktion } from "../kern/daten.js";
-import { CHAT, nsId, nachrichtFrei, nachrichtAbgelaufen, chatPartnerErlaubt, pwAppPerson, chatMitgliederMitKopie } from "../kern/schema.js";
+import { CHAT, nsId, nachrichtFrei, nachrichtAbgelaufen, chatPartnerErlaubt, pwAppPerson, chatMitgliederMitKopie, rollenMit } from "../kern/schema.js";
 import { empfaengerVon, naechsteSendung, nachrichtEreignis, nachrichtKurz, kinderVon, elternVon, instrumenteVon } from "../kern/logik.js";
 import { hochladen, bildVerkleinern, dateiUrl, dateiOeffnen, groesseText, artVonMime } from "../kern/dateien.js";
 import { zuhoeren, spracheMoeglich, aufnahme, aufnahmeMoeglich, dauerText, SPRACHE_FEHLER } from "./sprache.js";
@@ -33,7 +33,7 @@ const C = { anlagen: [], ablauf: null, aufnahme: null, diktat: null, offen: {}, 
 const PRIVAT = ["einzel", "runde"];
 const expressMax = () => (Number(konfig().express_max_tag) > 0 ? Number(konfig().express_max_tag) : CHAT.expressMax);
 const bearbeitenMin = () => (Number(konfig().bearbeiten_minuten) > 0 ? Number(konfig().bearbeiten_minuten) : CHAT.bearbeitenMin);
-const expressUnbegrenzt = () => (S.ich?.rollen || []).some((r) => CHAT.expressUnbegrenzt.includes(r));
+const expressUnbegrenzt = () => rollenMit(S.ich?.rollen).some((r) => CHAT.expressUnbegrenzt.includes(r));
 
 // ---------- Entwürfe (KC-CLUB-ENTWURF): je Chat auf diesem Gerät ----------
 const ENTWURF_KEY = "bk_entwuerfe";

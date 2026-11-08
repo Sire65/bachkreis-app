@@ -5,14 +5,14 @@
 // main.js übergibt seine Bausteine (registrieren); dieses Modul greift nicht selbst auf main.js zu.
 import { liste, hole, speichere, speichereViele, loesche, konfig } from "../kern/daten.js";
 import { esc, AKTIONEN, toast, frage, herunterladen, datumKurz, formWerte, vonLokal, zuLokal, $ } from "../kern/ui.js";
-import { TEILNAHME, GENEHMIGUNG_ZWECKE, FOTO_ZWECKE, UEBE_ARTEN, ANFRAGE_STATUS, ANFRAGE_BESETZUNG, GASTGEBER_STATUS } from "../kern/schema.js";
+import { TEILNAHME, GENEHMIGUNG_ZWECKE, FOTO_ZWECKE, UEBE_ARTEN, ANFRAGE_STATUS, ANFRAGE_BESETZUNG, GASTGEBER_STATUS, rollenMit } from "../kern/schema.js";
 import { tagIso, eingeladene, antwortVon, antwortZaehler, besetzung, gesamtAmpel, genehmigungsUebersicht, genehmigungStatus, verteilerListe, verteilerAufloesen,
   elternVon, gruppenMitglieder, instrumenteVon, fehlzeiten, fotoErlaubnis, csvAus, uebeStand, anfrageZuTermin, auftrittsArt, repertoire } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 
 let A; // { ANSICHTEN, V, zeichne, darf, db, pn, sonder }
 const T = {}; // Zustand der Werkzeuge (Auswahl, Filter)
-const hatRolle = (...r) => (A.V.ich?.rollen || []).some((x) => r.includes(x));
+const hatRolle = (...r) => rollenMit(A.V.ich?.rollen).some((x) => r.includes(x));
 const planer = () => hatRolle("admin", "leitung", "lehrkraft", "terminplaner");
 const leitung = () => hatRolle("admin", "leitung", "lehrkraft");
 const kasse = () => hatRolle("admin", "leitung", "vorstand");

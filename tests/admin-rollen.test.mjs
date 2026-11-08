@@ -2,7 +2,7 @@
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { verarbeiten } from "../supabase/functions/_shared/api.js";
-import { einstStufe, rollenMit } from "../js/kern/schema.js";
+import { einstStufe, rollenMit, chatPartnerErlaubt, pwAppPerson } from "../js/kern/schema.js";
 import { demoDatenbank } from "./demo-db.mjs";
 
 let db, d, codes, S, E;
@@ -74,4 +74,11 @@ test("🛡️ Admin-Lage: nur Admin/Entwickler, nur Zahlen; Abfragetexte nur fü
   const e = (await rufe({ aktion: "admin_lage" }, await login("p-entwickler"))).json;
   assert.equal(e.entwickler, true);
   assert.ok(!JSON.stringify(e).includes("Knopf geht nicht"), "keine Inhalte");
+});
+
+test("🧑‍💻 Nur-Entwickler (ohne eingetragene Admin-Rolle) gilt überall als Admin: Chat, Pinnwand, Communicator-Wartung", async () => {
+  const ent = { id: "x-e", typ: "unterstuetzer", status: "aktiv", rollen: ["entwickler"] }, kind = { id: "x-k", typ: "schueler", status: "aktiv", rollen: [] };
+  assert.ok(pwAppPerson(ent), "Entwickler nutzt die App");
+  assert.ok(chatPartnerErlaubt(ent, kind) && chatPartnerErlaubt(kind, ent), "Entwickler und Kinder dürfen sich schreiben wie mit der Leitung");
+  assert.notEqual((await rufe({ aktion: "kom_wartung" }, await login("p-entwickler"))).json.fehler, "NUR_LEITUNG");
 });

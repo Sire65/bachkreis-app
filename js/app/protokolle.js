@@ -2,6 +2,7 @@
 // Protokolle entstehen im 🏢 Büro (Ordner „Protokolle“). Die Leitung gibt eins frei („📣 Für Mitglieder freigeben“: alle, nur Eltern, nur Team) –
 // dann steht es hier, mit Benachrichtigung. Neue sind markiert (gelesen merkt sich das Gerät). „📌 Meine Aufgaben“ sammelt die Zeilen unter
 // „Aufgaben“, in denen der eigene Name steht. Wer was sieht, entscheidet der Server (Sichtbarkeit des Dokuments).
+import { klappe, klappenAlleKnopf } from "../kern/klappen.js";
 import { S, VIEWS, zeige, zeichne, kopf, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, frage } from "../kern/ui.js";
 import { liste, hole, speichere } from "../kern/daten.js";
@@ -31,9 +32,10 @@ VIEWS.protokolle = {
     const aufgaben = l.flatMap((d) => aufgabenAus(d.inhalt, ich).map((t) => ({ d, t })));
     const jahre = [...new Set(l.map((d) => d.jahr || "ohne Jahr"))];
     return kopf("🗒️ Protokolle") + `<p class="hinweis">Protokolle von Elternabenden, Besprechungen und Versammlungen – freigegeben von der Leitung.</p>`
-      + (aufgaben.length ? `<div class="karte prot-aufgaben"><h3>📌 Meine Aufgaben</h3><ul class="liste">${aufgaben.map(({ d, t }) => `<li class="klick" data-a="protokollAuf" data-x="${esc(d.id)}"><div class="fl"><b>${esc(t)}</b><div class="zeile-unter">aus „${esc(d.titel)}“</div></div><span aria-hidden="true">›</span></li>`).join("")}</ul></div>` : "")
-      + (l.length ? jahre.map((j) => `<div class="karte"><h3>${esc(String(j))}</h3><ul class="liste">${l.filter((d) => (d.jahr || "ohne Jahr") === j).map((d) => `<li class="klick${g.has(d.id) ? "" : " hat-neu"}" data-a="protokollAuf" data-x="${esc(d.id)}"><span aria-hidden="true">🗒️</span>
-          <div class="fl"><div class="zeile-titel">${esc(d.titel)}${g.has(d.id) ? "" : ' <span class="badge b-gelb">neu</span>'}</div><div class="zeile-unter">${esc([d.beschreibung, d.sichtbar && d.sichtbar !== "alle" ? DOKUMENT_SICHT[d.sichtbar] : ""].filter(Boolean).join(" · "))}</div></div><span aria-hidden="true">›</span></li>`).join("")}</ul></div>`).join("")
+      + (jahre.length > 1 ? klappenAlleKnopf("inhalt") : "")
+      + (aufgaben.length ? klappe("pr_aufgaben", "📌 Meine Aufgaben", `<ul class="liste">${aufgaben.map(({ d, t }) => `<li class="klick" data-a="protokollAuf" data-x="${esc(d.id)}"><div class="fl"><b>${esc(t)}</b><div class="zeile-unter">aus „${esc(d.titel)}“</div></div><span aria-hidden="true">›</span></li>`).join("")}</ul>`, { offen: true, zahl: aufgaben.length, klasse: "prot-aufgaben", ohneUnten: true }) : "")
+      + (l.length ? jahre.map((j, i) => klappe(`pr_jahr_${String(j).replace(/[^a-z0-9]/gi, "_")}`, `📅 ${esc(String(j))}`, `<ul class="liste">${l.filter((d) => (d.jahr || "ohne Jahr") === j).map((d) => `<li class="klick${g.has(d.id) ? "" : " hat-neu"}" data-a="protokollAuf" data-x="${esc(d.id)}"><span aria-hidden="true">🗒️</span>
+          <div class="fl"><div class="zeile-titel">${esc(d.titel)}${g.has(d.id) ? "" : ' <span class="badge b-gelb">neu</span>'}</div><div class="zeile-unter">${esc([d.beschreibung, d.sichtbar && d.sichtbar !== "alle" ? DOKUMENT_SICHT[d.sichtbar] : ""].filter(Boolean).join(" · "))}</div></div><span aria-hidden="true">›</span></li>`).join("")}</ul>`, { offen: i === 0, zahl: l.filter((d) => (d.jahr || "ohne Jahr") === j).length })).join("")
         : '<div class="leer">Noch keine Protokolle freigegeben.</div>');
   },
 };

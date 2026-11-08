@@ -112,6 +112,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F102 | 🛡️ Admin-Leitstand mit Wächter-Lämpchen, Verlauf, Datenbank, Nutzung, Fehlerberichten | ✅ | tests/admin-rollen.test.mjs |
 | BK-F103 | 🚧 Wartungsmodus und 🧩 Module freigeben | ✅ | tests/admin-rollen.test.mjs |
 | BK-F104 | ⚙️ Zahnrad nach Kinder, Eltern, Leitungen, Admin, Entwickler | ✅ | tests/admin-rollen.test.mjs |
+| BK-F105 | 🔽 Klappbereiche wie KC (Pfeil, Schloss, Zuklappen, Alle auf/zu) in Listen | ✅ | tests/klappen.test.mjs |
+| BK-F106 | 💬 Chat: Klapp-Pfeile an Tagen/Wochen, Chat-Kopf und Schreibbereich einklappbar | ✅ | tests/klappen.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

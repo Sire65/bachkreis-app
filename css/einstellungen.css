@@ -86,3 +86,7 @@ details.einst h4 { margin: 14px 0 6px; }
 .sz-wert { min-width: 56px; text-align: center; font-weight: 900; }
 .install-schritte li { margin: 4px 0; }
 .einst-suche { width: 100%; padding: 11px 14px; border-radius: 14px; border: 2px solid var(--linie); background: var(--karte); margin: 0 0 12px; }
+/* 🔽 0.44.0 Unter-Klappen in den Einstellungen (wie KC „🎨 Weitere Farbschemen“) */
+details.einst-unter { background: var(--karte2); box-shadow: none; margin: 8px 0; }
+details.einst-unter > summary { font-size: .98rem; padding: 8px 0; }
+details.einst-unter[open] { padding-bottom: 10px; }

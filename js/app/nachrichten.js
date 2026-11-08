@@ -145,11 +145,11 @@ VIEWS.nachrichten = {
       for (const e of l.filter((x) => !x.neu && !favorit(x.u.id))) { const [k, t] = abschnittVon(e, art); if (!teile.has(k)) teile.set(k, [t, []]); teile.get(k)[1].push(e); }
       if (art === "name") for (const v of teile.values()) v[1].sort((a, b) => chatTitel(a.u).localeCompare(chatTitel(b.u), "de"));
       inhalt = [...teile].map(([k, [t, es]]) => { const auf = o[k] !== false;
-        return `<div class="chat-abschnitt"><button type="button" class="chat-abschnitt-kopf" data-a="gliedUm" data-x="${esc(k)}" aria-expanded="${auf}"><span>${auf ? "▾" : "▸"} ${esc(t)}</span><small>${es.length}</small></button>${auf ? `<ul class="liste">${es.map(chatZeile).join("")}</ul>` : ""}</div>`; }).join("");
+        return `<div class="chat-abschnitt"><button type="button" class="chat-abschnitt-kopf" data-a="gliedUm" data-x="${esc(k)}" aria-expanded="${auf}"><span>${esc(t)}</span><small>${es.length}</small><span class="kl-pfeil${auf ? "" : " zu"}" aria-hidden="true">▾</span></button>${auf ? `<ul class="liste">${es.map(chatZeile).join("")}</ul>` : ""}</div>`; }).join("");
     }
     return kopf(netz ? "Nachrichten" : "💬 Nachrichten", rechts).replace("<h2>", netz + "<h2>") + onlineLeisteHtml() + `<input class="chat-suche" type="search" id="chatSuche" placeholder="🔍 Chats und Nachrichten durchsuchen" value="${esc(C.suche)}" aria-label="Chats durchsuchen">${chips}
       <div class="karte chatliste">${inhalt}</div>
-      ${imArchiv.length && !q ? `<div class="chat-abschnitt"><button type="button" class="chat-abschnitt-kopf" data-a="archivListe" aria-expanded="${!!C.archivAuf}"><span>${C.archivAuf ? "▾" : "▸"} 📦 Archiviert</span><small>${imArchiv.length}</small></button>${C.archivAuf ? `<div class="karte chatliste"><ul class="liste">${imArchiv.map(chatZeile).join("")}</ul></div>` : ""}</div>` : ""}`;
+      ${imArchiv.length && !q ? `<div class="chat-abschnitt"><button type="button" class="chat-abschnitt-kopf" data-a="archivListe" aria-expanded="${!!C.archivAuf}"><span>📦 Archiviert</span><small>${imArchiv.length}</small><span class="kl-pfeil${C.archivAuf ? "" : " zu"}" aria-hidden="true">▾</span></button>${C.archivAuf ? `<div class="karte chatliste"><ul class="liste">${imArchiv.map(chatZeile).join("")}</ul></div>` : ""}</div>` : ""}`;
   },
   nach(w) { w.querySelector("#chatSuche")?.addEventListener("input", (e) => { C.suche = e.target.value; const pos = e.target.selectionStart; zeichne(); const f = document.getElementById("chatSuche"); f?.focus(); try { f?.setSelectionRange(pos, pos); } catch {} }); },
 };
@@ -266,8 +266,8 @@ function verlaufHtml(u) {
   const mussOffen = (t) => t.key === heute || t.ns.some((n) => n.id === C.trenner[u.id] || n.id === C.ziel || (n.von !== ich() && !gelesenVonMir(n)));
   const tagOffen = (t) => !ein || mussOffen(t) || offen.has("t:" + t.key);
   const tagHtml = (t) => {
-    if (!tagOffen(t)) return `<button type="button" class="tag-zu" data-a="tagUm" data-x="t:${t.key}"><span class="tz-pfeil">▸</span><span class="tz-info">${t.ns.length} ${t.ns.length === 1 ? "Nachricht" : "Nachrichten"} · ${esc(werText(t.ns))}</span><b class="tz-datum">${tagKurz(t.zeit)}</b></button>`;
-    const kopfT = ein && t.key !== heute && !mussOffen(t) ? `<button type="button" class="tag-trenner auf" data-a="tagUm" data-x="t:${t.key}"><span>▾ ${tagTrenner(t.zeit)}</span></button>` : `<div class="tag-trenner"><span>${tagTrenner(t.zeit)}</span></div>`;
+    if (!tagOffen(t)) return `<button type="button" class="tag-zu" data-a="tagUm" data-x="t:${t.key}"><span class="kl-pfeil zu" aria-hidden="true">▾</span><span class="tz-info">${t.ns.length} ${t.ns.length === 1 ? "Nachricht" : "Nachrichten"} · ${esc(werText(t.ns))}</span><b class="tz-datum">${tagKurz(t.zeit)}</b></button>`;
+    const kopfT = ein && t.key !== heute && !mussOffen(t) ? `<button type="button" class="tag-trenner auf" data-a="tagUm" data-x="t:${t.key}" aria-label="${tagTrenner(t.zeit)} zuklappen"><span>${tagTrenner(t.zeit)}</span><i class="kl-pfeil" aria-hidden="true">▾</i></button>` : `<div class="tag-trenner"><span>${tagTrenner(t.zeit)}</span></div>`;
     return kopfT + t.ns.map((n) => (n.id === C.trenner[u.id] ? '<div class="neu-trenner" id="neuTrenner">⬇ Neue Nachrichten</div>' : "") + blaseHtml(n, u, gruppe)).join("");
   };
   let html = "", zu = 0;
@@ -277,8 +277,8 @@ function verlaufHtml(u) {
       const wk = kwText(t.zeit), woche = [];
       while (i < tage.length && tageAb(tage[i].zeit) >= 7 && kwText(tage[i].zeit) === wk) woche.push(tage[i++]);
       const wOffen = offen.has("w:" + wk) || woche.some(mussOffen);
-      if (!wOffen) { zu++; const m = woche.reduce((x, y) => x + y.ns.length, 0); html += `<button type="button" class="tag-zu kw" data-a="tagUm" data-x="w:${wk}"><span class="tz-pfeil">▸</span><span class="tz-info">${m} ${m === 1 ? "Nachricht" : "Nachrichten"} an ${woche.length} ${woche.length === 1 ? "Tag" : "Tagen"} · ${esc(werText(woche.flatMap((x) => x.ns)))}</span><b class="tz-datum">${wk}</b></button>`; continue; }
-      html += `<button type="button" class="kw-kopf" data-a="tagUm" data-x="w:${wk}">▾ ${wk}</button>` + woche.map((x) => { if (!tagOffen(x)) zu++; return tagHtml(x); }).join("");
+      if (!wOffen) { zu++; const m = woche.reduce((x, y) => x + y.ns.length, 0); html += `<button type="button" class="tag-zu kw" data-a="tagUm" data-x="w:${wk}"><span class="kl-pfeil zu" aria-hidden="true">▾</span><span class="tz-info">${m} ${m === 1 ? "Nachricht" : "Nachrichten"} an ${woche.length} ${woche.length === 1 ? "Tag" : "Tagen"} · ${esc(werText(woche.flatMap((x) => x.ns)))}</span><b class="tz-datum">${wk}</b></button>`; continue; }
+      html += `<button type="button" class="kw-kopf" data-a="tagUm" data-x="w:${wk}" aria-label="${wk} zuklappen">${wk} <i class="kl-pfeil" aria-hidden="true">▾</i></button>` + woche.map((x) => { if (!tagOffen(x)) zu++; return tagHtml(x); }).join("");
       continue;
     }
     if (!tagOffen(t)) zu++;
@@ -424,7 +424,7 @@ function eingabeHtml(u) {
   const z = C.zustell, zAn = z.push || z.mail || z.whatsapp, alle = z.push && z.mail && z.whatsapp;
   const exp = !expressUnbegrenzt() ? ` data-zahl="${expressHeute()}/${expressMax()}"` : "";
   const hinweis = [C.wichtig ? "❗ Wird als WICHTIG gesendet – bei allen farbig markiert, auch per E-Mail" : "", C.express ? "🏎️ Express: kommt sofort an – auch nachts. Beim Empfänger geht ein Fenster auf." : "", C.ablauf ? `⏳ Löscht sich nach ${C.ablauf === 1 ? "1 Std." : C.ablauf === 24 ? "24 Std." : "7 Tagen"} – bei allen` : "", C.diktat ? "🗣️ Ich höre zu … einfach sprechen" : "", entwurf(u.id) && !document.getElementById("chatText") ? "✏️ Entwurf – noch nicht gesendet" : ""].filter(Boolean);
-  return `<div class="chat-eingabe" id="chatEingabe">
+  return `<div class="chat-eingabe${C.schreibZu ? " zu" : ""}" id="chatEingabe"><button type="button" class="schreib-griff" data-a="schreibenKlappe" aria-expanded="${!C.schreibZu}" aria-label="${C.schreibZu ? "Schreibbereich öffnen" : "Schreibbereich einklappen – mehr Platz für Nachrichten"}">${C.schreibZu ? "▴ ✏️ Schreiben" : "▾"}</button>
     ${a ? `<div class="antwort-leiste"><div class="zitat"><b>↩️ ${esc(a.von === ich() ? "Du" : name(a.von))}</b><span>${esc(String(a.text).slice(0, 90))}</span></div><button type="button" class="knopf klein" data-a="naAntwortWeg" aria-label="Antwort aufheben">✕</button></div>` : ""}
     ${C.zustellOffen ? `<div class="zustell"><span>Benachrichtigen:</span><button class="${alle ? "an" : ""}" data-a="zustellWahl" data-x="alle">✅ Alle</button><button class="${z.push ? "an" : ""}" data-a="zustellWahl" data-x="push">🔔 Push</button><button class="${z.mail ? "an" : ""}" data-a="zustellWahl" data-x="mail">✉️ E-Mail</button><button class="${z.whatsapp ? "an" : ""}" data-a="zustellWahl" data-x="whatsapp">🟢 WhatsApp</button><span>${z.push || z.mail ? "" : "· wie eingestellt"}</span></div>` : ""}
     ${C.emoji ? `<div class="chat-emoji">${EMOJIS.map((e) => `<button type="button" data-a="chatEmoji" data-x="${e}" aria-label="Emoji ${e}">${e}</button>`).join("")}</div>` : ""}
@@ -453,12 +453,13 @@ VIEWS.unterhaltung = {
     if (!u || !meineUnterhaltungen().some((x) => x.id === id)) return kopf("Nachrichten") + '<div class="leer">Nicht gefunden.</div>';
     const l = empfaengerVon(db, u), p = chatPartnerVon(u);
     const unter = p ? ({ schueler: "Schüler/in", eltern: "Eltern", lehrkraft: "Lehrkraft", leitung: "Leitung" }[hole("personen", p)?.typ] || "Bachkreis") : u.art === "verteiler" ? `📣 Rundschreiben · ${l.length} Empfänger` : `${u.art === "runde" ? "Runde" : "Gruppe"} · ${l.length} Mitglieder`;
-    return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${stummAn(id) ? '<span title="stumm" aria-label="stumm">🔕</span> ' : ""}${esc(chatTitel(u))}</h2><div class="hinweis">${esc(unter)}</div></div>
+    return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${stummAn(id) ? '<span title="stumm" aria-label="stumm">🔕</span> ' : ""}${esc(chatTitel(u))}</h2><div class="hinweis kk-zeile" id="kkZeile">${esc(unter)}${!p && l.length ? ` · Mit: ${esc(l.filter((x) => x !== ich()).map((x) => vorn(x)).join(", "))}` : ""}</div></div><button type="button" class="kk-pfeil" data-a="chatKopfKlappe" aria-label="Alle Namen zeigen" aria-expanded="false" hidden><span class="kl-pfeil zu" aria-hidden="true">▾</span></button>
       <button type="button" class="chat-kopf-knopf" data-a="chatSucheAuf" data-x="${esc(id)}" aria-label="Im Chat suchen">🔍</button><button type="button" class="chat-kopf-knopf" data-a="chatMenue" data-x="${esc(id)}" aria-label="Mehr zum Chat">⋮</button></div>
       ${angeheftetHtml(u)}<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat" id="chatVerlauf">${verlaufHtml(u)}</div>${eingabeHtml(u)}`;
   },
   nach(w, { id }) {
-    if (C.filterChat !== id) { C.filter = "alle"; C.filterChat = id; }
+    if (C.filterChat !== id) { C.filter = "alle"; C.filterChat = id; C.schreibZu = false; } // ✏️ beim Öffnen eines Chats ist der Schreibbereich immer offen
+    const kz = document.getElementById("kkZeile"), kp = w.querySelector(".kk-pfeil"); if (kz && kp) kp.hidden = kz.scrollWidth <= kz.clientWidth + 1; // Pfeil nur, wenn die Zeile nicht ganz hinpasst
     filterAnwenden();
     cfAnwenden();
     eingabeVerdrahten(id, false);
@@ -573,6 +574,21 @@ const FILTER = ["alle", "andere", "meine", "keine"], FILTER_TEXT = { alle: "Alle
 AKTIONEN.chatFilterWeiter = () => { C.filter = FILTER[(FILTER.indexOf(C.filter || "alle") + 1) % FILTER.length]; filterAnwenden(); eingabeNeu(); toast(FILTER_TEXT[C.filter]); };
 function filterAnwenden() { const v = document.getElementById("chatVerlauf"); if (!v) return; for (const f of FILTER) v.classList.toggle("nur-" + f, C.filter === f && f !== "alle"); }
 
+// 👥 Chat-Kopf: alle Namen auf- und zuklappen · ✏️ Schreibbereich wegklappen (mehr Platz für Nachrichten), Antippen öffnet und setzt die Schreibmarke
+AKTIONEN.chatKopfKlappe = (_, el) => {
+  const z = document.getElementById("kkZeile"); if (!z) return;
+  const auf = z.classList.toggle("auf"); el.setAttribute("aria-expanded", String(auf)); el.setAttribute("aria-label", auf ? "Namen einklappen" : "Alle Namen zeigen");
+  el.querySelector(".kl-pfeil")?.classList.toggle("zu", !auf);
+};
+AKTIONEN.schreibenKlappe = () => {
+  C.schreibZu = !C.schreibZu;
+  const e = document.getElementById("chatEingabe"), g = e?.querySelector(".schreib-griff"); if (!e || !g) return;
+  e.classList.toggle("zu", C.schreibZu);
+  g.textContent = C.schreibZu ? "▴ ✏️ Schreiben" : "▾"; g.setAttribute("aria-expanded", String(!C.schreibZu));
+  g.setAttribute("aria-label", C.schreibZu ? "Schreibbereich öffnen" : "Schreibbereich einklappen – mehr Platz für Nachrichten");
+  abstand();
+  if (!C.schreibZu) document.getElementById("chatText")?.focus();
+};
 // Nur die Eingabe neu zeichnen (Text bleibt, Fokus bleibt)
 function eingabeNeu() {
   const alt = document.getElementById("chatEingabe"), u = hole("unterhaltungen", S.params.id); if (!alt || !u) return zeichne();

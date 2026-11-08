@@ -224,9 +224,9 @@ VIEWS.instrumentenkunde = {
       <div class="lehre-steckbrief">
         <div><small>Tonumfang</small><b>${l.umfang[0] ? `${esc(l.umfang[0].replace("b", "♭"))} – ${esc(l.umfang[1].replace("b", "♭"))}` : "ohne feste Tonhöhe"}</b></div>
         <div><small>Notenschlüssel</small><b>${esc(l.schluessel)}</b></div><div><small>Stimmung</small><b>${esc(l.stimmung)}</b></div><div><small>Steckbrief</small><b>${esc(l.steckbrief)}</b></div></div>
-      <details class="karte lehre-abschnitt" open><summary>✋ Darauf kommt es an</summary><ul>${l.beachten.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>
-      <details class="karte lehre-abschnitt"><summary>🧽 Pflege</summary><ul>${l.pflege.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>
-      <details class="karte lehre-abschnitt"><summary>🌱 Einstieg</summary><p>${esc(l.einstieg)}</p></details>
+      <details class="karte lehre-abschnitt" data-klappe="lehre_beachten" data-ohne-unten open><summary>✋ Darauf kommt es an</summary><ul>${l.beachten.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>
+      <details class="karte lehre-abschnitt" data-klappe="lehre_pflege" data-ohne-unten><summary>🧽 Pflege</summary><ul>${l.pflege.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></details>
+      <details class="karte lehre-abschnitt" data-klappe="lehre_einstieg" data-ohne-unten><summary>🌱 Einstieg</summary><p>${esc(l.einstieg)}</p></details>
       <div class="karte lehre-wussten">💡 <b>Schon gewusst?</b> ${esc(l.wussten)}</div>
       <div class="karte"><h3>🎼 Im Bachkreis</h3>${b.spieler.length ? `<div class="lehre-gesichter">${gesichter}${b.spieler.length > 14 ? `<span class="hinweis">+${b.spieler.length - 14}</span>` : ""}</div><p class="hinweis">${b.spieler.length} ${b.spieler.length === 1 ? "spielt" : "spielen"} ${esc(l.name.split(" ")[0])}.</p>` : `<p class="hinweis">Zurzeit spielt das im Bachkreis niemand – vielleicht du? 😊</p>`}
         ${istVerwalter() && b.inv.length ? `<p>🏷️ Leihinstrumente: <b>${b.frei} frei</b> von ${b.inv.length} <button type="button" class="knopf klein" data-a="lehreInventar" data-x="${esc(b.typen[0] || "")}">Ansehen ›</button></p>` : ""}</div>`;

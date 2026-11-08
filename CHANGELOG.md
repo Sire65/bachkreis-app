@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.44.0 DEV – 08.11.2026
+- 🔽 Klappbereiche wie in der KC Club App (KC-CLUB-KLAPPE-GLEICH, -KLAPPE-UNTEN, -KLAPPEN-ALLE, -GRUPPE-KLAPPEN): ein gemeinsamer Baustein `js/kern/klappen.js` für jeden `<details data-klappe>` – Titel links, runder weinroter Pfeil rechts (dreht sich), 🔓/🔒 Schloss stellt den Bereich fest (neben der Kopfzeile, damit Bildschirmleser keinen verschachtelten Knopf finden), unten „▴ Zuklappen“ (springt zur Überschrift), Auf/Zu je Gerät gemerkt; oben „▾ Alle auf / ▴ Alle zu“ (festgestellte bleiben, wie sie sind). Wird beim Zeichnen jeder Seite und jedes Blatts eingerichtet
+- 💬 Chat: runde weinrote Pfeile an eingeklappten Tagen und Wochen und an aufgeklappten Tages-/Wochenköpfen (KC-CLUB-KLAPP-PFEILE), Abschnitte der Chat-Übersicht und „Archiviert“ mit demselben Pfeil; 👥 Chat-Kopf: „Mit: …“ einzeilig, Pfeil zeigt alle Namen (nur wenn die Zeile nicht passt, beim Öffnen immer zu – KC-CLUB-CHAT-KOPF-KLAPPEN); ✏️ ▾-Griff über dem Schreibfeld klappt den Schreibbereich weg, „▴ ✏️ Schreiben“ öffnet ihn mit Schreibmarke, beim Öffnen eines Chats immer offen (KC-CLUB-SCHREIBEN-KLAPPEN)
+- 📋 Listen: Termine (Heute · Morgen · Woche · Monate), Protokolle (Meine Aufgaben, Jahre), Vorschläge › Erledigt (nach Monaten), Rückmeldungen (Eingang der Leitung, Meine), Erstattung › Kasse (nach Status), Einstellungen (+ Alle auf/zu), Instrumente und Noten (Gruppen), Instrumentenkunde, Probenplan/Protokoll, Startnachrichten, Chronik u. a.
+- ⚙️ Einstellungen innen wie KC in Unter-Klappen mit Pfeil (Auf/Zu gemerkt, die Suche öffnet passende): 🎨 Darstellung › Farbdesign · Themen · Tag & Nacht · Schrift & Größe · Schatten, Ecken & Tippflächen · Chat-Farben · Sparmodus; ✨ Effekte › Bewegung · Uhr · Überraschungen · Jahreszeiten · Kacheln & Register · Senden & Löschen · Klänge; 🧩 Startseite › Ansicht · Info-Feld & Laufband · Kacheln · Anordnen & auswählen
+- Korrektur: ein langer angehefteter Zettel im Chat machte die Seite auf dem Handy breiter als den Bildschirm
+- tests/klappen.test.mjs
+
+
 ## 0.43.1 DEV – 08.11.2026
 - 🧑‍💻 Korrektur: Wer nur die Rolle „Entwickler“ hat (ohne eingetragene Admin-Rolle), gilt jetzt überall als Admin – PC-Verwaltung (Rechte je Tabelle, geschützte Bereiche, Kommunikation), Chat-Regeln und Pinnwand (schema.js), Express ohne Grenze, Communicator-Wartung (Server), Empfängerlisten bei Terminumfrage, Protokollen, Rückmeldungen und Abstimmungen
 - tests/admin-rollen.test.mjs (+ Nur-Entwickler)

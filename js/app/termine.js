@@ -1,5 +1,6 @@
 // Termine: Liste/Kalender, Zu-/Absage (auch Eltern für ihre Kinder), Besetzungsampel, Nachfassen, Serientermine,
 // Abwesenheit (Zeitraum auf einmal absagen), Kalender-Export (.ics). Vorbild: KC Club „treffen“/„teilnahme“.
+import { klappe, klappenAlleKnopf } from "../kern/klappen.js";
 import { mitfahrtHtml, mitfahrtZahlen } from "./extras.js";
 import { offeneFuerMich } from "./terminumfrage.js";
 import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istLehrkraft, istLeitung, istEltern, hatRolle } from "./zustand.js";
@@ -110,7 +111,7 @@ VIEWS.termine = {
     const modusKn = `<div class="umschalter">${[["liste", "☰ Liste"], ["kalender", "🗓️ Kalender"]].map(([k, n]) => `<button class="${modus === k ? "an" : ""}" data-a="termineModus" data-x="${k}">${n}</button>`).join("")}</div>`;
     const hinweis = stand?.offen && !["meine_offen"].includes(filter) && !planer ? `<button type="button" class="karte t-hinweis" data-a="termineFilter" data-x="meine_offen">❔ <b>${stand.offen} ${stand.offen === 1 ? "Termin wartet" : "Termine warten"} auf ${istEltern() ? "eure" : "deine"} Antwort</b><span>antippen ›</span></button>` : "";
     const inhalt = modus === "kalender" ? monatsKalender(ts, p.monat)
-      : ts.length ? abschnitte(ts).map((a) => `<h3 class="t-abschnitt">${esc(a.k)}</h3>${a.l.map((t) => terminKarte(t)).join("")}`).join("")
+      : ts.length ? ((ab) => (ab.length > 2 ? klappenAlleKnopf("inhalt") : "") + ab.map((a, i) => klappe(`tm_${a.k.replace(/[^a-z0-9]/gi, "_")}`, `<span class="t-abschnitt">${esc(a.k)}</span>`, a.l.map((t) => terminKarte(t)).join(""), { offen: i < 4, zahl: a.l.length, klasse: "t-klappe", ohneUnten: a.l.length < 4 })).join(""))(abschnitte(ts))
       : `<div class="leer">${f === "eigene" ? "Noch keine eigenen Termine.<br><button class=\"knopf haupt\" data-a=\"eigenNeu\">＋ Eigenen Termin eintragen</button>" : f === "offen" ? "🎉 Alles beantwortet!" : "Keine Termine."}</div>`;
     const tu = offeneFuerMich(); // 🗳️ 0.39.0 offene Terminumfragen für mich
     const tuHinweis = tu.length ? `<button type="button" class="karte t-hinweis tu-hinweis" data-a="${tu.length === 1 ? "oeffne" : "kachel"}" data-x="${tu.length === 1 ? `terminumfrage|${esc(tu[0].id)}` : "terminumfragen"}">🗳️ <b>${tu.length === 1 ? `Wann passt es? „${esc(tu[0].titel)}“` : `${tu.length} Terminumfragen warten`}</b> – bitte abstimmen ›</button>` : "";
@@ -204,8 +205,8 @@ VIEWS.termin = {
       <div class="t-marken">${teilnahmeBadge(t)}${t.fuer_alle ? '<span class="badge b-alle">🌍 für alle</span>' : ""}${t.register?.length ? `<span class="badge b-lila">🎼 Registerprobe: ${t.register.map((r) => esc(hole("register", r)?.kurz || "")).join(", ")}</span>` : ""}</div>
       ${t.frist ? `<div class="hinweis">Antwort bis ${datumKurz(t.frist)}</div>` : ""}
       ${t.beschreibung ? `<p>${esc(t.beschreibung).replace(/\n/g, "<br>")}</p>` : ""}
-      ${t.probenplan ? `<details class="t-probenplan" open><summary>🎼 Probenplan</summary><p>${esc(t.probenplan).replace(/\n/g, "<br>")}</p></details>` : ""}
-      ${t.protokoll && darfPlanen() ? `<details class="t-probenplan"><summary>📝 Probenprotokoll (intern)</summary><p>${esc(t.protokoll).replace(/\n/g, "<br>")}</p></details>` : ""}
+      ${t.probenplan ? `<details class="t-probenplan" data-klappe="t_probenplan" data-ohne-unten open><summary>🎼 Probenplan</summary><p>${esc(t.probenplan).replace(/\n/g, "<br>")}</p></details>` : ""}
+      ${t.protokoll && darfPlanen() ? `<details class="t-probenplan" data-klappe="t_protokoll" data-ohne-unten><summary>📝 Probenprotokoll (intern)</summary><p>${esc(t.protokoll).replace(/\n/g, "<br>")}</p></details>` : ""}
       ${t.status === "abgesagt" ? '<p class="badge b-rot">Dieser Termin ist abgesagt.</p>' : ""}
       <div class="knopfreihe"><button class="knopf klein" data-a="terminIcs" data-x="${t.id}">📆 In meinen Kalender</button><button class="knopf klein" data-a="terminWa" data-x="${t.id}">🟢 Per WhatsApp teilen</button></div></div>`;
     const meine = fuerWen().filter((p) => eingeladen(db, t, p));
@@ -332,7 +333,7 @@ function terminForm(t = {}) {
     <div class="feld"><label>Projekt</label><select name="projekt_id"><option value="">–</option>${projekte.map((p) => `<option value="${p.id}" ${p.id === t.projekt_id ? "selected" : ""}>${esc(p.titel)}</option>`).join("")}</select></div>
     <div class="feld"><label>Antwort bis</label><input type="date" name="frist" value="${esc(t.frist || "")}"></div>
     <div class="feld"><label>Hinweise</label><textarea name="beschreibung">${esc(t.beschreibung || "")}</textarea></div>
-    <details><summary><b>Soll-Besetzung je Register</b> (für die Ampel)</summary>${regs.map((r) => `<div class="feld" style="display:flex;gap:8px;align-items:center"><label style="flex:1">${esc(r.name)}</label><input type="number" min="0" style="width:80px" name="soll_${r.id}" value="${soll[r.id] || ""}"></div>`).join("")}</details>
+    <details data-klappe="t_soll" data-ohne-unten><summary><b>Soll-Besetzung je Register</b> (für die Ampel)</summary>${regs.map((r) => `<div class="feld" style="display:flex;gap:8px;align-items:center"><label style="flex:1">${esc(r.name)}</label><input type="number" min="0" style="width:80px" name="soll_${r.id}" value="${soll[r.id] || ""}"></div>`).join("")}</details>
     ${t.id ? "" : `<div class="feld"><label>Wiederholen (Serie)</label><select name="serie"><option value="">einmalig</option><option value="7">wöchentlich</option><option value="14">alle 2 Wochen</option></select></div><div class="feld"><label>Serie bis</label><input type="date" name="serie_bis"></div>`}
     <label class="schalter"><span>Eingeladene benachrichtigen</span><input type="checkbox" name="melden" checked></label>
     <button class="knopf haupt breit" data-a="terminSpeichern" data-x="${t.id || ""}">💾 Speichern</button></div>`;

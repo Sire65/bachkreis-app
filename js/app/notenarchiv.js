@@ -135,7 +135,7 @@ function notenHtml(w, gr) {
   const block = (f) => {
     const l = sicht.filter((s) => famVon(s) === f); if (!l.length) return "";
     const [sym, t] = FAM[f] || ["🎵", f];
-    return `<details class="ig" open><summary>${sym} ${esc(t)} <b>${l.length}</b><small>🎼 ${l.filter(hatNoten).length}/${l.length}</small></summary>`
+    return `<details class="ig" data-klappe="na_${esc(String(t).replace(/[^a-z0-9]/gi, "_"))}" data-ohne-unten open><summary>${sym} ${esc(t)} <b>${l.length}</b><small>🎼 ${l.filter(hatNoten).length}/${l.length}</small></summary>`
       + (ansicht() === "liste" ? `<ul class="liste">${l.map(zeile).join("")}</ul>` : `<div class="na-stimmen">${l.map(kachel).join("")}</div>`) + "</details>";
   };
   const r = RECHTE[w.rechte];

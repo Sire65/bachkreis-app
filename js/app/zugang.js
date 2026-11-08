@@ -86,7 +86,7 @@ function speicherHtml() {
   const st = speicherStufen(s), warn = st.filter((x) => x.stufe === "gelb" || x.stufe === "rot");
   return `<div class="karte"><h3>💾 Speicher (kostenloser Tarif)</h3>${warn.length ? `<p><span class="badge ${warn.some((x) => x.stufe === "rot") ? "b-rot" : "b-gelb"}">⚠️ ${warn.map((x) => `${x.t}: ${x.p} %`).join(" · ")} – bald aufräumen oder größeren Tarif wählen</span></p>` : '<p><span class="badge b-gruen">🟢 Genug Platz</span></p>'}
     ${st.map((x) => `<div class="sp-zeile"><div class="sp-text"><b>${esc(x.t)}</b><span>${x.unbekannt ? "❔ unbekannt" : `${x.mb.toFixed(1)} von ${x.grenze} MB · ${x.p} %`}</span></div><div class="sp-balken" role="img" aria-label="${x.p} Prozent belegt"><i class="${x.stufe}" style="width:${Math.min(100, x.p)}%"></i></div>${x.extra ? `<small class="hinweis">${esc(x.extra)}</small>` : ""}</div>`).join("")}
-    <details><summary>Größte Tabellen</summary><ul class="liste">${(s.tabellen || []).map((t) => `<li><div class="fl">${esc(t.tabelle.replace(/^bk_/, ""))}</div><b>${MB(t.bytes).toFixed(1)} MB</b></li>`).join("")}</ul></details>
+    <details data-klappe="zg_tabellen" data-ohne-unten data-ohne-schloss><summary>Größte Tabellen</summary><ul class="liste">${(s.tabellen || []).map((t) => `<li><div class="fl">${esc(t.tabelle.replace(/^bk_/, ""))}</div><b>${MB(t.bytes).toFixed(1)} MB</b></li>`).join("")}</ul></details>
     <p class="hinweis">Gemessen ${esc(vorZeit(s.gemessen))}. Das Änderungsprotokoll wird nach ${esc(String(konfig().aenderungen_monate || 12))} Monaten automatisch aufgeräumt. Grenzen änderbar in der PC-Verwaltung (Einstellungen).</p></div>`;
 }
 VIEWS.zugang = {

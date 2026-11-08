@@ -98,7 +98,7 @@ VIEWS.instrumente = {
     const gr = gruppiert(l);
     let inhalt = "";
     if (!l.length) inhalt = `<div class="leer">Keine Instrumente gefunden.${IF.q || aktiv.length || IF.status !== "aktiv" ? '<br><button class="knopf klein" data-a="instReset">↺ Suche & Filter zurücksetzen</button>' : ""}</div>`;
-    else if (ans === "liste") inhalt = gr.map((g) => (g.titel ? `<details class="ig" open><summary>${esc(g.titel)} <b>${g.l.length}</b></summary>` : "<div>") + `<ul class="iz-liste">${g.l.map(zeileHtml).join("")}</ul>` + (g.titel ? "</details>" : "</div>")).join("");
+    else if (ans === "liste") inhalt = gr.map((g) => (g.titel ? `<details class="ig" data-klappe="ig_l_${esc(String(g.titel).replace(/[^a-z0-9]/gi, "_"))}" data-ohne-unten open><summary>${esc(g.titel)} <b>${g.l.length}</b></summary>` : "<div>") + `<ul class="iz-liste">${g.l.map(zeileHtml).join("")}</ul>` + (g.titel ? "</details>" : "</div>")).join("");
     else if (ans === "dreh") {
       const reihe = gr.flatMap((g) => g.l);
       const reiter = [...new Set(reihe.map((x) => x.gruppe))];
@@ -108,7 +108,7 @@ VIEWS.instrumente = {
         <button type="button" class="dreh-pfeil rechts" data-a="drehSchritt" data-x="1" aria-label="nächstes Instrument">›</button></div>`;
     } else inhalt = gr.map((g) => {
       const frei = g.l.filter((x) => x.i.status === "verfuegbar").length, verl = g.l.filter((x) => x.i.status === "verliehen").length;
-      return (g.titel ? `<details class="ig" open><summary>${esc(g.titel)} <b>${g.l.length}</b><small>${frei} frei · ${verl} verliehen</small></summary>` : "<div>") + `<div class="ik-gitter">${g.l.map(kachelHtml).join("")}</div>` + (g.titel ? "</details>" : "</div>");
+      return (g.titel ? `<details class="ig" data-klappe="ig_k_${esc(String(g.titel).replace(/[^a-z0-9]/gi, "_"))}" data-ohne-unten open><summary>${esc(g.titel)} <b>${g.l.length}</b><small>${frei} frei · ${verl} verliehen</small></summary>` : "<div>") + `<div class="ik-gitter">${g.l.map(kachelHtml).join("")}</div>` + (g.titel ? "</details>" : "</div>");
     }).join("");
     return kopf("🎻 Instrumente", `<span class="hinweis">${l.length}${l.length !== alle.length ? ` / ${alle.length}` : ""}</span>`)
       + `<div class="inst-leiste"><input type="search" id="instSuche" placeholder="🔍 Nr., Instrument, Hersteller, Name …" value="${esc(IF.q)}" aria-label="Instrumente durchsuchen">
@@ -125,7 +125,7 @@ VIEWS.instrumente = {
         <button type="button" class="knopf klein" data-a="instReset">↺ Zurücksetzen</button></div>` : ""}
       ${aktiv.length ? `<div class="inst-aktiv">${aktiv.map(([k, t]) => `<button type="button" data-a="instFeldWeg" data-x="${k}">${esc(t)} ✕</button>`).join("")}</div>` : ""}
       <div class="inst-inhalt ans-${ans}">${inhalt}</div>
-      ${reps.length ? `<details class="karte inst-rep"><summary>🔧 ${reps.length} offene ${reps.length === 1 ? "Reparatur" : "Reparaturen"}</summary><ul class="liste">${reps.map((r) => `<li class="klick" data-a="oeffne" data-x="reparatur|${r.id}"><div class="fl"><div class="zeile-titel">${esc(hole("inventar", r.inventar_id)?.inventar_nr || "")} · ${esc(hole("inventar", r.inventar_id)?.bezeichnung || "")}</div><div class="zeile-unter">${esc(r.meldung)}</div></div><span class="badge ${REP[r.status]?.[0] || ""}">${esc(REP[r.status]?.[1] || r.status)}</span></li>`).join("")}</ul></details>` : ""}
+      ${reps.length ? `<details class="karte inst-rep" data-klappe="inst_rep"><summary>🔧 ${reps.length} offene ${reps.length === 1 ? "Reparatur" : "Reparaturen"}</summary><ul class="liste">${reps.map((r) => `<li class="klick" data-a="oeffne" data-x="reparatur|${r.id}"><div class="fl"><div class="zeile-titel">${esc(hole("inventar", r.inventar_id)?.inventar_nr || "")} · ${esc(hole("inventar", r.inventar_id)?.bezeichnung || "")}</div><div class="zeile-unter">${esc(r.meldung)}</div></div><span class="badge ${REP[r.status]?.[0] || ""}">${esc(REP[r.status]?.[1] || r.status)}</span></li>`).join("")}</ul></details>` : ""}
       <p class="hinweis">Neue Instrumente, Inventarnummern, Werte, Instrumentengruppen und Symbole pflegt die PC-Verwaltung.</p>`;
   },
   nach(w) {

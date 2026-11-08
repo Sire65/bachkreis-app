@@ -36,7 +36,7 @@ VIEWS.kalender = {
       : `<div class="kal-knoepfe"><a class="knopf haupt" href="${esc(l.webcal)}">🍎 Apple Kalender abonnieren</a>
           <a class="knopf haupt kal-google" href="https://calendar.google.com/calendar/r?cid=${encodeURIComponent(l.webcal)}" target="_blank" rel="noopener">🟢 Google Kalender abonnieren</a>
           <button class="knopf" data-a="kalKopieren">📋 Link kopieren (Outlook, andere)</button></div>
-        <details class="kal-hilfe"><summary>So geht's</summary><ul>
+        <details class="kal-hilfe" data-klappe="kal_hilfe" data-ohne-unten data-ohne-schloss><summary>So geht's</summary><ul>
           <li><b>iPhone/iPad/Mac:</b> „Apple Kalender abonnieren“ tippen → „Abonnieren“ → „Hinzufügen“. Die Termine erscheinen als eigener Kalender „Bachkreis“.</li>
           <li><b>Google:</b> „Google Kalender abonnieren“ öffnet Google (am besten am PC, angemeldet) → „Hinzufügen“. Auf dem Android-Handy erscheint der Kalender danach von selbst (ggf. in der Kalender-App unter „Bachkreis“ das Synchronisieren einschalten). Google aktualisiert Abos nur alle paar Stunden.</li>
           <li><b>Outlook:</b> Link kopieren → „Kalender hinzufügen“ → „Aus dem Internet abonnieren“.</li></ul></details>

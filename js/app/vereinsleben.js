@@ -41,7 +41,7 @@ function chronikHtml() {
   if (!alle.length) return '<div class="leer">Noch keine Einträge.</div>';
   const jahrzehnte = [...new Set(l.map((c) => Math.floor(c.jahr / 10) * 10))];
   return jahrzehnte.map((jz) => `<div class="karte"><h3>${jz}er</h3><ol class="vl-zeitleiste">${l.filter((c) => Math.floor(c.jahr / 10) * 10 === jz).map(chZeile).join("")}</ol></div>`).join("")
-    + (ohne.length ? `<details class="karte"><summary><b>📌 Ohne Jahresangabe (${ohne.length})</b> – z. B. Auftrittsorte von der Schul-Website</summary><ol class="vl-zeitleiste">${ohne.map(chZeile).join("")}</ol>
+    + (ohne.length ? `<details class="karte" data-klappe="ch_ohne"><summary><b>📌 Ohne Jahresangabe (${ohne.length})</b> – z. B. Auftrittsorte von der Schul-Website</summary><ol class="vl-zeitleiste">${ohne.map(chZeile).join("")}</ol>
       ${vorstandOderLeitung() ? '<p class="hinweis">Wer das Jahr weiß: ✏️ antippen und eintragen – dann rutscht der Eintrag in die Zeitleiste.</p>' : ""}</details>` : "");
 }
 

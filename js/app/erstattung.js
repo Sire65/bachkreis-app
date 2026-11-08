@@ -2,6 +2,7 @@
 // änderbar in der PC-Verwaltung als km_satz) und Auslagen mit Beleg (Foto oder PDF). Einreichen: Erwachsene (Lehrkräfte, Leitung, Vorstand, Eltern als
 // Fahrer). Die Kasse (Vorstand Förderverein, Leitung) genehmigt, zahlt aus oder lehnt ab – mit Notiz. Den Betrag rechnet der Server.
 // 🖨️ Antrag auf dem Bachkreis-Briefbogen, ⬇️ CSV für die Kasse. Keine Bankdaten in der App – ausgezahlt wird wie gewohnt über die Kasse.
+import { klappe, klappenAlleKnopf } from "../kern/klappen.js";
 import { S, VIEWS, zeichne, kopf, name, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, herunterladen } from "../kern/ui.js";
 import { liste, hole, speichere, neueId, konfig } from "../kern/daten.js";
@@ -31,7 +32,7 @@ VIEWS.erstattung = {
     const summe = (l, st) => l.filter((e) => !st || st.includes(e.status)).reduce((s, e) => s + (Number(e.betrag) || 0), 0);
     const inhalt = E.tab === "kasse" && kasse()
       ? `<div class="karte"><p>📨 offen: <b>${euro(summe(alle, ["eingereicht"]))}</b> · ✅ genehmigt, noch nicht ausgezahlt: <b>${euro(summe(alle, ["genehmigt"]))}</b></p><div class="knopfreihe"><button type="button" class="knopf klein" data-a="erCsv">⬇️ Als Liste (CSV)</button></div>
-          <ul class="liste">${alle.map((e) => zeile(e, true)).join("") || '<li class="leer">Keine Erstattungen.</li>'}</ul></div>`
+</div>${alle.length ? klappenAlleKnopf("inhalt") + Object.keys(ER_STATUS).map((st) => { const l = alle.filter((e) => e.status === st); return l.length ? klappe(`er_${st}`, esc(ER_STATUS[st]), `<ul class="liste">${l.map((e) => zeile(e, true)).join("")}</ul>`, { offen: ["eingereicht", "genehmigt"].includes(st), zahl: l.length }) : ""; }).join("") : '<div class="leer">Keine Erstattungen.</div>'}`
       : `<div class="knopfreihe"><button type="button" class="knopf haupt" data-a="erNeu" data-x="fahrt">🚗 Fahrtkosten</button><button type="button" class="knopf haupt" data-a="erNeu" data-x="auslage">🧾 Auslage</button></div>
         <div class="karte"><ul class="liste">${meine.map((e) => zeile(e, false)).join("") || '<li class="leer">Noch nichts eingereicht.</li>'}</ul></div>`;
     return kopf("💶 Erstattung") + `<p class="hinweis">Fahrtkosten (${euro(satz())} je km) und Auslagen mit Beleg. Ausgezahlt wird über die Kasse des Fördervereins – Bankdaten stehen nicht in der App.</p>` + tabs + inhalt;

@@ -1,6 +1,7 @@
 // 🆘💬 Rückmeldungen zur App (0.42.0, wie KC-CLUB-UNTERSTUETZUNG-ANFRAGE, KC-CLUB-FEEDBACK, „Klappt etwas nicht?“ KC-CLUB-HILFE-INSTALL):
 // 🆘 Problem melden · 🤝 Hilfe mit der App anfragen (auf Wunsch Rückruf) · 💡 Idee · ⭐ Lob mit Sternen. Die App hängt technische Angaben an
 // (Gerät, Browser, installiert?, Version, wo in der App) – keine Inhalte. Die Leitung antwortet; die Antwort steht bei der Meldung und kommt als Nachricht.
+import { klappe, klappenAlleKnopf } from "../kern/klappen.js";
 import { S, VIEWS, zeichne, kopf, name, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
@@ -51,8 +52,8 @@ VIEWS.rueckmeldungen = {
       ${leitung ? `<button type="button" class="knopf klein" data-a="rmAntworten" data-x="${esc(r.id)}">💬 ${r.antwort ? "Antwort ändern" : "Antworten"}</button>` : ""}</div>`;
     return kopf("🆘 Rückmeldungen", '<button class="knopf haupt klein" data-a="rmNeu" data-x="problem">＋ Neu</button>')
       + `<div class="knopfreihe rm-schnell">${Object.entries(RM_ARTEN).map(([k, t]) => `<button type="button" class="knopf" data-a="rmNeu" data-x="${k}">${t}</button>`).join("")}</div>`
-      + (chef() ? `<h3>🧑‍💼 Eingang der Leitung</h3><div class="umschalter" role="group" aria-label="Filter">${[["neu", "🆕 neu"], ["in_arbeit", "🔧 in Arbeit"], ["erledigt", "✅ erledigt"], ["alle", "alle"]].map(([k, t]) => `<button type="button" class="${F.status === k ? "an" : ""}" aria-pressed="${F.status === k}" data-a="rmFilter" data-x="${k}">${t}</button>`).join("")}</div>${alle.map((r) => zeile(r, true)).join("") || '<div class="leer">Nichts in dieser Liste.</div>'}` : "")
-      + `<h3>🙋 Meine Rückmeldungen</h3>${meine.map((r) => zeile(r, false)).join("") || '<div class="leer">Noch nichts gemeldet. Klappt etwas nicht? Oben antippen.</div>'}`;
+      + (chef() ? klappe("rm_eingang", "🧑‍💼 Eingang der Leitung", `<div class="umschalter" role="group" aria-label="Filter">${[["neu", "🆕 neu"], ["in_arbeit", "🔧 in Arbeit"], ["erledigt", "✅ erledigt"], ["alle", "alle"]].map(([k, t]) => `<button type="button" class="${F.status === k ? "an" : ""}" aria-pressed="${F.status === k}" data-a="rmFilter" data-x="${k}">${t}</button>`).join("")}</div>${alle.map((r) => zeile(r, true)).join("") || '<div class="leer">Nichts in dieser Liste.</div>'}`, { offen: true, zahl: rmNeu() || null }) : "")
+      + klappe("rm_meine", "🙋 Meine Rückmeldungen", meine.map((r) => zeile(r, false)).join("") || '<div class="leer">Noch nichts gemeldet. Klappt etwas nicht? Oben antippen.</div>', { offen: true, zahl: meine.length });
   },
 };
 AKTIONEN.rmFilter = (k) => { F.status = k; zeichne(); };

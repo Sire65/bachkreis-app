@@ -2,6 +2,7 @@
 // 💡 Vorschlag: jede/r reicht eine Idee ein (an alle oder ans Team), andere unterstützen mit 👍. Das Team macht daraus eine Abstimmung oder legt ihn
 // als ✅ erledigt (mit Ergebnis) ab. 🗳️ Abstimmung: Leitung/Lehrkräfte/Vorstand fragen alle, Eltern, das Team oder den Vorstand – mit Frist, eigenen
 // Antworten (sonst Ja/Nein/Enthaltung) und auf Wunsch 🔒 geheim (dann sieht niemand, wer wie gestimmt hat – erzwingt der Server).
+import { klappe, klappenAlleKnopf } from "../kern/klappen.js";
 import { S, VIEWS, zeige, zeichne, kopf, name, hatRolle, istVerwalter } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
@@ -31,10 +32,20 @@ VIEWS.vorschlaege = {
     const l = V.tab === "vorschlaege" ? vors : V.tab === "erledigt" ? fertig : abst;
     return kopf("💡 Vorschläge & Abstimmungen", `<button class="knopf klein" data-a="vsNeu" data-x="vorschlag">＋ Vorschlag</button>${darfAbstimmungAnlegen() ? '<button class="knopf haupt klein" data-a="vsNeu" data-x="abstimmung">＋ Abstimmung</button>' : ""}`)
       + `<div class="umschalter vier" role="group" aria-label="Ansicht">${tabs.map(([k, t]) => `<button type="button" class="${V.tab === k ? "an" : ""}" aria-pressed="${V.tab === k}" data-a="vsTab" data-x="${k}">${t}</button>`).join("")}</div>`
-      + (l.length ? l.map(karte).join("") : `<div class="leer">${V.tab === "vorschlaege" ? "Noch keine Vorschläge – hast du eine Idee? ＋ Vorschlag" : V.tab === "erledigt" ? "Noch nichts erledigt." : "Gerade läuft keine Abstimmung."}</div>`);
+      + (l.length ? (V.tab === "erledigt" ? erledigtGruppen(l, karte) : l.map(karte).join("")) : `<div class="leer">${V.tab === "vorschlaege" ? "Noch keine Vorschläge – hast du eine Idee? ＋ Vorschlag" : V.tab === "erledigt" ? "Noch nichts erledigt." : "Gerade läuft keine Abstimmung."}</div>`);
   },
 };
 AKTIONEN.vsTab = (k) => { V.tab = k; zeichne(); };
+// 🗂️ Erledigtes nach Monaten in Klappbereichen (KC vs_erledigt / vs_g_) – der neueste Monat ist offen
+function erledigtGruppen(l, karte) {
+  const g = new Map();
+  for (const v of [...l].sort((a, b) => String(b.geaendert_am || b.erstellt_am || "").localeCompare(String(a.geaendert_am || a.erstellt_am || "")))) {
+    const z = new Date(v.geaendert_am || v.erstellt_am || Date.now()), k = `${z.getFullYear()}_${String(z.getMonth() + 1).padStart(2, "0")}`;
+    if (!g.has(k)) g.set(k, { titel: z.toLocaleDateString("de-DE", { month: "long", year: "numeric" }), l: [] });
+    g.get(k).l.push(v);
+  }
+  return (g.size > 1 ? klappenAlleKnopf("inhalt") : "") + [...g].map(([k, x], i) => klappe(`vs_g_${k}`, `🗂️ ${esc(x.titel)}`, x.l.map(karte).join(""), { offen: i === 0, zahl: x.l.length })).join("");
+}
 function karte(v) {
   const z = vsAuszaehlen(v, stimmenVon(v)), meine = meineStimme(v)?.wahl, offen = laeuft(v), darf = offen && zielgruppe(v), chef = v.von === ich() || leitet() || (v.an === "vorstand" && hatRolle("vorstand"));
   const namenSichtbar = !v.anonym && chef, max = Math.max(1, ...z.optionen.map((o) => o.zahl));
@@ -46,7 +57,7 @@ function karte(v) {
   return `<div class="karte vs-karte">${kopfZ}<h3>${esc(v.titel)}</h3>${v.text ? `<p>${esc(v.text)}</p>` : ""}<p class="hinweis">von ${esc(name(v.von))}${v.art === "abstimmung" ? ` · ${z.stimmen} ${z.stimmen === 1 ? "Stimme" : "Stimmen"}` : ""}</p>
     ${v.status === "offen" ? auswahl : ""}${v.ergebnis ? `<p class="vs-ergebnis">✅ <b>Ergebnis:</b> ${esc(v.ergebnis)}</p>` : v.status !== "offen" ? `<div class="vs-optionen">${z.optionen.map((o) => `<div class="vs-option"><b>${esc(o.t)}</b><small>${o.zahl}</small></div>`).join("")}</div>` : ""}
     ${meine && darf ? `<button type="button" class="knopf klein" data-a="vsStimme" data-x="${esc(v.id)}|">↩️ Stimme zurücknehmen</button>` : ""}
-    ${namenSichtbar && z.stimmen ? `<details><summary>Wer hat wie gestimmt?</summary><ul class="liste">${stimmenVon(v).filter((s) => s.wahl && s.person_id).map((s) => `<li><div class="fl">${esc(name(s.person_id))}</div><span>${esc(z.optionen.find((o) => o.id === s.wahl)?.t || s.wahl)}</span></li>`).join("")}</ul></details>` : ""}
+    ${namenSichtbar && z.stimmen ? `<details data-klappe="vs_wer" data-ohne-unten data-ohne-schloss><summary>Wer hat wie gestimmt?</summary><ul class="liste">${stimmenVon(v).filter((s) => s.wahl && s.person_id).map((s) => `<li><div class="fl">${esc(name(s.person_id))}</div><span>${esc(z.optionen.find((o) => o.id === s.wahl)?.t || s.wahl)}</span></li>`).join("")}</ul></details>` : ""}
     ${chef && v.status === "offen" ? `<div class="knopfreihe">${v.art === "vorschlag" && darfAbstimmungAnlegen() ? `<button type="button" class="knopf klein" data-a="vsZurAbstimmung" data-x="${esc(v.id)}">🗳️ Abstimmung daraus</button>` : ""}<button type="button" class="knopf klein" data-a="vsAbschliessen" data-x="${esc(v.id)}">✅ Abschließen</button>${v.art === "abstimmung" ? `<button type="button" class="knopf klein" data-a="vsErinnern" data-x="${esc(v.id)}">📣 Erinnern</button>` : ""}</div>` : ""}</div>`;
 }
 AKTIONEN.vsStimme = async (x) => {

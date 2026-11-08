@@ -1,3 +1,4 @@
+import { klappenEinrichten } from "./klappen.js"; // 🔽 0.44.0 Klappbereiche wie KC
 // Kleine Oberflächen-Helfer (ohne Framework, wie in der Club-App). Ereignisse laufen über data-a="aktion" und
 // eine zentrale Aktions-Registry – keine Inline-onclick-Strings (CSP-freundlich).
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -39,7 +40,7 @@ export function blatt(titel, inhalt) {
   hg.innerHTML = `<div class="blatt" role="dialog" aria-modal="true" aria-label="${esc(titel)}"><h3>${esc(titel)}</h3>${inhalt}<button class="knopf breit" data-a="blattZu">Schließen</button></div>`;
   hg.addEventListener("click", (e) => { if (e.target === hg) blattZu(); });
   document.body.appendChild(hg);
-  beschriftungenVerknuepfen(hg);
+  beschriftungenVerknuepfen(hg); klappenEinrichten(hg);
   return hg.querySelector(".blatt");
 }
 export function blattZu() { $("#blattHg")?.remove(); }

@@ -100,7 +100,7 @@ VIEWS.startnachricht = {
 };
 function gesendetHtml(z) {
   const emp = empfaenger(z), a = emp.map((p) => [p, antwortVon(z.id, p.id)]), zahl = (k) => a.filter(([, x]) => x?.antwort === k).length, offen = a.filter(([, x]) => !x).length;
-  return `<details class="karte"><summary><b>${esc(String(z.text).slice(0, 70))}${String(z.text).length > 70 ? "…" : ""}</b><br><small>${esc(datum(z.zeit))} · von ${esc(name(z.von))} · ${emp.length} Empfänger · ${z.wahl ? `✅ ${zahl("ja")} · ⏰ ${zahl("spaeter")} · ✖ ${zahl("nein")}` : `✓ ${zahl("gelesen")}`} · offen ${offen}</small></summary>
+  return `<details class="karte" data-klappe="sn_${esc(z.id)}" data-ohne-unten><summary><b>${esc(String(z.text).slice(0, 70))}${String(z.text).length > 70 ? "…" : ""}</b><br><small>${esc(datum(z.zeit))} · von ${esc(name(z.von))} · ${emp.length} Empfänger · ${z.wahl ? `✅ ${zahl("ja")} · ⏰ ${zahl("spaeter")} · ✖ ${zahl("nein")}` : `✓ ${zahl("gelesen")}`} · offen ${offen}</small></summary>
     ${a.map(([p, x]) => `<div class="sn-quittung"><span>${esc(name(p))}</span><span>${x ? `${SN_ANTWORTEN[x.antwort] || ""} ${esc(datum(x.am))}${x.rueckfrage ? `<br>↩️ <i>${esc(x.rueckfrage)}</i>` : ""}` : "– noch nicht"}</span></div>`).join("")}
     ${z.von === S.ich?.id || istLeitung() ? `<button type="button" class="knopf klein" data-a="snLoeschen" data-x="${esc(z.id)}">🗑️ Zurückziehen</button>` : ""}</details>`;
 }

@@ -1,11 +1,20 @@
 {
-  "version": "0.43.1",
+  "version": "0.44.0",
   "datum": "2026-11-08",
   "stufe": "DEV",
   "neu": [
-    "🧑‍💻 Der Entwickler hat jetzt überall die vollen Admin-Rechte – auch in der PC-Verwaltung, im Chat und bei Empfängerlisten"
+    "🔽 Klappbereiche wie in der Club App: runder roter Pfeil zum Auf- und Zuklappen, 🔓/🔒 zum Feststellen, unten „▴ Zuklappen“, oben „▾ Alle auf / ▴ Alle zu“ – die App merkt sich, was offen ist – auch innen in den Einstellungen (Farben, Themen, Tag & Nacht, Schrift, Effekte …)",
+    "💬 Im Chat: ▾-Griff über dem Schreibfeld klappt den Schreibbereich weg (mehr Platz zum Lesen), oben im Chat alle Namen per Pfeil",
+    "📋 Listen in Abschnitten zum Aufklappen: Termine, Protokolle, Erledigte Vorschläge, Rückmeldungen, Erstattungen, Instrumente, Noten"
   ],
   "verlauf": [
+    {
+      "version": "0.43.1",
+      "datum": "2026-11-08",
+      "neu": [
+        "🧑‍💻 Der Entwickler hat jetzt überall die vollen Admin-Rechte – auch in der PC-Verwaltung, im Chat und bei Empfängerlisten"
+      ]
+    },
     {
       "version": "0.43.0",
       "datum": "2026-11-08",

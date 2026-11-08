@@ -5,6 +5,7 @@ import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern, istLehrkraft, ist
 import { esc, AKTIONEN, toast, blatt } from "../kern/ui.js";
 import { speichere, datenInfo, serverAktion, konfig, konfigSetzen } from "../kern/daten.js";
 import { einstStufe, CHAT, ER_KM_SATZ } from "../kern/schema.js";
+import { klappenAlleKnopf } from "../kern/klappen.js";
 import { kinderVon } from "../kern/logik.js";
 import { kindAnsicht } from "./kinderstart.js";
 import { EREIGNISSE, KANAELE, wahlVon } from "../kern/versand.js";
@@ -29,6 +30,8 @@ addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installErei
 
 const schalter = (k, t, x = "", an = einst()[k] !== false, c = "einstSchalter2") => `<label class="schalter"><span><b>${t}</b>${x ? `<div class="hinweis">${x}</div>` : ""}</span><input type="checkbox" data-c="${c}" data-x="${k}" ${an ? "checked" : ""}></label>`;
 const chips = (liste, aktiv, a) => `<div class="wahlen">${liste.map(([k, t]) => `<button type="button" class="chip-wahl ${aktiv === k ? "an" : ""}" data-a="${a}" data-x="${esc(k)}" aria-pressed="${aktiv === k}">${t}</button>`).join("")}</div>`;
+// Unter-Klappe innerhalb eines Bereichs (wie KC „🎨 Weitere Farbschemen“, „🌗 Schatten einstellen“ …): Pfeil, ohne Schloss, Auf/Zu gemerkt
+const unter = (id, titel, inhalt, offen = false) => `<details class="kl innen einst-unter" data-klappe="eu_${id}" data-ohne-unten data-ohne-schloss${offen ? " open" : ""}><summary><span class="kl-titel">${titel}</span></summary><div class="kl-inhalt">${inhalt}</div></details>`;
 const bereich = (id, titel, inhalt) => `<details class="einst" data-klappe="${id}" ${offen.has(id) ? "open" : ""}><summary>${titel}</summary>${inhalt}</details>`;
 
 function designKnopf(d) {
@@ -40,7 +43,7 @@ function designKnopf(d) {
 }
 function designWahlHtml(nurOben = false) {
   const grund = D.DESIGNS.filter((d) => !d.mehr), mehr = D.DESIGNS.filter((d) => d.mehr && !d.bunt), bunt = D.DESIGNS.filter((d) => d.bunt);
-  const zone = (l, t) => `<details class="ds-mehr" ${l.some((d) => d.id === D.dsEff()) ? "open" : ""}><summary>${t} (${l.length})</summary><div class="designwahl">${l.map(designKnopf).join("")}</div></details>`;
+  const zone = (l, t) => `<details class="ds-mehr innen" data-klappe="ds_${l[0]?.bunt ? "bunt" : "mehr"}" data-ohne-schloss ${l.some((d) => d.id === D.dsEff()) ? "open" : ""}><summary>${t} (${l.length})</summary><div class="designwahl">${l.map(designKnopf).join("")}</div></details>`;
   return `<div class="designwahl">${grund.map(designKnopf).join("")}</div>${zone(mehr, "🎨 Weitere Farbschemen")}${zone(bunt, "✨ Ausgefallene Farbschemen")}${nurOben ? "" : ""}`;
 }
 function themaWahlHtml() {
@@ -137,51 +140,54 @@ VIEWS.einstellungen = {
       ${schalter("mobil", "📱 Meine Handynummer", "", !!fg.mobil, "freigabe")}${schalter("email", "✉️ Meine E-Mail-Adresse", "", !!fg.email, "freigabe")}${schalter("adresse", "🏠 Meine Adresse", "", !!fg.adresse, "freigabe")}
       <p class="hinweis">Leitung und Lehrkräfte sehen Kontaktdaten immer (für Notfälle). ${istEltern() ? "Die Daten Ihrer Kinder verwaltet die Leitung." : ""}</p>
       <div class="knopfreihe"><button class="knopf" data-a="kachel" data-x="meinedaten">🔐 Was ist über mich gespeichert?</button>${datenInfo().server ? `<button class="knopf" data-a="abmeldenApp">🚪 Von diesem Gerät abmelden</button><button class="knopf rot" data-a="alleGeraeteAb">🔒 Alle anderen Geräte abmelden</button>` : ""}</div>`;
-    const bedienung = `<h4>🌗 Schatten</h4>${chips(SCHATTEN, e.schatten || "", "schattenWahl")}
+    // 🔽 0.44.0 wie KC: innerhalb der Bereiche Unter-Klappen mit Pfeil (Farben, Themen, Tag/Nacht, Schrift, Schatten … – Auf/Zu wird gemerkt)
+    const schatten = `${chips(SCHATTEN, e.schatten || "", "schattenWahl")}
       <h4>⬜ Ecken der Kacheln</h4><div class="ecken-zeile"><span aria-hidden="true">▢</span><input type="range" min="2" max="32" step="1" value="${eckenWert()}" data-c="eckenSetzen" aria-label="Ecken der Kacheln (Pixel)"><span aria-hidden="true">◯</span><b id="eckenWert">${eckenWert()} px</b></div>
       <div class="ecken-muster" aria-hidden="true"><i></i><i></i><i></i></div><button type="button" class="knopf klein" data-a="eckenStandard">↺ Standard</button>
       ${schalter("tippGross", "👆 Größere Tippflächen", "Kleine Knöpfe werden mindestens fingerbreit – leichter zu treffen", e.tippGross !== false)}`;
-    const darstellung = `${bedienung}<h4>🐢 Sparmodus</h4>${chips([["auto", "Automatisch"], ["an", "Immer an"], ["aus", "Aus"]], D.sparWahl(), "sparWahl")}<p class="hinweis">${D.SPAR.an ? `Gerade an: ${esc(D.SPAR.grund)}.` : "Gerade aus."} Im Sparmodus ruhen alle Bewegungen – gut bei schwachem Netz oder älteren Handys.</p>
-      ${gross}${sz}${modus}
-      <div class="schalter"><span><b>💬 Chat-Farben & Hintergrund</b><div class="hinweis">Farbe deiner und der fremden Sprechblasen, Hintergrund mit Motiv – gilt für alle Chats</div></span><button class="knopf klein" data-a="cfOeffnen">🎨 Wählen</button></div>
-      <h4>🎭 Themen</h4>${themaWahlHtml()}
-      <h4>🎨 Farbdesign</h4>${designWahlHtml()}<button class="knopf" data-a="designStandard">↺ Standard wiederherstellen</button>`;
-    const effekte = `${schalter("effekte", "✨ Animierte Knöpfe", "Bewegungen und Effekte in der ganzen App", e.effekte !== false)}
-    ${schalter("netzBlinken", "📡 Verbindungs-Symbol blinkt", "Router bzw. Satellit in 💬 Nachrichten mit blinkenden Wellen und Lämpchen (aus = ruhiges Symbol)", e.netzBlinken !== false)}
-      <div class="schalter"><span><b>🕰️ Stundenuhr zur vollen Stunde</b><div class="hinweis">Kuckuck, Big Ben, Glockenspiele … – nur wenn die App offen ist; nachts ohne Ton</div></span><span><input type="checkbox" data-c="einstSchalter2" data-x="kuckuck" aria-label="Stundenuhr an" ${e.kuckuck !== false ? "checked" : ""}></span></div>
-      ${e.kuckuck !== false ? stundenuhrenEinstHtml() : ""}
-      <div class="schalter"><span><b>🎁 Geburtstags-Vogel</b><div class="hinweis">Hat heute jemand Geburtstag, fliegt im Kopf ein Vogel mit einem Geschenk vorbei</div></span><span><button type="button" class="knopf klein" data-a="gbvVorschau">▶ Vorschau</button> <input type="checkbox" data-c="einstSchalter2" data-x="gbvogel" aria-label="Geburtstags-Vogel an" ${e.gbvogel !== false ? "checked" : ""}></span></div>
-      ${schalter("echteKlaenge", "🎻 Echte Instrumentenklänge", "Aufnahmen echter Instrumente (Violine, Cello, Flöte, Trompete …) – je Instrument beim ersten Abspielen ca. 0,2 MB; aus = erzeugter Klang", e.echteKlaenge !== false)}
-      <h4>🌀 Kacheln erscheinen …</h4>${chips(KACHEL_EFFEKTE, e.kachelEffekt || "einfach", "kachelEffektWahl")}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachelEffektVorschau">▶ Auf der Startseite ansehen</button></div>
-      <div class="schalter"><span><b>🧚 Die kleine Fee</b><div class="hinweis">Ab und zu schwebt eine Fee durchs Startbild – antippen = ein schöner Spruch</div></span><span><button type="button" class="knopf klein" data-a="feeAnsehen">🧚 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="fee" ${e.fee !== false ? "checked" : ""}></span></div>
+    const darstellung = unter("farbe", "🎨 Farbdesign", `${designWahlHtml()}<button class="knopf" data-a="designStandard">↺ Standard wiederherstellen</button>`, true)
+      + unter("themen", "🎭 Themen", themaWahlHtml())
+      + unter("modus", "🌗 Tag & Nacht", modus)
+      + unter("schrift", "🔠 Schrift & Größe", `${gross}${sz}`)
+      + unter("schatten", "🌗 Schatten, Ecken & Tippflächen", schatten)
+      + unter("chatfarben", "💬 Chat-Farben & Hintergrund", `<div class="schalter"><span><b>💬 Chat-Farben & Hintergrund</b><div class="hinweis">Farbe deiner und der fremden Sprechblasen, Hintergrund mit Motiv – gilt für alle Chats</div></span><button class="knopf klein" data-a="cfOeffnen">🎨 Wählen</button></div>`)
+      + unter("spar", "🐢 Sparmodus", `${chips([["auto", "Automatisch"], ["an", "Immer an"], ["aus", "Aus"]], D.sparWahl(), "sparWahl")}<p class="hinweis">${D.SPAR.an ? `Gerade an: ${esc(D.SPAR.grund)}.` : "Gerade aus."} Im Sparmodus ruhen alle Bewegungen – gut bei schwachem Netz oder älteren Handys.</p>`);
+    const effekte = unter("bewegung", "✨ Bewegung & Blinken", `${schalter("effekte", "✨ Animierte Knöpfe", "Bewegungen und Effekte in der ganzen App", e.effekte !== false)}
+      ${schalter("netzBlinken", "📡 Verbindungs-Symbol blinkt", "Router bzw. Satellit in 💬 Nachrichten mit blinkenden Wellen und Lämpchen (aus = ruhiges Symbol)", e.netzBlinken !== false)}`, true)
+      + unter("uhr", "🕰️ Uhr zur vollen Stunde", `<div class="schalter"><span><b>🕰️ Stundenuhr zur vollen Stunde</b><div class="hinweis">Kuckuck, Big Ben, Glockenspiele … – nur wenn die App offen ist; nachts ohne Ton</div></span><span><input type="checkbox" data-c="einstSchalter2" data-x="kuckuck" aria-label="Stundenuhr an" ${e.kuckuck !== false ? "checked" : ""}></span></div>
+      ${e.kuckuck !== false ? stundenuhrenEinstHtml() : ""}`)
+      + unter("ueberraschung", "🎁 Überraschungen", `<div class="schalter"><span><b>🎁 Geburtstags-Vogel</b><div class="hinweis">Hat heute jemand Geburtstag, fliegt im Kopf ein Vogel mit einem Geschenk vorbei</div></span><span><button type="button" class="knopf klein" data-a="gbvVorschau">▶ Vorschau</button> <input type="checkbox" data-c="einstSchalter2" data-x="gbvogel" aria-label="Geburtstags-Vogel an" ${e.gbvogel !== false ? "checked" : ""}></span></div>
+      <div class="schalter"><span><b>🧚 Die kleine Fee</b><div class="hinweis">Ab und zu schwebt eine Fee durchs Startbild – antippen = ein schöner Spruch</div></span><span><button type="button" class="knopf klein" data-a="feeAnsehen">🧚 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="fee" aria-label="Fee an" ${e.fee !== false ? "checked" : ""}></span></div>
       <div class="schalter"><span><b>🐞 Der Marienkäfer</b><div class="hinweis">Jeder 50. Start: krabbelt über die Startseite, dreht sich um und lächelt – antippen = Glücksspruch</div></span><span><button type="button" class="knopf klein" data-a="kaeferAnsehen">🐞 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="kaefer" aria-label="Marienkäfer an" ${e.kaefer !== false ? "checked" : ""}></span></div>
-      <div class="schalter"><span><b>🍀 Der Glücksklee</b><div class="hinweis">Jeder 25. Start: ein Windstoß pustet ein vierblättriges Kleeblatt herein – antippen = Glücksspruch</div></span><span><button type="button" class="knopf klein" data-a="kleeAnsehen">🍀 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="klee" aria-label="Glücksklee an" ${e.klee !== false ? "checked" : ""}></span></div>
-      ${schalter("jahreszeit", "🍂 Jahreszeiten im Kopf", "Laub, Schnee, Blumen, Schneemann mit Zylinder – wie in der KC Club App", e.jahreszeit !== false, "jzSchalter")}
+      <div class="schalter"><span><b>🍀 Der Glücksklee</b><div class="hinweis">Jeder 25. Start: ein Windstoß pustet ein vierblättriges Kleeblatt herein – antippen = Glücksspruch</div></span><span><button type="button" class="knopf klein" data-a="kleeAnsehen">🍀 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="klee" aria-label="Glücksklee an" ${e.klee !== false ? "checked" : ""}></span></div>`)
+      + unter("jahreszeit", "🍂 Jahreszeiten im Kopf", `${schalter("jahreszeit", "🍂 Jahreszeiten im Kopf", "Laub, Schnee, Blumen, Schneemann mit Zylinder – wie in der KC Club App", e.jahreszeit !== false, "jzSchalter")}
       <h4>📅 Welche Jahreszeit?</h4>${chips(JZ_WAHL, jzWahl(), "jzWahlKnopf")}
       <h4>🎏 Deko an der Leiste</h4>${chips(JZ_DEKO_WAHL, jzDekoWahl(), "jzDekoKnopf")}
-      <h4>👁 Vorschau im Kopf der Startseite</h4><div class="wahlen">${JZ_VORSCHAUEN.map(([x, t]) => `<button type="button" class="chip-wahl" data-a="jzVorschauKnopf" data-x="${x}">${t}</button>`).join("")}</div>
-      <h4>🎬 Effekt beim Register-Wechsel</h4>${chips(REG_EFFEKTE, regEffektWahl(), "regEffektKnopf")}
-      <h4>✉️ Effekt beim Senden</h4>${chips(SENDE_EFFEKTE, sendeEffektWahl(), "sendeEffektWahl")}
+      <h4>👁 Vorschau im Kopf der Startseite</h4><div class="wahlen">${JZ_VORSCHAUEN.map(([x, t]) => `<button type="button" class="chip-wahl" data-a="jzVorschauKnopf" data-x="${x}">${t}</button>`).join("")}</div>`)
+      + unter("kacheln", "🌀 Kacheln & Register-Wechsel", `<h4>🌀 Kacheln erscheinen …</h4>${chips(KACHEL_EFFEKTE, e.kachelEffekt || "einfach", "kachelEffektWahl")}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachelEffektVorschau">▶ Auf der Startseite ansehen</button></div>
+      <h4>🎬 Effekt beim Register-Wechsel</h4>${chips(REG_EFFEKTE, regEffektWahl(), "regEffektKnopf")}`)
+      + unter("senden", "✉️ Senden & Löschen", `<h4>✉️ Effekt beim Senden</h4>${chips(SENDE_EFFEKTE, sendeEffektWahl(), "sendeEffektWahl")}
       <div class="knopfreihe"><button class="knopf" data-a="sendeVorschau">▶ Vorschau</button><button class="knopf" data-a="blaulichtVorschauK">🚨 Wichtig (Blaulicht)</button></div>
-      <div class="schalter"><span><b>🗑️ Reißwolf beim Löschen</b><div class="hinweis">Gelöschtes läuft sichtbar durch einen Aktenvernichter</div></span><span><button type="button" class="knopf klein" data-a="reisswolfProbe" id="rwProbe">▶ Probe</button> <input type="checkbox" data-c="einstSchalter2" data-x="reisswolf" ${e.reisswolf !== false ? "checked" : ""}></span></div>`;
-    const startseite = `${schalter("eselsohr", "📄 Eselsohr am Kopf", "Doppelt tippen dreht den Kopf um – dahinter die Bühne mit dem Orchester", e.eselsohr !== false)}
-      ${schalter("einfach", "🟢 Einfache Ansicht", "Große Kacheln, nur das Wichtigste – ohne Register", !!e.einfach)}
+      <div class="schalter"><span><b>🗑️ Reißwolf beim Löschen</b><div class="hinweis">Gelöschtes läuft sichtbar durch einen Aktenvernichter</div></span><span><button type="button" class="knopf klein" data-a="reisswolfProbe" id="rwProbe">▶ Probe</button> <input type="checkbox" data-c="einstSchalter2" data-x="reisswolf" aria-label="Reißwolf an" ${e.reisswolf !== false ? "checked" : ""}></span></div>`)
+      + unter("klaenge", "🎻 Klänge", schalter("echteKlaenge", "🎻 Echte Instrumentenklänge", "Aufnahmen echter Instrumente (Violine, Cello, Flöte, Trompete …) – je Instrument beim ersten Abspielen ca. 0,2 MB; aus = erzeugter Klang", e.echteKlaenge !== false));
+    const startseite = unter("ansicht", "🟢 Ansicht & Start", `${schalter("einfach", "🟢 Einfache Ansicht", "Große Kacheln, nur das Wichtigste – ohne Register", !!e.einfach)}
+      ${schalter("eselsohr", "📄 Eselsohr am Kopf", "Doppelt tippen dreht den Kopf um – dahinter die Bühne mit dem Orchester", e.eselsohr !== false)}
       ${schalter("feiertage", "🇩🇪 Feiertage NRW im Kalender", "", e.feiertage !== false)}
-      <div class="feld"><label>🪧 Info-Feld oben beim Start</label><select data-c="infoStart"><option value="">Die zuletzt gezeigte Karte</option>${infoKarten().map(([id, t], i) => `<option value="${id}" ${e.infoStart === id ? "selected" : ""}>${i + 1}. ${esc(t)}</option>`).join("")}</select></div>
-      <div class="feld"><label>Start-Register</label><select data-c="einstStartReg">${REGISTER_ALLE.map(([r, n]) => `<option value="${r}" ${e.startRegister === r ? "selected" : ""}>${n}</option>`).join("")}</select></div>
-      ${schalter("kachelRueck", "🔄 Kacheln umdrehen", "Das kleine 🔄 oben rechts antippen (oder doppelt auf die Kachel) – hinten warten Schnellaktionen (erweiterte Ansicht)", e.kachelRueck !== false)}
-      ${schalter("pwFenster", "📌 Neue Zettel sofort als Fenster", "Aus (Standard): neue Pinnwand-Zettel öffnen sich nie von selbst – die Pinnwand-Kachel und der Kopf zeigen sie an", e.pwFenster === true)}
+      <div class="feld"><label>Start-Register</label><select data-c="einstStartReg">${REGISTER_ALLE.map(([r, n]) => `<option value="${r}" ${e.startRegister === r ? "selected" : ""}>${n}</option>`).join("")}</select></div>`, true)
+      + unter("infofeld", "🪧 Info-Feld, Laufband & Schnellstart", `<div class="feld"><label>🪧 Info-Feld oben beim Start</label><select data-c="infoStart"><option value="">Die zuletzt gezeigte Karte</option>${infoKarten().map(([id, t], i) => `<option value="${id}" ${e.infoStart === id ? "selected" : ""}>${i + 1}. ${esc(t)}</option>`).join("")}</select></div>
       ${schalter("laufband", "📰 Info-Laufband", "Über den drei Feldern oben: was zu erledigen ist, Hinweise, schöne Infos – wechselt alle 6 Sekunden", e.laufband !== false)}
       ${schalter("schnellstart", "⚡ Schnellstart im Info-Feld", "Bis zu 8 Symbole für die wichtigsten Dinge (erweiterte Ansicht)", e.schnellstart !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="schnellWahl">✏️ Symbole wählen</button></div>
-      <h4>🔲 Kachelgröße (erweiterte Ansicht)</h4>${chips([["normal", "Normal (2–3 je Reihe)"], ["klein", "Klein (3 je Reihe)"], ["mini", "Mini (4 je Reihe)"]], e.kachelGroesse || "normal", "kachelGroesseWahl")}
-      <h4>⏳ Countdown bis zum nächsten Termin</h4>${chips([["normal", "Normal"], ["fallblatt", "🔢 Fallblatt (Klappzahlen)"]], e.countdown || "normal", "countdownWahl")}
-      ${schalter("vorschlaege", "💡 Vorschläge zur Startseite", "Selten ein Vorschlag, z. B. eine lange nicht benutzte Kachel zu verbergen – die App baut nie selbst um. Gezählt wird nur auf diesem Gerät.", e.vorschlaege !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="nuVergessen">🧹 Gemerktes löschen</button></div>
-      <h4>✥ Kacheln anordnen</h4><p class="hinweis">Auf der Startseite lange auf eine Kachel drücken – dann ziehen, mit den Pfeilen verschieben oder mit ✕ ausblenden. Register lassen sich genauso festhalten und verschieben.</p>
+      <h4>⏳ Countdown bis zum nächsten Termin</h4>${chips([["normal", "Normal"], ["fallblatt", "🔢 Fallblatt (Klappzahlen)"]], e.countdown || "normal", "countdownWahl")}`)
+      + unter("kacheln_start", "🔲 Kacheln: Größe, Umdrehen & Hinweise", `<h4>🔲 Kachelgröße (erweiterte Ansicht)</h4>${chips([["normal", "Normal (2–3 je Reihe)"], ["klein", "Klein (3 je Reihe)"], ["mini", "Mini (4 je Reihe)"]], e.kachelGroesse || "normal", "kachelGroesseWahl")}
+      ${schalter("kachelRueck", "🔄 Kacheln umdrehen", "Das kleine 🔄 oben rechts antippen (oder doppelt auf die Kachel) – hinten warten Schnellaktionen (erweiterte Ansicht)", e.kachelRueck !== false)}
+      ${schalter("pwFenster", "📌 Neue Zettel sofort als Fenster", "Aus (Standard): neue Pinnwand-Zettel öffnen sich nie von selbst – die Pinnwand-Kachel und der Kopf zeigen sie an", e.pwFenster === true)}
+      ${schalter("vorschlaege", "💡 Vorschläge zur Startseite", "Selten ein Vorschlag, z. B. eine lange nicht benutzte Kachel zu verbergen – die App baut nie selbst um. Gezählt wird nur auf diesem Gerät.", e.vorschlaege !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="nuVergessen">🧹 Gemerktes löschen</button></div>`)
+      + unter("anordnen", "✥ Kacheln anordnen & auswählen", `<p class="hinweis">Auf der Startseite lange auf eine Kachel drücken – dann ziehen, mit den Pfeilen verschieben oder mit ✕ ausblenden. Register lassen sich genauso festhalten und verschieben.</p>
       <div class="knopfreihe"><button type="button" class="knopf" data-a="kaAnordnen">✥ Jetzt anordnen</button><button class="knopf" data-a="kachelnStandard">↺ Alles auf Standard</button></div>
       <h4>☑️ Welche Kacheln möchtest du sehen?</h4>${e.einfach ? '<p class="hinweis">🟢 Du nutzt gerade die einfache Ansicht – die Auswahl gilt für die erweiterte Ansicht.</p>' : ""}
       ${["bachkreis", "meins", "technik"].map((r) => { const l = KACHELN[r].filter((k) => !k.nur || k.nur()), an = l.filter((k) => !e.kachelnAus.includes(k.id)).length;
-        return `<details class="ka-wahl"><summary>${REGISTER_ALLE.find(([x]) => x === r)[1]} <span class="ka-wahl-zahl">${an} von ${l.length}</span></summary><div class="ka-wahl-raster">${l.map((k) => `<label><input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span></label>`).join("")}</div>
-          <button type="button" class="knopf klein" data-a="kachelnAlleAn" data-x="${r}">✅ Alle anzeigen</button></details>`; }).join("")}`;
+        return `<details class="ka-wahl" data-klappe="ka_${r}" data-ohne-unten><summary>${REGISTER_ALLE.find(([x]) => x === r)[1]} <span class="ka-wahl-zahl">${an} von ${l.length}</span></summary><div class="ka-wahl-raster">${l.map((k) => `<label><input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span></label>`).join("")}</div>
+          <button type="button" class="knopf klein" data-a="kachelnAlleAn" data-x="${r}">✅ Alle anzeigen</button></details>`; }).join("")}`);
     const install = `<p>Die Bachkreis-App läuft im Browser und lässt sich wie eine App auf den Startbildschirm legen – kostenlos, ohne App-Store.</p>
       <p><b>Auf diesem Gerät:</b> ${{ installiert: "✅ installiert – prima!", browser: "🌐 im Browser – bitte einmal installieren", pc: "💻 am PC" }[installModus()]}</p>
       <div class="knopfreihe">${installEreignis || installMoeglich() ? `<button class="knopf haupt" data-a="installieren">📲 Jetzt installieren</button>` : ""}<button class="knopf" data-a="installAnleitung">🖼️ Mit Bildern</button><button class="knopf" data-a="kachel" data-x="hilfe">🙋 Hilfe</button></div>
@@ -193,7 +199,7 @@ VIEWS.einstellungen = {
     const info = `<p>Bachkreis-App <b>v${APP_VERSION} ${APP_STUFE}</b> · ${esc(datenInfo().hinweis || "")}</p>
       <div class="knopfreihe"><button class="knopf" data-a="updatePruefen">🔄 Update prüfen</button><button class="knopf" data-a="kachel" data-x="ueber">ℹ️ Über die App</button><button class="knopf" data-a="kachel" data-x="impressum">§ Impressum</button><button class="knopf" data-a="kachel" data-x="hilfe">❓ Hilfe & Tipps</button><button class="knopf" data-a="kachel" data-x="sicherheit">🛡️ Sicherheits-Check</button></div>`;
     const st = meineStufe(), nurFuer = (id) => (id === "familie" ? st === "eltern" : id === "leitung" ? ab("leitung") : id === "appweit" ? ab("admin") : id === "entwickler" ? st === "entwickler" : id === "startseite" ? st !== "kinder" : true);
-    return kopf("⚙️ Mehr – Einstellungen") + `<span class="badge einst-stufe" title="Welche Einstellungen du siehst, hängt von deiner Rolle ab">Ansicht: ${STUFEN[st]}</span>`
+    return kopf("⚙️ Mehr – Einstellungen") + `<span class="badge einst-stufe" title="Welche Einstellungen du siehst, hängt von deiner Rolle ab">Ansicht: ${STUFEN[st]}</span>${klappenAlleKnopf("inhalt")}`
       + (st === "kinder" ? '<p class="hinweis">🧒 Hier stellst du alles für dich ein – Farben, Töne, Benachrichtigungen. Den Rest machen deine Eltern und die Leitung.</p>' : "") + `<input class="einst-suche" type="search" placeholder="🔍 Einstellung suchen …" data-c="einstSuche" aria-label="Einstellung suchen">`
       + `<nav class="eu-raster" aria-label="Übersicht der Einstellungen">${EU_BEREICHE.filter(([id]) => nurFuer(id)).map(([id, sym, t, u]) => `<button type="button" data-a="einstBereich" data-x="${id}"><span aria-hidden="true">${sym}</span><b>${t}</b><small>${u}</small></button>`).join("")}</nav>`
       + bereich("wichtig", "⚙️ Das Wichtigste", `<h4>📬 Wie möchtest du Neuigkeiten bekommen?</h4><div class="knopfreihe"><button class="knopf haupt" data-a="pushErlauben">🔔 Push auf diesem Gerät erlauben</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>
@@ -273,7 +279,8 @@ AKTIONEN.einstSuche = (q) => {
   const t = String(q || "").trim().toLowerCase();
   for (const d of document.querySelectorAll("details.einst")) {
     const treffer = !t || d.textContent.toLowerCase().includes(t);
-    d.style.display = treffer ? "" : "none"; if (t && treffer) d.open = true;
+    (d.closest(".kl-rahmen") || d).style.display = treffer ? "" : "none"; if (t && treffer) d.open = true;
+    for (const u of d.querySelectorAll("details.einst-unter")) { const tu = !t || u.textContent.toLowerCase().includes(t); u.style.display = tu ? "" : "none"; if (t && tu) u.open = true; }
   }
 };
 

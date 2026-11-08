@@ -226,7 +226,8 @@ button.tag-trenner { border: none; background: none; font: inherit; cursor: poin
 .chat-kopf-knopf:focus-visible { outline: 3px solid var(--akzent); }
 .chat-angeheftet { position: sticky; top: 64px; z-index: 5; display: grid; gap: 2px; margin: 0 0 6px; }
 .chat-pin { display: flex; gap: 6px; align-items: center; width: 100%; border: none; border-left: 4px solid var(--gold, #f2b705); border-radius: 10px; background: var(--karte); color: var(--text); padding: 8px 10px; font: inherit; font-size: .88rem; text-align: left; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.12); }
-.chat-pin span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; }
+.chat-pin span:last-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; min-width: 0; flex: 1; }
+.chat-pin { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; } .chat-pin b { flex: none; } /* 0.44.0: lange Zettel machten die Seite breiter */
 .chat-suche-leiste { position: sticky; top: 64px; z-index: 6; display: flex; gap: 6px; align-items: center; padding: 6px; border-radius: 12px; background: var(--karte); box-shadow: 0 2px 8px rgba(0,0,0,.15); margin-bottom: 6px; }
 .chat-suche-leiste input { flex: 1; min-width: 0; }
 .blase.treffer { outline: 2px dashed #d4a017; } .blase.treffer-an { outline: 3px solid #d4a017; box-shadow: 0 0 0 6px rgba(242,183,5,.3); }
@@ -241,3 +242,22 @@ mark.erw { background: rgba(31,79,143,.14); color: inherit; border-radius: 4px; 
 .blase { transition: transform .12s ease; }
 @media (prefers-reduced-motion: reduce) { .blase { transition: none; } }
 :root.dunkel .blase .von { color: color-mix(in srgb, var(--pf, var(--blau)) 45%, #ffffff); } /* 0.38.0: farbige Namen im Nachtmodus gut lesbar */
+
+/* 🔽 0.44.0 Klapp-Pfeile wie KC (KC-CLUB-KLAPP-PFEILE, -CHAT-KOPF-KLAPPEN, -SCHREIBEN-KLAPPEN) */
+.kl-pfeil.zu { transform: rotate(-90deg); }
+.chat-abschnitt-kopf .kl-pfeil { width: 28px; height: 28px; font-size: .95rem; margin-left: 8px; }
+.chat-abschnitt-kopf small { margin-left: auto; }
+.tag-zu .kl-pfeil { width: 30px; height: 30px; }
+button.tag-trenner.auf { display: inline-flex; align-items: center; gap: 6px; }
+button.tag-trenner.auf .kl-pfeil, .kw-kopf .kl-pfeil { width: 26px; height: 26px; font-size: .85rem; font-style: normal; vertical-align: middle; }
+.kw-kopf { display: inline-flex; align-items: center; gap: 6px; }
+.kk-zeile { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kk-zeile.auf { white-space: normal; max-height: 28vh; overflow-y: auto; }
+.kk-pfeil { flex: none; border: none; background: none; padding: 0; cursor: pointer; display: grid; place-items: center; }
+.kk-pfeil[hidden] { display: none; }
+.kk-pfeil .kl-pfeil { width: 28px; height: 28px; font-size: .9rem; }
+.chat-eingabe { padding-top: 14px; }
+.schreib-griff { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); min-width: 56px; height: 26px; padding: 0 12px; border: 1px solid var(--linie); border-radius: 14px; background: var(--weinrot); color: #fff; font: inherit; font-size: .9rem; font-weight: 800; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.18); z-index: 1; }
+.chat-eingabe.zu { padding: 16px 10px 6px; }
+.chat-eingabe.zu > :not(.schreib-griff) { display: none !important; }
+.chat-eingabe.zu .schreib-griff { position: static; transform: none; display: block; margin: -10px auto 0; height: 34px; }

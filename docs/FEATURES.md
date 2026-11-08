@@ -126,6 +126,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F116 | 📖 Jahrbuch mit schönsten Momenten | ✅ | tests/paket3.test.mjs |
 | BK-F117 | 🎲 Musik-Spiele (Memory, Noten-Raten) | ✅ | tests/paket3.test.mjs |
 | BK-F118 | 🎭 Stimmen-Effekte für Sprachnachrichten | ✅ | tests/paket3.test.mjs |
+| BK-F119 | 🎬 Sitzung vorbereiten & leiten mit Protokoll | ✅ | tests/paket4.test.mjs |
+| BK-F120 | 📁 Unterlagen je Familie | ✅ | tests/paket4.test.mjs |
+| BK-F121 | 🪧 Schilder-Druckerei | ✅ | tests/paket4.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

@@ -1171,6 +1171,58 @@ grant select, insert, update, delete on bk_erstattungen to service_role;
 drop trigger if exists bk_erstattungen_stempel on bk_erstattungen;
 create trigger bk_erstattungen_stempel before update on bk_erstattungen for each row execute function bk_abgleich_stempel();
 
+-- Unterlagen (Familien-Ordner)
+create table if not exists bk_unterlagen (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  titel text not null,
+  art text check (art is null or art in ('bescheinigung', 'vertrag', 'attest', 'rechnung', 'einwilligung', 'sonst')),
+  datei text not null,
+  von text,
+  jahr integer,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_unterlagen_geaendert on bk_unterlagen (geaendert_am);
+alter table bk_unterlagen enable row level security;
+revoke all on bk_unterlagen from public, anon, authenticated;
+grant select, insert, update, delete on bk_unterlagen to service_role;
+drop trigger if exists bk_unterlagen_stempel on bk_unterlagen;
+create trigger bk_unterlagen_stempel before update on bk_unterlagen for each row execute function bk_abgleich_stempel();
+
+-- Sitzungen & Versammlungen
+create table if not exists bk_versammlungen (
+  id text primary key default gen_random_uuid()::text,
+  titel text not null,
+  art text check (art is null or art in ('vorstand', 'elternabend', 'leitung', 'mitglieder')),
+  zielgruppe text check (zielgruppe is null or zielgruppe in ('vorstand', 'eltern', 'team', 'alle')),
+  beginn timestamptz not null,
+  ort text,
+  tagesordnung jsonb,
+  status text check (status is null or status in ('planung', 'eingeladen', 'laeuft', 'beendet')),
+  frist_tage integer,
+  eingeladen_am timestamptz,
+  erinnert_am timestamptz,
+  gestartet_am timestamptz,
+  beendet_am timestamptz,
+  leiter text,
+  protokoll_id text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_versammlungen_geaendert on bk_versammlungen (geaendert_am);
+alter table bk_versammlungen enable row level security;
+revoke all on bk_versammlungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_versammlungen to service_role;
+drop trigger if exists bk_versammlungen_stempel on bk_versammlungen;
+create trigger bk_versammlungen_stempel before update on bk_versammlungen for each row execute function bk_abgleich_stempel();
+
 -- Bachkreis-Börse
 create table if not exists bk_boerse (
   id text primary key default gen_random_uuid()::text,
@@ -2054,6 +2106,10 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_rueck
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_termin_id_fk') then alter table bk_erstattungen add constraint bk_erstattungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_bearbeitet_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_bearbeitet_von_fk foreign key (bearbeitet_von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_unterlagen_person_id_fk') then alter table bk_unterlagen add constraint bk_unterlagen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_unterlagen_von_fk') then alter table bk_unterlagen add constraint bk_unterlagen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versammlungen_leiter_fk') then alter table bk_versammlungen add constraint bk_versammlungen_leiter_fk foreign key (leiter) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versammlungen_protokoll_id_fk') then alter table bk_versammlungen add constraint bk_versammlungen_protokoll_id_fk foreign key (protokoll_id) references bk_dokumente(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_boerse_von_fk') then alter table bk_boerse add constraint bk_boerse_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_boerse_termin_id_fk') then alter table bk_boerse add constraint bk_boerse_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_foto_id_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_foto_id_fk foreign key (foto_id) references bk_fotos(id) on delete restrict; end if; end $$;

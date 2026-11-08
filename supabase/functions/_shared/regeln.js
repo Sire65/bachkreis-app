@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -131,6 +131,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "rueckmeldungen": return z.von === ctx.ich || hatRolle(ctx, RM_LEITUNG);
     case "fehlerberichte": return hatRolle(ctx, ["admin"]);
     case "boerse": return boerseDarf(ctx.person) || z.von === ctx.ich; // 🛍️ 0.47.0 nur Erwachsene
+    case "unterlagen": return ctx.meine.has(z.person_id) || hatRolle(ctx, UNTERLAGEN_LEITUNG); // 📁 0.48.0 eigene/Kinder + Leitung
+    case "versammlungen": return hatRolle(ctx, SITZUNG_PLANER) || (z.status !== "planung" && sitzungFuerMich(z, ctx.person, ctx.rollen)); // 🎬 0.48.0 Planung nur fürs Büro
     case "jahrbuch_momente": return z.von === ctx.ich || z.freigegeben === true || hatRolle(ctx, MODERATION); // 📖 0.47.0
     case "erstattungen": return z.von === ctx.ich || hatRolle(ctx, ER_KASSE);
     case "vorschlaege": return vsSichtbar(z, ctx);
@@ -561,6 +563,26 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "unterlagen": {
+      // 📁 0.48.0 Leitung legt für alle ab; Eltern/Erwachsene für sich und ihre Kinder; löschen: wer abgelegt hat oder Leitung
+      const chef = hatRolle(ctx, UNTERLAGEN_LEITUNG), pid = alt?.person_id || neu.person_id;
+      if (!chef && !ctx.meine.has(pid)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+      if (!chef && ctx.person?.typ === "schueler" && istMinderjaehrig(ctx.person)) return { ok: false, grund: "NUR_ELTERN" };
+      if (alt && alt.von !== ctx.ich && !chef) return { ok: false, grund: "NUR_EIGENE" };
+      const datei = /^datei:[\w-]{1,80}$/.test(String(neu.datei ?? alt?.datei ?? "")) ? neu.datei ?? alt.datei : null; if (!datei && !neu.geloescht_am) return { ok: false, grund: "DATEI_FEHLT" };
+      const titel = String(neu.titel ?? alt?.titel ?? "").trim().slice(0, 120); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "geloescht_am"]), person_id: pid, titel, datei, art: UNTERLAGEN_ARTEN[neu.art] ? neu.art : alt?.art || "sonst", von: alt?.von || ctx.ich, jahr: Math.round(Number(neu.jahr ?? alt?.jahr)) || new Date().getFullYear() } };
+    }
+    case "versammlungen": {
+      // 🎬 0.48.0 nur Leitung/Vorstand/Admin planen, laden ein und leiten; Tagesordnung bleibt eine einfache Liste
+      if (!hatRolle(ctx, SITZUNG_PLANER)) return { ok: false, grund: "NUR_LEITUNG" };
+      const to = (Array.isArray(neu.tagesordnung) ? neu.tagesordnung : alt?.tagesordnung || []).slice(0, 30).map((p) => ({ titel: String(p?.titel ?? "").slice(0, 160), minuten: Math.max(0, Math.min(240, Math.round(Number(p?.minuten) || 0))) || null,
+        von: p?.von ? String(p.von).slice(0, 40) : null, notiz: String(p?.notiz ?? "").slice(0, 2000) || null, beschluss: String(p?.beschluss ?? "").slice(0, 1000) || null, erledigt: !!p?.erledigt })).filter((p) => p.titel);
+      const titel = String(neu.titel ?? alt?.titel ?? "").trim().slice(0, 120); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "beginn", "ort", "eingeladen_am", "erinnert_am", "gestartet_am", "beendet_am", "protokoll_id", "leiter", "geloescht_am"]), titel, tagesordnung: to,
+        art: SITZUNG_ARTEN[neu.art] ? neu.art : alt?.art || "vorstand", zielgruppe: SITZUNG_FUER[neu.zielgruppe] ? neu.zielgruppe : alt?.zielgruppe || "vorstand",
+        status: ["planung", "eingeladen", "laeuft", "beendet"].includes(neu.status) ? neu.status : alt?.status || "planung", frist_tage: Math.max(0, Math.min(30, Math.round(Number(neu.frist_tage ?? alt?.frist_tage ?? 3)))) } };
     }
     case "boerse": {
       // 🛍️ 0.47.0 Erwachsene bieten/suchen/bitten um Hilfe; ändern nur die eigene Anzeige; andere tragen sich nur selbst als Helfer ein/aus; Leitung räumt auf

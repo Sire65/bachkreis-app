@@ -323,6 +323,7 @@ async function dateiHolen(db, s, body, ablage) {
     if (!darf) darf = filtern("dokumente", (await db.q(`select to_jsonb(d) as z from bk_dokumente d where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
     if (!darf) darf = filtern("erstattungen", (await db.q(`select to_jsonb(e) as z from bk_erstattungen e where beleg = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 💶 Beleg: Kasse
     if (!darf) darf = filtern("rueckmeldungen", (await db.q(`select to_jsonb(r) as z from bk_rueckmeldungen r where bild = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📸 0.46.0 Bildschirmfoto: Person + Leitung
+    if (!darf) darf = filtern("unterlagen", (await db.q(`select to_jsonb(u) as z from bk_unterlagen u where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📁 0.48.0
     if (!darf) darf = filtern("boerse", (await db.q(`select to_jsonb(b) as z from bk_boerse b where foto = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 🛍️ 0.47.0
     if (!darf) darf = filtern("fotos", (await db.q(`select to_jsonb(f) as z from bk_fotos f where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📷 0.40.0
     if (!darf) darf = filtern("uebe_ergebnisse", (await db.q(`select to_jsonb(e) as z from bk_uebe_ergebnisse e where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;

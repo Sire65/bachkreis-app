@@ -23,6 +23,7 @@ import { rmNeu } from "./rueckmeldung.js";
 import { passFuer, meineFahrten } from "./notfallpass.js";
 import { boerseFuerMich, helferOffen } from "./boerse.js";
 import { momenteOffen } from "./jahrbuch.js";
+import { naechsteSitzung, sitzungenFuerMich } from "./sitzung.js";
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
@@ -99,6 +100,8 @@ export const KACHELN = {
     { id: "erstattung", sym: "💶", t: "Erstattung", u: "Fahrtkosten · Auslagen mit Beleg", v: "erstattung", nur: () => darfErstattung(), zahl: () => erOffen() },
     { id: "rueckmeldungen", sym: "🆘", t: "Hilfe & Rückmeldung", u: "Klappt etwas nicht? · Idee · Lob", v: "rueckmeldungen", zahl: () => rmNeu() },
     { id: "protokolle", sym: "🗒️", t: "Protokolle", u: "Elternabende · Besprechungen · meine Aufgaben", v: "protokolle", zahl: () => neueProtokolle() },
+    { id: "sitzungen", sym: "🎬", t: "Sitzungen", u: () => { const s = naechsteSitzung(); return s ? `${new Date(s.beginn).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} · ${s.titel}` : "Vorbereiten · Einladen · Leiten"; }, v: "sitzungen", nur: () => sitzungenFuerMich().length > 0 || hatRolle("admin", "leitung", "vorstand") },
+    { id: "schilder", sym: "🪧", t: "Schilder-Druckerei", u: "Wegweiser · Reserviert · Buffet · Pultkarten", v: "schilder", nur: () => istVerwalter() || istEltern() },
     { id: "boerse", sym: "🛍️", t: "Börse & Helfer", u: "Biete · Suche · Helfer gesucht", v: "boerse", nur: () => boerseFuerMich(), zahl: () => helferOffen() },
     { id: "jahrbuch", sym: "📖", t: "Jahrbuch", u: "Unser Bachkreis-Jahr zum Blättern", v: "jahrbuch", zahl: () => momenteOffen() },
     { id: "spiele", sym: "🎲", t: "Musik-Spiele", u: "Memory · Noten-Raten · Quiz", v: "spiele" },
@@ -129,6 +132,7 @@ export const KACHELN = {
     { id: "meinregister", sym: "🎼", t: "Mein Register", u: "Wer kommt? Erinnern", v: "meinregister", nur: () => hatRolle("registerfuehrer") },
     { id: "wechselwunsch", sym: "🔀", t: "Gruppenwechsel", u: "Wunsch an die Leitung", v: "wechselwunsch", nur: () => istSchueler() },
     { id: "meingesicht", sym: "🙂", t: "Mein Gesicht", u: "Frisur, Brille, Farben – fürs Orchester", aktion: "meinGesicht" },
+    { id: "unterlagen", sym: "📁", t: "Meine Unterlagen", u: "Bescheinigungen · Verträge · Atteste", v: "unterlagen", nur: () => !istSchueler() || hatRolle("admin", "leitung") },
     { id: "meinedaten", sym: "🔐", t: "Meine Daten", u: "Was ist über mich gespeichert?", v: "meinedaten" },
     { id: "aenderung", sym: "✏️", t: "Änderung melden", u: "Neue Anschrift, Telefon …", v: "aenderung" },
     { id: "einstellungen", sym: "⚙️", t: "Meine Einstellungen", u: "Benachrichtigung · Schrift · Ansicht", v: "einstellungen" },

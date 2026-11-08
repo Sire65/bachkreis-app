@@ -249,6 +249,16 @@ export const ER_KASSE = ["admin", "leitung", "vorstand"];
 export const BOERSE_ARTEN = { biete: "🎁 Biete", suche: "🔎 Suche", helfer: "🙋 Helfer gesucht" };
 export const BOERSE_KAT = { instrument: "🎻 Instrument", noten: "🎼 Noten", kleidung: "👔 Konzertkleidung", zubehoer: "🎒 Zubehör", kuchen: "🍰 Kuchen & Buffet", aufbau: "🪑 Auf- & Abbau", fahrdienst: "🚗 Fahrdienst", sonst: "📦 Sonstiges" };
 export const BOERSE_STATUS = { offen: "🟢 offen", reserviert: "🟡 reserviert", erledigt: "✅ erledigt" };
+// 🎬 0.48.0 Sitzung vorbereiten & leiten (wie KC-CLUB-SITZUNG-ABLAUF): Vorstand, Elternabend, Leitungsrunde, Mitgliederversammlung
+export const SITZUNG_ARTEN = { vorstand: "💛 Vorstandssitzung", elternabend: "👪 Elternabend", leitung: "🎼 Leitungsrunde", mitglieder: "🏛️ Mitgliederversammlung" };
+export const SITZUNG_FUER = { vorstand: "Vorstand & Leitung", eltern: "alle Eltern", team: "Leitung & Lehrkräfte", alle: "alle Erwachsenen" };
+export const SITZUNG_STATUS = { planung: "📝 in Planung", eingeladen: "📨 eingeladen", laeuft: "🔴 läuft", beendet: "✅ beendet" };
+export const SITZUNG_PLANER = ["admin", "leitung", "vorstand"];
+export const sitzungFuerMich = (s, person, rollen = []) => !!s && !!person && (s.zielgruppe === "alle" ? person.typ !== "schueler" : s.zielgruppe === "eltern" ? person.typ === "eltern" || rollen.some((r) => ["admin", "leitung"].includes(r))
+  : s.zielgruppe === "team" ? rollen.some((r) => ["admin", "leitung", "lehrkraft"].includes(r)) : rollen.some((r) => ["admin", "leitung", "vorstand"].includes(r)));
+// 📁 0.48.0 Unterlagen je Person/Familie (wie KC „eigener Archiv-Ordner“): Bescheinigungen, Verträge, Atteste, Rechnungen
+export const UNTERLAGEN_ARTEN = { bescheinigung: "🎓 Bescheinigung / Urkunde", vertrag: "📑 Vertrag", attest: "🩺 Attest / Nachweis", rechnung: "🧾 Rechnung / Quittung", einwilligung: "🔐 Einwilligung", sonst: "📄 Sonstiges" };
+export const UNTERLAGEN_LEITUNG = ["admin", "leitung"];
 export const boerseDarf = (p) => !!p && !(p.typ === "schueler" && istMinderjaehrig(p));
 // 📖 0.47.0 Jahrbuch (wie KC „Unser Clubjahr“ + „Mein Clubmoment“): Schuljahr ab 1. August
 export const schuljahrVon = (d = new Date()) => { const x = new Date(d), j = x.getMonth() >= 7 ? x.getFullYear() : x.getFullYear() - 1; return `${j}/${String((j + 1) % 100).padStart(2, "0")}`; };
@@ -1069,6 +1079,38 @@ export const TABELLEN = {
       { k: "bearbeitet_von", t: "bearbeitet von", typ: "ref", ref: "personen" },
     ],
     liste: ["datum", "von", "zweck", "betrag", "status"],
+  },
+  unterlagen: {
+    titel: "Unterlagen (Familien-Ordner)", sym: "📁", gruppe: "Genehmigungen", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "Für wen?", typ: "ref", ref: "personen", pflicht: true },
+      { k: "titel", t: "Titel", typ: "text", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: UNTERLAGEN_ARTEN },
+      { k: "datei", t: "Datei (datei:…)", typ: "text", pflicht: true },
+      { k: "von", t: "abgelegt von", typ: "ref", ref: "personen" },
+      { k: "jahr", t: "Jahr", typ: "zahl" },
+    ],
+    liste: ["person_id", "titel", "art"],
+  },
+  versammlungen: {
+    titel: "Sitzungen & Versammlungen", sym: "🎬", gruppe: "Förderverein", lesen: [], schreiben: [],
+    felder: [
+      { k: "titel", t: "Titel", typ: "text", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: SITZUNG_ARTEN },
+      { k: "zielgruppe", t: "Für wen?", typ: "wahl", werte: SITZUNG_FUER },
+      { k: "beginn", t: "Beginn", typ: "zeit", pflicht: true },
+      { k: "ort", t: "Ort", typ: "text" },
+      { k: "tagesordnung", t: "Tagesordnung", typ: "json" },
+      { k: "status", t: "Status", typ: "wahl", werte: SITZUNG_STATUS },
+      { k: "frist_tage", t: "Einladung spätestens (Tage vorher)", typ: "zahl" },
+      { k: "eingeladen_am", t: "eingeladen am", typ: "zeit" },
+      { k: "erinnert_am", t: "erinnert am", typ: "zeit" },
+      { k: "gestartet_am", t: "gestartet", typ: "zeit" },
+      { k: "beendet_am", t: "beendet", typ: "zeit" },
+      { k: "leiter", t: "Sitzungsleitung", typ: "ref", ref: "personen" },
+      { k: "protokoll_id", t: "Protokoll", typ: "ref", ref: "dokumente" },
+    ],
+    liste: ["titel", "beginn", "status"],
   },
   boerse: {
     titel: "Bachkreis-Börse", sym: "🛍️", gruppe: "Kommunikation", lesen: [], schreiben: [],

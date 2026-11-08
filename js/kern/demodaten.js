@@ -519,6 +519,15 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 📁 0.48.0 Unterlagen (Beispiel: Teilnahmebescheinigung, Leihvertrag)
+  d.unterlagen = demoSchueler ? [
+    { id: "ul-1", person_id: demoSchueler.id, titel: "Teilnahmebescheinigung Probenfreizeit", art: "bescheinigung", datei: "bild:bilder/demo/probe.svg", von: "p-leitung", jahr: jetzt.getFullYear() },
+    { id: "ul-2", person_id: demoSchueler.id, titel: "Leihvertrag Instrument (unterschrieben)", art: "vertrag", datei: "bild:bilder/demo/instrumente.svg", von: "p-leitung", jahr: jetzt.getFullYear() },
+  ] : [];
+  // 🎬 0.48.0 Sitzung (Beispiel: Vorstand in 10 Tagen, eingeladen)
+  const sBeginn = tag(jetzt, 10, 19, 30);
+  d.versammlungen = [{ id: "si-1", titel: "Vorstandssitzung Förderverein", art: "vorstand", zielgruppe: "vorstand", beginn: iso(sBeginn), ort: "Musiksaal", status: "eingeladen", frist_tage: 3, leiter: "p-fv1", eingeladen_am: iso(tag(jetzt, -1, 18)),
+    tagesordnung: [{ titel: "Begrüßung & Protokoll der letzten Sitzung", minuten: 5 }, { titel: "Kassenbericht", minuten: 15 }, { titel: "Weihnachtskonzert: Buffet & Helfer", minuten: 20 }, { titel: "Anschaffung Cello 3/4", minuten: 15 }, { titel: "Verschiedenes", minuten: 10 }] }];
   // 🛍️ 0.47.0 Börse · 📖 Jahrbuch-Momente (Beispiele)
   const elternIds = [...new Set(d.eltern_kind.map((e) => e.eltern_id))];
   d.boerse = [

@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.48.0 DEV – 08.11.2026
+Abgleich mit der KC Club App, Paket 4 „Leitung“ (letztes Paket der Liste):
+- 🎬 **Sitzung vorbereiten & leiten** (wie KC-CLUB-SITZUNG-ABLAUF, -SCHRITTE, -FRIST): Vorstandssitzung, Elternabend, Leitungsrunde, Mitgliederversammlung – Schritte mit Häkchen: 💡 offene Vorschläge übernehmen · 📝 Tagesordnung (Minuten, Reihenfolge, voraussichtliches Ende) · 📨 Einladen mit Frist („bis spätestens …“, rot wenn verpasst) an die Zielgruppe · 🔔 Erinnern · ▶️ Leiten TOP für TOP mit Uhr, Notiz und Beschluss · 🗒️ Protokoll als fertiger Text im Büro-Ordner „Protokolle“ (danach wie gewohnt freigeben). Planen: Leitung, Vorstand, Admin; Eingeladene sehen die Tagesordnung ab der Einladung. Tabelle bk_versammlungen (bk_sitzungen ist die Anmelde-Sitzung)
+- 📁 **Meine Unterlagen** (wie KC „eigener Archiv-Ordner“): Ordner je Person, für Eltern auch je Kind – Bescheinigungen, Verträge, Atteste, Rechnungen, Einwilligungen; Leitung legt für alle ab, Eltern für die eigene Familie; Abkürzungen zu Genehmigungen, Leihinstrument, Einwilligungen; sichtbar nur Familie + Leitung
+- 🪧 **Schilder-Druckerei** (wie KC „Schilder-Druckerei“): Wegweiser mit Pfeil, Reserviert, Registerschild, Türschild, Garderobe, Kuchenbuffet mit Preisliste, Pult-Namenskarten zum Knicken – A4 quer/hoch oder A5, Schwarz-Gold mit Logo oder hell; Vorschau, Drucken
+- Migration 20261116000000_bk_versammlungen.sql (bk_versammlungen, bk_unterlagen); tests/paket4.test.mjs
+
+
 ## 0.47.0 DEV – 08.11.2026
 Abgleich mit der KC Club App, Paket 3 „Gemeinschaft“:
 - 🛍️ **Bachkreis-Börse** (wie KC „Helfen, Leihen & Börse“): 🎁 Biete · 🔎 Suche (Instrumente, Noten, Konzertkleidung, Zubehör; Preis, VB oder zu verschenken, Foto) und 🙋 Helfer gesucht (Kuchen, Auf-/Abbau, Fahrdienst) mit Plätzen, Frist und „Ich helfe“; Kontakt über eine Nachricht in der App; Status offen/reserviert/erledigt; nur Erwachsene. Server: ändern nur eigene Anzeigen, als Helfer nur sich selbst, Plätze begrenzt (VOLL), Leitung räumt auf

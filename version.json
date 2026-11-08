@@ -1,14 +1,23 @@
 {
-  "version": "0.47.0",
+  "version": "0.48.0",
   "datum": "2026-11-08",
   "stufe": "DEV",
   "neu": [
-    "🛍️ Bachkreis-Börse: gebrauchte Instrumente, Noten und Konzertkleidung – und „🙋 Helfer gesucht“ für Kuchen, Aufbau und Fahrdienst",
-    "📖 Jahrbuch zum Blättern – schreib deinen schönsten Bachkreis-Moment hinein",
-    "🎲 Musik-Spiele: Instrumenten-Memory und Noten-Raten",
-    "🎭 Sprachnachrichten mit lustigen Stimmen: Maus, Roboter, Riese, Gespenst …"
+    "🎬 Sitzungen: Vorstand, Elternabend, Leitungsrunde – Schritt für Schritt vorbereiten, einladen, leiten und das Protokoll gleich mitschreiben",
+    "📁 Meine Unterlagen: Bescheinigungen, Verträge und Atteste je Familie an einem Ort",
+    "🪧 Schilder-Druckerei: Wegweiser, Reserviert, Kuchenbuffet, Pultkarten im Bachkreis-Design"
   ],
   "verlauf": [
+    {
+      "version": "0.47.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🛍️ Bachkreis-Börse: gebrauchte Instrumente, Noten und Konzertkleidung – und „🙋 Helfer gesucht“ für Kuchen, Aufbau und Fahrdienst",
+        "📖 Jahrbuch zum Blättern – schreib deinen schönsten Bachkreis-Moment hinein",
+        "🎲 Musik-Spiele: Instrumenten-Memory und Noten-Raten",
+        "🎭 Sprachnachrichten mit lustigen Stimmen: Maus, Roboter, Riese, Gespenst …"
+      ]
+    },
     {
       "version": "0.46.0",
       "datum": "2026-11-08",

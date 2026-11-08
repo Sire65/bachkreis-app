@@ -239,6 +239,10 @@ function ilMeldungen() {
   const beantw = naechste.find(({ t, p }) => antwortVon(db, t.id, p));
   if (beantw) { const tage = Math.round((new Date(beantw.t.beginn).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86400000);
     if (tage >= 1 && tage <= 14) add({ id: "countdown:" + beantw.t.id, stufe: "gold", sym: "⏳", t: tage === 1 ? `Morgen: ${beantw.t.titel}` : `Noch ${tage} Tage bis ${beantw.t.titel}`, u: `${datum(beantw.t.beginn)}, ${uhr(beantw.t.beginn)} Uhr`, ziel: ["oeffne", "termin|" + beantw.t.id] }); }
+  // 💡 0.41.0 Abstimmungen · 🗒️ neue Protokolle · 🎄 Adventskalender
+  for (const v of (SV.vsOffen?.() || []).slice(0, 2)) add({ id: "vs:" + v.id, stufe: "orange", sym: "🗳️", t: `Abstimmung: „${v.titel}“`, u: v.frist ? `Bitte abstimmen bis ${new Date(v.frist + "T12:00").toLocaleDateString("de-DE")}` : "Bitte abstimmen", ziel: ["kachel", "vorschlaege"] });
+  const pn = SV.protNeu?.() || 0; if (pn) add({ id: "prot", stufe: "gold", sym: "🗒️", t: pn === 1 ? "Ein neues Protokoll" : `${pn} neue Protokolle`, u: "Antippen zum Lesen", ziel: ["kachel", "protokolle"] });
+  const adv = SV.adventHinweis?.(); if (adv) add({ id: "advent:" + adv, stufe: "gold", sym: "🎄", t: `Türchen ${adv} wartet!`, u: "Adventskalender öffnen", ziel: ["kachel", "advent"] });
   // 🗳️ 0.39.0 Terminumfrage: bitte abstimmen
   for (const u of (SV.tuOffen?.() || []).slice(0, 2)) add({ id: "tu:" + u.id, stufe: "orange", sym: "🗳️", t: `Wann passt es? „${u.titel}“`, u: "Bitte in der Terminumfrage abstimmen", ziel: ["oeffne", `terminumfrage|${u.id}`] });
   const pw = SV.pwOffen?.() || 0;

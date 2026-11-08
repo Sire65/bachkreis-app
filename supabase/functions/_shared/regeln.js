@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -50,6 +50,7 @@ export function kontext(person, alle) {
   ctx.eigeneGruppen = new Set((alle.gruppe_zuordnung || []).filter((z) => z.person_id === ich && !z.geloescht_am).map((z) => z.gruppe_id));
   ctx.tuMap = new Map((alle.terminumfragen || []).map((z) => [z.id, z]));
   ctx.faMap = new Map((alle.fotoalben || []).map((z) => [z.id, z])); // 📷 0.40.0
+  ctx.vsMap = new Map((alle.vorschlaege || []).map((z) => [z.id, z])); // 💡 0.41.0
   ctx.elternKind = ek;
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
   // 🎙️ Übe-Aufnahmen: für welche (eigenen) Kinder haben die Eltern zuletzt „erteilt“ (Zweck uebeaufnahmen)?
@@ -73,6 +74,9 @@ export function kontext(person, alle) {
 }
 
 const hatRolle = (ctx, liste) => (liste || []).some((r) => ctx.rollen.includes(r));
+// 💡 Vorschlag/Abstimmung sichtbar: Zielgruppe, wer es angelegt hat, und das Team (zum Begleiten) – Vorstands-Abstimmungen nur Vorstand/Leitung
+const vsCtx = (ctx) => ({ typ: ctx.person?.typ, rollen: ctx.rollen, verwalter: ctx.istVerwalter });
+const vsSichtbar = (v, ctx) => !v.geloescht_am && (v.von === ctx.ich || vsZielgruppe(v, vsCtx(ctx)) || (v.an !== "vorstand" && ctx.istVerwalter));
 // 📷 Album sichtbar: „alle“ für jeden in der App, „verwaltung“ nur für das Team (und wer es angelegt hat)
 const albumSichtbar = (a, ctx) => !a.geloescht_am && (a.sichtbar === "verwaltung" ? ctx.istVerwalter || a.von === ctx.ich : true);
 const tuCtx = (ctx) => ({ gruppen: ctx.gruppen, eigeneGruppen: ctx.eigeneGruppen || new Set(), kinder: ctx.kinder, verwalter: ctx.istVerwalter });
@@ -124,6 +128,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "startnachrichten": return z.von === ctx.ich || snFuerMich(z, ctx.ich, ctx.gruppen, "0000-00-00"); // 📣 an mich (auch abgelaufene – für den Abgleich)
     case "startnachricht_antworten": return z.person_id === ctx.ich || ctx.snMap?.get(z.nachricht_id)?.von === ctx.ich;
     case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich;
+    case "vorschlaege": return vsSichtbar(z, ctx);
+    case "vorschlag_stimmen": { const v = ctx.vsMap?.get(z.vorschlag_id); return !!v && vsSichtbar(v, ctx); }
     case "fotoalben": return albumSichtbar(z, ctx);
     case "fotos": { const a = ctx.faMap?.get(z.album_id); return !!a && albumSichtbar(a, ctx) && (!z.papierkorb_am || z.von === ctx.ich || hatRolle(ctx, MODERATION)); }
     case "terminumfragen": return z.von === ctx.ich || hatRolle(ctx, TU_PLANER) || tuFuerMich(z, tuCtx(ctx));
@@ -163,6 +169,7 @@ function kuerzen(tab, z, ctx, alleLesen) {
   }
   if (tab === "antworten" && !alleLesen && !ctx.meine.has(z.person_id)) { out = { ...out }; delete out.notiz; } // Registerführer: Antwort ja, Grund nein
   if (tab === "zugaenge") out = { ...out, code: null, code_hash: undefined };
+  if (tab === "vorschlag_stimmen" && z.person_id !== ctx.ich && ctx.vsMap?.get(z.vorschlag_id)?.anonym) out = { ...out, person_id: null }; // 🔒 geheim: auch die Leitung sieht nicht, wer
   if (tab === "versand" && out.quittung_hash !== undefined) { out = { ...out }; delete out.quittung_hash; } // Einmal-Token der Push-Quittung
   if (!alleLesen) { const vermerke = (TABELLEN[tab]?.felder || []).filter((f) => f.vermerk).map((f) => f.k); if (vermerke.length) { out = { ...out }; for (const k of vermerke) delete out[k]; } }
   const geschuetzt = (TABELLEN[tab]?.felder || []).filter((f) => f.geschuetzt).map((f) => f.k);
@@ -538,6 +545,41 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "vorschlaege": {
+      // 💡 Vorschläge darf jede/r einreichen (an alle oder ans Team), 🗳️ Abstimmungen nur Leitung/Lehrkräfte/Vorstand; ändern: wer es angelegt hat oder die Leitung
+      const art = neu.art === "abstimmung" ? "abstimmung" : "vorschlag";
+      if (!alt && art === "abstimmung" && !hatRolle(ctx, VS_ABSTIMMEN)) return { ok: false, grund: "NUR_LEITUNG_VORSTAND" };
+      if (!alt && art === "vorschlag" && !["alle", "team"].includes(neu.an)) return { ok: false, grund: "AN_UNGUELTIG" };
+      if (alt && alt.von !== ctx.ich && !hatRolle(ctx, MODERATION) && !(alt.an === "vorstand" && hatRolle(ctx, ["vorstand"]))) return { ok: false, grund: "NUR_EIGENE" };
+      if (neu.geloescht_am && !alt?.geloescht_am) return { ok: true, zeile: { ...alt, geloescht_am: jetzt } };
+      const titel = String(neu.titel ?? "").trim().slice(0, 140); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
+      const an = Object.keys({ alle: 1, eltern: 1, team: 1, vorstand: 1 }).includes(neu.an) ? neu.an : "alle";
+      let optionen = null;
+      if ((alt?.art || art) === "abstimmung") {
+        const ids = new Set(); optionen = [];
+        for (const o of Array.isArray(neu.optionen) ? neu.optionen.slice(0, 12) : []) { const id = String(o?.id || "").slice(0, 20), t = String(o?.t || "").trim().slice(0, 80); if (id && t && !ids.has(id)) { ids.add(id); optionen.push({ id, t }); } }
+        if (optionen.length === 1) return { ok: false, grund: "MINDESTENS_ZWEI_ANTWORTEN" };
+        const kurz = (l) => (l || []).map((o) => `${o.id}|${o.t}`).join("¦"); // Feld-Reihenfolge aus der Datenbank egal
+        if (alt && neu.optionen === undefined) optionen = alt.optionen || [];
+        else if (alt && kurz(optionen) !== kurz(alt.optionen) && ctx.vsStimmenZahl?.get(alt.id)) return { ok: false, grund: "ANTWORTEN_GESPERRT" }; // nach der ersten Stimme bleiben die Antworten
+      }
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), titel, text: String(neu.text ?? "").trim().slice(0, 2000) || null, von: alt?.von || ctx.ich, art: alt?.art || art, an: alt ? alt.an : an, optionen: optionen?.length ? optionen : null,
+        frist: /^\d{4}-\d{2}-\d{2}$/.test(String(neu.frist || "")) ? neu.frist : null, anonym: alt ? !!alt.anonym : !!neu.anonym, status: ["offen", "beendet", "erledigt"].includes(neu.status) ? neu.status : "offen",
+        ergebnis: String(neu.ergebnis ?? "").trim().slice(0, 2000) || null } };
+    }
+    case "vorschlag_stimmen": {
+      // ✋ je Person eine Stimme (ändern/zurücknehmen bis zur Frist); geheim: die Person steht nur in der eigenen Zeile
+      const v = ctx.vsMap?.get(String(neu.vorschlag_id || alt?.vorschlag_id));
+      if (!v || v.geloescht_am || !vsSichtbar(v, ctx) || !vsZielgruppe(v, vsCtx(ctx))) return { ok: false, grund: "NICHT_FUER_MICH" };
+      if (v.status !== "offen") return { ok: false, grund: "ABSTIMMUNG_BEENDET" };
+      if (v.frist && jetzt.slice(0, 10) > v.frist) return { ok: false, grund: "FRIST_VORBEI" };
+      if (alt && alt.person_id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE" };
+      const meine = ctx.vsMeine?.get(v.id); if (!alt && meine && meine !== neu.id) return { ok: false, grund: "SCHON_ABGESTIMMT" };
+      const erlaubt = v.art === "abstimmung" ? (v.optionen?.length ? v.optionen.map((o) => o.id) : ["ja", "nein", "enth"]) : ["dafuer"];
+      const wahl = neu.wahl == null || neu.wahl === "" ? null : String(neu.wahl);
+      if (wahl && !erlaubt.includes(wahl)) return { ok: false, grund: "WAHL_UNGUELTIG" };
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), vorschlag_id: v.id, person_id: ctx.ich, wahl, am: jetzt } };
     }
     case "fotoalben": {
       // 📷 0.40.0 Alben legt das Team an; ändern: wer es angelegt hat oder die Leitung

@@ -1093,6 +1093,52 @@ grant select, insert, update, delete on bk_startnachrichten to service_role;
 drop trigger if exists bk_startnachrichten_stempel on bk_startnachrichten;
 create trigger bk_startnachrichten_stempel before update on bk_startnachrichten for each row execute function bk_abgleich_stempel();
 
+-- Vorschläge & Abstimmungen
+create table if not exists bk_vorschlaege (
+  id text primary key default gen_random_uuid()::text,
+  titel text not null,
+  text text,
+  von text,
+  art text check (art is null or art in ('vorschlag', 'abstimmung')),
+  an text check (an is null or an in ('alle', 'eltern', 'team', 'vorstand')),
+  optionen jsonb,
+  frist date,
+  anonym boolean,
+  status text check (status is null or status in ('offen', 'beendet', 'erledigt')),
+  ergebnis text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_vorschlaege_geaendert on bk_vorschlaege (geaendert_am);
+alter table bk_vorschlaege enable row level security;
+revoke all on bk_vorschlaege from public, anon, authenticated;
+grant select, insert, update, delete on bk_vorschlaege to service_role;
+drop trigger if exists bk_vorschlaege_stempel on bk_vorschlaege;
+create trigger bk_vorschlaege_stempel before update on bk_vorschlaege for each row execute function bk_abgleich_stempel();
+
+-- Stimmen
+create table if not exists bk_vorschlag_stimmen (
+  id text primary key default gen_random_uuid()::text,
+  vorschlag_id text not null,
+  person_id text,
+  wahl text,
+  am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_vorschlag_stimmen_geaendert on bk_vorschlag_stimmen (geaendert_am);
+alter table bk_vorschlag_stimmen enable row level security;
+revoke all on bk_vorschlag_stimmen from public, anon, authenticated;
+grant select, insert, update, delete on bk_vorschlag_stimmen to service_role;
+drop trigger if exists bk_vorschlag_stimmen_stempel on bk_vorschlag_stimmen;
+create trigger bk_vorschlag_stimmen_stempel before update on bk_vorschlag_stimmen for each row execute function bk_abgleich_stempel();
+
 -- Fotoalben
 create table if not exists bk_fotoalben (
   id text primary key default gen_random_uuid()::text,
@@ -1874,6 +1920,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnw
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_person_id_fk') then alter table bk_uebungen add constraint bk_uebungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_werk_id_fk') then alter table bk_uebungen add constraint bk_uebungen_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_startnachrichten_von_fk') then alter table bk_startnachrichten add constraint bk_startnachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_von_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_vorschlag_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_vorschlag_id_fk foreign key (vorschlag_id) references bk_vorschlaege(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_person_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotoalben_projekt_id_fk') then alter table bk_fotoalben add constraint bk_fotoalben_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotoalben_von_fk') then alter table bk_fotoalben add constraint bk_fotoalben_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotos_album_id_fk') then alter table bk_fotos add constraint bk_fotos_album_id_fk foreign key (album_id) references bk_fotoalben(id) on delete restrict; end if; end $$;

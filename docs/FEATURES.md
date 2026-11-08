@@ -101,6 +101,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F91 | ❓ Hilfe-Zentrum + 🔍 Lupe (Suche über die ganze App, unscharf) | ✅ | tests/hilfe-suche.test.mjs |
 | BK-F92 | 📷 Fotoalbum mit Foto-Einwilligung, Diashow, Papierkorb | ✅ | tests/fotoalbum.test.mjs |
 | BK-F93 | 📖 PDF-Ansicht in der App + 🎼 Pult-Modus (Blätterpedal) | ✅ | Browser-Prüfung |
+| BK-F94 | 💡🗳️ Vorschläge & Abstimmungen (auch geheim) | ✅ | tests/vorschlaege.test.mjs |
+| BK-F95 | 🗒️ Protokolle für Mitglieder mit „Meine Aufgaben“ | ✅ | tests/buero.test.mjs |
+| BK-F96 | 🎄 Adventskalender (Überraschung bis 30.11.) | ✅ | tests/vorschlaege.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

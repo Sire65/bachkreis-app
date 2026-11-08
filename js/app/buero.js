@@ -72,7 +72,8 @@ VIEWS.buerodok = {
       ${d.beschreibung ? `<p>${esc(d.beschreibung)}</p>` : ""}${d.inhalt ? `<div class="bu-text">${esc(d.inhalt).replace(/\n/g, "<br>")}</div>` : ""}
       <div class="knopfreihe">${d.datei ? `<button type="button" class="knopf haupt" data-a="dokOeffnen" data-x="${esc(d.id)}">📎 Datei öffnen</button>` : ""}${d.url ? `<a class="knopf" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">🔗 Link öffnen ↗</a>` : ""}
       ${d.art === "vorlage" ? `<button type="button" class="knopf haupt" data-a="buBriefNeu" data-x="${esc(d.id)}">✉️ Brief daraus</button>` : ""}${d.inhalt ? `<button type="button" class="knopf" data-a="buDrucken" data-x="${esc(d.id)}">🖨️ Drucken</button>` : ""}
-      <button type="button" class="knopf" data-a="buBearbeiten" data-x="${esc(d.id)}">✏️ Bearbeiten</button></div></div>`;
+      <button type="button" class="knopf" data-a="buBearbeiten" data-x="${esc(d.id)}">✏️ Bearbeiten</button>
+      ${d.art === "protokoll" ? `<button type="button" class="knopf" data-a="protokollFreigeben" data-x="${esc(d.id)}">📣 ${["leitung", "vorstand"].includes(d.sichtbar) ? "Für Mitglieder freigeben" : "Freigabe ändern"}</button>` : ""}</div></div>`;
   },
 };
 AKTIONEN.buOrdner = (k) => zeige("buero", { ordner: k });

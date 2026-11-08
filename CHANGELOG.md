@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.41.0 DEV – 08.11.2026
+- Abgleich mit der KC Club App 2.882, Teil 4:
+  - 💡🗳️ Vorschläge & Abstimmungen (wie KC-CLUB-ABSTIMMUNG, -VORSCHLAG-*, -VORSCHLAG-ERLEDIGT): Vorschläge reicht jede/r ein (an alle oder als Idee ans Team), andere unterstützen mit 👍; Leitung/Lehrkräfte/Vorstand starten Abstimmungen für alle, Eltern, das Team oder den Vorstand – mit eigenen Antworten (sonst Ja/Nein/Enthaltung), Frist, 📣 Erinnern und 🔒 geheim (der Server entfernt bei geheimen Abstimmungen die Person aus fremden Stimmen – auch für die Leitung). Eine Stimme je Person (ändern/zurücknehmen bis zur Frist), Antworten nach der ersten Stimme gesperrt, Abschluss mit Ergebnis. Aus einem Vorschlag wird mit einem Tipp eine Abstimmung. Migration 20261111000000_bk_vorschlaege.sql
+  - 🗒️ Protokolle für Mitglieder (wie KC-Kachel „Protokolle“, KC-CLUB-PROTOKOLL-INFO): Protokolle aus dem Büro gibt die Leitung mit „📣 Für Mitglieder freigeben“ frei (alle / Eltern / Team, mit Benachrichtigung); Kachel mit Zahl neuer Protokolle, „📌 Meine Aufgaben“ aus den Aufgaben-Zeilen mit dem eigenen Namen, im Text gelb markiert
+  - 🎄 Adventskalender (wie KC-CLUB-ADVENTSKALENDER, -ADVENT-UEBERRASCHUNG, für den Bachkreis neu gefüllt): 24 Türchen auf einer Winterlandschaft – 🎵 Weihnachtslieder zum Anhören (gemeinfreie Melodien, selbst erzeugter Klang), 🧩 Musikrätsel, ✂️ Bastelideen, 🍪 Leckereien, 🎅 Nikolaus-Quiz, 🕯️ Adventssonntage, am 24. „Stille Nacht“ und ein Weihnachtsgruß. Heutiges Türchen leuchtet, frühere nachholen, spätere zu; bis 30.11. Überraschung (nur die Leitung sieht eine Vorschau), sichtbar bis 6. Januar; gemerkt auf dem Gerät
+- 🐞 Server: Abstimmung abschließen meldete fälschlich „Antworten gesperrt“ (Feld-Reihenfolge aus der Datenbank) – mit Test behoben, bevor es live war
+- tests/vorschlaege.test.mjs (Abstimmungen, geheim, Adventskalender); tests/buero.test.mjs angepasst (freigegebene Protokolle)
+
+
 ## 0.40.0 DEV – 08.11.2026
 - Abgleich mit der KC Club App 2.882, Teil 3:
   - 📷 Fotoalbum (wie KC-CLUB-FOTOALBUM, -FOTO-ALBEN, Diashow, Papierkorb, -FOTO-ENDGUELTIG): Alben „alle“ oder „nur Team“, Fotos hochladen (Erwachsene: Team und Eltern; vorher verkleinert auf ca. 1600 px), Großansicht mit Wischen, ▶️ Diashow, ⬇️ speichern/teilen, Bildunterschrift, 🗑️ Papierkorb 30 Tage + endgültig löschen. 🔐 Markierte Personen brauchen die Foto-Einwilligung „intern (App)“ – der Server lehnt sonst ab; vor dem Hochladen zeigt die App, welche Kinder nicht gezeigt werden dürfen. Datei-Zugriff nur über sichtbare Fotos. Migration 20261110000000_bk_fotoalbum.sql

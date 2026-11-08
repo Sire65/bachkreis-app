@@ -52,7 +52,7 @@ async function alleZeilen(db, tab) {
 }
 async function kontextLaden(db, person) {
   // Alles, was die Regeln brauchen (regeln.js kontext): Begleitpersonen/Anmeldung (projekte, reise_anmeldungen), Textfassung (genehmigung_vorlagen)
-  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben"];
+  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben", "vorschlaege"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   const ctx = kontext(person, alle);
@@ -125,6 +125,15 @@ async function speichern(db, s, body) {
   if (tab === "zugaenge") cols.push("code_hash");
   const gespeichert = [], konflikte = [];
   // ✓✓-Status braucht die Nachricht (Absender, Unterhaltung, Express) – einmal für alle Zeilen holen
+  // 💡 0.41.0 Stimmen: welche eigene Stimme gibt es schon je Vorschlag? (eine je Person) · Abstimmungen: gibt es schon Stimmen?
+  if (tab === "vorschlag_stimmen") {
+    const ids = [...new Set(zeilen.map((z) => String(z?.vorschlag_id || "")))];
+    ctx.vsMeine = new Map((await db.q(`select vorschlag_id, id from bk_vorschlag_stimmen where vorschlag_id = any($1::text[]) and person_id = $2 and geloescht_am is null`, [ids, ctx.ich])).map((r) => [r.vorschlag_id, r.id]));
+  }
+  if (tab === "vorschlaege") {
+    const ids = zeilen.map((z) => String(z?.id || ""));
+    ctx.vsStimmenZahl = new Map((await db.q(`select vorschlag_id, count(*)::int as n from bk_vorschlag_stimmen where vorschlag_id = any($1::text[]) and wahl is not null and geloescht_am is null group by 1`, [ids])).map((r) => [r.vorschlag_id, r.n]));
+  }
   // 📷 0.40.0 Fotos: eigene Dateien (Bild) und welche markierten Personen die Foto-Einwilligung „intern“ haben
   if (tab === "fotos") {
     const ids = [...new Set(zeilen.map((z) => String(z?.datei || "").replace(/^datei:/, "")).filter(Boolean))];

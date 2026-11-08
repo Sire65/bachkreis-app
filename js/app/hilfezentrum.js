@@ -8,6 +8,7 @@ import { liste } from "../kern/daten.js";
 import { HILFE_THEMEN, hilfeFuer, hilfeGliederung, hilfeNeu } from "../kern/hilfe.js";
 import { suchen } from "../kern/suche.js";
 import { TU_PLANER } from "../kern/schema.js";
+import { adventSichtbar } from "../kern/advent.js";
 import { APP_VERSION } from "../kern/version.js";
 import { KACHELN } from "./start.js";
 import { meineUnterhaltungen } from "./start.js";
@@ -15,7 +16,7 @@ import { chatTitel } from "./nachrichten.js";
 
 const GESEHEN = "bk_hz_gesehen";
 const LS = (k, d = null) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
-const darf = (fuer) => ({ eltern: istEltern(), kinder: istSchueler(), verwalter: istVerwalter(), leitung: hatRolle("admin", "leitung"), buero: hatRolle("admin", "leitung", "lehrkraft", "vorstand"), planer: hatRolle(...TU_PLANER) })[fuer] ?? true;
+const darf = (fuer) => ({ eltern: istEltern(), kinder: istSchueler(), verwalter: istVerwalter(), leitung: hatRolle("admin", "leitung"), buero: hatRolle("admin", "leitung", "lehrkraft", "vorstand"), planer: hatRolle(...TU_PLANER), advent: adventSichtbar(new Date(), hatRolle("admin", "leitung")) })[fuer] ?? true;
 const HZ = { thema: null, q: "", vorher: null, unterwegs: null, behalten: false };
 const eintraege = () => hilfeFuer(darf);
 

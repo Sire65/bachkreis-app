@@ -516,6 +516,18 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 💡🗳️ 0.41.0 Vorschläge & Abstimmungen
+  const kinderB = d.gruppe_zuordnung.filter((z) => z.gruppe_id === "g-b").map((z) => z.person_id);
+  d.vorschlaege = [
+    { id: "vs-1", titel: "„Jingle Bells“ beim Weihnachtskonzert spielen", text: "Das wäre lustig – mit Glöckchen für alle!", von: demoSchueler?.id || kinderB[0], art: "vorschlag", an: "alle", status: "offen" },
+    { id: "vs-2", titel: "Probenfahrt 2027: wohin?", text: "Bitte bis Ende des Monats abstimmen – die Jugendherbergen müssen früh gebucht werden.", von: "p-leitung", art: "abstimmung", an: "eltern",
+      optionen: [{ id: "harz", t: "🌲 Harz" }, { id: "nordsee", t: "🌊 Nordsee" }, { id: "sauerland", t: "⛰️ Sauerland" }], frist: isoTag(tag(jetzt, 14)), anonym: false, status: "offen" },
+    { id: "vs-3", titel: "Mitgliedsbeitrag Förderverein ab 2027", text: "Vorschlag der Kassenwartin: 30 € statt 24 € im Jahr.", von: "p-fv1", art: "abstimmung", an: "vorstand", optionen: null, frist: isoTag(tag(jetzt, 7)), anonym: true, status: "offen" },
+    { id: "vs-4", titel: "Mehr Notenständer für den Musiksaal", von: "p-lk2", art: "vorschlag", an: "team", status: "erledigt", ergebnis: "6 Ständer bestellt (Förderverein)." },
+  ];
+  d.vorschlag_stimmen = kinderB.slice(0, 7).map((p, i) => ({ id: `vst-1-${i}`, vorschlag_id: "vs-1", person_id: p, wahl: "dafuer", am: iso(tag(jetzt, -1, 17)) }))
+    .concat([...new Set(d.eltern_kind.map((e) => e.eltern_id))].filter((p) => p !== demoEltern?.id).slice(0, 6).map((p, i) => ({ id: `vst-2-${i}`, vorschlag_id: "vs-2", person_id: p, wahl: ["harz", "nordsee", "harz", "sauerland", "harz", "nordsee"][i], am: iso(tag(jetzt, -2, 20)) })))
+    .concat(["p-fv2", "p-fv3"].map((p, i) => ({ id: `vst-3-${i}`, vorschlag_id: "vs-3", person_id: p, wahl: i ? "nein" : "ja", am: iso(tag(jetzt, -1, 9)) })));
   // 📷 0.40.0 Fotoalbum: selbst gezeichnete Beispielbilder (bilder/demo/*.svg) – keine echten Fotos, niemand erkennbar
   const foto = (album, b, titel, tageVorher) => ({ id: `fo-${album}-${b}`, album_id: album, datei: `bild:bilder/demo/${b}.svg`, titel, von: "p-leitung", personen: [], aufgenommen_am: iso(tag(jetzt, -tageVorher, 19)), papierkorb_am: null });
   d.fotoalben = [
@@ -672,6 +684,8 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "bu-v1", titel: "Elternbrief: Probenfahrt", ordner: "vorlagen", art: "vorlage", jahr: J, sichtbar: "leitung", beschreibung: "Einladung zur Probenfahrt", inhalt: "Liebe Eltern,\n\nauch in diesem Jahr fährt das {orchester} zur Probenfahrt. Alle Infos und die Anmeldung finden Sie in der Bachkreis-App unter Termine.\n\nNächster Termin: {termin}\n\nBitte geben Sie die Einverständniserklärung bis zum … in der App frei.\n\nMusikalische Grüße\n{leitung}" },
     { id: "bu-v2", titel: "Einladung zum Konzert", ordner: "vorlagen", art: "vorlage", jahr: J, sichtbar: "leitung", beschreibung: "Herzliche Einladung zu unserem Konzert", inhalt: "Liebe {vorname},\n\nwir laden Sie und Ihre Familie herzlich zu unserem Konzert ein:\n{termin}\n\nDer Eintritt ist frei – wir freuen uns über eine Spende für den Förderverein.\n\nMusikalische Grüße\n{leitung}" },
     { id: "bu-v3", titel: "Urkunde: Danke fürs Mitspielen", ordner: "vorlagen", art: "vorlage", jahr: J, sichtbar: "leitung", beschreibung: "Urkunde", inhalt: "URKUNDE\n\n{vorname} hat im Schuljahr mit großem Einsatz im {orchester} mitgespielt.\n\nHerzlichen Dank!\n\nBergkamen, {datum}\n{leitung}" },
+    { id: "bu-p2", titel: "Protokoll Elternabend B-Orchester (Beispiel)", ordner: "protokolle", art: "protokoll", jahr: J, sichtbar: "alle", beschreibung: "Probenfahrt, Herbstkonzert, Kuchenverkauf",
+      inhalt: `Elternabend B-Orchester (Beispiel)\nAnwesend: Leitung, 23 Eltern\nProtokoll: Bettina Jacka\n\nTOP 1 – Probenfahrt\nDie Fahrt geht im Frühjahr in eine Jugendherberge; Abstimmung über das Ziel läuft in der App.\n\nTOP 2 – Herbstkonzert\nBeginn 17 Uhr, Einspielen 16 Uhr. Kleidung: schwarz-weiß.\n\nBeschlüsse:\n- Kuchenverkauf zugunsten des Fördervereins\n\nAufgaben (wer · was · bis wann):\n- ${demoEltern ? `${demoEltern.vorname} ${demoEltern.nachname}` : "Eltern"} · Kuchenliste herumschicken · bis Freitag\n- Leitung · Programmheft drucken · 1 Woche vor dem Konzert\n\nNächster Elternabend: nach den Ferien` },
     { id: "bu-p1", titel: "Protokoll Lehrkräfte-Besprechung (Beispiel)", ordner: "protokolle", art: "protokoll", jahr: J, sichtbar: "leitung", beschreibung: "Planung Herbstkonzert", inhalt: "Besprechung (Beispiel)\nAnwesend: Leitung, Lehrkräfte\n\nTOP 1 – Herbstkonzert: Programm steht, Generalprobe Samstag\nTOP 2 – Probenfahrt: Jugendherberge angefragt\n\nAufgaben:\n- Plakat entwerfen (Grafik & Design)\n- Elternbrief verschicken" },
     { id: "bu-f1", titel: "Haushaltsplan Förderverein (Beispiel)", ordner: "finanzen", art: "info", jahr: J, sichtbar: "vorstand", beschreibung: "Entwurf für die Mitgliederversammlung", inhalt: "Einnahmen: Beiträge, Spenden, Konzerte\nAusgaben: Noten, Instrumente, Probenfahrt\n(Beispielzahlen folgen)" },
     { id: "bu-g1", titel: "Logo und Farben", ordner: "grafik", art: "info", jahr: J, sichtbar: "leitung", beschreibung: "Bachkreis-Logo, Schwarz-Gold", inhalt: "Farben: Gold #d4a017, Schwarz #1a1500, Weiß.\nLogo: icons/logo.png (Bachkreis-Kreis)." },

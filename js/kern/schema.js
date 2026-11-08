@@ -202,6 +202,24 @@ export const tuAntwortId = (uid, pid) => `tua-${uid}-${pid}`;
 export const FOTO_SICHT = { alle: "👥 alle im Bachkreis", verwaltung: "🔒 nur Leitung, Lehrkräfte & Vorstand" };
 export const FOTO_HOCHLADEN = ["admin", "leitung", "lehrkraft", "vorstand", "eltern"];
 export const FOTO_PAPIERKORB_TAGE = 30;
+// 💡🗳️ 0.41.0 Vorschläge & Abstimmungen (wie KC-CLUB-ABSTIMMUNG / Vorschläge): Ideen einreichen und unterstützen 👍, Abstimmungen mit Frist –
+// auf Wunsch geheim (dann sieht niemand, wer wie gestimmt hat, auch die Leitung nicht).
+export const VS_AN = { alle: "👥 alle im Bachkreis", eltern: "👪 Eltern", team: "🧑‍🏫 Leitung, Lehrkräfte & Vorstand", vorstand: "🏛️ Vorstand Förderverein" };
+export const VS_ABSTIMMEN = ["admin", "leitung", "lehrkraft", "vorstand"];
+export const VS_STANDARD = [{ id: "ja", t: "👍 Ja" }, { id: "nein", t: "👎 Nein" }, { id: "enth", t: "🤷 Enthaltung" }];
+// Wer gehört zur Zielgruppe (darf abstimmen bzw. unterstützen)?
+export function vsZielgruppe(v, { typ = "", rollen = [], verwalter = false } = {}) {
+  if (v.an === "eltern") return typ === "eltern";
+  if (v.an === "team") return verwalter;
+  if (v.an === "vorstand") return rollen.some((r) => ["admin", "leitung", "vorstand"].includes(r));
+  return true;
+}
+export function vsAuszaehlen(v, stimmen = []) {
+  const opts = v.art === "abstimmung" ? (v.optionen?.length ? v.optionen : VS_STANDARD) : [{ id: "dafuer", t: "👍 dafür" }];
+  const z = Object.fromEntries(opts.map((o) => [o.id, 0])); let n = 0;
+  for (const s of stimmen) if (s.wahl && s.wahl in z) { z[s.wahl]++; n++; }
+  return { optionen: opts.map((o) => ({ ...o, zahl: z[o.id] })), stimmen: n };
+}
 // Auszählung: je Option ja/vielleicht/nein; beste = meiste „ja“, dann wenigste „nein“, dann meiste „vielleicht“
 export function tuAuszaehlen(umfrage, antworten = []) {
   const opt = (umfrage?.optionen || []).map((o) => ({ ...o, ja: 0, vielleicht: 0, nein: 0 }));
@@ -962,6 +980,33 @@ export const TABELLEN = {
     ],
     liste: ["zeit", "text", "an", "wichtig"],
     anzeige: (z) => String(z.text || "").slice(0, 60),
+  },
+  vorschlaege: {
+    titel: "Vorschläge & Abstimmungen", sym: "💡", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "titel", t: "Worum geht es?", typ: "text", pflicht: true },
+      { k: "text", t: "Beschreibung", typ: "lang" },
+      { k: "von", t: "von", typ: "ref", ref: "personen" },
+      { k: "art", t: "Art", typ: "wahl", werte: { vorschlag: "💡 Vorschlag", abstimmung: "🗳️ Abstimmung" } },
+      { k: "an", t: "Für wen?", typ: "wahl", werte: VS_AN },
+      { k: "optionen", t: "Antworten", typ: "json" },
+      { k: "frist", t: "Abstimmen bis", typ: "datum" },
+      { k: "anonym", t: "🔒 geheim", typ: "ja" },
+      { k: "status", t: "Status", typ: "wahl", werte: { offen: "läuft", beendet: "beendet", erledigt: "erledigt" } },
+      { k: "ergebnis", t: "Ergebnis / Beschluss", typ: "lang" },
+    ],
+    liste: ["titel", "art", "an", "status"],
+    anzeige: (z) => z.titel,
+  },
+  vorschlag_stimmen: {
+    titel: "Stimmen", sym: "✋", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "vorschlag_id", t: "Vorschlag", typ: "ref", ref: "vorschlaege", pflicht: true },
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen" },
+      { k: "wahl", t: "Wahl", typ: "text" },
+      { k: "am", t: "am", typ: "zeit" },
+    ],
+    liste: ["vorschlag_id", "wahl", "am"],
   },
   fotoalben: {
     titel: "Fotoalben", sym: "📷", gruppe: "Orchester", lesen: L, schreiben: [],

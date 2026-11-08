@@ -16,6 +16,9 @@ import { startseiteVerbinden, ANO, anordnenHtml, anordnenLeiste, nachDemZeichnen
 import { gbvPruefen } from "./bedienung.js";
 import { kindAnsicht, kinderStartHtml, kindGross } from "./kinderstart.js";
 import { bueroDa } from "./buero.js";
+import { adventDa, adventHinweis } from "./advent.js";
+import { offeneAbstimmungen } from "./vorschlaege.js";
+import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
 import { offeneUebeAufgaben } from "./uebebuehne.js";
@@ -86,6 +89,9 @@ export const KACHELN = {
     { id: "fotoliste", sym: "📷", t: "Foto-Liste", u: "Wer darf aufs Foto – App, Website, Presse, Social", v: "fotoliste", nur: () => istLehrkraft() },
     { id: "rundschreiben", sym: "📣", t: "Rundschreiben", u: "An Eltern, Schüler, Spender …", v: "rundschreiben", nur: () => istVerwalter() },
     { id: "fotoalbum", sym: "📷", t: "Fotoalbum", u: "Konzerte · Fahrten · Proben", v: "fotoalbum" },
+    { id: "advent", sym: "🎄", t: "Adventskalender", u: "Jeden Tag ein Türchen", v: "advent", nur: () => adventDa(), zahl: () => (adventHinweis() ? 1 : 0) },
+    { id: "vorschlaege", sym: "💡", t: "Vorschläge & Abstimmungen", u: "Ideen · abstimmen · Ergebnisse", v: "vorschlaege", zahl: () => offeneAbstimmungen().length },
+    { id: "protokolle", sym: "🗒️", t: "Protokolle", u: "Elternabende · Besprechungen · meine Aufgaben", v: "protokolle", zahl: () => neueProtokolle() },
     { id: "chronik", sym: "📜", t: "Chronik & Repertoire", u: "Seit 1969 · Was haben wir gespielt?", v: "chronik" },
     { id: "dokumente", sym: "📂", t: "Dokumente", u: "Satzung · Flyer · Vorlagen", v: "dokumente" },
     { id: "austausch", sym: "🏠", t: "Austausch & Gastfamilien", u: "Gäste aufnehmen · Zuordnung", v: "austausch", nur: () => austauschProjekte().length > 0 && (istEltern() || istLehrkraft()), zahl: () => (istLehrkraft() ? austauschProjekte().reduce((s, p) => s + liste("gaeste", (g) => g.projekt_id === p.id && !g.gastgeber_id).length, 0) : 0) },

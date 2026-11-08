@@ -288,7 +288,9 @@ await p.click('[data-a="buBriefAblegen"]'); await p.waitForSelector(".bu-text");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("buero", { ordner: "elternbriefe" })); await p.waitForSelector(".liste li").catch(() => fehler.push("Büro: Brief nicht in „Elternbriefe“"));
 await p.selectOption("#demoleiste select", "vorstand"); await p.waitForTimeout(500);
 await p.evaluate(async () => { document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()); (await import("/js/app/zustand.js")).zeige("buero"); }); await p.waitForSelector(".bu-regal");
-if ((await p.$$eval(".bu-ordner[data-a=buOrdner] .bu-otext", (l) => l.map((x) => x.textContent))).join() !== "Förderverein & Finanzen") fehler.push("Büro: Vorstand sieht Leitungs-Ordner");
+// Vorstand: Finanzen – und „Protokolle“ nur wegen des für alle freigegebenen Protokolls (0.41.0); Leitungs-Dokumente darin nicht
+if ((await p.$$eval(".bu-ordner[data-a=buOrdner] .bu-otext", (l) => l.map((x) => x.textContent))).filter((t) => t !== "Protokolle").join() !== "Förderverein & Finanzen") fehler.push("Büro: Vorstand sieht Leitungs-Ordner");
+if (await p.evaluate(async () => (await import("/js/app/buero.js")).bueroDokumente("protokolle").some((d) => d.sichtbar === "leitung"))) fehler.push("Büro: Vorstand sieht Leitungs-Protokoll");
 // 🛡️ Schutz (0.20.0): Eltern füllen 🩺 Gesundheit aus · Leitung: 📷 Foto-Liste, 📋 Anwesenheit im Termin abhaken, Fehlzeiten
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(300);
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("gesundheit")); await p.waitForSelector("#gsForm");

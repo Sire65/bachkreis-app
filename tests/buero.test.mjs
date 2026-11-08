@@ -21,7 +21,8 @@ test("🏢 Leitung legt ab und sieht alles; Vorstand nur Finanzen; Wart, Eltern,
   const L = await ids(dp.leitung), V = await ids(dp.vorstand), E = await ids(dp.eltern), S = await ids(dp.schueler);
   assert.ok(L.includes("bu-t1") && L.includes("bu-f1") && L.includes("bu-v1"));
   assert.ok(V.includes("bu-f1") && !V.includes("bu-t1") && !V.includes("bu-v1"), "Vorstand: nur Finanzen");
-  assert.ok(![...E, ...S].some((x) => x.startsWith("bu-")), "Eltern/Schüler sehen keine Büro-Dokumente");
+  assert.ok(![...E, ...S].some((x) => x.startsWith("bu-") && x !== "bu-p2"), "Eltern/Schüler sehen keine Büro-Dokumente – außer einem freigegebenen Protokoll (0.41.0)");
+  assert.ok(E.includes("bu-p2") && S.includes("bu-p2"), "freigegebenes Protokoll (sichtbar: alle) sehen alle");
   const wart = d.personen.find((p) => (p.rollen || []).includes("instrumentenwart") && !(p.rollen || []).some((r) => ["admin", "leitung", "lehrkraft"].includes(r)) && codes[p.id]);
   if (wart) assert.ok(!(await ids(wart.id)).some((x) => x === "bu-t1" || x === "bu-v1"), "Instrumentenwart sieht keine Leitungs-Ordner");
 });

@@ -6,7 +6,7 @@ import { offeneFuerMich } from "./terminumfrage.js";
 import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istLehrkraft, istLeitung, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
-import { feiertageNRW, termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, googleKalenderLink, tagIso, registerVon, instrumenteVon, teilnahmeVon, eigeneVorkommen } from "../kern/logik.js";
+import { feiertage, termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, googleKalenderLink, tagIso, registerVon, instrumenteVon, teilnahmeVon, eigeneVorkommen } from "../kern/logik.js";
 import { TERMIN_PLANER, TEILNAHME, ANWESENHEIT } from "../kern/schema.js";
 import { senden, whatsapp } from "../kern/versand.js";
 
@@ -129,7 +129,7 @@ function monatsKalender(ts, monat) {
     const d = new Date(start); d.setDate(start.getDate() + i);
     const tag = tagIso(d);
     const an = ts.filter((t) => tagIso(t.beginn) === tag);
-    const ft = einst().feiertage !== false ? feiertageNRW(d.getFullYear())[tag] : null;
+    const ft = einst().feiertage !== false ? feiertage(d.getFullYear(), einst().laender?.length ? einst().laender : ["NW"])[tag] : null;
     html += `<div class="tag ${d.getMonth() !== m ? "fremd" : ""} ${tag === heute ? "heute" : ""} ${ft ? "feiertag" : ""}" ${ft ? `title="${esc(ft)}"` : ""} data-a="${an.length ? (an[0].eigen ? "eigenBearbeiten" : "oeffne") : "nix"}" data-x="${an.length ? (an[0].eigen ? an[0].eigen_id : "termin|" + an[0].id) : ""}">${d.getDate()}${ft ? `<small class="ft">${esc(ft)}</small>` : ""}${an.map((t) => `<i style="background:${t.eigen ? "#7b3fa0" : esc(art(t).farbe)}" title="${esc(t.titel)}"></i>`).join("")}</div>`;
   }
   return html + "</div>";

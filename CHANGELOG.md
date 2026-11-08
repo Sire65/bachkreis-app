@@ -1,5 +1,16 @@
 # Änderungen
 
+## 0.45.0 DEV – 08.11.2026
+Abgleich mit der KC Club App, Paket 1 „Ordnung & Bedienung“:
+- 🗺️ **Alles auf einen Blick** (wie KC „Club-App auf einen Blick“): jeder Bereich der App, nach Registern (Bachkreis · Meins · Technik · Admin) in Klappbereichen, nur was die eigene Rolle sieht, auch auf der Startseite ausgeblendete Kacheln (gestrichelt), Suche; Kachel unter Technik
+- 🙋 **Einstieg** (wie KC-CLUB-EINSTIEG): ab dem 2. Öffnen einmal „Wie viel Hilfe möchtest du?“ – 🙋 Viel (Tipps, Übersicht), 👌 Ein bisschen (Standard), 😎 Ich komme klar (keine Tipps); an diesem Start sonst kein Fenster; änderbar in ⚙️ › Ansagen & Tipps
+- 🗂️ **Einstellungen als Kartei** (wie KC-CLUB-ROLLKARTEI): Umschalter ☰ Liste / 🗂️ Kartei; Reiter oben, ein Bereich, ‹ › und Wischen blättern
+- 🗺️ **Feiertage je Bundesland** (wie KC „Bundesländer wählen“): alle 16 Länder mit ihren Feiertagen (Buß- und Bettag, Reformationstag, Heilige Drei Könige, Frauentag …), mehrere wählbar; Standard NRW
+- ⏳ **Warte-Bild** wählbar (wie KC mit Küchen-Motiven, hier Musik): Bachkreis-Logo, 🎻 Geige streicht, ⏱️ Metronom, 🎵 Noten hüpfen, 🪄 Taktstock, 🥁 Trommelwirbel, 🎶 Notenschlüssel – fest, abwechselnd oder täglich anders
+- ✨ **Blinken** einstellbar: Ungelesen-Zahlen, rote Lämpchen, Kopf-Pfeil (aus = ruhig)
+- tests/ueberblick.test.mjs
+
+
 ## 0.44.0 DEV – 08.11.2026
 - 🔽 Klappbereiche wie in der KC Club App (KC-CLUB-KLAPPE-GLEICH, -KLAPPE-UNTEN, -KLAPPEN-ALLE, -GRUPPE-KLAPPEN): ein gemeinsamer Baustein `js/kern/klappen.js` für jeden `<details data-klappe>` – Titel links, runder weinroter Pfeil rechts (dreht sich), 🔓/🔒 Schloss stellt den Bereich fest (neben der Kopfzeile, damit Bildschirmleser keinen verschachtelten Knopf finden), unten „▴ Zuklappen“ (springt zur Überschrift), Auf/Zu je Gerät gemerkt; oben „▾ Alle auf / ▴ Alle zu“ (festgestellte bleiben, wie sie sind). Wird beim Zeichnen jeder Seite und jedes Blatts eingerichtet
 - 💬 Chat: runde weinrote Pfeile an eingeklappten Tagen und Wochen und an aufgeklappten Tages-/Wochenköpfen (KC-CLUB-KLAPP-PFEILE), Abschnitte der Chat-Übersicht und „Archiviert“ mit demselben Pfeil; 👥 Chat-Kopf: „Mit: …“ einzeilig, Pfeil zeigt alle Namen (nur wenn die Zeile nicht passt, beim Öffnen immer zu – KC-CLUB-CHAT-KOPF-KLAPPEN); ✏️ ▾-Griff über dem Schreibfeld klappt den Schreibbereich weg, „▴ ✏️ Schreiben“ öffnet ihn mit Schreibmarke, beim Öffnen eines Chats immer offen (KC-CLUB-SCHREIBEN-KLAPPEN)

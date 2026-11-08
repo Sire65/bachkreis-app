@@ -114,6 +114,11 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F104 | ⚙️ Zahnrad nach Kinder, Eltern, Leitungen, Admin, Entwickler | ✅ | tests/admin-rollen.test.mjs |
 | BK-F105 | 🔽 Klappbereiche wie KC (Pfeil, Schloss, Zuklappen, Alle auf/zu) in Listen | ✅ | tests/klappen.test.mjs |
 | BK-F106 | 💬 Chat: Klapp-Pfeile an Tagen/Wochen, Chat-Kopf und Schreibbereich einklappbar | ✅ | tests/klappen.test.mjs |
+| BK-F107 | 🗺️ Alles auf einen Blick (alle Bereiche nach Registern) | ✅ | tests/ueberblick.test.mjs |
+| BK-F108 | 🙋 Einstieg: Hilfebedarf beim Start | ✅ | tests/ueberblick.test.mjs |
+| BK-F109 | 🗂️ Einstellungen als Kartei | ✅ | tests/ueberblick.test.mjs |
+| BK-F110 | 🗺️ Feiertage je Bundesland | ✅ | tests/ueberblick.test.mjs |
+| BK-F111 | ⏳ Warte-Bilder mit Musik-Motiven, ✨ Blinken einstellbar | ✅ | tests/ueberblick.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

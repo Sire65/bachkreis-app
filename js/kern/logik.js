@@ -334,12 +334,26 @@ function osterSonntagIso(jahr) {
   return `${jahr}-${String(monat).padStart(2, "0")}-${String(tag).padStart(2, "0")}`;
 }
 const plusTage = (iso, n) => { const x = new Date(iso + "T12:00:00Z"); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
-export function feiertageNRW(jahr) {
-  const o = osterSonntagIso(jahr);
-  return Object.fromEntries([[`${jahr}-01-01`, "Neujahr"], [plusTage(o, -2), "Karfreitag"], [plusTage(o, 1), "Ostermontag"], [`${jahr}-05-01`, "Tag der Arbeit"],
-    [plusTage(o, 39), "Christi Himmelfahrt"], [plusTage(o, 50), "Pfingstmontag"], [plusTage(o, 60), "Fronleichnam"], [`${jahr}-10-03`, "Tag der Deutschen Einheit"],
-    [`${jahr}-11-01`, "Allerheiligen"], [`${jahr}-12-25`, "1. Weihnachtstag"], [`${jahr}-12-26`, "2. Weihnachtstag"]]);
+// 🗺️ 0.45.0 Feiertage je Bundesland (wie KC „Bundesländer wählen“) – Standard NRW; mehrere Länder möglich (Austausch, Fahrten)
+export const BUNDESLAENDER = { BW: "Baden-Württemberg", BY: "Bayern", BE: "Berlin", BB: "Brandenburg", HB: "Bremen", HH: "Hamburg", HE: "Hessen", MV: "Mecklenburg-Vorpommern",
+  NI: "Niedersachsen", NW: "Nordrhein-Westfalen", RP: "Rheinland-Pfalz", SL: "Saarland", SN: "Sachsen", ST: "Sachsen-Anhalt", SH: "Schleswig-Holstein", TH: "Thüringen" };
+export function feiertage(jahr, laender = ["NW"]) {
+  const o = osterSonntagIso(jahr), L = new Set(laender), hat = (...x) => x.some((l) => L.has(l));
+  const n23 = new Date(Date.UTC(jahr, 10, 22)); while (n23.getUTCDay() !== 3) n23.setUTCDate(n23.getUTCDate() - 1); // Buß- und Bettag: Mittwoch vor dem 23.11.
+  const l = [[`${jahr}-01-01`, "Neujahr"], [plusTage(o, -2), "Karfreitag"], [plusTage(o, 1), "Ostermontag"], [`${jahr}-05-01`, "Tag der Arbeit"],
+    [plusTage(o, 39), "Christi Himmelfahrt"], [plusTage(o, 50), "Pfingstmontag"], [`${jahr}-10-03`, "Tag der Deutschen Einheit"], [`${jahr}-12-25`, "1. Weihnachtstag"], [`${jahr}-12-26`, "2. Weihnachtstag"]];
+  if (hat("BW", "BY", "ST")) l.push([`${jahr}-01-06`, "Heilige Drei Könige"]);
+  if (hat("BE", "MV")) l.push([`${jahr}-03-08`, "Frauentag"]);
+  if (hat("BB")) l.push([o, "Ostersonntag"], [plusTage(o, 49), "Pfingstsonntag"]);
+  if (hat("BW", "BY", "HE", "NW", "RP", "SL")) l.push([plusTage(o, 60), "Fronleichnam"]);
+  if (hat("SL")) l.push([`${jahr}-08-15`, "Mariä Himmelfahrt"]);
+  if (hat("TH")) l.push([`${jahr}-09-20`, "Weltkindertag"]);
+  if (hat("BB", "HB", "HH", "MV", "NI", "SN", "ST", "SH", "TH")) l.push([`${jahr}-10-31`, "Reformationstag"]);
+  if (hat("BW", "BY", "NW", "RP", "SL")) l.push([`${jahr}-11-01`, "Allerheiligen"]);
+  if (hat("SN")) l.push([n23.toISOString().slice(0, 10), "Buß- und Bettag"]);
+  return Object.fromEntries(l.sort((a, b) => a[0].localeCompare(b[0])));
 }
+export const feiertageNRW = (jahr) => feiertage(jahr, ["NW"]);
 
 // ---------- Nachrichten (gemeinsam für App und Server – tools/server-kopie.mjs kopiert diese Datei) ----------
 // Wer bekommt Nachrichten einer Unterhaltung? Verteiler (automatisch) + feste Mitglieder (+ Leitung bei Verteilern)

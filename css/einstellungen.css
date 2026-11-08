@@ -90,3 +90,27 @@ details.einst h4 { margin: 14px 0 6px; }
 details.einst-unter { background: var(--karte2); box-shadow: none; margin: 8px 0; }
 details.einst-unter > summary { font-size: .98rem; padding: 8px 0; }
 details.einst-unter[open] { padding-bottom: 10px; }
+.wb-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.wb-wahl { display: grid; justify-items: center; gap: 6px; padding: 10px; border: 2px solid var(--linie); border-radius: 16px; background: var(--karte); color: var(--text); font: inherit; font-weight: 800; font-size: .85rem; cursor: pointer; }
+.wb-wahl.an { border-color: var(--gold); box-shadow: 0 0 0 3px color-mix(in srgb, var(--gold) 35%, transparent); }
+.wb-wahl .warte-logo { width: 72px; height: 72px; }
+/* 🗂️ 0.45.0 Einstellungen als Kartei (Reiter oben, ein Bereich, ‹ › und Wischen) */
+.einst-oben { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.einst-oben .einst-stufe { margin: 0; }
+.einst-art { margin: 0 0 0 auto; width: auto; }
+.einst-art button { padding: 6px 12px; }
+.kartei-reiter { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 8px; scrollbar-width: thin; }
+.kartei-reiter button { flex: none; border: 1px solid var(--linie); border-bottom: none; border-radius: 12px 12px 0 0; background: var(--karte2); color: var(--text); font: inherit; font-weight: 800; font-size: .85rem; padding: 8px 12px; cursor: pointer; }
+.kartei-reiter button.an { background: var(--karte); box-shadow: 0 -3px 0 var(--gold) inset; }
+.kartei-blaettern { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 8px; }
+.kartei-blaettern span { font-weight: 800; color: var(--grau); font-size: .85rem; }
+.kartei-blaettern .knopf { max-width: 42%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+section.kartei-blatt { background: var(--karte); border-radius: var(--radius); box-shadow: var(--schatten); padding: 4px 14px 14px; margin: 0 0 12px; }
+section.kartei-blatt > h3 { margin: 12px 0 8px; }
+/* 🗺️ 0.45.0 Alles auf einen Blick · 🙋 Einstieg */
+.ub-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; padding-bottom: 6px; }
+.ub-kachel { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px; border: 1px solid var(--linie); border-radius: 14px; background: var(--karte); color: var(--text); font: inherit; cursor: pointer; min-height: 56px; }
+.ub-kachel.aus { opacity: .7; border-style: dashed; }
+.ub-sym { font-size: 1.5rem; flex: none; }
+.ub-text { display: grid; gap: 2px; min-width: 0; } .ub-text b { font-size: .92rem; } .ub-text small { color: var(--grau); font-size: .78rem; }
+.ub-hilfe .knopf { display: grid; gap: 2px; text-align: left; padding: 12px 14px; } .ub-hilfe .knopf small { font-weight: 600; opacity: .85; }

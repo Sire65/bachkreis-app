@@ -1,13 +1,24 @@
 {
-  "version": "0.44.0",
+  "version": "0.45.0",
   "datum": "2026-11-08",
   "stufe": "DEV",
   "neu": [
-    "🔽 Klappbereiche wie in der Club App: runder roter Pfeil zum Auf- und Zuklappen, 🔓/🔒 zum Feststellen, unten „▴ Zuklappen“, oben „▾ Alle auf / ▴ Alle zu“ – die App merkt sich, was offen ist – auch innen in den Einstellungen (Farben, Themen, Tag & Nacht, Schrift, Effekte …)",
-    "💬 Im Chat: ▾-Griff über dem Schreibfeld klappt den Schreibbereich weg (mehr Platz zum Lesen), oben im Chat alle Namen per Pfeil",
-    "📋 Listen in Abschnitten zum Aufklappen: Termine, Protokolle, Erledigte Vorschläge, Rückmeldungen, Erstattungen, Instrumente, Noten"
+    "🗺️ Alles auf einen Blick: jeder Bereich der App geordnet nach Registern (Technik › Alles auf einen Blick)",
+    "🙋 Wie viel Hilfe möchtest du? Viel, ein bisschen oder keine – die App richtet Tipps danach ein",
+    "🗂️ Einstellungen auch als Kartei mit Reitern zum Blättern",
+    "⏳ Neue Warte-Bilder: Geige, Metronom, Noten, Taktstock, Trommel",
+    "🗺️ Feiertage für jedes Bundesland, ✨ Blinken einstellbar"
   ],
   "verlauf": [
+    {
+      "version": "0.44.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🔽 Klappbereiche wie in der Club App: runder roter Pfeil zum Auf- und Zuklappen, 🔓/🔒 zum Feststellen, unten „▴ Zuklappen“, oben „▾ Alle auf / ▴ Alle zu“ – die App merkt sich, was offen ist – auch innen in den Einstellungen (Farben, Themen, Tag & Nacht, Schrift, Effekte …)",
+        "💬 Im Chat: ▾-Griff über dem Schreibfeld klappt den Schreibbereich weg (mehr Platz zum Lesen), oben im Chat alle Namen per Pfeil",
+        "📋 Listen in Abschnitten zum Aufklappen: Termine, Protokolle, Erledigte Vorschläge, Rückmeldungen, Erstattungen, Instrumente, Noten"
+      ]
+    },
     {
       "version": "0.43.1",
       "datum": "2026-11-08",

@@ -286,3 +286,28 @@ details.kl details.kl .kl-zahl { background: var(--karte); }
 .klappen-alle-zeile { display: flex; justify-content: flex-end; margin: -4px 0 6px; }
 .klappen-alle-zeile .klappen-alle { margin: 0; min-height: 36px; padding: 4px 14px; white-space: nowrap; }
 .klappen-alle[hidden] { display: none; }
+
+/* ⏳ 0.45.0 Warte-Bilder mit Musik-Motiven */
+.warte-bild svg { display: block; }
+.warte-bild .wb-kreis { fill: var(--haupt, #1a1500); }
+:root.dunkel .warte-bild .wb-kreis { fill: #3b3110; }
+.warte-bild .wb-strich { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.warte-bild .wb-voll { fill: #ffd23f; stroke: none; }
+.warte-bild .wb-bogen { animation: wbBogen 1s ease-in-out infinite alternate; }
+.warte-bild .wb-pendel { transform-origin: 40px 56px; animation: wbPendel 1s ease-in-out infinite alternate; }
+.warte-bild .wb-note { animation: wbHuepf .9s ease-in-out infinite alternate; }
+.warte-bild .wb-spur { opacity: .35; }
+.warte-bild .wb-stock1 { transform-origin: 26px 18px; animation: wbStock .18s ease-in-out infinite alternate; }
+.warte-bild .wb-stock2 { transform-origin: 54px 18px; animation: wbStock2 .18s ease-in-out .09s infinite alternate; }
+.warte-bild .wb-schluessel { fill: #ffd23f; font-size: 44px; transform-origin: 40px 40px; animation: bkLogoDreh 2.4s linear infinite; }
+@keyframes wbBogen { from { transform: translate(-6px, 2px); } to { transform: translate(6px, -2px); } }
+@keyframes wbPendel { from { transform: rotate(-24deg); } to { transform: rotate(24deg); } }
+@keyframes wbHuepf { from { transform: translateY(0); } to { transform: translateY(-9px); } }
+@keyframes wbStock { from { transform: rotate(-8deg); } to { transform: rotate(6deg); } }
+@keyframes wbStock2 { from { transform: rotate(8deg); } to { transform: rotate(-6deg); } }
+@media (prefers-reduced-motion: reduce) { .warte-bild * { animation-duration: 3s !important; } }
+
+/* ✨ 0.45.0 Blinken einstellbar (wie KC „✨ Blinken“): Zahlen, rote Lämpchen, Kopf-Pfeil – aus = ruhig */
+:root.ohne-zahlblink .fuss-leiste button[class*="alt-"] .zaehler, :root.ohne-zahlblink .kachel[class*="na-"] .zahl, :root.ohne-zahlblink .mini.mini-neu b { animation: none !important; }
+:root.ohne-ledpuls .led.rot { animation: none !important; }
+:root.ohne-pfeilblink .kopf-pfeil.kp-neu { animation: none !important; }

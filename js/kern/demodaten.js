@@ -516,6 +516,15 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 🆘 0.42.0 Rückmeldungen · 💶 Erstattungen (Beispiele)
+  d.rueckmeldungen = [
+    { id: "rm-1", art: "problem", text: "Beim Hochladen von Noten auf dem Tablet passiert nichts.", von: demoEltern?.id || "p-lk1", geraet: "Android · Chrome · installiert", ansicht: "noten", status: "in_arbeit", antwort: "Danke! Wir schauen es uns an – bitte bis dahin am Handy hochladen.", beantwortet_am: iso(tag(jetzt, -1, 10)) },
+    { id: "rm-2", art: "lob", text: "Die neue Terminumfrage ist super praktisch!", von: "p-lk2", sterne: 5, status: "neu" },
+  ];
+  d.erstattungen = [
+    { id: "er-1", von: "p-lk1", art: "fahrt", datum: isoTag(tag(jetzt, -12)), zweck: "Fahrt zum Notenkauf (Musikalienhandlung Dortmund)", km: 42, betrag: 12.6, status: "eingereicht" },
+    { id: "er-2", von: "p-lk2", art: "auslage", datum: isoTag(tag(jetzt, -20)), zweck: "Kolophonium und Saiten für Leih-Celli", betrag: 38.9, beleg: "bild:bilder/demo/instrumente.svg", status: "genehmigt", bearbeitet_von: "p-fv1" },
+  ];
   // 💡🗳️ 0.41.0 Vorschläge & Abstimmungen
   const kinderB = d.gruppe_zuordnung.filter((z) => z.gruppe_id === "g-b").map((z) => z.person_id);
   d.vorschlaege = [

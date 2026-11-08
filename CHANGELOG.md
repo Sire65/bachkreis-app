@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.42.0 DEV – 08.11.2026
+- Abgleich mit der KC Club App 2.882, Teil 5 (letzter Teil der Liste):
+  - 🆘 Rückmeldungen zur App (wie KC-CLUB-UNTERSTUETZUNG-ANFRAGE, KC-CLUB-FEEDBACK): 🆘 Problem · 🤝 Hilfe mit der App (auf Wunsch Rückruf) · 💡 Idee · ⭐ Lob mit Sternen; technische Angaben (Gerät, Browser, installiert, Version, Ansicht) automatisch, keine Inhalte. Leitung: Eingang mit Filter, Antwort + Status, Antwort kommt als Nachricht. Fremde Meldungen sieht nur die Leitung. Einstieg: Hilfe-Zentrum und Kachel „🆘 Hilfe & Rückmeldung“
+  - 💶 Erstattung (wie KC Erstattung, -BRIEFBOGEN, -CSV): Fahrtkosten (km × Satz, Standard 0,30 €, konfig km_satz) und Auslagen mit Beleg (Foto/PDF, verkleinert); Betrag rechnet der Server; Kasse (Vorstand, Leitung) genehmigt / zahlt aus / lehnt ab mit Notiz; Antrag auf dem Briefbogen, CSV für die Kasse; Beleg sehen nur Person und Kasse. Keine Bankdaten in der App. Migration 20261112000000_bk_rueckmeldung_erstattung.sql
+  - 🐞 Marienkäfer (jeder 50. Start) und 🍀 Glücksklee (jeder 25. Start) wie KC-CLUB-MARIENKAEFER / -GLUECKSKLEE: Käfer krabbelt zur Mitte, dreht sich um, lächelt und blinzelt; Klee wird hereingeweht und wieder fortgepustet; antippen = musikalischer Glücksspruch. Immer nur eine Überraschung (Käfer vor Klee vor Fee), nicht ohne Effekte / bei weniger Bewegung, abschaltbar und zum Ansehen in ⚙️ › ✨ Effekte
+  - 📏 Datenvolumen-Messung (wie KC-CLUB-EGRESS-MESSUNG): der Server zählt Bytes je Aktion (bei „laden“ je Tabelle), alle 10 Minuten eine Zeile in bk_kom_ereignisse (nur Namen und Zahlen); „Zugang im Blick“ › 💾 zeigt das Volumen hochgerechnet auf 30 Tage gegen das Kontingent (Standard 5 GB, konfig grenze_volumen_gb) mit den größten Verbrauchern – ohne Messung grau
+- tests/rueckmeldung-erstattung.test.mjs, tests/zugang.test.mjs (+ Datenvolumen)
+
+
 ## 0.41.0 DEV – 08.11.2026
 - Abgleich mit der KC Club App 2.882, Teil 4:
   - 💡🗳️ Vorschläge & Abstimmungen (wie KC-CLUB-ABSTIMMUNG, -VORSCHLAG-*, -VORSCHLAG-ERLEDIGT): Vorschläge reicht jede/r ein (an alle oder als Idee ans Team), andere unterstützen mit 👍; Leitung/Lehrkräfte/Vorstand starten Abstimmungen für alle, Eltern, das Team oder den Vorstand – mit eigenen Antworten (sonst Ja/Nein/Enthaltung), Frist, 📣 Erinnern und 🔒 geheim (der Server entfernt bei geheimen Abstimmungen die Person aus fremden Stimmen – auch für die Leitung). Eine Stimme je Person (ändern/zurücknehmen bis zur Frist), Antworten nach der ersten Stimme gesperrt, Abschluss mit Ergebnis. Aus einem Vorschlag wird mit einem Tipp eine Abstimmung. Migration 20261111000000_bk_vorschlaege.sql

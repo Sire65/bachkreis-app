@@ -73,15 +73,19 @@ export function speicherStufen(s) {
   const stufe = (p) => (p >= 95 ? "rot" : p >= 80 ? "gelb" : "gruen");
   const db = MB(s.dbBytes), dat = MB(datBytes);
   return [{ id: "db", t: "Datenbank", mb: db, grenze: s.grenzen.db_mb, p: Math.round((db / s.grenzen.db_mb) * 100), stufe: stufe((db / s.grenzen.db_mb) * 100), extra: inDb > 0 ? `davon Dateien in der Datenbank: ${MB(inDb).toFixed(1)} MB – besser in den Dateispeicher (BK_ABLAGE=storage)` : "" },
-    { id: "dateien", t: "Dateispeicher (Noten, Fotos, Dokumente)", mb: dat, grenze: s.grenzen.dateien_mb, p: Math.round((dat / s.grenzen.dateien_mb) * 100), stufe: stufe((dat / s.grenzen.dateien_mb) * 100), extra: "" }];
+    { id: "dateien", t: "Dateispeicher (Noten, Fotos, Dokumente)", mb: dat, grenze: s.grenzen.dateien_mb, p: Math.round((dat / s.grenzen.dateien_mb) * 100), stufe: stufe((dat / s.grenzen.dateien_mb) * 100), extra: "" },
+    // 📏 0.42.0 Datenvolumen: Messung der letzten 7 Tage, hochgerechnet auf 30 Tage (Kontingent Standard 5 GB) – ohne Messung grau (nie „ok“)
+    ...(s.volumen && s.grenzen.volumen_gb ? [(() => { const tage = s.volumen.seit ? Math.max(1, Math.min(7, (Date.now() - Date.parse(s.volumen.seit)) / 86400000)) : 0, mb = tage ? (MB(s.volumen.bytes) / tage) * 30 : 0, g = s.grenzen.volumen_gb * 1024, p = Math.round((mb / g) * 100);
+      return { id: "volumen", t: "Datenvolumen (hochgerechnet auf 30 Tage)", mb, grenze: g, p, stufe: tage ? stufe(p) : "grau", unbekannt: !tage,
+        extra: tage ? `Größte Verbraucher: ${s.volumen.top.slice(0, 4).map((x) => `${x.k} ${MB(x.b).toFixed(1)} MB`).join(" · ")}` : "Noch keine Messung – der Server schreibt alle 10 Minuten eine." }; })()] : [])];
 }
 function speicherHtml() {
   const s = ZG.speicher;
   if (!s) return '<div class="karte"><h3>💾 Speicher</h3><p class="hinweis">Wird gemessen …</p></div>';
   if (s.fehler) return `<div class="karte"><h3>💾 Speicher</h3><p><span class="badge b-grau">❔ Unbekannt – ${esc(s.fehler)}</span></p></div>`;
-  const st = speicherStufen(s), warn = st.filter((x) => x.stufe !== "gruen");
+  const st = speicherStufen(s), warn = st.filter((x) => x.stufe === "gelb" || x.stufe === "rot");
   return `<div class="karte"><h3>💾 Speicher (kostenloser Tarif)</h3>${warn.length ? `<p><span class="badge ${warn.some((x) => x.stufe === "rot") ? "b-rot" : "b-gelb"}">⚠️ ${warn.map((x) => `${x.t}: ${x.p} %`).join(" · ")} – bald aufräumen oder größeren Tarif wählen</span></p>` : '<p><span class="badge b-gruen">🟢 Genug Platz</span></p>'}
-    ${st.map((x) => `<div class="sp-zeile"><div class="sp-text"><b>${esc(x.t)}</b><span>${x.mb.toFixed(1)} von ${x.grenze} MB · ${x.p} %</span></div><div class="sp-balken" role="img" aria-label="${x.p} Prozent belegt"><i class="${x.stufe}" style="width:${Math.min(100, x.p)}%"></i></div>${x.extra ? `<small class="hinweis">${esc(x.extra)}</small>` : ""}</div>`).join("")}
+    ${st.map((x) => `<div class="sp-zeile"><div class="sp-text"><b>${esc(x.t)}</b><span>${x.unbekannt ? "❔ unbekannt" : `${x.mb.toFixed(1)} von ${x.grenze} MB · ${x.p} %`}</span></div><div class="sp-balken" role="img" aria-label="${x.p} Prozent belegt"><i class="${x.stufe}" style="width:${Math.min(100, x.p)}%"></i></div>${x.extra ? `<small class="hinweis">${esc(x.extra)}</small>` : ""}</div>`).join("")}
     <details><summary>Größte Tabellen</summary><ul class="liste">${(s.tabellen || []).map((t) => `<li><div class="fl">${esc(t.tabelle.replace(/^bk_/, ""))}</div><b>${MB(t.bytes).toFixed(1)} MB</b></li>`).join("")}</ul></details>
     <p class="hinweis">Gemessen ${esc(vorZeit(s.gemessen))}. Das Änderungsprotokoll wird nach ${esc(String(konfig().aenderungen_monate || 12))} Monaten automatisch aufgeräumt. Grenzen änderbar in der PC-Verwaltung (Einstellungen).</p></div>`;
 }

@@ -47,7 +47,14 @@ test("💾 Speicher-Lage: nur Leitung; Datenbankgröße, Dateien, größte Tabel
   assert.equal((await rufe({ aktion: "speicher_lage" }, await login(dp.eltern))).status, 403);
   const r = (await rufe({ aktion: "speicher_lage" }, await login(dp.leitung))).json;
   assert.ok(r.ok && r.dbBytes > 0 && Array.isArray(r.dateien) && r.tabellen.length > 0);
-  assert.deepEqual(r.grenzen, { db_mb: 500, dateien_mb: 1024 });
+  assert.deepEqual(r.grenzen, { db_mb: 500, dateien_mb: 1024, volumen_gb: 5 });
+  // 📏 0.42.0 Datenvolumen: nach dem Schreiben der Messung erscheinen Aktionen und Tabellen – nur Namen und Zahlen
+  const { messungSchreiben } = await import("../supabase/functions/_shared/api.js");
+  await rufe({ aktion: "laden" }, await login(dp.leitung)); assert.equal(await messungSchreiben(db, { immer: true }), true);
+  const v = (await rufe({ aktion: "speicher_lage" }, await login(dp.leitung))).json.volumen;
+  assert.ok(v.bytes > 1000 && v.top.some((x) => x.k === "laden") && v.top.some((x) => x.k.startsWith("laden:")), JSON.stringify(v).slice(0, 200));
+  const roh = (await db.q(`select text from bk_kom_ereignisse where code = 'DATENVOLUMEN' limit 1`))[0].text;
+  assert.ok(!/Jacka|@|p-leitung/.test(roh), "keine Personen, keine Inhalte");
   assert.ok(r.tabellen.every((t) => t.tabelle.startsWith("bk_")));
 });
 test("🧹 Wartung räumt das Änderungsprotokoll nach 12 Monaten auf (neuere Einträge bleiben)", async () => {

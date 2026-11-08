@@ -405,3 +405,17 @@ body:has(#hilfeKnoepfe:not([hidden])) #inhalt { padding-bottom: 64px; } /* die r
 .adv-vorschau { border: 2px dashed #d9a21b; } .adv-nr { font-weight: 800; color: var(--grau); margin: 0 0 4px; }
 .adv-lied { display: grid; gap: 4px; justify-items: start; padding: 10px; border-radius: 12px; background: var(--karte2); margin: 8px 0; } .adv-lied small { color: var(--grau); }
 .adv-schritte { padding-left: 1.3em; } .adv-schritte li { margin: 4px 0; } .adv-frage { font-size: 1.05rem; }
+.sp-balken i.grau { background: #9aa4ad; }
+/* 0.42.0 – 🆘 Rückmeldungen · 💶 Erstattung · 🐞🍀 Glück */
+.rm-arten { grid-auto-flow: row; grid-template-columns: 1fr 1fr; } .rm-arten button { font-size: .85rem; }
+.rm-sterne { display: flex; gap: 6px; justify-content: center; margin: 8px 0; } .rm-sterne button { width: 48px; height: 48px; border: none; border-radius: 12px; background: var(--karte2); font-size: 1.6rem; color: #9aa4ad; cursor: pointer; } .rm-sterne button.an { color: #d4a017; }
+.rm-rueckruf { display: flex; gap: 8px; align-items: center; min-height: 44px; } .rm-schnell .knopf { font-size: .85rem; }
+.rm-kopf { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .rm-stern { color: #b8860b; letter-spacing: 2px; } .rm-antwort { background: var(--gruenbg); border-radius: 10px; padding: 8px 10px; margin: 6px 0; }
+.er-betrag { white-space: nowrap; } .er-rechnung { font-size: 1.15rem; font-weight: 800; text-align: center; }
+.gk-kaefer, .gk-klee { position: fixed; left: 0; top: 0; z-index: 8500; border: none; background: none; padding: 0; cursor: pointer; filter: drop-shadow(0 3px 3px rgba(0,0,0,.3)); }
+.gk-kaefer .bein path { animation: gkBein .25s linear infinite alternate; transform-origin: center; } .gk-kaefer.vorn .augen { animation: gkBlinzeln 1.3s step-end infinite; transform-origin: 35px 21px; }
+.gk-klee.liegt svg { animation: gkWiegen 1.6s ease-in-out infinite alternate; transform-origin: 40px 80px; }
+.gk-wind { position: fixed; inset: 0 0 auto 0; height: 50vh; z-index: 8400; pointer-events: none; } .gk-wind i { position: absolute; left: -30%; height: 3px; width: 40%; border-radius: 3px; background: rgba(255,255,255,.7); animation: gkWind 1.4s ease-out forwards; }
+.gk-wind i:nth-child(1) { top: 18%; } .gk-wind i:nth-child(2) { top: 30%; animation-delay: .15s; } .gk-wind i:nth-child(3) { top: 42%; animation-delay: .3s; }
+@keyframes gkBein { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } } @keyframes gkBlinzeln { 0%, 85% { transform: scaleY(1); } 90% { transform: scaleY(.1); } }
+@keyframes gkWiegen { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } } @keyframes gkWind { to { left: 110%; opacity: 0; } }

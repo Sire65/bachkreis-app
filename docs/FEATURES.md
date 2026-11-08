@@ -104,6 +104,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F94 | 💡🗳️ Vorschläge & Abstimmungen (auch geheim) | ✅ | tests/vorschlaege.test.mjs |
 | BK-F95 | 🗒️ Protokolle für Mitglieder mit „Meine Aufgaben“ | ✅ | tests/buero.test.mjs |
 | BK-F96 | 🎄 Adventskalender (Überraschung bis 30.11.) | ✅ | tests/vorschlaege.test.mjs |
+| BK-F97 | 🆘 Rückmeldungen zur App (Problem, Hilfe, Idee, Lob) mit Antwort | ✅ | tests/rueckmeldung-erstattung.test.mjs |
+| BK-F98 | 💶 Erstattung Fahrtkosten/Auslagen mit Beleg und Kasse | ✅ | tests/rueckmeldung-erstattung.test.mjs |
+| BK-F99 | 🐞🍀 Marienkäfer und Glücksklee | ✅ | tests/rueckmeldung-erstattung.test.mjs |
+| BK-F100 | 📏 Datenvolumen-Messung im Server | ✅ | tests/zugang.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

@@ -17,16 +17,23 @@ const MAX_FEHLVERSUCHE = 20; // je IP in 15 Minuten
 export const INSTALL_MODI = ["installiert", "browser", "pc"];
 // 💾 0.36.0 Speicher im Blick (nur Leitung): Datenbankgröße, Dateien (Datenbank/Speicher), größte Tabellen – mit den Grenzen des kostenlosen Tarifs
 // (Konfiguration grenze_db_mb / grenze_dateien_mb, Standard Supabase Free: 500 MB / 1024 MB). Nur Zahlen, keine Inhalte.
-export const GRENZEN_STANDARD = { db_mb: 500, dateien_mb: 1024 };
+export const GRENZEN_STANDARD = { db_mb: 500, dateien_mb: 1024, volumen_gb: 5 };
 async function speicherLage(db, s) {
   if (!(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
-  const k = Object.fromEntries((await db.q(`select schluessel, wert from bk_konfig where schluessel in ('grenze_db_mb', 'grenze_dateien_mb')`)).map((r) => [r.schluessel, Number(r.wert)]));
+  const k = Object.fromEntries((await db.q(`select schluessel, wert from bk_konfig where schluessel in ('grenze_db_mb', 'grenze_dateien_mb', 'grenze_volumen_gb')`)).map((r) => [r.schluessel, Number(r.wert)]));
   const dbBytes = Number((await db.q(`select pg_database_size(current_database())::bigint as n`))[0].n);
   const dat = await db.q(`select coalesce(ablage, 'datenbank') as ablage, count(*)::int as anzahl, coalesce(sum(groesse), 0)::bigint as bytes from bk_dateien where geloescht_am is null group by 1`);
   const tab = (await db.q(`select relname as tabelle, pg_total_relation_size(c.oid)::bigint as bytes from pg_class c join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r' and relname like 'bk\\_%' order by 2 desc limit 8`)).map((r) => ({ tabelle: r.tabelle, bytes: Number(r.bytes) }));
-  return { status: 200, json: { ok: true, dbBytes, dateien: dat.map((r) => ({ ...r, bytes: Number(r.bytes) })), tabellen: tab,
-    grenzen: { db_mb: k.grenze_db_mb > 0 ? k.grenze_db_mb : GRENZEN_STANDARD.db_mb, dateien_mb: k.grenze_dateien_mb > 0 ? k.grenze_dateien_mb : GRENZEN_STANDARD.dateien_mb }, gemessen: new Date().toISOString() } };
+  // 📏 Datenvolumen der letzten 7 Tage (aus der Messung) – hochgerechnet auf 30 Tage gegen das Kontingent (Standard 5 GB)
+  const vol = {}; let volBytes = 0, volSeit = null;
+  for (const r of await db.q(`select zeit, text from bk_kom_ereignisse where code = 'DATENVOLUMEN' and zeit > now() - interval '7 days' order by zeit`)) {
+    volSeit ||= r.zeit; let z = {}; try { z = JSON.parse(r.text || "{}"); } catch {}
+    for (const [k, [n, b]] of Object.entries(z)) { if (!k.startsWith("laden:")) volBytes += b; (vol[k] ||= [0, 0]); vol[k][0] += n; vol[k][1] += b; }
+  }
+  const volumen = { bytes: volBytes, seit: volSeit, top: Object.entries(vol).sort((a, b) => b[1][1] - a[1][1]).slice(0, 8).map(([k, [n, b]]) => ({ k, n, b })) };
+  return { status: 200, json: { ok: true, volumen, dbBytes, dateien: dat.map((r) => ({ ...r, bytes: Number(r.bytes) })), tabellen: tab,
+    grenzen: { db_mb: k.grenze_db_mb > 0 ? k.grenze_db_mb : GRENZEN_STANDARD.db_mb, dateien_mb: k.grenze_dateien_mb > 0 ? k.grenze_dateien_mb : GRENZEN_STANDARD.dateien_mb, volumen_gb: k.grenze_volumen_gb > 0 ? k.grenze_volumen_gb : GRENZEN_STANDARD.volumen_gb }, gemessen: new Date().toISOString() } };
 }
 // 🛡️ 0.31.0 Zugang im Blick (nur Leitung/Admin): Anmeldeversuche der letzten 14 Tage je Tag, gerade gesperrte Anschlüsse (nur Anzahl –
 // keine IP, die ist ohnehin nur als Prüfsumme gespeichert), Zugänge nie benutzt, und wie die App bei jedem läuft (📲 installiert?)
@@ -125,6 +132,12 @@ async function speichern(db, s, body) {
   if (tab === "zugaenge") cols.push("code_hash");
   const gespeichert = [], konflikte = [];
   // ✓✓-Status braucht die Nachricht (Absender, Unterhaltung, Express) – einmal für alle Zeilen holen
+  // 💶 0.42.0 Erstattung: Beleg muss eine eigene Datei sein; km-Satz aus der Konfiguration
+  if (tab === "erstattungen") {
+    const ids = [...new Set(zeilen.map((z) => String(z?.beleg || "").replace(/^datei:/, "")).filter(Boolean))];
+    ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
+    ctx.kmSatz = Number((await db.q(`select wert from bk_konfig where schluessel = 'km_satz'`))[0]?.wert) || undefined;
+  }
   // 💡 0.41.0 Stimmen: welche eigene Stimme gibt es schon je Vorschlag? (eine je Person) · Abstimmungen: gibt es schon Stimmen?
   if (tab === "vorschlag_stimmen") {
     const ids = [...new Set(zeilen.map((z) => String(z?.vorschlag_id || "")))];
@@ -267,6 +280,7 @@ async function dateiHolen(db, s, body, ablage) {
     // 🎭 Übe-Bühne: Noten/Vorspiel einer sichtbaren Aufgabe, Aufnahme eines eigenen (bzw. Kinder-)Ergebnisses
     if (!darf) darf = filtern("uebeaufgaben", (await db.q(`select to_jsonb(u) as z from bk_uebeaufgaben u where (datei = $1 or vorspiel = $1) and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
     if (!darf) darf = filtern("dokumente", (await db.q(`select to_jsonb(d) as z from bk_dokumente d where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
+    if (!darf) darf = filtern("erstattungen", (await db.q(`select to_jsonb(e) as z from bk_erstattungen e where beleg = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 💶 Beleg: Kasse
     if (!darf) darf = filtern("fotos", (await db.q(`select to_jsonb(f) as z from bk_fotos f where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📷 0.40.0
     if (!darf) darf = filtern("uebe_ergebnisse", (await db.q(`select to_jsonb(e) as z from bk_uebe_ergebnisse e where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
   }
@@ -374,7 +388,30 @@ async function anklopfen(db, s, body, dienste) {
 }
 
 // dienste (nur Edge Function/Tests): { adapter, umgebung: { appUrl, quittungUrl, vapidPublic }, hintergrund(promise) }
+// 📏 0.42.0 Datenvolumen-Messung (wie KC-CLUB-EGRESS-MESSUNG): der Server zählt im Speicher, wie viele Bytes er je Aktion (bei „laden“ je Tabelle)
+// an die Apps zurückgibt – nur Namen und Zahlen, keine Inhalte, keine Personen. Alle 10 Minuten eine Zeile in bk_kom_ereignisse (code DATENVOLUMEN, 90 Tage).
+// Keine zusätzliche Abfrage pro Aufruf. Auswertung: „Zugang im Blick“ › 💾 Speicher (Leitung).
+const MESS = { seit: Date.now(), z: {} };
+const bytes = (x) => { try { return new TextEncoder().encode(JSON.stringify(x ?? null)).length; } catch { return 0; } };
+function messen(aktion, antwort) {
+  if (!antwort?.json) return;
+  const add = (k, n) => { const e = (MESS.z[k] ||= [0, 0]); e[0]++; e[1] += n; };
+  add(aktion || "?", bytes(antwort.json));
+  if (aktion === "laden" && antwort.json.daten) for (const [t, l] of Object.entries(antwort.json.daten)) if (Array.isArray(l) && l.length) add(`laden:${t}`, bytes(l));
+}
+export async function messungSchreiben(db, { immer = false } = {}) {
+  if (!immer && Date.now() - MESS.seit < 600000) return false;
+  const z = MESS.z; MESS.z = {}; MESS.seit = Date.now();
+  if (!Object.keys(z).length) return false;
+  await db.q(`insert into bk_kom_ereignisse (id, zeit, art, code, text, geaendert_von) values (gen_random_uuid()::text, now(), 'messung', 'DATENVOLUMEN', $1, 'Server')`, [JSON.stringify(z).slice(0, 8000)]);
+  return true;
+}
 export async function verarbeiten(db, body, meta = {}, dienste = {}) {
+  const r = await verarbeitenRoh(db, body, meta, dienste);
+  try { messen(String(body?.aktion || ""), r); await messungSchreiben(db); } catch (e) { console.warn("Messung", e?.message); }
+  return r;
+}
+async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
   dienste = { umgebung: {}, hintergrund: (p) => p, ...dienste };
   try {
     const aktion = String(body?.aktion || "");

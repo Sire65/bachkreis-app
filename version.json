@@ -1,13 +1,22 @@
 {
-  "version": "0.41.0",
+  "version": "0.42.0",
   "datum": "2026-11-07",
   "stufe": "DEV",
   "neu": [
-    "💡 Vorschläge & 🗳️ Abstimmungen: Ideen einreichen und unterstützen, abstimmen mit Frist – auf Wunsch geheim",
-    "🗒️ Protokolle: freigegebene Protokolle lesen, neue sind markiert, „📌 Meine Aufgaben“ auf einen Blick",
-    "🎄 Und im Dezember wartet eine Überraschung …"
+    "🆘 Klappt etwas nicht? Problem, Frage, Idee oder Lob direkt an die Leitung – die Antwort kommt zurück (Hilfe › 🆘 oder Kachel „Hilfe & Rückmeldung“)",
+    "💶 Erstattung: Fahrtkosten und Auslagen mit Beleg einreichen – die Kasse prüft und zahlt aus",
+    "🐞🍀 Ab und zu krabbelt ein Marienkäfer über die Startseite oder der Wind bringt ein Kleeblatt – antippen!"
   ],
   "verlauf": [
+    {
+      "version": "0.41.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "💡 Vorschläge & 🗳️ Abstimmungen: Ideen einreichen und unterstützen, abstimmen mit Frist – auf Wunsch geheim",
+        "🗒️ Protokolle: freigegebene Protokolle lesen, neue sind markiert, „📌 Meine Aufgaben“ auf einen Blick",
+        "🎄 Und im Dezember wartet eine Überraschung …"
+      ]
+    },
     {
       "version": "0.40.0",
       "datum": "2026-11-07",

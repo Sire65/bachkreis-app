@@ -214,6 +214,16 @@ export function vsZielgruppe(v, { typ = "", rollen = [], verwalter = false } = {
   if (v.an === "vorstand") return rollen.some((r) => ["admin", "leitung", "vorstand"].includes(r));
   return true;
 }
+// 🆘💬 0.42.0 Rückmeldungen (wie KC-CLUB-UNTERSTUETZUNG-ANFRAGE + KC-CLUB-FEEDBACK): Problem melden, Hilfe mit der App, Idee, Lob – mit Antwort der Leitung
+export const RM_ARTEN = { problem: "🆘 Etwas klappt nicht", hilfe: "🤝 Ich brauche Hilfe mit der App", idee: "💡 Idee für die App", lob: "⭐ Rückmeldung / Lob" };
+export const RM_STATUS = { neu: "🆕 neu", in_arbeit: "🔧 in Arbeit", erledigt: "✅ erledigt" };
+export const RM_LEITUNG = ["admin", "leitung"];
+// 💶 0.42.0 Erstattung (wie KC Erstattung): Fahrtkosten (km × Satz) und Auslagen mit Beleg – prüfen und auszahlen: Vorstand (Kasse) und Leitung
+export const ER_ARTEN = { fahrt: "🚗 Fahrtkosten", auslage: "🧾 Auslage (Beleg)" };
+export const ER_STATUS = { eingereicht: "📨 eingereicht", genehmigt: "✅ genehmigt", ausgezahlt: "💶 ausgezahlt", abgelehnt: "✖ abgelehnt" };
+export const ER_KASSE = ["admin", "leitung", "vorstand"];
+export const ER_KM_SATZ = 0.30; // € je km (Standard, änderbar: konfig.km_satz)
+export const erBetrag = (z, satz = ER_KM_SATZ) => (z.art === "fahrt" ? Math.round(Math.max(0, Number(z.km) || 0) * (Number(satz) > 0 ? Number(satz) : ER_KM_SATZ) * 100) / 100 : Math.round(Math.max(0, Number(z.betrag) || 0) * 100) / 100);
 export function vsAuszaehlen(v, stimmen = []) {
   const opts = v.art === "abstimmung" ? (v.optionen?.length ? v.optionen : VS_STANDARD) : [{ id: "dafuer", t: "👍 dafür" }];
   const z = Object.fromEntries(opts.map((o) => [o.id, 0])); let n = 0;
@@ -980,6 +990,39 @@ export const TABELLEN = {
     ],
     liste: ["zeit", "text", "an", "wichtig"],
     anzeige: (z) => String(z.text || "").slice(0, 60),
+  },
+  rueckmeldungen: {
+    titel: "Rückmeldungen zur App", sym: "🆘", gruppe: "Kommunikation", lesen: L, schreiben: [],
+    felder: [
+      { k: "art", t: "Art", typ: "wahl", werte: RM_ARTEN },
+      { k: "text", t: "Was ist los?", typ: "lang", pflicht: true },
+      { k: "von", t: "von", typ: "ref", ref: "personen" },
+      { k: "sterne", t: "Bewertung (1–5)", typ: "zahl" },
+      { k: "geraet", t: "Gerät (automatisch)", typ: "text" },
+      { k: "ansicht", t: "Wo in der App?", typ: "text" },
+      { k: "rueckruf", t: "Bitte anrufen", typ: "ja" },
+      { k: "status", t: "Status", typ: "wahl", werte: RM_STATUS },
+      { k: "antwort", t: "Antwort der Leitung", typ: "lang" },
+      { k: "beantwortet_am", t: "beantwortet", typ: "zeit" },
+    ],
+    liste: ["art", "von", "status"],
+  },
+  erstattungen: {
+    titel: "Erstattungen", sym: "💶", gruppe: "Förderverein", lesen: ["admin", "leitung", "vorstand"], schreiben: [],
+    felder: [
+      { k: "von", t: "für", typ: "ref", ref: "personen" },
+      { k: "art", t: "Art", typ: "wahl", werte: ER_ARTEN },
+      { k: "datum", t: "Datum", typ: "datum", pflicht: true },
+      { k: "zweck", t: "Wofür?", typ: "text", pflicht: true },
+      { k: "km", t: "Kilometer (hin und zurück)", typ: "zahl" },
+      { k: "betrag", t: "Betrag (€)", typ: "geld" },
+      { k: "beleg", t: "Beleg (Foto/PDF)", typ: "text" },
+      { k: "termin_id", t: "Termin", typ: "ref", ref: "termine" },
+      { k: "status", t: "Status", typ: "wahl", werte: ER_STATUS },
+      { k: "notiz_kasse", t: "Notiz der Kasse", typ: "text" },
+      { k: "bearbeitet_von", t: "bearbeitet von", typ: "ref", ref: "personen" },
+    ],
+    liste: ["datum", "von", "zweck", "betrag", "status"],
   },
   vorschlaege: {
     titel: "Vorschläge & Abstimmungen", sym: "💡", gruppe: "Kommunikation", lesen: L, schreiben: [],

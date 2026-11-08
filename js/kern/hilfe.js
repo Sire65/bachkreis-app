@@ -67,6 +67,9 @@ export const HILFE = [
   h("hilfeknoepfe", "einstellungen", "❓", "Lupe und ? ausblenden", "Die runden Knöpfe 🔍 und ? unten rechts lassen sich in der Hilfe ganz unten aus- und wieder einschalten.", { v: "hilfe" }, null, "0.39.0"),
 
   h("sicherheit", "technik", "🛡️", "Sicherheits-Check", "Prüft Verbindung, Offline-Speicher und Benachrichtigungen. Grün = ok, Rot = Problem, Grau = unbekannt (nie „ok“).", { v: "sicherheit" }),
+  h("klappt-nicht", "start", "🆘", "Klappt etwas nicht?", "Hilfe › „🆘 Klappt etwas nicht?“ oder die Kachel 🆘 Hilfe & Rückmeldung: kurz beschreiben, was passiert ist – auf Wunsch ruft die Leitung zurück. Die Antwort steht bei deiner Meldung und kommt als Nachricht. Mitgeschickt werden nur technische Angaben (Gerät, Browser, Version).", { v: "rueckmeldungen" }, null, "0.42.0"),
+  h("erstattung", "leitung", "💶", "Fahrtkosten und Auslagen erstatten", "Kachel 💶 Erstattung: Fahrten mit Kilometern (der Betrag wird ausgerechnet) oder Auslagen mit Foto/PDF des Belegs einreichen. Die Kasse des Fördervereins genehmigt und zahlt aus; den Stand siehst du bei deinem Antrag. 🖨️ druckt den Antrag auf dem Bachkreis-Briefbogen.", { v: "erstattung" }, "erwachsen", "0.42.0"),
+  h("kaefer", "kinder", "🐞", "Marienkäfer und Glücksklee", "Manchmal krabbelt ein Marienkäfer über die Startseite oder der Wind pustet ein Kleeblatt herein – antippen bringt einen Glücksspruch. Abschalten oder ansehen: ⚙️ Einstellungen › ✨ Effekte.", { v: "einstellungen" }, null, "0.42.0"),
   h("datenschutz", "technik", "🔐", "Wer sieht was?", "Private Chats sehen nur die Beteiligten – auch die Leitung nicht. Fremde sehen von Kindern und Eltern nur den Namen. Gesundheitsangaben sehen nur Leitung und Begleitpersonen. Merkliste und Chat-Einstellungen sieht nur du."),
   h("update", "technik", "🔄", "Neue Version", "Gibt es eine neue Version, erscheint „Jetzt aktualisieren“. Was neu ist, steht danach in einem Fenster – und hier in der Hilfe mit „neu“."),
 ];

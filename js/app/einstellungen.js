@@ -14,6 +14,7 @@ import { onlineEinstellungenHtml } from "./online.js";
 import { SCHATTEN, KACHEL_EFFEKTE, eckenWert } from "./bedienung.js";
 import { stundenuhrenEinstHtml } from "./stundenuhren.js";
 import { installModus, installMoeglich } from "./zugang.js";
+import { ueberraschung, kaeferKommt, kleeKommt } from "./glueck.js";
 import { SENDE_EFFEKTE, sendeEffektWahl, sendeEffektSetzen, sendeEffektVorschau, blaulichtVorschau, feeKommt, reisswolf } from "./effekte.js";
 
 const JZ_VORSCHAUEN = [["herbst", "🍂 Herbst"], ["advent", "🕯️ Advent"], ["winter", "⛄ Winter"], ["fruehling", "🌱 Frühling"], ["sommer", "🌻 Sommer"],
@@ -107,6 +108,8 @@ VIEWS.einstellungen = {
       ${schalter("echteKlaenge", "🎻 Echte Instrumentenklänge", "Aufnahmen echter Instrumente (Violine, Cello, Flöte, Trompete …) – je Instrument beim ersten Abspielen ca. 0,2 MB; aus = erzeugter Klang", e.echteKlaenge !== false)}
       <h4>🌀 Kacheln erscheinen …</h4>${chips(KACHEL_EFFEKTE, e.kachelEffekt || "einfach", "kachelEffektWahl")}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachelEffektVorschau">▶ Auf der Startseite ansehen</button></div>
       <div class="schalter"><span><b>🧚 Die kleine Fee</b><div class="hinweis">Ab und zu schwebt eine Fee durchs Startbild – antippen = ein schöner Spruch</div></span><span><button type="button" class="knopf klein" data-a="feeAnsehen">🧚 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="fee" ${e.fee !== false ? "checked" : ""}></span></div>
+      <div class="schalter"><span><b>🐞 Der Marienkäfer</b><div class="hinweis">Jeder 50. Start: krabbelt über die Startseite, dreht sich um und lächelt – antippen = Glücksspruch</div></span><span><button type="button" class="knopf klein" data-a="kaeferAnsehen">🐞 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="kaefer" aria-label="Marienkäfer an" ${e.kaefer !== false ? "checked" : ""}></span></div>
+      <div class="schalter"><span><b>🍀 Der Glücksklee</b><div class="hinweis">Jeder 25. Start: ein Windstoß pustet ein vierblättriges Kleeblatt herein – antippen = Glücksspruch</div></span><span><button type="button" class="knopf klein" data-a="kleeAnsehen">🍀 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="klee" aria-label="Glücksklee an" ${e.klee !== false ? "checked" : ""}></span></div>
       ${schalter("jahreszeit", "🍂 Jahreszeiten im Kopf", "Laub, Schnee, Blumen, Schneemann mit Zylinder – wie in der KC Club App", e.jahreszeit !== false, "jzSchalter")}
       <h4>📅 Welche Jahreszeit?</h4>${chips(JZ_WAHL, jzWahl(), "jzWahlKnopf")}
       <h4>🎏 Deko an der Leiste</h4>${chips(JZ_DEKO_WAHL, jzDekoWahl(), "jzDekoKnopf")}
@@ -200,6 +203,8 @@ AKTIONEN.sendeEffektWahl = (w) => { sendeEffektSetzen(w); neu(); };
 AKTIONEN.sendeVorschau = (_, el) => sendeEffektVorschau(el);
 AKTIONEN.blaulichtVorschauK = (_, el) => blaulichtVorschau(el);
 AKTIONEN.feeAnsehen = () => { zeige("start"); setTimeout(() => feeKommt(true), 400); };
+AKTIONEN.kaeferAnsehen = () => { zeige("start"); setTimeout(() => kaeferKommt(true), 400); };
+AKTIONEN.kleeAnsehen = () => { zeige("start"); setTimeout(() => kleeKommt(true), 400); };
 AKTIONEN.reisswolfProbe = (_, el) => { const k = el.closest(".schalter"); reisswolf(k).then(() => { if (k) k.style.visibility = ""; }); };
 AKTIONEN.freigabe = async (_, el) => {
   const fg = { ...(S.ich.freigaben || {}), [el.dataset.x]: el.checked };
@@ -274,7 +279,9 @@ export function beimStart(ohneAnsagen = false) {
   if (zuletzt && zuletzt !== APP_VERSION && e.wasNeu !== false) setTimeout(wasNeuZeigen, 1500);
   else if (e.tippDesTages !== false) { let t = null; try { t = localStorage.getItem("bk_tipp_tag"); localStorage.setItem("bk_tipp_tag", heute); } catch {} if (t && t !== heute) setTimeout(tippZeigen, 2500); }
   let n = 0; try { n = +(localStorage.getItem("bk_starts") || 0) + 1; localStorage.setItem("bk_starts", String(n)); } catch {}
-  if (n % 20 === 0 && e.fee !== false) setTimeout(() => feeKommt(), 4000);
+  // 🐞🍀🧚 0.42.0 immer nur eine Überraschung: Marienkäfer (jeder 50.) vor Glücksklee (jeder 25.) vor Fee (jeder 20. Start)
+  const u = ueberraschung(n, e);
+  if (u === "kaefer") setTimeout(() => kaeferKommt(), 4000); else if (u === "klee") setTimeout(() => kleeKommt(), 4000); else if (u === "fee") setTimeout(() => feeKommt(), 4000);
 }
 // Rechtschreibprüfung in Eingabefeldern nach Wunsch
 document.addEventListener("bk-ansicht", () => setTimeout(() => { const an = einst().tippfehler !== false; document.querySelectorAll("textarea, input[type=text], input:not([type])").forEach((x) => { x.spellcheck = an; }); }, 0));

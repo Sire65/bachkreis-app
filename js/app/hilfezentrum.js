@@ -16,7 +16,7 @@ import { chatTitel } from "./nachrichten.js";
 
 const GESEHEN = "bk_hz_gesehen";
 const LS = (k, d = null) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
-const darf = (fuer) => ({ eltern: istEltern(), kinder: istSchueler(), verwalter: istVerwalter(), leitung: hatRolle("admin", "leitung"), buero: hatRolle("admin", "leitung", "lehrkraft", "vorstand"), planer: hatRolle(...TU_PLANER), advent: adventSichtbar(new Date(), hatRolle("admin", "leitung")) })[fuer] ?? true;
+const darf = (fuer) => ({ eltern: istEltern(), kinder: istSchueler(), verwalter: istVerwalter(), leitung: hatRolle("admin", "leitung"), buero: hatRolle("admin", "leitung", "lehrkraft", "vorstand"), planer: hatRolle(...TU_PLANER), advent: adventSichtbar(new Date(), hatRolle("admin", "leitung")), erwachsen: !istSchueler() })[fuer] ?? true;
 const HZ = { thema: null, q: "", vorher: null, unterwegs: null, behalten: false };
 const eintraege = () => hilfeFuer(darf);
 
@@ -34,7 +34,7 @@ VIEWS.hilfe = {
     else if (HZ.thema) { const th = themen.find((t) => t.id === HZ.thema); inhalt = th ? `<h2 class="hz-kapitel">${th.nr}. ${th.sym} ${esc(th.t)}</h2>${th.es.map((e) => karte(e, false)).join("")}<button type="button" class="knopf" data-a="hzThema" data-x="">‹ Alle Themen</button>` : ""; }
     else inhalt = (neu.length ? `<div class="karte hz-neu"><h3>✨ Neu seit deinem letzten Besuch (${neu.length})</h3><ul class="liste">${neu.map((e) => `<li class="klick" data-a="hzZu" data-x="${esc(e.id)}"><span aria-hidden="true">${e.sym}</span><div class="fl">${esc(e.t)}</div><span aria-hidden="true">›</span></li>`).join("")}</ul></div>` : "")
       + `<div class="hz-themen">${themen.map((t) => { const n = t.es.filter((e) => hilfeNeu(e, HZ.vorher)).length; return `<button type="button" class="hz-thema" data-a="hzThema" data-x="${esc(t.id)}"><span class="hz-tsym" aria-hidden="true">${t.sym}</span><b>${t.nr}. ${esc(t.t)}</b><small>${t.es.length} Hilfen${n ? ` · ${n} neu` : ""}</small></button>`; }).join("")}</div>
-      <div class="karte"><h3>Noch Fragen?</h3><p>Frag die Leitung über 💬 Nachrichten – oder schau in die 💡 Tipps.</p><div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachel" data-x="nachrichten">💬 Nachricht schreiben</button><button type="button" class="knopf klein" data-a="lupe">🔍 Ganze App durchsuchen</button></div>
+      <div class="karte"><h3>Noch Fragen?</h3><p>Frag die Leitung über 💬 Nachrichten – oder schau in die 💡 Tipps.</p><div class="knopfreihe"><button type="button" class="knopf klein haupt" data-a="rmNeu" data-x="problem">🆘 Klappt etwas nicht?</button><button type="button" class="knopf klein" data-a="rmNeu" data-x="lob">⭐ Rückmeldung zur App</button><button type="button" class="knopf klein" data-a="kachel" data-x="nachrichten">💬 Nachricht schreiben</button><button type="button" class="knopf klein" data-a="lupe">🔍 Ganze App durchsuchen</button></div>
         <label class="hz-schalter"><input type="checkbox" data-c="hzKnoepfe" ${einst().hilfeKnoepfe !== false ? "checked" : ""}> Runde Knöpfe 🔍 und ? unten rechts zeigen</label></div>`;
     return kopf("❓ Hilfe & Tipps") + suche + inhalt;
   },

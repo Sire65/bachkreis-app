@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "erstattungen"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -128,6 +128,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "startnachrichten": return z.von === ctx.ich || snFuerMich(z, ctx.ich, ctx.gruppen, "0000-00-00"); // 📣 an mich (auch abgelaufene – für den Abgleich)
     case "startnachricht_antworten": return z.person_id === ctx.ich || ctx.snMap?.get(z.nachricht_id)?.von === ctx.ich;
     case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich;
+    case "rueckmeldungen": return z.von === ctx.ich || hatRolle(ctx, RM_LEITUNG);
+    case "erstattungen": return z.von === ctx.ich || hatRolle(ctx, ER_KASSE);
     case "vorschlaege": return vsSichtbar(z, ctx);
     case "vorschlag_stimmen": { const v = ctx.vsMap?.get(z.vorschlag_id); return !!v && vsSichtbar(v, ctx); }
     case "fotoalben": return albumSichtbar(z, ctx);
@@ -545,6 +547,41 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "rueckmeldungen": {
+      // 🆘 jede/r meldet (eigener Name); antworten und Status: Leitung/Admin. Eigene Meldung ändern nur, solange keine Antwort da ist.
+      const chef = hatRolle(ctx, RM_LEITUNG);
+      if (alt && alt.von !== ctx.ich && !chef) return { ok: false, grund: "NUR_EIGENE" };
+      if (!alt) { const text = String(neu.text ?? "").trim().slice(0, 3000); if (!text) return { ok: false, grund: "TEXT_FEHLT" };
+        return { ok: true, zeile: { ...nur(neu, ["id"]), art: ["problem", "hilfe", "idee", "lob"].includes(neu.art) ? neu.art : "problem", text, von: ctx.ich, sterne: neu.sterne ? Math.max(1, Math.min(5, Math.round(Number(neu.sterne)))) : null,
+          geraet: String(neu.geraet ?? "").slice(0, 200) || null, ansicht: String(neu.ansicht ?? "").slice(0, 60) || null, rueckruf: !!neu.rueckruf, status: "neu", antwort: null, beantwortet_am: null } }; }
+      if (chef) { const antwort = String(neu.antwort ?? "").trim().slice(0, 3000) || null;
+        return { ok: true, zeile: { ...alt, status: ["neu", "in_arbeit", "erledigt"].includes(neu.status) ? neu.status : alt.status, antwort, beantwortet_am: antwort && antwort !== alt.antwort ? jetzt : alt.beantwortet_am } }; }
+      if (alt.antwort) return { ok: false, grund: "SCHON_BEANTWORTET" };
+      return { ok: true, zeile: { ...alt, text: String(neu.text ?? alt.text).trim().slice(0, 3000) || alt.text, geloescht_am: neu.geloescht_am ? jetzt : null } };
+    }
+    case "erstattungen": {
+      // 💶 Erwachsene reichen für sich ein; Betrag bei Fahrten rechnet der Server (km × Satz); Status setzen Vorstand/Leitung; eingereichte selbst ändern/zurückziehen
+      const kasse = hatRolle(ctx, ER_KASSE);
+      if (!alt && ctx.person?.typ === "schueler") return { ok: false, grund: "NUR_ERWACHSENE" };
+      if (alt && alt.von !== ctx.ich && !kasse) return { ok: false, grund: "NUR_EIGENE" };
+      if (alt && alt.von === ctx.ich && !kasse && alt.status !== "eingereicht") return { ok: false, grund: "SCHON_BEARBEITET" };
+      if (alt && kasse && alt.von !== ctx.ich) {
+        const status = ["eingereicht", "genehmigt", "ausgezahlt", "abgelehnt"].includes(neu.status) ? neu.status : alt.status;
+        return { ok: true, zeile: { ...alt, status, notiz_kasse: String(neu.notiz_kasse ?? "").trim().slice(0, 300) || null, bearbeitet_von: ctx.ich } };
+      }
+      if (neu.geloescht_am && alt) return { ok: true, zeile: { ...alt, geloescht_am: jetzt } };
+      const art = neu.art === "auslage" ? "auslage" : "fahrt", zweck = String(neu.zweck ?? "").trim().slice(0, 200);
+      if (!zweck || !/^\d{4}-\d{2}-\d{2}$/.test(String(neu.datum || ""))) return { ok: false, grund: "ANGABEN_FEHLEN" };
+      const km = art === "fahrt" ? Math.max(0, Math.min(5000, Math.round(Number(neu.km) || 0))) : null;
+      if (art === "fahrt" && !km) return { ok: false, grund: "KM_FEHLEN" };
+      const beleg = neu.beleg ? String(neu.beleg) : alt?.beleg || null;
+      if (beleg && beleg !== alt?.beleg) { const d = ctx.dateien?.get(beleg.replace(/^datei:/, "")); if (!d || d.von !== ctx.ich) return { ok: false, grund: "BELEG_UNGUELTIG" }; }
+      if (art === "auslage" && !beleg) return { ok: false, grund: "BELEG_FEHLT" };
+      const z = { ...(alt || {}), ...nur(neu, ["id"]), von: ctx.ich, art, datum: neu.datum, zweck, km, beleg, termin_id: neu.termin_id || null, status: kasse && ["genehmigt", "ausgezahlt"].includes(neu.status) ? neu.status : "eingereicht", notiz_kasse: alt?.notiz_kasse || null };
+      z.betrag = erBetrag({ ...z, betrag: neu.betrag }, ctx.kmSatz);
+      if (!(z.betrag > 0) || z.betrag > 5000) return { ok: false, grund: "BETRAG_UNGUELTIG" };
+      return { ok: true, zeile: z };
     }
     case "vorschlaege": {
       // 💡 Vorschläge darf jede/r einreichen (an alle oder ans Team), 🗳️ Abstimmungen nur Leitung/Lehrkräfte/Vorstand; ändern: wer es angelegt hat oder die Leitung

@@ -24,7 +24,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F13 | Auswertungen + Export | ✅ Kennzahlen, CSV · ⏳ Berichte | logik: CSV |
 | BK-F14 | Terminfindung (Doodle) → 🗳️ Terminumfrage (0.39.0, siehe BK-F90) | ✅ | tests/terminumfrage.test.mjs |
 | BK-F15 | Mitfahrgelegenheiten | ⏳ | – |
-| BK-F16 | Notenarchiv, „Meine Noten“ | ✅ Metadaten · ⏳ PDF-Speicher | Rundgang, notensatz.test (Demo-Probenoten, Explorer 0.18.0) |
+| BK-F16 | Notenarchiv, „Meine Noten“ | ✅ Metadaten · ✅ PDF in der App (0.40.0) | Rundgang, notensatz.test (Demo-Probenoten, Explorer 0.18.0) |
 | BK-F17 | Offline-/Notbetrieb | 🟡 App startet offline (SW) · ⏳ signierte Vorab-Antworten | – |
 | BK-F18 | Mandantenfähigkeit | ⏳ optional | – |
 | BK-F19 | Gruppen A–D, Wechsel generell/temporär, Wechselwunsch | ✅ | logik: temporär/generell |
@@ -99,6 +99,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F89 | 💬 Nachrichten wie KC 2.882: Weiterleiten, Anheften, @Erwähnung, Stumm, Archiv/Favoriten, Chatsuche, Merkliste, Zurückholen, Wer hat nicht gelesen, Wischen | ✅ | tests/chatplus.test.mjs |
 | BK-F90 | 🗳️ Terminumfrage (Doodle): abstimmen, auszählen, festlegen → Termin | ✅ | tests/terminumfrage.test.mjs |
 | BK-F91 | ❓ Hilfe-Zentrum + 🔍 Lupe (Suche über die ganze App, unscharf) | ✅ | tests/hilfe-suche.test.mjs |
+| BK-F92 | 📷 Fotoalbum mit Foto-Einwilligung, Diashow, Papierkorb | ✅ | tests/fotoalbum.test.mjs |
+| BK-F93 | 📖 PDF-Ansicht in der App + 🎼 Pult-Modus (Blätterpedal) | ✅ | Browser-Prüfung |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

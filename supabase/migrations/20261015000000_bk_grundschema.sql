@@ -1093,6 +1093,52 @@ grant select, insert, update, delete on bk_startnachrichten to service_role;
 drop trigger if exists bk_startnachrichten_stempel on bk_startnachrichten;
 create trigger bk_startnachrichten_stempel before update on bk_startnachrichten for each row execute function bk_abgleich_stempel();
 
+-- Fotoalben
+create table if not exists bk_fotoalben (
+  id text primary key default gen_random_uuid()::text,
+  titel text not null,
+  datum date,
+  beschreibung text,
+  projekt_id text,
+  sichtbar text check (sichtbar is null or sichtbar in ('alle', 'verwaltung')),
+  von text,
+  titelbild text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_fotoalben_geaendert on bk_fotoalben (geaendert_am);
+alter table bk_fotoalben enable row level security;
+revoke all on bk_fotoalben from public, anon, authenticated;
+grant select, insert, update, delete on bk_fotoalben to service_role;
+drop trigger if exists bk_fotoalben_stempel on bk_fotoalben;
+create trigger bk_fotoalben_stempel before update on bk_fotoalben for each row execute function bk_abgleich_stempel();
+
+-- Fotos
+create table if not exists bk_fotos (
+  id text primary key default gen_random_uuid()::text,
+  album_id text not null,
+  datei text not null,
+  titel text,
+  von text,
+  personen text[],
+  aufgenommen_am timestamptz,
+  papierkorb_am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_fotos_geaendert on bk_fotos (geaendert_am);
+alter table bk_fotos enable row level security;
+revoke all on bk_fotos from public, anon, authenticated;
+grant select, insert, update, delete on bk_fotos to service_role;
+drop trigger if exists bk_fotos_stempel on bk_fotos;
+create trigger bk_fotos_stempel before update on bk_fotos for each row execute function bk_abgleich_stempel();
+
 -- Terminumfragen
 create table if not exists bk_terminumfragen (
   id text primary key default gen_random_uuid()::text,
@@ -1828,6 +1874,10 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_pinnw
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_person_id_fk') then alter table bk_uebungen add constraint bk_uebungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebungen_werk_id_fk') then alter table bk_uebungen add constraint bk_uebungen_werk_id_fk foreign key (werk_id) references bk_werke(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_startnachrichten_von_fk') then alter table bk_startnachrichten add constraint bk_startnachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotoalben_projekt_id_fk') then alter table bk_fotoalben add constraint bk_fotoalben_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotoalben_von_fk') then alter table bk_fotoalben add constraint bk_fotoalben_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotos_album_id_fk') then alter table bk_fotos add constraint bk_fotos_album_id_fk foreign key (album_id) references bk_fotoalben(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotos_von_fk') then alter table bk_fotos add constraint bk_fotos_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_terminumfragen_von_fk') then alter table bk_terminumfragen add constraint bk_terminumfragen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_terminumfragen_art_id_fk') then alter table bk_terminumfragen add constraint bk_terminumfragen_art_id_fk foreign key (art_id) references bk_terminarten(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_terminumfragen_termin_id_fk') then alter table bk_terminumfragen add constraint bk_terminumfragen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;

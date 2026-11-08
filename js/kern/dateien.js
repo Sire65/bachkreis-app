@@ -62,7 +62,11 @@ export async function dateiUrl(id) {
   const url = URL.createObjectURL(blob); CACHE.set(id, url); return url;
 }
 // Öffnen: PDF/Bild/Video im neuen Tab, sonst herunterladen
+// 📖 0.40.0 PDFs zeigt die App selbst an (js/app/pdfansicht.js meldet sich hier an)
+let pdfAnzeiger = null;
+export const pdfAnzeigerSetzen = (f) => { pdfAnzeiger = f; };
 export async function dateiOeffnen(id, name = "Datei", mime = "") {
+  if (pdfAnzeiger && (/^application\/pdf/.test(mime) || /\.pdf$/i.test(name))) return pdfAnzeiger({ id, titel: String(name).replace(/\.pdf$/i, ""), name });
   const url = await dateiUrl(id);
   if (/^(application\/pdf|image\/|video\/|audio\/|text\/plain)/.test(mime)) { const w = window.open(url, "_blank", "noopener"); if (w) return; }
   const a = document.createElement("a"); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();

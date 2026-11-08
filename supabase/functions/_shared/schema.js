@@ -198,6 +198,11 @@ export const TU_AN = { mitglieder: "👥 Mitglieder der Orchester (Kinder sagen 
 export const TU_STIMMEN = { ja: "✅ passt", vielleicht: "🤔 notfalls", nein: "❌ geht nicht" };
 export const TU_PLANER = ["admin", "leitung", "lehrkraft", "vorstand", "terminplaner"];
 export const tuAntwortId = (uid, pid) => `tua-${uid}-${pid}`;
+// 📷 0.40.0 Fotoalbum (wie KC-CLUB-FOTOALBUM / -FOTO-ALBEN / Papierkorb / Diashow): Alben für alle oder nur das Team; Fotos laden Erwachsene hoch,
+// markierte Kinder brauchen die Foto-Einwilligung „intern (App)“ – das prüft der Server. Papierkorb 30 Tage, dann endgültig.
+export const FOTO_SICHT = { alle: "👥 alle im Bachkreis", verwaltung: "🔒 nur Leitung, Lehrkräfte & Vorstand" };
+export const FOTO_HOCHLADEN = ["admin", "leitung", "lehrkraft", "vorstand", "eltern"];
+export const FOTO_PAPIERKORB_TAGE = 30;
 // Auszählung: je Option ja/vielleicht/nein; beste = meiste „ja“, dann wenigste „nein“, dann meiste „vielleicht“
 export function tuAuszaehlen(umfrage, antworten = []) {
   const opt = (umfrage?.optionen || []).map((o) => ({ ...o, ja: 0, vielleicht: 0, nein: 0 }));
@@ -958,6 +963,33 @@ export const TABELLEN = {
     ],
     liste: ["zeit", "text", "an", "wichtig"],
     anzeige: (z) => String(z.text || "").slice(0, 60),
+  },
+  fotoalben: {
+    titel: "Fotoalben", sym: "📷", gruppe: "Orchester", lesen: L, schreiben: [],
+    felder: [
+      { k: "titel", t: "Name des Albums", typ: "text", pflicht: true },
+      { k: "datum", t: "Datum", typ: "datum" },
+      { k: "beschreibung", t: "Beschreibung", typ: "lang" },
+      { k: "projekt_id", t: "Projekt", typ: "ref", ref: "projekte" },
+      { k: "sichtbar", t: "Wer sieht es?", typ: "wahl", werte: FOTO_SICHT },
+      { k: "von", t: "angelegt von", typ: "ref", ref: "personen" },
+      { k: "titelbild", t: "Titelbild (Foto)", typ: "text" },
+    ],
+    liste: ["titel", "datum", "sichtbar"],
+    anzeige: (z) => z.titel,
+  },
+  fotos: {
+    titel: "Fotos", sym: "🖼️", gruppe: "Orchester", lesen: L, schreiben: [],
+    felder: [
+      { k: "album_id", t: "Album", typ: "ref", ref: "fotoalben", pflicht: true },
+      { k: "datei", t: "Datei", typ: "text", pflicht: true },
+      { k: "titel", t: "Bildunterschrift", typ: "text" },
+      { k: "von", t: "hochgeladen von", typ: "ref", ref: "personen" },
+      { k: "personen", t: "Wer ist zu sehen? (nur mit Foto-Einwilligung)", typ: "refs", ref: "personen" },
+      { k: "aufgenommen_am", t: "aufgenommen", typ: "zeit" },
+      { k: "papierkorb_am", t: "im Papierkorb seit", typ: "zeit" },
+    ],
+    liste: ["album_id", "titel", "von", "aufgenommen_am"],
   },
   terminumfragen: {
     titel: "Terminumfragen", sym: "🗳️", gruppe: "Termine", lesen: L, schreiben: [],

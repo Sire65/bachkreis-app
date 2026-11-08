@@ -39,3 +39,11 @@ Selbst erzeugt (WebAudio, keine Aufnahme): Ersatzklang der Instrumente (offline/
 ## Karte (0.36.0)
 
 `bilder/weltkarte.json` (Chronik › Orte): Land-Umrisse aus **Natural Earth 1:50m Land** – gemeinfrei (public domain), naturalearthdata.com. Vereinfacht und als SVG-Pfad gespeichert mit `python3 tools/weltkarte.py ne_50m_land.geojson bilder/weltkarte.json`. Stadt-Koordinaten in `js/kern/orte.js`: gerundete Stadtmitten (Fakten, keine geschützten Daten).
+
+## PDF-Anzeige (0.40.0)
+
+`lib/pdfjs/` – **pdf.js 4.10.38** (Mozilla Foundation, Apache License 2.0, Lizenztext in `lib/pdfjs/LICENSE`), unveränderter „legacy build“ aus pdfjs-dist, übernommen aus der KC Club App. Wird erst beim ersten Öffnen eines PDFs geladen; nichts kommt von fremden Servern.
+
+## Beispielbilder und Beispiel-PDF (0.40.0)
+
+`bilder/demo/*.svg` (Fotoalbum der Vorführversion) und `bilder/demo/probenplan.pdf` sind selbst erzeugt (keine echten Fotos, keine erkennbaren Personen) – frei verwendbar.

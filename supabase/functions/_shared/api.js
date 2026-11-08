@@ -6,10 +6,10 @@
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
 import { TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
-import { nachrichtBescheid } from "./nachrichten.js";
+import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
 import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
-import { termineFuer, ics, eigeneVorkommen } from "./logik.js";
+import { termineFuer, ics, eigeneVorkommen, einwilligung } from "./logik.js";
 import * as kom from "./kom/kern.js";
 
 const SITZUNG_TAGE = 180;
@@ -52,7 +52,7 @@ async function alleZeilen(db, tab) {
 }
 async function kontextLaden(db, person) {
   // Alles, was die Regeln brauchen (regeln.js kontext): Begleitpersonen/Anmeldung (projekte, reise_anmeldungen), Textfassung (genehmigung_vorlagen)
-  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen"];
+  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   const ctx = kontext(person, alle);
@@ -125,6 +125,14 @@ async function speichern(db, s, body) {
   if (tab === "zugaenge") cols.push("code_hash");
   const gespeichert = [], konflikte = [];
   // ✓✓-Status braucht die Nachricht (Absender, Unterhaltung, Express) – einmal für alle Zeilen holen
+  // 📷 0.40.0 Fotos: eigene Dateien (Bild) und welche markierten Personen die Foto-Einwilligung „intern“ haben
+  if (tab === "fotos") {
+    const ids = [...new Set(zeilen.map((z) => String(z?.datei || "").replace(/^datei:/, "")).filter(Boolean))];
+    ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
+    const markiert = [...new Set(zeilen.flatMap((z) => (Array.isArray(z?.personen) ? z.personen : [])).map(String))];
+    ctx.fotoOk = new Set();
+    if (markiert.length) { const mdb = await speicherDb(db, ["genehmigung_vorlagen", "genehmigungen", "personen", "eltern_kind"]); for (const p of markiert) if (einwilligung(mdb, p, "foto_intern") === "ja") ctx.fotoOk.add(p); }
+  }
   if (tab === "nachricht_status" || tab === "chat_merker") {
     const ids = [...new Set(zeilen.map((z) => String(z?.nachricht_id || "")))];
     ctx.nMap = new Map((await db.q(`select to_jsonb(n) as z from bk_nachrichten n where id = any($1::text[])`, [ids])).map((r) => [r.z.id, r.z]));
@@ -250,6 +258,7 @@ async function dateiHolen(db, s, body, ablage) {
     // 🎭 Übe-Bühne: Noten/Vorspiel einer sichtbaren Aufgabe, Aufnahme eines eigenen (bzw. Kinder-)Ergebnisses
     if (!darf) darf = filtern("uebeaufgaben", (await db.q(`select to_jsonb(u) as z from bk_uebeaufgaben u where (datei = $1 or vorspiel = $1) and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
     if (!darf) darf = filtern("dokumente", (await db.q(`select to_jsonb(d) as z from bk_dokumente d where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
+    if (!darf) darf = filtern("fotos", (await db.q(`select to_jsonb(f) as z from bk_fotos f where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📷 0.40.0
     if (!darf) darf = filtern("uebe_ergebnisse", (await db.q(`select to_jsonb(e) as z from bk_uebe_ergebnisse e where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
   }
   if (!darf) return fehler(403, "KEIN_ZUGRIFF");

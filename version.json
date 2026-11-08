@@ -1,13 +1,22 @@
 {
-  "version": "0.39.0",
+  "version": "0.40.0",
   "datum": "2026-11-07",
   "stufe": "DEV",
   "neu": [
-    "🗳️ Terminumfrage: Wann passt es? Vorschläge ankreuzen (✅ passt · 🤔 notfalls · ❌ geht nicht) – die Leitung legt den Termin mit einem Tipp fest",
-    "❓ Neues Hilfe-Zentrum: Themen, Suche, „Zeig mir wo“ und „neu“ seit deinem letzten Besuch",
-    "🔍 Lupe unten rechts: die ganze App durchsuchen – Funktionen, Hilfen, Personen, Termine, Chats, Noten – auch mit Tippfehlern"
+    "📷 Fotoalbum: Fotos von Konzerten, Fahrten und Proben – Alben, Diashow, groß ansehen, speichern, Papierkorb. Kinder sind nur mit Foto-Einwilligung zu sehen",
+    "📖 PDFs (Noten, Dokumente, Anhänge) öffnen direkt in der App",
+    "🎼 Pult-Modus: Noten Seite für Seite bildschirmfüllend, quer zwei Seiten – blättern mit Tippen, Wischen oder Bluetooth-Pedal"
   ],
   "verlauf": [
+    {
+      "version": "0.39.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🗳️ Terminumfrage: Wann passt es? Vorschläge ankreuzen (✅ passt · 🤔 notfalls · ❌ geht nicht) – die Leitung legt den Termin mit einem Tipp fest",
+        "❓ Neues Hilfe-Zentrum: Themen, Suche, „Zeig mir wo“ und „neu“ seit deinem letzten Besuch",
+        "🔍 Lupe unten rechts: die ganze App durchsuchen – Funktionen, Hilfen, Personen, Termine, Chats, Noten – auch mit Tippfehlern"
+      ]
+    },
     {
       "version": "0.38.0",
       "datum": "2026-11-07",

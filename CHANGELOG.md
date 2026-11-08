@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.40.0 DEV – 08.11.2026
+- Abgleich mit der KC Club App 2.882, Teil 3:
+  - 📷 Fotoalbum (wie KC-CLUB-FOTOALBUM, -FOTO-ALBEN, Diashow, Papierkorb, -FOTO-ENDGUELTIG): Alben „alle“ oder „nur Team“, Fotos hochladen (Erwachsene: Team und Eltern; vorher verkleinert auf ca. 1600 px), Großansicht mit Wischen, ▶️ Diashow, ⬇️ speichern/teilen, Bildunterschrift, 🗑️ Papierkorb 30 Tage + endgültig löschen. 🔐 Markierte Personen brauchen die Foto-Einwilligung „intern (App)“ – der Server lehnt sonst ab; vor dem Hochladen zeigt die App, welche Kinder nicht gezeigt werden dürfen. Datei-Zugriff nur über sichtbare Fotos. Migration 20261110000000_bk_fotoalbum.sql
+  - 📖 PDF-Ansicht in der App (wie KC-CLUB-DOKUMENTE / -DOK-SCHONEND): pdf.js 4.10.38 (Apache-2.0) in lib/pdfjs, erst beim ersten PDF geladen; Seiten werden nur nahe am Bildschirm gezeichnet. Gilt für Noten, Dokumente, Büro, Chat-Anhänge, Übe-Aufgaben
+  - 🎼 Pult-Modus (neu für den Bachkreis): eine Seite bildschirmfüllend (quer zwei), blättern per Tippen links/rechts, Wischen, Pfeil-/Bildtasten (Bluetooth-Blätterpedal); Bildschirm bleibt an
+- 🐞 Server-Wartung: verwaiste Dateien – Dateien von Dokumenten/Büro, Übe-Aufgaben, Übe-Aufnahmen, Mitschnitten und Fotos werden nicht mehr nach 1 Tag als „verwaist“ gelöscht (betraf nur den Echtbetrieb, der noch nicht läuft)
+- Vorführversion: Beispielalben mit selbst gezeichneten Bildern, Beispiel-PDF „Probenplan“ unter 📂 Dokumente
+- tests/fotoalbum.test.mjs
+
+
 ## 0.39.0 DEV – 07.11.2026
 - Abgleich mit der KC Club App 2.882, Teil 2 (Wunsch Hansi „Club App checken und anpassen“):
   - 🗳️ Terminumfrage (wie KC Terminumfrage): Planer (Leitung, Lehrkräfte, Vorstand, Terminplaner) schlagen Termine vor, für Eltern, Mitglieder (Kinder stimmen selbst) oder das Team; abstimmen ✅/🤔/❌ mit Kommentar bis zur Frist; Auszählung mit „am besten“, „📅 Festlegen“ legt den Termin an und gibt allen Bescheid, „📣 Erinnern“ nur an die, die noch fehlen. Fremde Antworten sehen nur Ersteller und Leitung. Hinweis in Termine und „Für dich“. Migration 20261109000000_bk_terminumfrage.sql

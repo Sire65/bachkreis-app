@@ -65,7 +65,15 @@ export async function nachrichtenAufraeumen(db, ablage, { limit = 200 } = {}) {
   // Dateien, auf die keine sichtbare Nachricht und keine Stimme mehr zeigt, nach 1 Tag aufräumen (auch abgebrochene Uploads)
   const verwaist = await db.q(`select d.id from bk_dateien d where d.geloescht_am is null and d.erstellt_am < now() - interval '1 day'
     and not exists (select 1 from bk_nachrichten n where n.anlagen @> jsonb_build_array(jsonb_build_object('id', d.id)) and n.geloescht_am is null)
-    and not exists (select 1 from bk_stimmen s where s.datei = 'datei:' || d.id and s.geloescht_am is null) limit 100`);
+    and not exists (select 1 from bk_stimmen s where s.datei = 'datei:' || d.id and s.geloescht_am is null)
+    -- 0.40.0: auch Dateien von Dokumenten/Büro, Übe-Aufgaben, Übe-Aufnahmen und Fotos bleiben (vorher hätte die Wartung sie nach 1 Tag gelöscht)
+    and not exists (select 1 from bk_dokumente x where x.datei = 'datei:' || d.id and x.geloescht_am is null)
+    and not exists (select 1 from bk_uebeaufgaben x where (x.datei = 'datei:' || d.id or x.vorspiel = 'datei:' || d.id) and x.geloescht_am is null)
+    and not exists (select 1 from bk_uebe_ergebnisse x where x.aufnahme = 'datei:' || d.id and x.geloescht_am is null)
+    and not exists (select 1 from bk_aufnahmen x where x.datei = 'datei:' || d.id and x.geloescht_am is null)
+    and not exists (select 1 from bk_fotos x where x.datei = 'datei:' || d.id and x.geloescht_am is null) limit 100`);
+  // 📷 Papierkorb: Fotos nach 30 Tagen endgültig weg (die Datei räumt der nächste Lauf auf)
+  await db.q(`update bk_fotos set geloescht_am = now(), geaendert_von = 'Papierkorb' where papierkorb_am is not null and papierkorb_am < now() - interval '30 days' and geloescht_am is null`);
   for (const d of verwaist) { await ablage.loeschen(db, d.id); await db.q(`update bk_dateien set geloescht_am = now() where id = $1`, [d.id]); }
   return { geleert: weg.length, dateien: verwaist.length };
 }

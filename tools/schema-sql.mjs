@@ -93,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261110000000_bk_fotoalbum.sql": { titel: "📷 Fotoalbum: Alben (alle / nur Team), Fotos mit markierten Personen (Foto-Einwilligung), Papierkorb (0.40.0)", tabellen: ["fotoalben", "fotos"] },
   "20261109000000_bk_terminumfrage.sql": { titel: "🗳️ Terminumfrage: mögliche Termine ankreuzen, Leitung entscheidet → Termin (0.39.0)", tabellen: ["terminumfragen", "terminumfrage_antworten"] },
   "20261108000000_bk_chat_plus.sql": { titel: "💬 Nachrichten wie KC 2.882: Weiterleiten, @Erwähnungen, Anheften, 🔕 stumm/📦 Archiv/⭐ Favorit je Person, 🔖 Merkliste (0.38.0)", tabellen: ["unterhaltungen", "nachrichten", "chat_einstellungen", "chat_merker"] },
   "20261107000000_bk_chronik_orte.sql": { titel: "🗺️ Chronik mit Auftrittsorten (Stadt, Land, Koordinaten), Jahr nicht mehr Pflicht (0.36.0)", tabellen: ["chronik"], extra: ["alter table bk_chronik alter column jahr drop not null;"] },

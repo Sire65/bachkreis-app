@@ -26,6 +26,8 @@ import { onlineStart } from "./online.js";
 import "./kalender.js";
 import "./meins.js";
 import "./hilfezentrum.js"; // ❓🔍 0.39.0
+import "./pdfansicht.js"; // 📖 0.40.0
+import "./fotoalbum.js"; // 📷 0.40.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";

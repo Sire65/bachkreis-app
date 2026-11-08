@@ -31,6 +31,7 @@ export const HILFE = [
   h("erwaehnen", "nachrichten", "@", "Jemanden mit @ erwähnen", "Im Chat „@“ tippen und einen Namen wählen – die Person wird markiert und bekommt Bescheid, auch wenn sie den Chat stumm geschaltet hat.", { v: "nachrichten" }, null, "0.38.0"),
   h("stumm", "nachrichten", "🔕", "Chat stumm, Favorit, Archiv", "Im Chat oben ⋮: 🔕 stumm (8 Std., 1 Woche, immer), ⭐ Favorit oben halten, 📦 archivieren. Das gilt nur für dich – niemand sonst sieht es.", { v: "nachrichten" }, null, "0.38.0"),
   h("ungelesen", "nachrichten", "👁", "Wer hat meine Nachricht noch nicht gelesen?", "Nachrichten › 👁: deine Nachrichten der letzten 7, 14 oder 30 Tage mit allen, die sie noch nicht gelesen haben – mit „💬 Erinnern“. Eine noch ungelesene eigene Nachricht kannst du auch ↩️ zurückholen.", { v: "ungelesen" }, null, "0.38.0"),
+  h("fotoalbum", "nachrichten", "📷", "Fotoalbum", "Fotos von Konzerten, Fahrten und Proben – Diashow ▶️, groß ansehen, speichern. Erwachsene laden Fotos hoch; Kinder, die zu sehen sind, brauchen die Foto-Einwilligung der Eltern. Gelöschtes liegt 30 Tage im 🗑️ Papierkorb.", { v: "fotoalbum" }, null, "0.40.0"),
   h("pinnwand", "nachrichten", "📌", "Pinnwand", "Zettel für alle oder einzelne Personen – ❗ wichtig bleibt groß an der Wand. Gelesen und Erledigt sieht, wer den Zettel geschrieben hat.", { v: "pinnwand" }),
   h("whatsapp", "nachrichten", "🟢", "WhatsApp", "Die App öffnet WhatsApp mit fertigem Text – du wählst Kontakt oder Gruppe und drückst selbst auf Senden."),
 
@@ -38,6 +39,7 @@ export const HILFE = [
   h("ueben", "ueben", "⏱️", "Üben eintragen", "Üben › Minuten eintragen, Wochenziel setzen, Erinnerungen bekommen. Die Lehrkraft sieht deinen Fortschritt.", { v: "ueben" }),
   h("uebebuehne", "ueben", "🎤", "Übe-Bühne: Mitspielen & Stimmgerät", "Mitspielen mit Begleitung, Griffe, Rhythmus, Stimmgerät und Ohr-Spiele – und die Aufgaben deiner Lehrkraft.", { v: "buehne" }),
   h("metronom", "ueben", "🥁", "Metronom, Timer, Stoppuhr", "Mehr › Uhr & Takt: Metronom (antippen im Takt), Timer und Stoppuhr.", { a: "uhrWerkzeug" }),
+  h("pdf", "ueben", "📖", "Noten und PDFs in der App ansehen", "PDFs (Noten, Dokumente, Anhänge) öffnen direkt in der App. 🎼 Pult zeigt eine Seite bildschirmfüllend (quer: zwei) – blättern mit Tippen rechts/links, Wischen oder einem Bluetooth-Blätterpedal. Der Bildschirm bleibt dabei an. ⬇️ speichert oder teilt das PDF.", { v: "dokumente" }, null, "0.40.0"),
   h("instrumentenkunde", "ueben", "🎻", "Instrumente kennenlernen", "Instrumentenkunde: jedes Instrument mit Bild und echtem Klang (Aufnahmen, gemeinfrei).", { v: "instrumentenkunde" }),
 
   h("eltern-start", "eltern", "👪", "Die Eltern-Ansicht", "Eltern sehen oben, was für ihre Kinder zu erledigen ist: Zusagen, Genehmigungen, Gesundheitsangaben – mit einem Tipp erledigt.", { v: "start" }, "eltern"),

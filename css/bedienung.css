@@ -356,3 +356,27 @@
 .lupe-zeile .fl { display: grid; min-width: 0; } .lupe-zeile small { color: var(--grau); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body:has(#hilfeKnoepfe:not([hidden])) #inhalt { padding-bottom: 64px; } /* die runden Knöpfe verdecken nichts */
 .tu-zeile .knopf { flex: none; white-space: nowrap; }
+/* 0.40.0 – 📖 PDF-Ansicht + 🎼 Pult-Modus */
+.pdf-seiten { display: grid; gap: 10px; } .pdf-seite { display: block; width: 100%; height: auto; background: #fff; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.18); }
+.pdf-pult { position: fixed; inset: 0; z-index: 9500; background: #111; display: grid; place-items: center; touch-action: pan-y; }
+.pdf-pult-bilder { display: flex; gap: 8px; justify-content: center; align-items: center; width: 100vw; height: 100vh; padding: 4px 4px 56px; }
+.pdf-pult-bilder img { max-width: 100%; max-height: 100%; object-fit: contain; background: #fff; } .pdf-pult-bilder.zwei img { max-width: 50%; }
+.pdf-pult-zone { position: absolute; top: 0; bottom: 56px; width: 38%; border: none; background: transparent; cursor: pointer; } .pdf-pult-zone.links { left: 0; } .pdf-pult-zone.rechts { right: 0; }
+.pdf-pult-leiste { position: absolute; left: 0; right: 0; bottom: 0; height: 52px; display: flex; gap: 8px; justify-content: center; align-items: center; background: rgba(0,0,0,.75); color: #ffd23f; font-weight: 800; }
+.pdf-pult-leiste button { min-width: 48px; height: 44px; border: 1px solid #ffd23f; border-radius: 12px; background: #1a1500; color: #ffd23f; font: 800 1.2rem/1 system-ui, sans-serif; cursor: pointer; }
+/* 📷 Fotoalbum */
+.alben { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.album-kachel { display: grid; gap: 4px; text-align: left; padding: 0 0 10px; border: none; border-radius: 16px; overflow: hidden; background: var(--karte); color: var(--text); font: inherit; cursor: pointer; box-shadow: var(--schatten); }
+.album-kachel b, .album-kachel small { padding: 0 10px; } .album-kachel small { color: var(--grau); font-weight: 700; }
+.album-bild { display: grid; place-items: center; aspect-ratio: 4 / 3; background: var(--karte2); font-size: 2.4rem; } .album-bild img { width: 100%; height: 100%; object-fit: cover; }
+.foto-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 4px; margin-top: 10px; }
+.foto-kachel { padding: 0; border: none; aspect-ratio: 1; overflow: hidden; border-radius: 6px; background: var(--karte2); cursor: pointer; } .foto-kachel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto-kachel:focus-visible { outline: 3px solid var(--gold, #f2b705); outline-offset: 2px; }
+.foto-hoch { position: relative; display: inline-flex; align-items: center; cursor: pointer; } .foto-hoch input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.foto-hoch:focus-within { outline: 3px solid var(--gold, #f2b705); outline-offset: 2px; }
+.foto-gross { position: fixed; inset: 0; z-index: 9500; background: #0d0c08; display: grid; grid-template-rows: 1fr auto auto; color: #f3efe3; }
+.foto-gross img { width: 100%; height: 100%; object-fit: contain; min-height: 0; } .foto-gross-text { padding: 6px 14px; display: grid; gap: 2px; } .foto-gross-text small { opacity: .85; }
+.foto-gross-leiste { display: flex; gap: 8px; justify-content: center; padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px)); flex-wrap: wrap; }
+.foto-gross-leiste button { min-width: 48px; height: 46px; border: 1px solid #ffd23f; border-radius: 12px; background: #1a1500; color: #ffd23f; font: 800 1.15rem/1 system-ui, sans-serif; cursor: pointer; }
+.foto-warnung { border: 2px solid #d9a21b; } .foto-personen { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; max-height: 40vh; overflow: auto; }
+.foto-personen label { display: flex; gap: 6px; align-items: center; min-height: 40px; } .foto-mini { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; background: var(--karte2); }

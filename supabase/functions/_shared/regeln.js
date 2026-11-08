@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -49,6 +49,7 @@ export function kontext(person, alle) {
   // 🗳️ 0.39.0 Terminumfragen: eigene Orchester (ohne die der Kinder) für „Mitglieder stimmen selbst ab“
   ctx.eigeneGruppen = new Set((alle.gruppe_zuordnung || []).filter((z) => z.person_id === ich && !z.geloescht_am).map((z) => z.gruppe_id));
   ctx.tuMap = new Map((alle.terminumfragen || []).map((z) => [z.id, z]));
+  ctx.faMap = new Map((alle.fotoalben || []).map((z) => [z.id, z])); // 📷 0.40.0
   ctx.elternKind = ek;
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
   // 🎙️ Übe-Aufnahmen: für welche (eigenen) Kinder haben die Eltern zuletzt „erteilt“ (Zweck uebeaufnahmen)?
@@ -72,6 +73,8 @@ export function kontext(person, alle) {
 }
 
 const hatRolle = (ctx, liste) => (liste || []).some((r) => ctx.rollen.includes(r));
+// 📷 Album sichtbar: „alle“ für jeden in der App, „verwaltung“ nur für das Team (und wer es angelegt hat)
+const albumSichtbar = (a, ctx) => !a.geloescht_am && (a.sichtbar === "verwaltung" ? ctx.istVerwalter || a.von === ctx.ich : true);
 const tuCtx = (ctx) => ({ gruppen: ctx.gruppen, eigeneGruppen: ctx.eigeneGruppen || new Set(), kinder: ctx.kinder, verwalter: ctx.istVerwalter });
 export const darfAlleLesen = (tab, ctx) => hatRolle(ctx, TABELLEN[tab]?.lesen);
 export const darfAlleSchreiben = (tab, ctx) => !SERVER_ONLY.has(tab) && !TABELLEN[tab]?.nurLesen && hatRolle(ctx, TABELLEN[tab]?.schreiben);
@@ -121,6 +124,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "startnachrichten": return z.von === ctx.ich || snFuerMich(z, ctx.ich, ctx.gruppen, "0000-00-00"); // 📣 an mich (auch abgelaufene – für den Abgleich)
     case "startnachricht_antworten": return z.person_id === ctx.ich || ctx.snMap?.get(z.nachricht_id)?.von === ctx.ich;
     case "chat_einstellungen": case "chat_merker": return z.person_id === ctx.ich;
+    case "fotoalben": return albumSichtbar(z, ctx);
+    case "fotos": { const a = ctx.faMap?.get(z.album_id); return !!a && albumSichtbar(a, ctx) && (!z.papierkorb_am || z.von === ctx.ich || hatRolle(ctx, MODERATION)); }
     case "terminumfragen": return z.von === ctx.ich || hatRolle(ctx, TU_PLANER) || tuFuerMich(z, tuCtx(ctx));
     case "terminumfrage_antworten": { const u = ctx.tuMap?.get(z.umfrage_id); return z.person_id === ctx.ich || (!!u && u.von === ctx.ich) || hatRolle(ctx, MODERATION); } // 0.38.0: privat – nur die Person selbst
     case "pinnwand": return pwSichtbar(z, ctx.ich);
@@ -533,6 +538,31 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "fotoalben": {
+      // 📷 0.40.0 Alben legt das Team an; ändern: wer es angelegt hat oder die Leitung
+      if (!alt && !ctx.istVerwalter) return { ok: false, grund: "NUR_TEAM" };
+      if (alt && alt.von !== ctx.ich && !hatRolle(ctx, MODERATION)) return { ok: false, grund: "NUR_EIGENE" };
+      const titel = String(neu.titel ?? "").trim().slice(0, 100); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
+      if (neu.geloescht_am && !alt?.geloescht_am) return { ok: true, zeile: { ...alt, geloescht_am: jetzt } };
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), titel, datum: /^\d{4}-\d{2}-\d{2}$/.test(String(neu.datum || "")) ? neu.datum : null, beschreibung: String(neu.beschreibung ?? "").trim().slice(0, 500) || null,
+        projekt_id: neu.projekt_id || null, sichtbar: neu.sichtbar === "verwaltung" ? "verwaltung" : "alle", von: alt?.von || ctx.ich, titelbild: neu.titelbild ? String(neu.titelbild).slice(0, 80) : null } };
+    }
+    case "fotos": {
+      // 📷 hochladen: Erwachsene (Team, Eltern) in sichtbare Alben, nur eigene Dateien; markierte Kinder brauchen die Foto-Einwilligung „intern“
+      const a = ctx.faMap?.get(String(alt?.album_id || neu.album_id));
+      if (!a || !albumSichtbar(a, ctx)) return { ok: false, grund: "ALBUM_NICHT_SICHTBAR" };
+      if (!alt && !hatRolle(ctx, FOTO_HOCHLADEN)) return { ok: false, grund: "NUR_ERWACHSENE" };
+      if (alt && alt.von !== ctx.ich && !hatRolle(ctx, MODERATION)) return { ok: false, grund: "NUR_EIGENE" };
+      if (!alt) { const d = ctx.dateien?.get(String(neu.datei || "").replace(/^datei:/, "")); if (!d || d.von !== ctx.ich || !/^image\//.test(d.mime || "")) return { ok: false, grund: "DATEI_UNGUELTIG" }; }
+      const personen = [...new Set((Array.isArray(neu.personen) ? neu.personen : alt?.personen || []).map(String))].slice(0, 40);
+      const ohne = personen.filter((p) => !ctx.fotoOk?.has(p));
+      if (ohne.length) return { ok: false, grund: "EINWILLIGUNG_FEHLT" };
+      // endgültig löschen nur aus dem Papierkorb
+      if (neu.geloescht_am && !alt?.geloescht_am) { if (!alt?.papierkorb_am) return { ok: false, grund: "ERST_PAPIERKORB" }; return { ok: true, zeile: { ...alt, geloescht_am: jetzt } }; }
+      const pk = neu.papierkorb_am === null ? null : neu.papierkorb_am ? alt?.papierkorb_am || jetzt : alt?.papierkorb_am || null;
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), album_id: a.id, datei: alt?.datei || String(neu.datei), titel: String(neu.titel ?? "").trim().slice(0, 200) || null, von: alt?.von || ctx.ich,
+        personen, aufgenommen_am: Number.isFinite(Date.parse(neu.aufgenommen_am)) ? new Date(neu.aufgenommen_am).toISOString() : alt?.aufgenommen_am || jetzt, papierkorb_am: pk } };
     }
     case "terminumfragen": {
       // 🗳️ 0.39.0 anlegen: Leitung, Lehrkräfte, Vorstand, Terminplaner · ändern/entscheiden: wer sie angelegt hat oder die Leitung

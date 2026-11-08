@@ -516,6 +516,15 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 📷 0.40.0 Fotoalbum: selbst gezeichnete Beispielbilder (bilder/demo/*.svg) – keine echten Fotos, niemand erkennbar
+  const foto = (album, b, titel, tageVorher) => ({ id: `fo-${album}-${b}`, album_id: album, datei: `bild:bilder/demo/${b}.svg`, titel, von: "p-leitung", personen: [], aufgenommen_am: iso(tag(jetzt, -tageVorher, 19)), papierkorb_am: null });
+  d.fotoalben = [
+    { id: "fa-1", titel: "Herbstkonzert (Beispiel)", datum: isoTag(tag(jetzt, -40)), sichtbar: "alle", von: "p-leitung", titelbild: "fo-fa-1-konzert", beschreibung: "Bilder vom Konzert in der Aula" },
+    { id: "fa-2", titel: "Probenfahrt (Beispiel)", datum: isoTag(tag(jetzt, -90)), sichtbar: "alle", von: "p-leitung", titelbild: "fo-fa-2-fahrt" },
+    { id: "fa-3", titel: "Team intern (Beispiel)", datum: isoTag(tag(jetzt, -10)), sichtbar: "verwaltung", von: "p-leitung", titelbild: "fo-fa-3-probe" },
+  ];
+  d.fotos = [foto("fa-1", "konzert", "Einspielen vor dem Konzert", 40), foto("fa-1", "applaus", "Verbeugung", 40), foto("fa-1", "instrumente", "Die Instrumente warten", 40),
+    foto("fa-2", "fahrt", "Abfahrt am Rathausplatz", 90), foto("fa-2", "probe", "Probe in der Jugendherberge", 89), foto("fa-2", "sommerfest", "Abschlussabend", 88), foto("fa-3", "probe", "Sitzplan-Probe", 10)];
   // 🗳️ 0.39.0 Terminumfragen: Elternabend B-Orchester (Eltern stimmen ab) und ein Planungstreffen im Team
   const tuTag = (n, h) => iso(tag(jetzt, n, h));
   const elternB = [...new Set(d.eltern_kind.filter((e) => d.gruppe_zuordnung.some((z) => z.gruppe_id === "g-b" && z.person_id === e.kind_id)).map((e) => e.eltern_id))];
@@ -651,6 +660,7 @@ export function erzeugeDemodaten(heute = new Date()) {
   ];
   d.dokumente = [
     { id: "dok-1", titel: "Satzung des Fördervereins", art: "satzung", fassung: "2024", url: WEB, beschreibung: "PDF auf der Schul-Website (Abschnitt Förderverein)", sichtbar: "alle", sort: 1 },
+    { id: "dok-pdf", titel: "Probenplan (Beispiel-PDF)", art: "info", fassung: "2026", url: "bilder/demo/probenplan.pdf", beschreibung: "Zum Ausprobieren der PDF-Ansicht in der App", sichtbar: "alle", sort: 0 },
     { id: "dok-2", titel: "Flyer Förderverein Bachkreis", art: "flyer", fassung: "2026", url: WEB, beschreibung: "mit Beitrittserklärung", sichtbar: "alle", sort: 2 },
     { id: "dok-3", titel: "Flyer Orchesterklasse", art: "flyer", url: "https://www.gymnasium-bergkamen.de/wp-content/uploads/2023/05/flyer_orchesterklasse-fin.pdf", beschreibung: "Für Eltern der Grundschulkinder", sichtbar: "alle", sort: 3 },
     { id: "dok-4", titel: "Leihvertrag Instrumente", art: "vorlage", beschreibung: "Wird in der App als Genehmigung bestätigt (Genehmigungen › Leihvertrag)", sichtbar: "eltern", sort: 4 },

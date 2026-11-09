@@ -11,7 +11,7 @@ import { STIMMEN, stimmeAnwenden } from "../kern/stimme.js";
 import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, istLeitung, istVerwalter, einst, einstSetzen } from "./zustand.js";
 import { meineUnterhaltungen, gelesenVonMir, lokalGelesen } from "./start.js";
 import { esc, AKTIONEN, toast, uhr, frage, blatt, blattZu, $ } from "../kern/ui.js";
-import { liste, hole, speichere, speichereViele, konfig, abonnieren, neueId, istEchtbetrieb, jetztAbgleichen, serverAktion } from "../kern/daten.js";
+import { liste, hole, speichere, speichereViele, konfig, abonnieren, neueId, istEchtbetrieb, jetztAbgleichen, serverAktion, wartend } from "../kern/daten.js";
 import { CHAT, nsId, nachrichtFrei, nachrichtAbgelaufen, chatPartnerErlaubt, pwAppPerson, chatMitgliederMitKopie, rollenMit } from "../kern/schema.js";
 import { empfaengerVon, naechsteSendung, nachrichtEreignis, nachrichtKurz, kinderVon, elternVon, instrumenteVon } from "../kern/logik.js";
 import { hochladen, bildVerkleinern, dateiUrl, dateiOeffnen, groesseText, artVonMime } from "../kern/dateien.js";
@@ -27,6 +27,7 @@ import { kinderVon as kinderVonL, termineFuer, antwortVon, tagIso } from "../ker
 import { terminVorlage, eigenTerminVorlage } from "./termine.js";
 import { erwaehnteIn } from "../kern/schema.js";
 import { anrufKnoepfe } from "./anruf.js";
+import { kontaktHtml, konferenzHtml, konferenzKnopf, geheimKnopf, geheimHinweis, geheimAn, geheimVerpacken, geheimMerken, geheimHtml, geheimFuellen } from "./chatextra.js";
 import { stummAn, archiviert, favorit, archivAufwachen, angeheftetHtml, darfAnheften, gemerkt, zurueckholbar, erwaehnungVorschlag, erwaehnungenMarkieren, chatGestenVerdrahten, runterNeu } from "./chatplus.js";
 
 const ich = () => S.ich?.id;
@@ -87,6 +88,7 @@ function hakenStand(n) {
 }
 function hakenHtml(n) {
   if (n.zurueckgezogen_am) return "";
+  if (wartend("nachrichten").has(n.id)) return '<span class="haken wartet" role="img" title="wartet aufs Netz – geht von selbst raus" aria-label="wartet aufs Netz">🕓</span>'; // 📨 0.51.0
   let { anzahl, gelesen, stufe } = hakenStand(n);
   if (stufe === "gelesen" && einst().lesebestaetigung === false) stufe = "angekommen"; // wie WhatsApp: ohne eigene Lesebestätigung keine blauen Haken
   const z = stufe === "gelesen" ? `<span class="haken blau" role="img" title="gelesen" aria-label="gelesen">${HAKEN_ZWEI}</span>`
@@ -239,7 +241,7 @@ function blaseHtml(n, u, gruppe) {
     ${gruppe && !eigen ? `<div class="von">${esc(name(n.von))}</div>` : ""}
     ${n.weitergeleitet_von && !weg ? `<div class="weiter-marke">↪️ Weitergeleitet von ${esc(n.weitergeleitet_von)}</div>` : ""}
     ${bezug && !weg ? `<div class="zitat" data-a="zuNachricht" data-x="${esc(bezug.id)}"><b>${esc(bezug.von === ich() ? "Du" : name(bezug.von))}</b><span>${esc(bezug.zurueckgezogen_am ? "🚫 gelöscht" : String(bezug.text).slice(0, 90))}</span></div>` : ""}
-    ${weg ? '<div class="txt weg">🚫 Diese Nachricht wurde gelöscht</div>' : (n.text ? `<div class="txt">${erwaehnungenMarkieren(textHtml(n.text), n)}</div>` : "") + anlagenHtml(n) + umfrageHtml(n)}
+    ${weg ? '<div class="txt weg">🚫 Diese Nachricht wurde gelöscht</div>' : (n.geheim ? geheimHtml(n, textHtml) : n.text ? `<div class="txt">${erwaehnungenMarkieren(textHtml(n.text), n)}</div>` : "") + anlagenHtml(n) + umfrageHtml(n) + kontaktHtml(n) + konferenzHtml(n)}
     ${weg ? "" : hinweiseHtml(n)}${rueck}${express}
     <div class="fuss">${gemerkt(n.id) ? '<span title="gemerkt">🔖</span> ' : ""}${(u?.angeheftet || []).includes(n.id) && !weg ? '<span title="angeheftet">📌</span> ' : ""}${n.loescht_am && !weg ? `<span class="sl-marke" title="Löscht sich selbst – bei allen">⏳ ${esc(restText(n.loescht_am))}</span> ` : ""}${n.bearbeitet_am && !weg ? '<span class="bearb">bearbeitet</span> ' : ""}${uhr(n.zeit)}${eigen ? " " + hakenHtml(n) : ""}</div>${reHtml}</div>`;
 }
@@ -425,7 +427,7 @@ function eingabeHtml(u) {
   const a = C.antwort && hole("nachrichten", C.antwort);
   const z = C.zustell, zAn = z.push || z.mail || z.whatsapp, alle = z.push && z.mail && z.whatsapp;
   const exp = !expressUnbegrenzt() ? ` data-zahl="${expressHeute()}/${expressMax()}"` : "";
-  const hinweis = [C.wichtig ? "❗ Wird als WICHTIG gesendet – bei allen farbig markiert, auch per E-Mail" : "", C.express ? "🏎️ Express: kommt sofort an – auch nachts. Beim Empfänger geht ein Fenster auf." : "", C.ablauf ? `⏳ Löscht sich nach ${C.ablauf === 1 ? "1 Std." : C.ablauf === 24 ? "24 Std." : "7 Tagen"} – bei allen` : "", C.diktat ? "🗣️ Ich höre zu … einfach sprechen" : "", entwurf(u.id) && !document.getElementById("chatText") ? "✏️ Entwurf – noch nicht gesendet" : ""].filter(Boolean);
+  const hinweis = [C.wichtig ? "❗ Wird als WICHTIG gesendet – bei allen farbig markiert, auch per E-Mail" : "", C.express ? "🏎️ Express: kommt sofort an – auch nachts. Beim Empfänger geht ein Fenster auf." : "", C.ablauf ? `⏳ Löscht sich nach ${C.ablauf === 1 ? "1 Std." : C.ablauf === 24 ? "24 Std." : "7 Tagen"} – bei allen` : "", C.diktat ? "🗣️ Ich höre zu … einfach sprechen" : "", geheimHinweis(u.id), entwurf(u.id) && !document.getElementById("chatText") ? "✏️ Entwurf – noch nicht gesendet" : ""].filter(Boolean);
   return `<div class="chat-eingabe${C.schreibZu ? " zu" : ""}" id="chatEingabe"><button type="button" class="schreib-griff" data-a="schreibenKlappe" aria-expanded="${!C.schreibZu}" aria-label="${C.schreibZu ? "Schreibbereich öffnen" : "Schreibbereich einklappen – mehr Platz für Nachrichten"}">${C.schreibZu ? "▴ ✏️ Schreiben" : "▾"}</button>
     ${a ? `<div class="antwort-leiste"><div class="zitat"><b>↩️ ${esc(a.von === ich() ? "Du" : name(a.von))}</b><span>${esc(String(a.text).slice(0, 90))}</span></div><button type="button" class="knopf klein" data-a="naAntwortWeg" aria-label="Antwort aufheben">✕</button></div>` : ""}
     ${C.zustellOffen ? `<div class="zustell"><span>Benachrichtigen:</span><button class="${alle ? "an" : ""}" data-a="zustellWahl" data-x="alle">✅ Alle</button><button class="${z.push ? "an" : ""}" data-a="zustellWahl" data-x="push">🔔 Push</button><button class="${z.mail ? "an" : ""}" data-a="zustellWahl" data-x="mail">✉️ E-Mail</button><button class="${z.whatsapp ? "an" : ""}" data-a="zustellWahl" data-x="whatsapp">🟢 WhatsApp</button><span>${z.push || z.mail ? "" : "· wie eingestellt"}</span></div>` : ""}
@@ -447,8 +449,15 @@ function eingabeHtml(u) {
         <button type="button" class="rund tastatur-knopf" data-a="tastaturUm" title="Tastatur ein-/ausblenden" aria-label="Tastatur ein- oder ausblenden">⌨️</button>
         <button type="button" class="rund" data-a="spaeterWahl" data-x="${esc(u.id)}" title="Später senden …" aria-label="Später senden">⏰</button>
         <button type="button" class="rund ablauf${C.ablauf ? " an" : ""}" data-a="ablaufWahl" title="Nachricht löscht sich selbst …" aria-label="Selbstlöschen">⏳</button>
+        ${geheimKnopf(u)}
       </div></div>`}</div>`;
 }
+// 📨 0.51.0 Sende-Schlange (wie KC-CLUB-SENDE-SCHLANGE): ohne Netz Geschriebenes wartet auf dem Gerät und geht von selbst raus
+function schlangeHtml(u) {
+  const w = wartend("nachrichten"), n = w.size ? liste("nachrichten", (x) => x.unterhaltung_id === u.id && w.has(x.id)).length : 0;
+  return n ? `<div class="sende-schlange" role="status">📶 ${n === 1 ? "1 Nachricht wartet" : `${n} Nachrichten warten`} aufs Netz – ${n === 1 ? "sie geht" : "sie gehen"} von selbst raus. <button type="button" class="knopf klein" data-a="schlangeJetzt">🔄 Jetzt versuchen</button></div>` : "";
+}
+AKTIONEN.schlangeJetzt = async () => { try { await jetztAbgleichen(); } catch {} zeichne(); toast(wartend("nachrichten").size ? "📶 Noch kein Netz – wir versuchen es weiter" : "✅ Alles gesendet"); };
 VIEWS.unterhaltung = {
   render({ id }) {
     const u = hole("unterhaltungen", id);
@@ -456,8 +465,8 @@ VIEWS.unterhaltung = {
     const l = empfaengerVon(db, u), p = chatPartnerVon(u);
     const unter = p ? ({ schueler: "Schüler/in", eltern: "Eltern", lehrkraft: "Lehrkraft", leitung: "Leitung" }[hole("personen", p)?.typ] || "Bachkreis") : u.art === "verteiler" ? `📣 Rundschreiben · ${l.length} Empfänger` : `${u.art === "runde" ? "Runde" : "Gruppe"} · ${l.length} Mitglieder`;
     return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${stummAn(id) ? '<span title="stumm" aria-label="stumm">🔕</span> ' : ""}${esc(chatTitel(u))}</h2><div class="hinweis kk-zeile" id="kkZeile">${esc(unter)}${!p && l.length ? ` · Mit: ${esc(l.filter((x) => x !== ich()).map((x) => vorn(x)).join(", "))}` : ""}</div></div><button type="button" class="kk-pfeil" data-a="chatKopfKlappe" aria-label="Alle Namen zeigen" aria-expanded="false" hidden><span class="kl-pfeil zu" aria-hidden="true">▾</span></button>
-      ${p ? anrufKnoepfe(p) : ""}<button type="button" class="chat-kopf-knopf" data-a="chatSucheAuf" data-x="${esc(id)}" aria-label="Im Chat suchen">🔍</button><button type="button" class="chat-kopf-knopf" data-a="chatMenue" data-x="${esc(id)}" aria-label="Mehr zum Chat">⋮</button></div>
-      ${angeheftetHtml(u)}<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat" id="chatVerlauf">${verlaufHtml(u)}</div>${eingabeHtml(u)}`;
+      ${p ? anrufKnoepfe(p) : konferenzKnopf(u)}<button type="button" class="chat-kopf-knopf" data-a="chatSucheAuf" data-x="${esc(id)}" aria-label="Im Chat suchen">🔍</button><button type="button" class="chat-kopf-knopf" data-a="chatMenue" data-x="${esc(id)}" aria-label="Mehr zum Chat">⋮</button></div>
+      ${angeheftetHtml(u)}<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat" id="chatVerlauf">${verlaufHtml(u)}</div>${schlangeHtml(u)}${eingabeHtml(u)}`;
   },
   nach(w, { id }) {
     if (C.filterChat !== id) { C.filter = "alle"; C.filterChat = id; C.schreibZu = false; } // ✏️ beim Öffnen eines Chats ist der Schreibbereich immer offen
@@ -466,6 +475,7 @@ VIEWS.unterhaltung = {
     cfAnwenden();
     eingabeVerdrahten(id, false);
     bilderLaden(w);
+    geheimFuellen(textHtml); // 🔒 0.51.0 geheime Nachrichten auf dem Gerät entschlüsseln
     abstand();
     const tr = document.getElementById("neuTrenner");
     if (tr && !C.gesprungen?.[id]) { (C.gesprungen ||= {})[id] = true; tr.scrollIntoView({ block: "start" }); } else window.scrollTo(0, document.body.scrollHeight);
@@ -650,8 +660,14 @@ AKTIONEN.chatSenden = async (uid) => {
   if (C.anlagen.some((a) => a.status === "fehler")) return toast("⚠️ Ein Anhang ging nicht hoch – bitte mit ✕ entfernen oder neu wählen.");
   if ([...text].length > CHAT.zeichen) return toast(`Höchstens ${CHAT.zeichen} Zeichen.`);
   await wichtigkeitFragen(uid);
-  const u = hole("unterhaltungen", uid), n = await nachrichtBauen(uid, text);
-  const whatsappAuch = C.zustell.whatsapp;
+  const u = hole("unterhaltungen", uid); let n = await nachrichtBauen(uid, text);
+  // 🔒 0.51.0 Geheim schreiben: Text vor dem Speichern verschlüsseln – auf den Server kommt nur Zeichensalat
+  if (geheimAn(uid)) {
+    if (n.anlagen.length) return toast("🔒 Geheim geht nur Text – Anhänge bitte normal senden.");
+    try { const g = await geheimVerpacken(uid, text); n = { ...n, text: g.text, geheim: g.geheim, erwaehnt: [] }; geheimMerken(n.id, g.klar); }
+    catch { return toast("⚠️ Verschlüsseln ging nicht – nichts wurde gesendet."); }
+  }
+  const whatsappAuch = C.zustell.whatsapp && !n.geheim;
   papierflieger(document.querySelector('[data-a="chatSenden"]'), n.wichtig, n.id, n.express);
   await speichere("nachrichten", n);
   eingabeZuruecksetzen(uid);
@@ -945,7 +961,8 @@ AKTIONEN.anhangMenue = () => {
     ${datWahl("datei", ".pdf,.doc,.docx,.xls,.xlsx,.odt,.ods,.txt,.csv,.zip,application/pdf", "📄", "Datei (PDF, Word, Excel …)", true)}
     <button class="knopf" data-a="notenWahl">🎼 Noten aus dem Notenarchiv</button>
     ${datWahl("noten", "application/pdf,image/*", "🎼", "Noten vom Gerät (PDF oder Foto)", true)}
-    <button class="knopf" data-a="umfrageNeu">📊 Umfrage</button></div>
+    <button class="knopf" data-a="umfrageNeu">📊 Umfrage</button>
+    <button class="knopf" data-a="kontaktWahl" data-x="${esc(S.params?.id || "")}">👤 Kontakt teilen</button></div>
     <p class="hinweis">Je Datei höchstens 8 MB. Fotos werden vorher verkleinert. Die Empfänger sehen Anhänge nur, solange sie die Nachricht sehen dürfen.</p>
     ${istVerwalter() ? '<p class="hinweis">📷 Fotos mit Kindern nur, wenn sie die Einwilligung „Fotos intern“ haben – <button class="link" data-a="kachel" data-x="fotoliste">Foto-Liste ansehen</button>.</p>' : ""}`);
 };

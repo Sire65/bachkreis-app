@@ -1,14 +1,25 @@
 {
-  "version": "0.50.1",
+  "version": "0.51.0",
   "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
-    "📞 Anrufen und 🎥 Videoanruf direkt aus dem Einzelchat – Kinder nur mit den eigenen Eltern",
-    "🪑 Runder Tisch: Online-Treffen mit Bild und Ton für bis zu 8 Erwachsene, auch zur Sitzung",
-    "🛟 Fernhilfe: die Leitung schaut mit auf deinen Bildschirm und zeigt dir den Weg",
-    "✥ Nach „Fertig“ beim Anordnen ist der Knopf „Anordnen“ sofort wieder da"
+    "🔒 Geheim schreiben: im Einzelchat unter Erwachsenen können nur noch ihr zwei die Nachricht lesen – mit 🔑 Schlüsselbund fürs zweite Gerät",
+    "👤 Kontakt teilen und 👥 Konferenz (nur Ton, bis 4) direkt aus dem Chat",
+    "👋 Anklopfen: schreiben oder sprechen? – und 📼 Sprachnachricht, wenn keiner Zeit hat",
+    "🪑 Runder Tisch: sehen, wer schon da sitzt · 💼 Tasche mit PDF, Foto, Musik · 🙋 Gäste mit eigenem Link",
+    "📶 Ohne Netz geschrieben? Die Nachricht wartet mit 🕓 und geht von selbst raus · 🐌 ehrlicher Hinweis, wenn Laden dauert"
   ],
   "verlauf": [
+    {
+      "version": "0.50.1",
+      "datum": "2026-11-09",
+      "neu": [
+        "📞 Anrufen und 🎥 Videoanruf direkt aus dem Einzelchat – Kinder nur mit den eigenen Eltern",
+        "🪑 Runder Tisch: Online-Treffen mit Bild und Ton für bis zu 8 Erwachsene, auch zur Sitzung",
+        "🛟 Fernhilfe: die Leitung schaut mit auf deinen Bildschirm und zeigt dir den Weg",
+        "✥ Nach „Fertig“ beim Anordnen ist der Knopf „Anordnen“ sofort wieder da"
+      ]
+    },
     {
       "version": "0.49.0",
       "datum": "2026-11-09",

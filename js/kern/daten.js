@@ -41,6 +41,8 @@ export const serverAktionStill = (aktion, nutzlast) => A?.aktion?.(aktion, nutzl
 export const jetztAbgleichen = () => mitWarten(() => A?.abgleichen?.(), "Wird abgeglichen …");
 
 export const datenInfo = () => A?.info() || { art: "unbekannt", server: false };
+// 📨 0.51.0 Sende-Schlange: IDs, die noch nicht beim Server sind (Vorführversion: keine)
+export const wartend = (tab) => A?.wartend?.(tab) || new Set();
 export const setzeWer = (name) => { wer = name || "System"; };
 
 const sichtbar = (z) => !z.geloescht_am;

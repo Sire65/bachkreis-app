@@ -9,6 +9,7 @@ import { liste, hole, speichere, konfig, abonnieren, istEchtbetrieb, serverAktio
 import { onlineErlaubt, chatPartnerErlaubt, ONLINE_KREISE, onlineFuer } from "../kern/schema.js";
 import { kinderVon, elternVon } from "../kern/logik.js";
 import { gesicht } from "./gesichter.js";
+import { ANRUF_BRUECKE as ANRUF } from "../kern/rtc.js";
 
 const ONL = { liste: [], erlaubt: false, stand: 0, timer: null, warte: null, gesehen: new Set() };
 const TAKT_MS = 45000, KLOPF_SEK = 60;
@@ -66,23 +67,26 @@ function aktualisieren() {
 AKTIONEN.anklopfenFrage = (pid) => {
   const p = ONL.liste.find((x) => x.id === pid) || { id: pid, vorname: vorname(pid) };
   blatt(`👋 Bei ${p.vorname} anklopfen?`, `<div class="on-gross">${gesicht(pid)}</div><p>${esc(p.vorname)} bekommt sofort die Frage, ob ihr jetzt schreiben wollt.</p>
-    <div class="knopfreihe"><button class="knopf haupt" data-a="anklopfen" data-x="${esc(pid)}">👋 Anklopfen</button><button class="knopf" data-a="anklopfenSchreiben" data-x="${esc(pid)}">💬 Lieber gleich schreiben</button></div>`);
+    <p class="hinweis" style="text-align:center">Wie wollt ihr reden?</p>
+    <div class="knopfreihe"><button class="knopf haupt" data-a="anklopfen" data-x="${esc(pid)}|schreiben">✍️ Schreiben</button>${sprechenMoeglich(pid) ? `<button class="knopf haupt" data-a="anklopfen" data-x="${esc(pid)}|sprechen">📞 Sprechen</button>` : ""}<button class="knopf" data-a="anklopfenSchreiben" data-x="${esc(pid)}">💬 Lieber gleich schreiben</button></div>`);
 };
 AKTIONEN.anklopfenSchreiben = async (pid) => { blattZu(); (await import("./nachrichten.js")).chatMitText(pid, ""); };
-AKTIONEN.anklopfen = async (pid) => {
-  let id;
+// 📞 0.51.0 „schreiben oder sprechen?“ (KC-CLUB-ANKLOPFEN-ART): Sprechen nur, wenn ein Anruf mit der Person erlaubt ist (Kinderschutz)
+const sprechenMoeglich = (pid) => { try { return !!ANRUF.darf?.(pid); } catch { return false; } };
+AKTIONEN.anklopfen = async (x) => {
+  let id; const [pid, art0] = String(x).split("|"), art = art0 === "sprechen" && sprechenMoeglich(pid) ? "sprechen" : "schreiben";
   if (istEchtbetrieb()) {
-    const r = await serverAktionStill("anklopfen", { an: pid }).catch(() => null);
+    const r = await serverAktionStill("anklopfen", { an: pid, art }).catch(() => null);
     if (!r?.ok) return toast(r?.fehler === "NICHT_ONLINE" ? "Gerade nicht mehr online – schreib lieber eine Nachricht." : r?.fehler === "GERADE_ANGEKLOPFT" ? "Du hast gerade schon angeklopft – kurz warten." : "Anklopfen ging gerade nicht.", 4000);
     id = r.id;
   } else {
-    id = neueId("kl"); await speichere("klopfen", { id, von: S.ich.id, an: pid, zeit: new Date().toISOString(), antwort: null }, { still: true });
+    id = neueId("kl"); await speichere("klopfen", { id, von: S.ich.id, an: pid, zeit: new Date().toISOString(), antwort: null, art }, { still: true });
     // Vorführung: der andere antwortet nach ein paar Sekunden
     setTimeout(async () => { const k = hole("klopfen", id); if (k && !k.antwort) await speichere("klopfen", { ...k, antwort: Math.random() < 0.7 ? "ja" : "spaeter", antwort_am: new Date().toISOString() }, { still: true }); }, 4000 + Math.random() * 3000);
   }
-  warten(id, pid);
+  warten(id, pid, art);
 };
-function warten(id, pid) {
+function warten(id, pid, art = "schreiben") {
   ONL.warte = { id, pid, bis: Date.now() + KLOPF_SEK * 1000 };
   const b = blatt(`👋 Klopfe an bei ${vorname(pid)} …`, `<div id="onWarte"></div>`); b.closest(".blatt-hg")?.addEventListener("click", (e) => e.stopPropagation(), true);
   const takt = () => {
@@ -91,17 +95,27 @@ function warten(id, pid) {
     if (k?.antwort) { clearInterval(ONL.wTimer); return antwortGekommen(k); }
     const sek = Math.max(0, Math.ceil((w.bis - Date.now()) / 1000));
     e.innerHTML = sek > 0 ? `<div class="on-gross klopft">${gesicht(pid)}</div><div class="on-uhr">${Math.floor(sek / 60)}:${String(sek % 60).padStart(2, "0")}</div>
-      <p class="hinweis" style="text-align:center">Warte auf Antwort – sobald ${esc(vorname(pid))} „Ja“ sagt, geht der Chat auf.</p><button class="knopf breit" data-a="anklopfenAuflegen">📵 Auflegen</button>`
-      : `<p><b>${esc(vorname(pid))}</b> hat noch nicht reagiert.</p><div class="knopfreihe"><button class="knopf haupt" data-a="anklopfen" data-x="${esc(pid)}">👋 Nochmal</button><button class="knopf" data-a="anklopfenSchreiben" data-x="${esc(pid)}">💬 Nachricht schreiben</button><button class="knopf" data-a="anklopfenAuflegen">📵 Auflegen</button></div>`;
+      <p class="hinweis" style="text-align:center">Warte auf Antwort – sobald ${esc(vorname(pid))} „Ja“ sagt, ${art === "sprechen" ? "rufst du an" : "geht der Chat auf"}.</p><button class="knopf breit" data-a="anklopfenAuflegen">📵 Auflegen</button>`
+      : `<p><b>${esc(vorname(pid))}</b> hat noch nicht reagiert.</p><div class="knopfreihe"><button class="knopf haupt" data-a="anklopfen" data-x="${esc(pid)}|${art}">👋 Nochmal</button><button class="knopf" data-a="anrufbeantworter" data-x="${esc(pid)}">📼 Sprachnachricht hinterlassen</button><button class="knopf" data-a="anklopfenSchreiben" data-x="${esc(pid)}">💬 Nachricht schreiben</button><button class="knopf" data-a="anklopfenAuflegen">📵 Auflegen</button></div>`;
     if (sek <= 0) clearInterval(ONL.wTimer);
   };
   clearInterval(ONL.wTimer); takt(); ONL.wTimer = setInterval(takt, 1000);
 }
 async function antwortGekommen(k) {
   const w = vorname(k.an); ONL.warte = null; blattZu();
-  if (k.antwort === "ja") { toast(`✅ ${w} hat Zeit – der Chat geht auf`); (await import("./nachrichten.js")).chatMitText(k.an, ""); }
-  else toast(k.antwort === "spaeter" ? `⏰ ${w} meldet sich später` : `✋ ${w} hat gerade keine Zeit`, 4000);
+  if (k.antwort === "ja" && k.art === "sprechen" && ANRUF.rufen) { toast(`✅ ${w} hat Zeit – du rufst an`); ANRUF.rufen(k.an, "audio"); }
+  else if (k.antwort === "ja") { toast(`✅ ${w} hat Zeit – der Chat geht auf`); (await import("./nachrichten.js")).chatMitText(k.an, ""); }
+  else {
+    // 📼 0.51.0 Anrufbeantworter (KC-CLUB-ANRUFBEANTWORTER): statt nur „keine Zeit“ gleich eine Sprachnachricht anbieten
+    blatt(k.antwort === "spaeter" ? `⏰ ${w} meldet sich später` : `✋ ${w} hat gerade keine Zeit`, `<div class="on-gross">${gesicht(k.an)}</div><p style="text-align:center">Möchtest du eine Nachricht hinterlassen?</p>
+      <div class="knopfreihe"><button class="knopf haupt" data-a="anrufbeantworter" data-x="${esc(k.an)}">📼 Sprachnachricht</button><button class="knopf" data-a="anklopfenSchreiben" data-x="${esc(k.an)}">✍️ Schreiben</button><button class="knopf" data-a="blattZu">Nein, danke</button></div>`);
+  }
 }
+AKTIONEN.anrufbeantworter = async (pid) => {
+  ONL.warte = null; clearInterval(ONL.wTimer); blattZu();
+  const n = await import("./nachrichten.js"); await n.chatMitText(pid, "");
+  setTimeout(() => { if (AKTIONEN.aufnahmeStart) { AKTIONEN.aufnahmeStart(); toast("📼 Sprich nach dem Ton – dann ➤ senden"); } }, 500);
+};
 AKTIONEN.anklopfenAuflegen = () => { ONL.warte = null; clearInterval(ONL.wTimer); blattZu(); };
 
 // ---------- 👋 Anklopfen (Empfänger): neue Anfrage → Fenster mit drei Knöpfen ----------
@@ -111,14 +125,15 @@ function klopfenPruefen() {
   const neu = liste("klopfen", (k) => k.an === S.ich.id && !k.antwort && Date.now() - new Date(k.zeit) < 2 * 60000 && !ONL.gesehen.has(k.id))[0];
   if (!neu || document.getElementById("onKlopf")) return;
   ONL.gesehen.add(neu.id);
-  blatt(`👋 ${vorname(neu.von)} klopft an`, `<div id="onKlopf"><div class="on-gross klopft">${gesicht(neu.von)}</div><p style="text-align:center"><b>${esc(name(neu.von))}</b> fragt: Hast du gerade kurz Zeit?</p>
+  blatt(`👋 ${vorname(neu.von)} klopft an`, `<div id="onKlopf"><div class="on-gross klopft">${gesicht(neu.von)}</div><p style="text-align:center"><b>${esc(name(neu.von))}</b> fragt: Hast du gerade kurz Zeit${neu.art === "sprechen" ? " zum <b>Telefonieren</b> 📞" : ""}?</p>
     <div class="t-gruende"><button type="button" data-a="klopfAntwort" data-x="${esc(neu.id)}|ja">✅ Ja, jetzt</button><button type="button" data-a="klopfAntwort" data-x="${esc(neu.id)}|spaeter">⏰ Später</button><button type="button" data-a="klopfAntwort" data-x="${esc(neu.id)}|nein">✋ Gerade nicht</button></div></div>`);
   try { navigator.vibrate?.([120, 80, 120]); } catch {}
 }
 AKTIONEN.klopfAntwort = async (x) => {
   const [id, a] = x.split("|"), k = hole("klopfen", id); if (!k) return blattZu();
   await speichere("klopfen", { ...k, antwort: a, antwort_am: new Date().toISOString() }, { still: true }); blattZu();
-  if (a === "ja") (await import("./nachrichten.js")).chatMitText(k.von, "");
+  if (a === "ja" && k.art === "sprechen") toast(`📞 ${vorname(k.von)} ruft dich gleich an`);
+  else if (a === "ja") (await import("./nachrichten.js")).chatMitText(k.von, "");
   else toast(a === "spaeter" ? `⏰ ${vorname(k.von)} weiß Bescheid: später` : `✋ ${vorname(k.von)} weiß Bescheid`);
 };
 

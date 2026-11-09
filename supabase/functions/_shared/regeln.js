@@ -13,10 +13,12 @@ export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "ko
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
+export const TISCH_GAST_EINLADEN = ["leitung", "admin", "vorstand"]; // 🙋 0.51.0 wer Gäste an den Runden Tisch einlädt
+export const GEHEIM_TEXT = "🔒 Geheime Nachricht";
 const WIEDERHOLUNG = ["einmal", "taeglich", "werktags", "woechentlich", "monatlich"];
 const MODERATION = ["admin", "leitung"]; // dürfen sichtbare fremde Zettel abnehmen und sehen, wer gelesen hat
 
@@ -131,6 +133,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "rueckmeldungen": return z.von === ctx.ich || hatRolle(ctx, RM_LEITUNG);
     case "fehlerberichte": return hatRolle(ctx, ["admin"]);
     case "boerse": return boerseDarf(ctx.person) || z.von === ctx.ich; // 🛍️ 0.47.0 nur Erwachsene
+    case "geheimschluessel": return true; // 🔑 0.51.0 öffentliche Schlüssel darf jeder Angemeldete sehen (dafür sind sie da)
+    case "tischgaeste": return z.von === ctx.ich || hatRolle(ctx, TISCH_GAST_EINLADEN); // 🙋 0.51.0
     case "anrufe": return z.von === ctx.ich || (z.an || []).includes(ctx.ich) || (z.art === "tisch_da" && erwachsen(ctx.person) && z.status !== "beendet"); // 📞 0.50.0
     case "unterlagen": return ctx.meine.has(z.person_id) || hatRolle(ctx, UNTERLAGEN_LEITUNG); // 📁 0.48.0 eigene/Kinder + Leitung
     case "versammlungen": return hatRolle(ctx, SITZUNG_PLANER) || (z.status !== "planung" && sitzungFuerMich(z, ctx.person, ctx.rollen)); // 🎬 0.48.0 Planung nur fürs Büro
@@ -156,6 +160,7 @@ function zeileSichtbar(tab, z, ctx) {
 const NUR_NAME = ["id", "vorname", "nachname", "typ", "status", "jahrgang", "rollen", "avatar", "version", "geaendert_am", "geloescht_am"];
 function kuerzen(tab, z, ctx, alleLesen) {
   let out = z;
+  if (tab === "tischgaeste") { const { token_hash: _weg, ...rest } = z; return rest; } // 🙋 0.51.0 der Link-Hash verlässt nie den Server
   if (tab === "personen" && !alleLesen && !ctx.meine.has(z.id) && !ctx.eltern.has(z.id)) {
     out = Object.fromEntries(NUR_NAME.map((k) => [k, z[k]]));
     if (["leitung", "lehrkraft"].includes(z.typ)) { out.mobil = z.mobil; out.email = z.email; } // Ansprechpartner (SOS)
@@ -333,7 +338,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         if (u.art === "verteiler" && !ctx.istVerwalter) return { ok: false, grund: "NUR_LEITUNG" };
         const an = anlagenPruefen(neu.anlagen, ctx); if (an.grund) return { ok: false, grund: an.grund };
         const um = umfragePruefen(neu.umfrage); if (um?.grund) return { ok: false, grund: um.grund };
-        const f = textPruefen(neu.text); if (f && !(f === "TEXT_FEHLT" && (an.liste.length || um))) return { ok: false, grund: f };
+        const f = textPruefen(neu.text); if (f && !(f === "TEXT_FEHLT" && (an.liste.length || um || neu.kontakt || neu.konferenz || neu.geheim))) return { ok: false, grund: f };
         let loescht = null;
         if (neu.loescht_am) { const t = Date.parse(neu.loescht_am); if (!(t > Date.now() + 50 * 60000 && t < Date.now() + 8 * 86400000)) return { ok: false, grund: "SELBSTLOESCHEN_UNGUELTIG" }; loescht = new Date(t).toISOString(); }
         const express = !!neu.express, geplant = neu.geplant_um ? planZeit(neu.geplant_um) : null;
@@ -349,12 +354,29 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
           const p = (ctx.personen || []).find((x) => x.id === q.von); weiter = q.weitergeleitet_von || (p ? `${p.vorname} ${p.nachname}`.trim() : "Bachkreis");
         }
         const erwaehnt = [...new Set((Array.isArray(neu.erwaehnt) ? neu.erwaehnt : []).map(String))].filter((id) => id !== ctx.ich && ctx.personenIds?.has(id)).slice(0, 30);
+        // 👤 0.51.0 Kontakt teilen (KC-CLUB-KONTAKT): nur Erwachsene, die man selbst sieht – Kinder-Kontakte werden nie weitergegeben (Kinderschutz)
+        let kontakt = null;
+        if (neu.kontakt) { const p = (ctx.personen || []).find((x) => x.id === String(neu.kontakt)); if (!p || !ctx.personenIds?.has(p.id) || !erwachsen(p) || !pwAppPerson(p)) return { ok: false, grund: "KONTAKT_NICHT_ERLAUBT" }; kontakt = p.id; }
+        // 👥 0.51.0 Konferenz-Einladung (KC-CLUB-KONFERENZ): Raum-Kennung für den Runden Tisch – nur Erwachsene laden ein
+        let konferenz = null;
+        if (neu.konferenz) { if (!erwachsen(ctx.person)) return { ok: false, grund: "NUR_ERWACHSENE" }; if (!/^k-[\w-]{6,60}$/.test(String(neu.konferenz))) return { ok: false, grund: "RAUM_FEHLT" }; konferenz = String(neu.konferenz); }
+        // 🔒 0.51.0 Geheim schreiben (KC-CLUB-VERSCHLUESSELT): nur im Einzelchat unter Erwachsenen (Kinderschutz: bei Kindern bleibt alles lesbar für die Eltern);
+        // der Server sieht nur den verschlüsselten Inhalt – im Klartext steht nur ein Platzhalter
+        let geheim = null;
+        if (neu.geheim) {
+          if ((ctx.konfig?.module_aus || []).includes("geheim")) return { ok: false, grund: "MODUL_AUS" };
+          const g = neu.geheim, b64 = (x, n) => typeof x === "string" && x.length <= n && /^[A-Za-z0-9+/=]+$/.test(x);
+          const zwei = (u.mitglieder || []).map((id) => (ctx.personen || []).find((x) => x.id === id));
+          if (u.art !== "einzel" || zwei.length !== 2 || !zwei.every((p) => p && erwachsen(p))) return { ok: false, grund: "GEHEIM_NUR_ERWACHSENE_EINZEL" };
+          if (!b64(g.iv, 40) || !b64(g.ct, 40000) || (an.liste.length || um)) return { ok: false, grund: "GEHEIM_UNGUELTIG" };
+          geheim = { v: 1, iv: g.iv, ct: g.ct, fp: typeof g.fp === "string" ? g.fp.slice(0, 64) : null };
+        }
         return { ok: true, zeile: { ...nur(neu, ["id", "unterhaltung_id"]), text: String(neu.text ?? "").trim(), von: ctx.ich, zeit: geplant || jetzt, gelesen_von: [ctx.ich], weitergeleitet_von: weiter, erwaehnt,
           anlagen: an.liste, umfrage: um, umfrage_stimmen: {}, umfrage_frei: {}, loescht_am: geplant ? null : loescht,
           rueckmeldung: ctx.istVerwalter && !!neu.rueckmeldung, rueckmeldungen: {}, reaktionen: {}, wichtig: !!neu.wichtig, express,
           antwort_auf: neu.antwort_auf ? String(neu.antwort_auf).slice(0, 80) : null, kanaele: kanaele(neu.kanaele),
           geplant_um: geplant, wiederholung: geplant ? (WIEDERHOLUNG.includes(neu.wiederholung) ? neu.wiederholung : "einmal") : null,
-          anzahl: Math.max(0, Math.min(5000, Math.round(Number(neu.anzahl) || 0))) } };
+          anzahl: Math.max(0, Math.min(5000, Math.round(Number(neu.anzahl) || 0))), kontakt, konferenz, geheim, ...(geheim ? { text: GEHEIM_TEXT } : {}) } };
       }
       const eigen = alt.von === ctx.ich, geplantOffen = !nachrichtFrei(alt);
       if (!eigen && geplantOffen) return { ok: false, grund: "NICHT_SICHTBAR" };
@@ -376,12 +398,13 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       // Zurückziehen („Diese Nachricht wurde gelöscht“): Absender – oder die Leitung als Moderation
       if (neu.zurueckgezogen_am && !alt.zurueckgezogen_am) {
         if (!eigen && !hatRolle(ctx, MODERATION)) return { ok: false, grund: "NUR_EIGENE" };
-        return { ok: true, zeile: { ...alt, text: "", zurueckgezogen_am: jetzt, reaktionen: {}, rueckmeldungen: {}, anlagen: [], umfrage: null, umfrage_stimmen: {}, umfrage_frei: {} }, zusammenfuehren: true };
+        return { ok: true, zeile: { ...alt, text: "", geheim: null, zurueckgezogen_am: jetzt, reaktionen: {}, rueckmeldungen: {}, anlagen: [], umfrage: null, umfrage_stimmen: {}, umfrage_frei: {} }, zusammenfuehren: true };
       }
       let z = { ...alt };
       // Bearbeiten: nur der Absender, nur innerhalb der Frist
       if (eigen && neu.text !== undefined && String(neu.text).trim() !== alt.text) {
         if (alt.zurueckgezogen_am) return { ok: false, grund: "ZURUECKGEZOGEN" };
+        if (alt.geheim) return { ok: false, grund: "GEHEIM_NICHT_AENDERBAR" }; // 🔒 sonst stünde der Klartext auf dem Server
         if (Date.now() - Date.parse(alt.zeit) > (ctx.bearbeitenMin ?? CHAT.bearbeitenMin) * 60000) return { ok: false, grund: "BEARBEITEN_ZU_SPAET" };
         const f = textPruefen(neu.text); if (f) return { ok: false, grund: f };
         z = { ...z, text: String(neu.text).trim(), bearbeitet_am: jetzt };
@@ -565,6 +588,20 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
     }
+    case "geheimschluessel": {
+      // 🔑 0.51.0 jeder pflegt nur seinen eigenen öffentlichen Schlüssel (Zeile = Person); nur EC P-256, nur öffentliche Teile
+      const pid = alt?.person_id || neu.person_id;
+      if (pid !== ctx.ich || (neu.id && neu.id !== ctx.ich)) return { ok: false, grund: "NUR_EIGENER_SCHLUESSEL" };
+      const k = neu.pub, s64 = (x) => typeof x === "string" && /^[\w-]{20,60}$/.test(x);
+      if (!neu.geloescht_am && !(k && k.kty === "EC" && k.crv === "P-256" && s64(k.x) && s64(k.y) && !k.d)) return { ok: false, grund: "SCHLUESSEL_UNGUELTIG" };
+      return { ok: true, zeile: { ...(alt || {}), id: ctx.ich, person_id: ctx.ich, pub: neu.geloescht_am ? alt?.pub : { kty: "EC", crv: "P-256", x: k.x, y: k.y }, fingerabdruck: String(neu.fingerabdruck || "").slice(0, 64), ...(neu.geloescht_am ? { geloescht_am: jetzt } : {}) } };
+    }
+    case "tischgaeste": {
+      // 🙋 0.51.0 Einladungen legt nur die Server-Aktion „tisch_gast“ an (Link-Hash); hier nur zurückziehen
+      if (!alt) return { ok: false, grund: "NUR_UEBER_LINK" };
+      if (alt.von !== ctx.ich && !hatRolle(ctx, TISCH_GAST_EINLADEN)) return { ok: false, grund: "NUR_EINLADENDE" };
+      return { ok: true, zeile: { ...alt, geloescht_am: jetzt } };
+    }
     case "anrufe": {
       // 📞🪑🛟 0.50.0 Vermittlung von Anrufen: nur die Beteiligten; Kinder nur mit den eigenen Eltern; Runder Tisch und Fernhilfe nur Erwachsene
       const art = alt?.art || neu.art; if (!ANRUF_ARTEN[art]) return { ok: false, grund: "ART_UNGUELTIG" };
@@ -576,6 +613,11 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         if (art === "tisch_da") { if (!erwachsen(ctx.person)) return { ok: false, grund: "NUR_ERWACHSENE" }; if (!/^[\w-]{1,80}$/.test(String(neu.raum_id || ""))) return { ok: false, grund: "RAUM_FEHLT" };
           return { ok: true, zeile: { ...nur(neu, ["id"]), art, von: ctx.ich, an: [], raum_id: neu.raum_id, status: "angenommen", beginn: jetzt } }; }
         if (an.length !== 1) return { ok: false, grund: "GENAU_EINE_PERSON" };
+        // 🙋 0.51.0 Verbindung zu einem Gast am selben Tisch (Gast-Kennung „gast-…“, gültige Einladung prüft api.js vorab)
+        if (art === "tisch" && /^gast-/.test(an[0])) {
+          if (!erwachsen(ctx.person) || !ctx.tischGaeste?.get(an[0]) || ctx.tischGaeste.get(an[0]) !== neu.raum_id) return { ok: false, grund: "ANRUF_NICHT_ERLAUBT" };
+          return { ok: true, zeile: { ...nur(neu, ["id"]), art, von: ctx.ich, an, raum_id: neu.raum_id, status: "klingelt", angebot: sdp(neu.angebot), antwort: null, beginn: jetzt, ende: null } };
+        }
         const p = (ctx.personen || []).find((x) => x.id === an[0]); if (!p) return { ok: false, grund: "UNBEKANNT" };
         if (art === "tisch" ? !(erwachsen(ctx.person) && erwachsen(p)) : !anrufErlaubt(ctx.person, p, { art, verwandt: ctx.kinder.has(p.id) || ctx.eltern.has(p.id) })) return { ok: false, grund: "ANRUF_NICHT_ERLAUBT" };
         if (art === "tisch" && !/^[\w-]{1,80}$/.test(String(neu.raum_id || ""))) return { ok: false, grund: "RAUM_FEHLT" };

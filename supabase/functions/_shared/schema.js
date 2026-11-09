@@ -38,7 +38,7 @@ export const ADMIN_KONFIG = ["wartung", "wartung_text", "module_aus", "express_m
   "freigabe_grenze_eur", "km_satz", "grenze_db_mb", "grenze_dateien_mb", "grenze_volumen_gb", "aenderungen_monate", "loeschfrist_monate"];
 // 🚦 Module, die der Admin für alle abschalten kann (wie KC „Freigaben“): abgeschaltet sehen sie nur noch Admin/Entwickler (zum Prüfen)
 export const MODULE = { fotoalbum: "📷 Fotoalbum", advent: "🎄 Adventskalender", vorschlaege: "💡 Vorschläge & Abstimmungen", erstattung: "💶 Erstattung",
-  anrufe: "📞 Anrufe & Video", tisch: "🪑 Runder Tisch", fernhilfe: "🛟 Fernhilfe", protokolle: "🗒️ Protokolle", quiz: "🧠 Quiz", buehne: "🎭 Bühne", uebebuehne: "🎤 Übe-Bühne", chronik: "📜 Chronik", mitfahrboerse: "🚗 Mitfahrbörse", austausch: "🏠 Austausch & Gastfamilien" };
+  anrufe: "📞 Anrufe & Video", tisch: "🪑 Runder Tisch", fernhilfe: "🛟 Fernhilfe", geheim: "🔒 Geheim schreiben", protokolle: "🗒️ Protokolle", quiz: "🧠 Quiz", buehne: "🎭 Bühne", uebebuehne: "🎤 Übe-Bühne", chronik: "📜 Chronik", mitfahrboerse: "🚗 Mitfahrbörse", austausch: "🏠 Austausch & Gastfamilien" };
 export const VERWALTER = ["admin", "leitung", "lehrkraft", "vorstand", "instrumentenwart", "notenwart"];
 const L = ["admin", "leitung"];
 const LL = ["admin", "leitung", "lehrkraft"];
@@ -944,6 +944,7 @@ export const TABELLEN = {
       { k: "zeit", t: "Zeit", typ: "zeit", pflicht: true },
       { k: "antwort", t: "Antwort", typ: "wahl", werte: { ja: "ja, jetzt", spaeter: "später", nein: "gerade nicht" } },
       { k: "antwort_am", t: "beantwortet", typ: "zeit" },
+      { k: "art", t: "Wie?", typ: "wahl", werte: { schreiben: "✍️ schreiben", sprechen: "📞 sprechen" } }, // 0.51.0 KC-CLUB-ANKLOPFEN-ART
     ],
     liste: ["zeit", "von", "an", "antwort"], aufbewahrung_tage: 7,
   },
@@ -981,6 +982,9 @@ export const TABELLEN = {
       { k: "anlagen", t: "📎 Anhänge", typ: "json" },
       { k: "umfrage", t: "📊 Umfrage", typ: "json" },
       { k: "loescht_am", t: "⏳ löscht sich am", typ: "zeit" },
+      { k: "kontakt", t: "👤 geteilter Kontakt", typ: "ref", ref: "personen" }, // 0.51.0 KC-CLUB-KONTAKT
+      { k: "konferenz", t: "👥 Konferenz (Raum)", typ: "text" }, // 0.51.0 KC-CLUB-KONFERENZ
+      { k: "geheim", t: "🔒 verschlüsselt (technisch)", typ: "json" }, // 0.51.0 KC-CLUB-VERSCHLUESSELT – Text nur auf den Geräten lesbar
     ],
     liste: ["unterhaltung_id", "von", "text", "zeit"],
     intern: [{ k: "gelesen_von", typ: "refs", ref: "personen" }, { k: "rueckmeldungen", typ: "json" }, { k: "reaktionen", typ: "json" }, { k: "anzahl", typ: "zahl" },
@@ -1113,8 +1117,31 @@ export const TABELLEN = {
       { k: "antwort", t: "Verbindungsantwort (technisch)", typ: "json" },
       { k: "beginn", t: "Beginn", typ: "zeit" },
       { k: "ende", t: "Ende", typ: "zeit" },
+      { k: "gast", t: "🙋 Gast (statt Person)", typ: "text" }, // 0.51.0 KC-CLUB-RUNDER-TISCH-GAST
     ],
     liste: ["art", "von", "status"],
+  },
+  geheimschluessel: {
+    // 🔑 0.51.0 Geheim schreiben (wie KC-CLUB-VERSCHLUESSELT): nur der ÖFFENTLICHE Schlüssel je Person – der private bleibt auf dem Gerät
+    titel: "Öffentliche Schlüssel (Geheim schreiben)", sym: "🔑", gruppe: "Kommunikation", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "pub", t: "Öffentlicher Schlüssel (technisch)", typ: "json" },
+      { k: "fingerabdruck", t: "Fingerabdruck", typ: "text" },
+    ],
+    liste: ["person_id", "fingerabdruck"],
+  },
+  tischgaeste: {
+    // 🙋 0.51.0 Gäste am Runden Tisch mit eigenem Link (wie KC-CLUB-RUNDER-TISCH-GAST) – der Link selbst wird nie gespeichert, nur sein Hash
+    titel: "Gäste am Runden Tisch", sym: "🙋", gruppe: "Kommunikation", lesen: [], schreiben: [],
+    felder: [
+      { k: "raum_id", t: "Runder Tisch", typ: "text", pflicht: true },
+      { k: "name", t: "Name des Gastes", typ: "text", pflicht: true },
+      { k: "gueltig_bis", t: "gültig bis", typ: "zeit" },
+      { k: "von", t: "eingeladen von", typ: "ref", ref: "personen" },
+    ],
+    intern: [{ k: "token_hash", typ: "text" }],
+    liste: ["name", "raum_id", "gueltig_bis"],
   },
   unterlagen: {
     titel: "Unterlagen (Familien-Ordner)", sym: "📁", gruppe: "Genehmigungen", lesen: [], schreiben: [],

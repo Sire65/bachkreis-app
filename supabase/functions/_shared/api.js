@@ -7,7 +7,7 @@
 import { rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
-import { kontext, filtern, schreibPruefung } from "./regeln.js";
+import { kontext, filtern, schreibPruefung, TISCH_GAST_EINLADEN } from "./regeln.js";
 import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
 import { termineFuer, ics, eigeneVorkommen, einwilligung, nutzungAuswerten } from "./logik.js";
 import * as kom from "./kom/kern.js";
@@ -73,7 +73,78 @@ async function tischLage(db, s, body) {
     and (art = 'tisch_da' or von = $2 or $2 = any(an))`, [raum, s.person.id])).map((r) => r.z);
   const pids = [...new Set(l.filter((x) => x.art === "tisch_da" && x.status !== "beendet").map((x) => x.von))];
   const namen = pids.length ? Object.fromEntries((await db.q(`select id, vorname, nachname from bk_personen where id = any($1::text[])`, [pids])).map((p) => [p.id, `${p.vorname || ""} ${p.nachname || ""}`.trim()])) : {};
+  Object.assign(namen, await gastNamen(db, l));
   return { status: 200, json: { ok: true, zeilen: l, namen } };
+}
+// ---------- 🙋 0.51.0 Gäste am Runden Tisch (wie KC-CLUB-RUNDER-TISCH-GAST) ----------
+// Leitung/Admin/Vorstand erzeugt einen Link (gilt bis zu 3 Tage). Der Gast braucht kein Konto: Er kommt nur an DIESEN Tisch, sieht nur
+// die Anwesenden mit Namen und kann nur Verbindungen an diesem Tisch aufbauen. Gespeichert wird nur der Hash des Links.
+async function tischGaesteGueltig(db) {
+  return new Map((await db.q(`select id, raum_id from bk_tischgaeste where geloescht_am is null and gueltig_bis > now()`)).map((g) => ["gast-" + g.id, g.raum_id]));
+}
+async function gastNamen(db, zeilen) {
+  const ids = [...new Set(zeilen.filter((x) => x.art === "tisch_da" && x.gast && x.status !== "beendet").map((x) => String(x.gast).replace(/^gast-/, "")))];
+  return ids.length ? Object.fromEntries((await db.q(`select id, name from bk_tischgaeste where id = any($1::text[])`, [ids])).map((g) => ["gast-" + g.id, `🙋 ${g.name} (Gast)`])) : {};
+}
+async function tischGastAnlegen(db, s, body) {
+  if (!rollenMit(s.person.rollen || []).some((r) => TISCH_GAST_EINLADEN.includes(r))) return fehler(403, "NUR_LEITUNG");
+  const raum = String(body.raum || ""), name = String(body.name || "").trim().slice(0, 60), stunden = Math.max(1, Math.min(72, Math.round(Number(body.stunden) || 24)));
+  if (!/^[\w-]{1,80}$/.test(raum)) return fehler(400, "RAUM_FEHLT");
+  if (!name) return fehler(400, "NAME_FEHLT");
+  const id = (await zufallsToken()).slice(0, 12).replace(/[^\w]/g, "x"), geheim = await zufallsToken();
+  const r = (await db.q(`insert into bk_tischgaeste (id, raum_id, name, gueltig_bis, von, token_hash, version, erstellt_am, geaendert_am, geaendert_von)
+    values ($1, $2, $3, now() + ($4 || ' hours')::interval, $5, $6, 1, now(), now(), $7) returning id, raum_id, name, gueltig_bis, von, version, geaendert_am`, [id, raum, name, String(stunden), s.person.id, await sha256("gast:" + geheim), s.person.id]))[0];
+  return { status: 200, json: { ok: true, gast: r, token: `${id}.${geheim}` } };
+}
+async function gastPruefen(db, token) {
+  const [id, geheim] = String(token || "").split(".");
+  if (!id || !geheim) return null;
+  return (await db.q(`select id, raum_id, name from bk_tischgaeste where id = $1 and token_hash = $2 and geloescht_am is null and gueltig_bis > now()`, [id, await sha256("gast:" + geheim)]))[0] || null;
+}
+const sdpSauber = (x) => (x && typeof x === "object" && ["offer", "answer"].includes(x.type) && typeof x.sdp === "string" && x.sdp.length < 30000 ? { type: x.type, sdp: x.sdp } : null);
+async function gastTisch(db, body) {
+  const g = await gastPruefen(db, body.token);
+  if (!g) return fehler(403, "LINK_UNGUELTIG");
+  const ich = "gast-" + g.id, raum = g.raum_id, unter = String(body.unter || "lage");
+  const k = Object.fromEntries((await db.q(`select schluessel, wert from bk_konfig where schluessel in ('module_aus', 'rtc_server')`)).map((r) => [r.schluessel, r.wert]));
+  if ((Array.isArray(k.module_aus) ? k.module_aus : []).includes("tisch")) return fehler(403, "MODUL_AUS");
+  if (unter === "lage") {
+    const l = (await db.q(`select to_jsonb(a) as z from bk_anrufe a where raum_id = $1 and beginn > now() - interval '6 hours' and geloescht_am is null
+      and (art = 'tisch_da' or gast = $2 or $2 = any(an))`, [raum, ich])).map((r) => r.z).map((z) => (z.art === "tisch_da" && z.gast !== ich ? { ...z, angebot: null, antwort: null } : z));
+    const pids = [...new Set(l.filter((x) => x.art === "tisch_da" && x.von && x.status !== "beendet").map((x) => x.von))];
+    const namen = pids.length ? Object.fromEntries((await db.q(`select id, vorname, nachname from bk_personen where id = any($1::text[])`, [pids])).map((p) => [p.id, `${p.vorname || ""} ${p.nachname || ""}`.trim()])) : {};
+    Object.assign(namen, await gastNamen(db, l));
+    return { status: 200, json: { ok: true, ich, raum, name: g.name, zeilen: l, namen, ice: Array.isArray(k.rtc_server) ? k.rtc_server : null } };
+  }
+  if (unter !== "speichern") return fehler(400, "UNBEKANNT");
+  const z = body.zeile || {}, id = String(z.id || "").slice(0, 80);
+  if (!/^[\w-]{6,80}$/.test(id)) return fehler(400, "ID_FEHLT");
+  const alt = (await db.q(`select to_jsonb(a) as z from bk_anrufe a where id = $1`, [id]))[0]?.z;
+  let neu;
+  if (!alt) {
+    if (z.art === "tisch_da") neu = { id, art: "tisch_da", von: null, gast: ich, an: [], raum_id: raum, status: "angenommen", angebot: null, antwort: null };
+    else if (z.art === "tisch") {
+      const an = Array.isArray(z.an) ? z.an.map(String) : []; if (an.length !== 1 || an[0] === ich) return fehler(400, "GENAU_EINE_PERSON");
+      const da = (await db.q(`select 1 from bk_anrufe where raum_id = $1 and art = 'tisch_da' and status <> 'beendet' and (von = $2 or gast = $2) and beginn > now() - interval '6 hours' limit 1`, [raum, an[0]]))[0];
+      if (!da) return fehler(403, "NICHT_AM_TISCH");
+      neu = { id, art: "tisch", von: null, gast: ich, an, raum_id: raum, status: "klingelt", angebot: sdpSauber(z.angebot), antwort: null };
+    } else return fehler(400, "ART_UNGUELTIG");
+    const r = (await db.q(`insert into bk_anrufe (id, art, von, gast, an, raum_id, status, angebot, antwort, beginn, version, erstellt_am, geaendert_am, geaendert_von)
+      values ($1, $2, null, $3, $4::text[], $5, $6, $7::jsonb, null, now(), 1, now(), now(), $8) returning to_jsonb(bk_anrufe) as z`, [neu.id, neu.art, ich, neu.an, raum, neu.status, JSON.stringify(neu.angebot), `🙋 ${g.name}`]))[0].z;
+    return { status: 200, json: { ok: true, zeile: r } };
+  }
+  if (alt.raum_id !== raum) return fehler(403, "NUR_BETEILIGTE");
+  if (alt.gast === ich) {
+    const st = ["beendet", "verpasst"].includes(z.status) ? z.status : alt.status, ende = st !== alt.status || z.lebt ? "now()" : "ende";
+    const r = (await db.q(`update bk_anrufe set status = $2, ende = ${ende} where id = $1 returning to_jsonb(bk_anrufe) as z`, [id, st]))[0].z;
+    return { status: 200, json: { ok: true, zeile: r } };
+  }
+  if ((alt.an || []).includes(ich)) {
+    const st = ["angenommen", "abgelehnt", "beendet"].includes(z.status) ? z.status : alt.status, antwort = sdpSauber(z.antwort) || alt.antwort;
+    const r = (await db.q(`update bk_anrufe set status = $2, antwort = $3::jsonb where id = $1 returning to_jsonb(bk_anrufe) as z`, [id, st, JSON.stringify(antwort)]))[0].z;
+    return { status: 200, json: { ok: true, zeile: r } };
+  }
+  return fehler(403, "NUR_BETEILIGTE");
 }
 // 📈 0.49.0 „So nutzen wir die App“: für alle Angemeldeten, nur Summen (nutzungAuswerten in logik.js) – nie Personen, nie Inhalte
 async function nutzungLage(db, body) {
@@ -198,6 +269,8 @@ async function speichern(db, s, body) {
   const gespeichert = [], konflikte = [];
   // ✓✓-Status braucht die Nachricht (Absender, Unterhaltung, Express) – einmal für alle Zeilen holen
   // 💶 0.42.0 Erstattung: Beleg muss eine eigene Datei sein; km-Satz aus der Konfiguration
+  // 🙋 0.51.0 Verbindungen zu Gästen am Runden Tisch: gültige Einladungen (Gast-Kennung → Raum)
+  if (tab === "anrufe" && zeilen.some((z) => (z?.an || []).some?.((x) => /^gast-/.test(String(x))))) ctx.tischGaeste = await tischGaesteGueltig(db);
   if (tab === "erstattungen") {
     const ids = [...new Set(zeilen.map((z) => String(z?.beleg || "").replace(/^datei:/, "")).filter(Boolean))];
     ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
@@ -450,8 +523,9 @@ async function anklopfen(db, s, body, dienste) {
   const stunde = (await db.q(`select count(*)::int as n from bk_klopfen where von = $1 and zeit > now() - interval '1 hour'`, [s.person.id]))[0].n;
   if (stunde >= 20) return fehler(429, "ZU_OFT");
   const id = crypto.randomUUID();
-  await db.q(`insert into bk_klopfen (id, von, an, zeit, geaendert_von) values ($1, $2, $3, now(), $4)`, [id, s.person.id, an, name(s.person)]);
-  const r = await kom.annehmen(db, { ereignis: "anklopfen", an: [an], betreff: `👋 ${s.person.vorname || name(s.person)} klopft an`, text: "Hast du gerade kurz Zeit? Antippen und antworten.", kanaele: ["push"], korrelation: `klopfen:${id}`, ausloeser: name(s.person) });
+  const art = body.art === "sprechen" ? "sprechen" : "schreiben"; // 📞 0.51.0 „schreiben oder sprechen?“ (KC-CLUB-ANKLOPFEN-ART)
+  await db.q(`insert into bk_klopfen (id, von, an, zeit, geaendert_von, art) values ($1, $2, $3, now(), $4, $5)`, [id, s.person.id, an, name(s.person), art]);
+  const r = await kom.annehmen(db, { ereignis: "anklopfen", an: [an], betreff: `👋 ${s.person.vorname || name(s.person)} klopft an`, text: art === "sprechen" ? "Hast du gerade kurz Zeit zum Telefonieren? Antippen und antworten." : "Hast du gerade kurz Zeit? Antippen und antworten.", kanaele: ["push"], korrelation: `klopfen:${id}`, ausloeser: name(s.person) });
   if (r.ok && dienste.adapter) dienste.hintergrund(kom.zustellen(db, dienste.adapter, dienste.umgebung, { korrelation: r.korrelation, limit: 5 }).catch((e) => console.error("bk-kom klopfen", e)));
   return { status: 200, json: { ok: true, id } };
 }
@@ -488,6 +562,7 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     // 💤 0.36.0 Wach-Aufruf (GitHub, einmal pro Woche): eine Mini-Abfrage, damit das kostenlose Supabase-Projekt in den Ferien nicht einschläft.
     // Ohne Anmeldung, gibt nichts preis außer „ok“.
     if (aktion === "wach") { await db.q(`select 1`); return { status: 200, json: { ok: true } }; }
+    if (aktion === "gast_tisch") return await gastTisch(db, body); // 🙋 0.51.0 Gast am Runden Tisch – ohne Konto, nur mit Link
     const s = await sitzungPruefen(db, meta.token);
     if (!s) return fehler(401, "NICHT_ANGEMELDET");
     if (aktion === "laden") return await laden(db, s, body);
@@ -533,6 +608,7 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     if (aktion === "nutzung_lage") return await nutzungLage(db, body);
     if (aktion === "anruf_lage") return await anrufLage(db, s, body);
     if (aktion === "tisch_lage") return await tischLage(db, s, body);
+    if (aktion === "tisch_gast") return await tischGastAnlegen(db, s, body);
     if (aktion === "anklopfen") return await anklopfen(db, s, body, dienste);
     if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
       const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);

@@ -142,6 +142,7 @@ create table if not exists bk_klopfen (
   zeit timestamptz not null,
   antwort text check (antwort is null or antwort in ('ja', 'spaeter', 'nein')),
   antwort_am timestamptz,
+  art text check (art is null or art in ('schreiben', 'sprechen')),
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -162,6 +163,9 @@ alter table bk_klopfen add column if not exists antwort text;
 alter table bk_klopfen drop constraint if exists bk_klopfen_antwort_check;
 alter table bk_klopfen add constraint bk_klopfen_antwort_check check (antwort is null or antwort in ('ja', 'spaeter', 'nein'));
 alter table bk_klopfen add column if not exists antwort_am timestamptz;
+alter table bk_klopfen add column if not exists art text;
+alter table bk_klopfen drop constraint if exists bk_klopfen_art_check;
+alter table bk_klopfen add constraint bk_klopfen_art_check check (art is null or art in ('schreiben', 'sprechen'));
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_klopfen_von_fk') then alter table bk_klopfen add constraint bk_klopfen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_klopfen_an_fk') then alter table bk_klopfen add constraint bk_klopfen_an_fk foreign key (an) references bk_personen(id) on delete restrict; end if; end $$;
 

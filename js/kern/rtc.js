@@ -5,8 +5,12 @@
 // (zwei Tabs im selben Browser können sich wirklich anrufen).
 import { konfig, istEchtbetrieb, serverAktion, serverAktionStill, liste, neueId } from "./daten.js";
 
+// 👋 0.51.0 Brücke fürs Anklopfen „📞 Sprechen“: anruf.js trägt ein, online.js ruft (ohne Kreis-Import)
+export const ANRUF_BRUECKE = { darf: null, rufen: null };
 export const STANDARD_ICE = [{ urls: "stun:stun.l.google.com:19302" }];
-export const iceServer = () => (Array.isArray(konfig().rtc_server) && konfig().rtc_server.length ? konfig().rtc_server : STANDARD_ICE);
+let ICE_VORGABE = null; // 🙋 0.51.0 Gast-Seite: Server-Liste kommt vom Server (ohne App-Daten)
+export const iceSetzen = (l) => { ICE_VORGABE = Array.isArray(l) && l.length ? l : null; };
+export const iceServer = () => { if (ICE_VORGABE) return ICE_VORGABE; try { const k = konfig().rtc_server; return Array.isArray(k) && k.length ? k : STANDARD_ICE; } catch { return STANDARD_ICE; } };
 export const rtcMoeglich = () => typeof RTCPeerConnection !== "undefined";
 export function neueVerbindung() { return new RTCPeerConnection({ iceServers: iceServer() }); }
 // alle Kandidaten sammeln (höchstens 3 s), dann die fertige Beschreibung zurückgeben

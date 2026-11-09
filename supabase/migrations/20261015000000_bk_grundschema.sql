@@ -927,6 +927,7 @@ create table if not exists bk_klopfen (
   zeit timestamptz not null,
   antwort text check (antwort is null or antwort in ('ja', 'spaeter', 'nein')),
   antwort_am timestamptz,
+  art text check (art is null or art in ('schreiben', 'sprechen')),
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -980,6 +981,9 @@ create table if not exists bk_nachrichten (
   anlagen jsonb,
   umfrage jsonb,
   loescht_am timestamptz,
+  kontakt text,
+  konferenz text,
+  geheim jsonb,
   gelesen_von text[],
   rueckmeldungen jsonb,
   reaktionen jsonb,
@@ -1190,6 +1194,7 @@ create table if not exists bk_anrufe (
   antwort jsonb,
   beginn timestamptz,
   ende timestamptz,
+  gast text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -1202,6 +1207,46 @@ revoke all on bk_anrufe from public, anon, authenticated;
 grant select, insert, update, delete on bk_anrufe to service_role;
 drop trigger if exists bk_anrufe_stempel on bk_anrufe;
 create trigger bk_anrufe_stempel before update on bk_anrufe for each row execute function bk_abgleich_stempel();
+
+-- Öffentliche Schlüssel (Geheim schreiben)
+create table if not exists bk_geheimschluessel (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  pub jsonb,
+  fingerabdruck text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_geheimschluessel_geaendert on bk_geheimschluessel (geaendert_am);
+alter table bk_geheimschluessel enable row level security;
+revoke all on bk_geheimschluessel from public, anon, authenticated;
+grant select, insert, update, delete on bk_geheimschluessel to service_role;
+drop trigger if exists bk_geheimschluessel_stempel on bk_geheimschluessel;
+create trigger bk_geheimschluessel_stempel before update on bk_geheimschluessel for each row execute function bk_abgleich_stempel();
+
+-- Gäste am Runden Tisch
+create table if not exists bk_tischgaeste (
+  id text primary key default gen_random_uuid()::text,
+  raum_id text not null,
+  name text not null,
+  gueltig_bis timestamptz,
+  von text,
+  token_hash text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_tischgaeste_geaendert on bk_tischgaeste (geaendert_am);
+alter table bk_tischgaeste enable row level security;
+revoke all on bk_tischgaeste from public, anon, authenticated;
+grant select, insert, update, delete on bk_tischgaeste to service_role;
+drop trigger if exists bk_tischgaeste_stempel on bk_tischgaeste;
+create trigger bk_tischgaeste_stempel before update on bk_tischgaeste for each row execute function bk_abgleich_stempel();
 
 -- Unterlagen (Familien-Ordner)
 create table if not exists bk_unterlagen (
@@ -2129,6 +2174,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_klopf
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_klopfen_an_fk') then alter table bk_klopfen add constraint bk_klopfen_an_fk foreign key (an) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_unterhaltung_id_fk') then alter table bk_nachrichten add constraint bk_nachrichten_unterhaltung_id_fk foreign key (unterhaltung_id) references bk_unterhaltungen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_von_fk') then alter table bk_nachrichten add constraint bk_nachrichten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachrichten_kontakt_fk') then alter table bk_nachrichten add constraint bk_nachrichten_kontakt_fk foreign key (kontakt) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_nachricht_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_nachricht_id_fk foreign key (nachricht_id) references bk_nachrichten(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_person_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_nachricht_status_autor_id_fk') then alter table bk_nachricht_status add constraint bk_nachricht_status_autor_id_fk foreign key (autor_id) references bk_personen(id) on delete restrict; end if; end $$;
@@ -2142,6 +2188,8 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ersta
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_termin_id_fk') then alter table bk_erstattungen add constraint bk_erstattungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_bearbeitet_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_bearbeitet_von_fk foreign key (bearbeitet_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_anrufe_von_fk') then alter table bk_anrufe add constraint bk_anrufe_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_geheimschluessel_person_id_fk') then alter table bk_geheimschluessel add constraint bk_geheimschluessel_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_tischgaeste_von_fk') then alter table bk_tischgaeste add constraint bk_tischgaeste_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_unterlagen_person_id_fk') then alter table bk_unterlagen add constraint bk_unterlagen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_unterlagen_von_fk') then alter table bk_unterlagen add constraint bk_unterlagen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versammlungen_leiter_fk') then alter table bk_versammlungen add constraint bk_versammlungen_leiter_fk foreign key (leiter) references bk_personen(id) on delete restrict; end if; end $$;

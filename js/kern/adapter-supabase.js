@@ -133,6 +133,8 @@ export function erzeugeSupabaseAdapter({ url = "", quelle = "app" } = {}) {
         hinweis: online ? `Server verbunden · Stand ${stand}` : `OFFLINE – Daten von ${stand}${ausgang.length ? ` · ${ausgang.length} Änderung(en) warten` : ""}` };
     },
     alle(tab) { return daten[tab] || (daten[tab] = []); },
+    // 📨 0.51.0 Sende-Schlange (wie KC-CLUB-SENDE-SCHLANGE): welche Zeilen warten noch auf den Server (z. B. ohne Netz geschrieben)
+    wartend(tab) { return new Set(ausgang.filter((e) => !tab || e.tab === tab).map((e) => e.zeile?.id)); },
     async schreiben(tab, zeilen) { daten[tab] = zeilen; if (db) await idbSchreiben(db, tab, zeilen); },
     // Von daten.js für jede geänderte Zeile aufgerufen (mit basis_version = Stand vor der Änderung)
     async vormerken(tab, zeilen) {

@@ -7,7 +7,7 @@ import { hole, liste, abonnieren, istEchtbetrieb, konfig } from "../kern/daten.j
 import { anrufErlaubt, ANRUF_STATUS, ANRUF_ARTEN } from "../kern/schema.js";
 import { kinderVon, elternVon } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
-import { rtcMoeglich, neueVerbindung, angebotMachen, antwortMachen, antwortSetzen, vermittlung, ANRUF_FEHLER, datenSenden, datenEmpfang } from "../kern/rtc.js";
+import { ANRUF_BRUECKE as ANRUF, rtcMoeglich, neueVerbindung, angebotMachen, antwortMachen, antwortSetzen, vermittlung, ANRUF_FEHLER, datenSenden, datenEmpfang } from "../kern/rtc.js";
 import { gesicht } from "./gesichter.js";
 
 export const modulAbgeschaltet = (id) => (konfig().module_aus || []).includes(id) && !hatRolle("admin");
@@ -145,3 +145,4 @@ if (typeof document !== "undefined") {
   window.addEventListener("pagehide", () => { if (G.pc) ende(true); });
 }
 export const anrufZeigen = () => zeige("anrufe");
+ANRUF.darf = darfAnrufen; ANRUF.rufen = anrufen; // 👋 Anklopfen „📞 Sprechen“ (0.51.0)

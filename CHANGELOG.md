@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.51.0 DEV – 09.11.2026
+Paket A aus dem Abgleich mit der KC Club App – Nachrichten & Anrufe:
+- 🔒 **Geheim schreiben** (wie KC-CLUB-VERSCHLUESSELT): im Einzelchat unter Erwachsenen das 🔒 in der Schreibleiste – Ende-zu-Ende verschlüsselt (WebCrypto: ECDH P-256 + AES-GCM), der Server speichert nur Zeichensalat und den Platzhalter „🔒 Geheime Nachricht“; geheime Nachrichten lassen sich nicht ändern. 🔑 **Schlüsselbund** (Technik): eigenen Schlüssel mit Passwort aufs zweite Gerät mitnehmen. Kinderschutz: bei Minderjährigen nie (dort bleibt alles für die Eltern lesbar); Admin kann „Geheim schreiben“ abschalten. Neue Tabelle `geheimschluessel` (nur öffentliche Schlüssel)
+- 👤 **Kontakt teilen** (KC-CLUB-KONTAKT): 📎 → „Kontakt teilen“ – Karte mit 💬 Schreiben und 📞/🎥 Anrufen; Kontakte von Kindern werden nie geteilt (Server prüft)
+- 👥 **Konferenz** (KC-CLUB-KONFERENZ): im Gruppen-Chat, wenn alle erwachsen sind, oben 👥 – nur Ton, bis 4 Personen; im Chat steht „📞 Dazukommen“
+- 👋 **Anklopfen: schreiben oder sprechen?** (KC-CLUB-ANKLOPFEN-ART) – bei „Ja“ ruft man gleich an; 📼 **Anrufbeantworter** (KC-CLUB-ANRUFBEANTWORTER): hat jemand keine Zeit oder reagiert nicht, geht direkt die Sprachnachricht auf
+- 🪑 **Runder Tisch**: 🟢 sehen, wer schon da sitzt (KC-CLUB-GESPRAECHE); 💼 **Tasche** (KC-CLUB-TISCH-TASCHE) – vorher PDF, Foto oder Musik packen und am Tisch allen zeigen (direkt von Gerät zu Gerät); 🙋 **Gäste mit eigenem Link** (KC-CLUB-RUNDER-TISCH-GAST) – Leitung/Admin/Vorstand lädt ein (3 Std. bis 3 Tage, zurückziehbar), Gast braucht kein Konto, kommt nur an diesen Tisch (neue Seite `gast.html`, Tabelle `tischgaeste`, gespeichert wird nur der Hash des Links). Verbinden am Tisch jetzt als gemeinsamer Kern `js/kern/tischnetz.js` für App und Gast-Seite
+- 📶 **Sende-Schlange sichtbar** (KC-CLUB-SENDE-SCHLANGE): ohne Netz geschriebene Nachrichten zeigen 🕓 und im Chat „wartet aufs Netz – geht von selbst raus“ mit 🔄 Jetzt versuchen; 🐌 **Laden dauert zu lange** (KC-CLUB-LADE-SICHERHEIT): nach 12 s ehrlicher Hinweis und „✕ Nicht mehr warten“
+
 ## 0.50.1 DEV – 09.11.2026
 - ✥ Startseite: Nach „✅ Fertig“ beim Anordnen fehlte der Knopf „✥ Anordnen“, bis die Seite neu gezeichnet wurde – jetzt ist er immer da (nur ein-/ausgeblendet)
 - 🧪 Rundgang: Einstiegsfrage „Wie viel Hilfe?“ vorab beantwortet und auf jedes Neuzeichnen gewartet (in der CI schlug der Rundgang sonst fehl, 0.50.0 wurde darum nicht veröffentlicht)

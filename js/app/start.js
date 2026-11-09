@@ -28,6 +28,9 @@ import { pruefenFuerMich } from "./pruefung.js";
 import { verpassteAnrufe, anrufAn } from "./anruf.js";
 import { fernhilfeKachelDa } from "./fernhilfe.js";
 import { tischDa } from "./tisch.js";
+import { geheimTechnik } from "../kern/geheim.js";
+import { erwachsen } from "../kern/schema.js";
+const erwachsenIch = () => erwachsen(S.ich);
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
@@ -151,6 +154,7 @@ export const KACHELN = {
     { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },
     { id: "anrufe", sym: "📞", t: "Anrufe", u: "📞 Anruf · 🎥 Video – im Einzelchat", v: "anrufe", nur: () => anrufAn(), zahl: () => verpassteAnrufe() },
     { id: "tisch", sym: "🪑", t: "Runder Tisch", u: "Online-Treffen mit Bild und Ton", v: "tisch", nur: () => tischDa() },
+    { id: "schluesselbund", sym: "🔑", t: "Schlüsselbund", u: "🔒 Geheime Nachrichten auf jedem Gerät lesen", v: "schluesselbund", nur: () => geheimTechnik() && erwachsenIch() },
     { id: "fernhilfe", sym: "🛟", t: "Fernhilfe", u: "Jemand schaut mit auf deinen Bildschirm", v: "fernhilfe", nur: () => fernhilfeKachelDa() },
     { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung" },
     { id: "ueberblick", sym: "🗺️", t: "Alles auf einen Blick", u: "Jeder Bereich der App", v: "ueberblick" },

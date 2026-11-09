@@ -136,6 +136,13 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F126 | 📞🎥 Anrufe und Videoanrufe aus dem Einzelchat (Kinderschutz serverseitig) | ✅ | tests/anrufe.test.mjs |
 | BK-F127 | 🪑 Runder Tisch: Online-Treffen bis 8 Erwachsene, Hand heben, Bildschirm teilen | ✅ | tests/anrufe.test.mjs |
 | BK-F128 | 🛟 Fernhilfe: Bildschirm zeigen, Zeigen/Bedienen nur mit Erlaubnis, Chats nie | ✅ | tests/anrufe.test.mjs |
+| BK-F129 | 📶 Sende-Schlange sichtbar (🕓, „wartet aufs Netz“), 🐌 Laden dauert – nicht mehr warten | ✅ | tests/paket-a.test.mjs |
+| BK-F130 | 👤 Kontakt teilen im Chat (nur Erwachsene) | ✅ | tests/paket-a.test.mjs |
+| BK-F131 | 👋 Anklopfen schreiben/sprechen, 📼 Anrufbeantworter | ✅ | tests/paket-a.test.mjs |
+| BK-F132 | 👥 Konferenz aus dem Chat (nur Ton, bis 4), 🟢 wer sitzt am Tisch | ✅ | tests/paket-a.test.mjs |
+| BK-F133 | 🙋 Gäste am Runden Tisch mit eigenem Link (gast.html) | ✅ | tests/paket-a.test.mjs |
+| BK-F134 | 💼 Tasche am Runden Tisch (PDF, Foto, Musik zeigen) | ✅ | tests/paket-a.test.mjs |
+| BK-F135 | 🔒 Geheim schreiben (Ende-zu-Ende, Einzelchat unter Erwachsenen), 🔑 Schlüsselbund | ✅ | tests/paket-a.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

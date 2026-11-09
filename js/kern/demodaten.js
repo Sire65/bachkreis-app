@@ -520,6 +520,9 @@ export function erzeugeDemodaten(heute = new Date()) {
     });
   }
   // 📞 0.50.0 Anrufe: Beispiel eines verpassten Anrufs (nur Vermittlungsdaten)
+  // 🔑🙋 0.51.0 ein öffentlicher Beispiel-Schlüssel (nur Form, kein echter) und eine Gast-Einladung (ohne Link – den gibt es nur beim Anlegen)
+  d.geheimschluessel = [{ id: "p-leitung", person_id: "p-leitung", pub: { kty: "EC", crv: "P-256", x: "f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU", y: "x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0" }, fingerabdruck: "BEISPIEL" }];
+  d.tischgaeste = [{ id: "tg-demo", raum_id: "bachkreis", name: "Frau Weber (Dozentin)", gueltig_bis: iso(tag(jetzt, 2, 20, 0)), von: "p-leitung", token_hash: null }];
   d.anrufe = [{ id: "an-1", art: "audio", von: "p-lk1", an: ["p-leitung"], status: "verpasst", beginn: iso(tag(jetzt, -1, 17, 40)), ende: iso(tag(jetzt, -1, 17, 41)) }];
   // 📁 0.48.0 Unterlagen (Beispiel: Teilnahmebescheinigung, Leihvertrag)
   d.unterlagen = demoSchueler ? [

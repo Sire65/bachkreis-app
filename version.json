@@ -1,13 +1,21 @@
 {
-  "version": "0.53.0",
+  "version": "0.54.0",
   "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
-    "🖨️ Überall Druckvorschau mit Bachkreis-Kopf: Drucken, 📄 PDF teilen/speichern, 💬 in einen Chat, 📥 in den Eingangskorb",
-    "📥 Eingangskorb für alle: Geteiltes, Abgelegtes, eigene Notizen – und was die Leitung einem hineinlegt",
-    "📲 Am Handy über „Teilen → Bachkreis“ PDFs, Fotos und Texte direkt in die App schicken"
+    "🎨 Bachkreis-Design für alle Drucke und PDFs: Logo und Name im Kopf, unten links das Dokument, Mitte „Seite 1/2“, rechts Bachkreis Bergkamen",
+    "🖨️ Vorschau zeigt die echten Seiten – genau so wird gedruckt und ins PDF gelegt"
   ],
   "verlauf": [
+    {
+      "version": "0.53.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🖨️ Überall Druckvorschau mit Bachkreis-Kopf: Drucken, 📄 PDF teilen/speichern, 💬 in einen Chat, 📥 in den Eingangskorb",
+        "📥 Eingangskorb für alle: Geteiltes, Abgelegtes, eigene Notizen – und was die Leitung einem hineinlegt",
+        "📲 Am Handy über „Teilen → Bachkreis“ PDFs, Fotos und Texte direkt in die App schicken"
+      ]
+    },
     {
       "version": "0.52.0",
       "datum": "2026-11-09",

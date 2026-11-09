@@ -1,6 +1,8 @@
-// 🖨️ Druckvorschau (0.53.0, wie KC „Druckvorschau“): jede Druckstelle der App zeigt erst ein A4-Blatt mit Bachkreis-Kopf und -Fuß.
-// Knöpfe: 🖨️ Drucken · 📄 PDF teilen/speichern (echtes A4-PDF, das die App selbst baut – Seitenwechsel nur zwischen Zeilen, ab Seite 2 mit Kopf,
-// „Seite x von y“) · 💬 In einen Chat · 📥 In meinen Eingangskorb · 📤 In den Eingangskorb anderer (Leitung). Nichts geht an fremde Dienste.
+// 🖨️ Druckvorschau (0.53.0, wie KC „Druckvorschau“) im 🎨 Bachkreis-Corporate-Design (0.54.0, docs/CORPORATE_DESIGN.md):
+// Die App SETZT die Seiten selbst (A4, Ränder 15 mm) – jede Seite mit Kopf (Logo · Bachkreis Bergkamen · Untertitel · Datum, Goldlinie) und
+// Fuß (links das Dokument · Mitte „Seite 1/2“ · rechts Bachkreis Bergkamen). Dieselben Seiten zeigt die Vorschau, druckt 🖨️ Drucken und enthält
+// das 📄 PDF (selbst gebaut, kein fremder Dienst). Seitenwechsel nur zwischen Zeilen/Blöcken, nie direkt nach einer Überschrift.
+// Weitere Knöpfe: 💬 In einen Chat · 📥 In meinen Eingangskorb · 📤 In den Eingangskorb anderer (Leitung).
 import { S, VIEWS, zeige, zeichne, name, hatRolle } from "./zustand.js"; // eslint-disable-line no-unused-vars
 import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
@@ -9,76 +11,97 @@ import { pdfAusJpegs, umbrueche } from "../kern/pdf.js";
 import { laden as html2canvasLaden } from "./bildschirmfoto.js";
 import { EK_VERTEILER } from "../kern/schema.js";
 
-const DV = { titel: "", html: "", format: "hoch", datei: null, name: "" };
-const BREITE = { hoch: 794, quer: 1123 }, HOEHE = { hoch: 1123, quer: 794 }; // A4 bei 96 dpi
+// 🎨 Corporate Design (Maße in px bei 96 dpi; 1 mm ≈ 3,78 px)
+export const CD = { gold: "#f2b705", dunkel: "#1a1500", golddunkel: "#8a6400", grau: "#555555", schrift: "system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif",
+  rand: 57, kopf: 100, fuss: 66, logo: 42 };
+const DV = { titel: "", html: "", format: "hoch", datei: null, name: "", seiten: null, laeuft: null };
+const BREITE = { hoch: 794, quer: 1123 }, HOEHE = { hoch: 1123, quer: 794 }; // A4
+const SKALA = 2; // ~190 dpi – scharf genug für Druck und PDF
 const heute = () => new Date().toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" });
 const dateiName = (t) => `${String(t || "Bachkreis").replace(/[^\wäöüÄÖÜß -]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "Bachkreis"}.pdf`;
 export const darfVerteilen = () => hatRolle(...EK_VERTEILER);
+const marke = () => { const k = konfig(); return { name: k.name || "Bachkreis Bergkamen", unter: k.untertitel || "Jugendsinfonieorchester" }; };
 
-function papierHtml() {
-  const k = konfig();
-  return `<div class="dv-papier dv-${DV.format}" style="width:${BREITE[DV.format]}px">
-    <header class="dv-kopf"><img src="icons/logo.png" alt="" width="48" height="48"><div><b>${esc(k.name || "Bachkreis Bergkamen")}</b><small>${esc(k.untertitel || "Jugendsinfonieorchester")}</small></div><div class="dv-kopf-r"><b>${esc(DV.titel)}</b><small>${esc(heute())}</small></div></header>
-    <div class="dv-inhalt">${DV.html}</div>
-    <footer class="dv-fuss">${esc(k.name || "Bachkreis Bergkamen")}${k.webseite ? ` · ${esc(String(k.webseite).replace(/^https?:\/\//, "").replace(/\/$/, ""))}` : ""}</footer></div>`;
-}
-// Vorschau öffnen
+// Vorschau öffnen – die Seiten werden sofort gesetzt
 export function druckVorschau({ titel = "Bachkreis", html = "", format = "hoch" } = {}) {
-  Object.assign(DV, { titel, html, format: format === "quer" ? "quer" : "hoch", datei: null, name: dateiName(titel) });
+  Object.assign(DV, { titel, html, format: format === "quer" ? "quer" : "hoch", datei: null, name: dateiName(titel), seiten: null, laeuft: null });
   document.getElementById("dvFenster")?.remove();
   const f = document.createElement("div"); f.id = "dvFenster"; f.className = "dv-fenster"; f.setAttribute("role", "dialog"); f.setAttribute("aria-modal", "true"); f.setAttribute("aria-label", `Druckvorschau: ${titel}`);
   f.innerHTML = `<div class="dv-leiste" role="toolbar" aria-label="Druckvorschau"><button type="button" class="knopf" data-a="dvZu" aria-label="Vorschau schließen">✕</button>
       <button type="button" class="knopf haupt" data-a="dvDrucken">🖨️ Drucken</button><button type="button" class="knopf" data-a="dvPdf">📄 PDF</button>
       <button type="button" class="knopf" data-a="dvChat">💬 In Chat</button><button type="button" class="knopf" data-a="dvKorb">📥 Eingangskorb</button>
       ${darfVerteilen() ? '<button type="button" class="knopf" data-a="dvVerteilen">📤 An Mitglieder</button>' : ""}</div>
-    <div class="dv-flaeche"><div class="dv-huelle"><div class="dv-massstab">${papierHtml()}</div></div></div>`;
+    <div class="dv-flaeche" id="dvSeiten" aria-live="polite" tabindex="0" aria-label="Seiten"><p class="dv-setzen">📐 Seiten werden gesetzt …</p></div>`;
   document.body.appendChild(f); document.body.classList.add("dv-offen");
-  einpassen(); f.querySelector('[data-a="dvDrucken"]')?.focus();
+  f.querySelector('[data-a="dvDrucken"]')?.focus();
+  seitenSetzen().then((l) => {
+    const box = document.getElementById("dvSeiten"); if (!box || DV.seiten !== l) return;
+    box.innerHTML = l.map((s, i) => `<img class="dv-seite dv-${DV.format}" src="${s.url}" alt="${esc(DV.titel)} – Seite ${i + 1} von ${l.length}">`).join("");
+  }).catch((e) => { const box = document.getElementById("dvSeiten"); if (box) box.innerHTML = `<p class="dv-setzen">⚠️ Setzen ging nicht: ${esc(e.message || "")}</p>`; });
 }
-function einpassen() {
-  const fl = document.querySelector("#dvFenster .dv-flaeche"), h = fl?.querySelector(".dv-huelle"), m = fl?.querySelector(".dv-massstab"), p = m?.firstElementChild; if (!fl || !p) return;
-  const s = Math.min(1, (fl.clientWidth - 16) / p.offsetWidth);
-  m.style.transform = `scale(${s})`; m.style.width = `${p.offsetWidth}px`;
-  h.style.width = `${p.offsetWidth * s}px`; h.style.height = `${p.offsetHeight * s}px`; // Hülle so groß wie das verkleinerte Blatt – nichts ragt über die Knöpfe
+AKTIONEN.dvZu = () => { document.getElementById("dvFenster")?.remove(); document.getElementById("dvDruck")?.remove(); document.body.classList.remove("dv-offen"); };
+
+// ---------- 📐 Seiten setzen (einmal je Vorschau; Vorschau, Druck und PDF nutzen dieselben Seiten) ----------
+const bildLaden = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+function kuerzen(g, t, max) { if (g.measureText(t).width <= max) return t; while (t.length > 3 && g.measureText(t + "…").width > max) t = t.slice(0, -1); return t + "…"; }
+export function seitenSetzen() {
+  if (DV.laeuft) return DV.laeuft;
+  return (DV.laeuft = (async () => {
+    await html2canvasLaden();
+    const B = BREITE[DV.format], H = HOEHE[DV.format], satzBreite = B - 2 * CD.rand, platz = H - CD.kopf - CD.fuss - 8;
+    const box = document.createElement("div"); box.className = "dv-mess";
+    box.innerHTML = `<div class="dv-satz" style="width:${satzBreite}px">${DV.html}</div>`; document.body.appendChild(box);
+    const satz = box.firstElementChild;
+    try {
+      await Promise.all([...satz.querySelectorAll("img")].map((i) => (i.complete ? null : new Promise((ok) => { i.onload = i.onerror = ok; }))));
+      const oben = satz.getBoundingClientRect().top, unten = (e) => Math.round(e.getBoundingClientRect().bottom - oben);
+      const grenzen = [...satz.querySelectorAll("p, li, tr, h1, h2, h3, h4, section, table, img, figure, .lv-zeile, .lv-unterschrift, .karte, div")].map(unten);
+      const nachUeberschrift = new Set([...satz.querySelectorAll("h1, h2, h3, h4, legend, thead")].map(unten)); // nie direkt nach einer Überschrift umbrechen
+      const gesamt = Math.max(1, satz.offsetHeight), starts = umbrueche(gesamt, platz, grenzen.filter((g) => !nachUeberschrift.has(g))), enden = [...starts.slice(1), gesamt];
+      const bild = await globalThis.html2canvas(satz, { scale: SKALA, backgroundColor: "#ffffff", logging: false, useCORS: true });
+      const logo = await bildLaden("icons/logo.png"), m = marke(), n = starts.length, seiten = [];
+      for (let i = 0; i < n; i++) {
+        const c = document.createElement("canvas"); c.width = B * SKALA; c.height = H * SKALA;
+        const g = c.getContext("2d"); g.scale(SKALA, SKALA); g.fillStyle = "#fff"; g.fillRect(0, 0, B, H);
+        // Kopf: Logo · Name · Untertitel · Datum · Goldlinie
+        const ky = 34; if (logo) g.drawImage(logo, CD.rand, ky - CD.logo / 2 - 4, CD.logo, CD.logo);
+        g.textBaseline = "alphabetic"; g.fillStyle = CD.dunkel; g.font = `700 16px ${CD.schrift}`; g.fillText(m.name, CD.rand + CD.logo + 12, ky - 2);
+        g.fillStyle = CD.golddunkel; g.font = `500 11px ${CD.schrift}`; g.fillText(m.unter, CD.rand + CD.logo + 12, ky + 14);
+        g.fillStyle = CD.grau; g.font = `400 11px ${CD.schrift}`; const d = heute(); g.fillText(d, B - CD.rand - g.measureText(d).width, ky + 14);
+        g.fillStyle = CD.gold; g.fillRect(CD.rand, ky + 26, B - 2 * CD.rand, 2.2);
+        // Inhalt
+        const h = enden[i] - starts[i];
+        g.drawImage(bild, 0, starts[i] * SKALA, satzBreite * SKALA, h * SKALA, CD.rand, CD.kopf, satzBreite, h);
+        // Fuß: Goldlinie · links Dokument · Mitte „Seite 1/2“ · rechts Name
+        const fy = H - CD.fuss + 22; g.fillStyle = CD.gold; g.fillRect(CD.rand, fy - 16, B - 2 * CD.rand, 1);
+        const drittel = (B - 2 * CD.rand) / 3;
+        g.font = `400 10.5px ${CD.schrift}`; g.fillStyle = CD.grau; g.fillText(kuerzen(g, DV.titel, drittel - 8), CD.rand, fy);
+        g.font = `700 10.5px ${CD.schrift}`; g.fillStyle = CD.dunkel; const sz = `Seite ${i + 1}/${n}`; g.fillText(sz, (B - g.measureText(sz).width) / 2, fy);
+        g.font = `600 10.5px ${CD.schrift}`; g.fillStyle = CD.golddunkel; const r = kuerzen(g, m.name, drittel - 8); g.fillText(r, B - CD.rand - g.measureText(r).width, fy);
+        const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.88));
+        seiten.push({ blob, url: URL.createObjectURL(blob), w: c.width, h: c.height });
+      }
+      DV.seiten = seiten; return seiten;
+    } finally { box.remove(); }
+  })());
 }
-if (typeof window !== "undefined") addEventListener("resize", () => { if (document.getElementById("dvFenster")) einpassen(); });
-AKTIONEN.dvZu = () => { document.getElementById("dvFenster")?.remove(); document.body.classList.remove("dv-offen"); };
-AKTIONEN.dvDrucken = () => {
+// 🖨️ Drucken: genau die gesetzten Seiten, randlos je A4-Blatt
+AKTIONEN.dvDrucken = async () => {
+  const l = await seitenSetzen().catch(() => null); if (!l) return toast("⚠️ Drucken ging nicht");
   const st = document.getElementById("dvSeite") || document.head.appendChild(Object.assign(document.createElement("style"), { id: "dvSeite" }));
-  st.textContent = `@page { size: A4 ${DV.format === "quer" ? "landscape" : "portrait"}; margin: 12mm; }`;
+  st.textContent = `@page { size: A4 ${DV.format === "quer" ? "landscape" : "portrait"}; margin: 0; }`;
+  let d = document.getElementById("dvDruck"); if (!d) { d = document.createElement("div"); d.id = "dvDruck"; document.body.appendChild(d); }
+  d.innerHTML = l.map((s) => `<img src="${s.url}" alt="" class="dv-druckseite dv-${DV.format}">`).join("");
+  await Promise.all([...d.querySelectorAll("img")].map((i) => (i.complete ? null : new Promise((ok) => { i.onload = i.onerror = ok; }))));
   document.body.classList.add("dv-druck"); setTimeout(() => { try { print(); } catch {} document.body.classList.remove("dv-druck"); }, 60);
 };
-
-// ---------- 📄 PDF bauen ----------
+// 📄 PDF aus denselben Seiten
 export async function pdfBauen() {
   if (DV.datei) return DV.datei;
-  await html2canvasLaden();
-  const B = BREITE[DV.format], H = HOEHE[DV.format], RAND_O = 34, RAND_U = 40, platz = H - RAND_O - RAND_U, SKALA = 2;
-  const box = document.createElement("div"); box.className = "dv-mess"; box.innerHTML = papierHtml(); document.body.appendChild(box);
-  const p = box.firstElementChild;
-  try {
-    await Promise.all([...p.querySelectorAll("img")].map((i) => (i.complete ? null : new Promise((ok) => { i.onload = i.onerror = ok; }))));
-    const oben = p.getBoundingClientRect().top;
-    const grenzen = [...p.querySelectorAll("p, li, tr, h1, h2, h3, h4, header, footer, section, table, img, figure, .lv-zeile, .lv-unterschrift, .dv-block, .karte, div")].map((e) => Math.round(e.getBoundingClientRect().bottom - oben));
-    const nachUeberschrift = new Set([...p.querySelectorAll("h1, h2, h3, h4, legend, thead")].map((e) => Math.round(e.getBoundingClientRect().bottom - oben))); // nie direkt nach einer Überschrift umbrechen
-    const gesamt = p.offsetHeight, starts = umbrueche(gesamt, platz, grenzen.filter((g) => !nachUeberschrift.has(g))), enden = [...starts.slice(1), gesamt];
-    const bild = await globalThis.html2canvas(p, { scale: SKALA, backgroundColor: "#ffffff", logging: false, useCORS: true, windowWidth: B });
-    const seiten = [];
-    for (let i = 0; i < starts.length; i++) {
-      const c = document.createElement("canvas"); c.width = B * SKALA; c.height = H * SKALA;
-      const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
-      const hoehe = enden[i] - starts[i];
-      g.drawImage(bild, 0, starts[i] * SKALA, B * SKALA, hoehe * SKALA, 0, RAND_O * SKALA, B * SKALA, hoehe * SKALA);
-      g.fillStyle = "#555"; g.font = `${11 * SKALA}px sans-serif`;
-      if (i > 0) { g.fillText(`${konfig().name || "Bachkreis Bergkamen"} · ${DV.titel}`, 40 * SKALA, 22 * SKALA); g.fillRect(40 * SKALA, 27 * SKALA, (B - 80) * SKALA, 1); }
-      const s = `Seite ${i + 1} von ${starts.length}`; g.fillText(s, (B - 40) * SKALA - g.measureText(s).width, (H - 16) * SKALA);
-      const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.86));
-      seiten.push({ daten: new Uint8Array(await blob.arrayBuffer()), w: c.width, h: c.height });
-    }
-    const pdf = pdfAusJpegs(seiten, { format: DV.format, titel: DV.titel });
-    DV.datei = new File([pdf], DV.name, { type: "application/pdf" });
-    return DV.datei;
-  } finally { box.remove(); }
+  const l = await seitenSetzen(), seiten = [];
+  for (const s of l) seiten.push({ daten: new Uint8Array(await s.blob.arrayBuffer()), w: s.w, h: s.h });
+  DV.datei = new File([pdfAusJpegs(seiten, { format: DV.format, titel: DV.titel })], DV.name, { type: "application/pdf" });
+  return DV.datei;
 }
 async function mitPdf(f) { try { toast("📄 PDF wird gebaut …", 1500); return await f(await pdfBauen()); } catch (e) { toast("⚠️ " + (e.message || "PDF ging nicht"), 4000); } }
 AKTIONEN.dvPdf = () => mitPdf(async (datei) => {

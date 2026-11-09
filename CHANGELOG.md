@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.54.0 DEV – 09.11.2026
+🎨 **Corporate Design Bachkreis** (Wunsch Hansi „mit dem Logo und Name und Seite 1/2 und rechts Name und links Dokument“) – festgeschrieben in `docs/CORPORATE_DESIGN.md`:
+- **Kopf auf jeder Seite:** Logo · **Bachkreis Bergkamen** · *Jugendsinfonieorchester* (Dunkelgold) · rechts das Datum · Goldlinie
+- **Fuß auf jeder Seite:** Goldlinie, darunter **links das Dokument** (z. B. „Leihvertrag LV-2026-001“) · **Mitte „Seite 1/2“** · **rechts Bachkreis Bergkamen**
+- Farben Gold #f2b705, Dunkel #1a1500, Dunkelgold #8a6400, Hellgold #fdf3cc für Tabellenköpfe; Überschriften mit goldenem Balken; Ränder 15 mm; Systemschrift
+- Die App **setzt die Seiten jetzt selbst**: Die Druckvorschau zeigt die echten A4-Seiten – **🖨️ Drucken** druckt genau diese Seiten (randlos je Blatt) und **📄 PDF** enthält sie; vorher konnten Druck und PDF voneinander abweichen
+
 ## 0.53.0 DEV – 09.11.2026
 🖨️ **Druckvorschau überall** (wie KC „Druckvorschau“ / „📄 PDF in jeder Druckvorschau“) – Bestandsaufnahme: 11 Druckstellen, bisher alle ohne Vorschau und ohne PDF. Jetzt öffnet jede ein A4-Blatt mit Bachkreis-Kopf (Logo, Name, Titel, Datum) und -Fuß, darüber die Knöpfe:
 - **🖨️ Drucken** · **📄 PDF** – echtes A4-PDF, das die App selbst baut (`js/kern/pdf.js`, keine fremde Bibliothek, kein fremder Dienst): Seitenwechsel nur zwischen Zeilen/Blöcken und nie direkt nach einer Überschrift, ab Seite 2 mit Kopfzeile, unten „Seite x von y“; am Handy teilen (WhatsApp, Mail …), sonst speichern · **💬 In Chat** (PDF als Anhang in einen gewählten Chat) · **📥 Eingangskorb** · **📤 An Mitglieder** (Leitung/Lehrkraft/Vorstand: in die Eingangskörbe ausgewählter Personen)

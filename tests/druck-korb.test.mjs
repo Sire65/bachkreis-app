@@ -64,3 +64,11 @@ test("📲 Teilen-Ziel: Manifest, Service Worker, Druckstellen nutzen die Vorsch
   assert.doesNotMatch(lies("termine.js"), /window\.print\(\)/); assert.doesNotMatch(lies("buero.js"), /window\.open\(""/);
   for (const f of ["notenblatt.js", "notfallpass.js", "leihvertrag.js", "schilder.js", "buero.js"]) assert.match(lies(f), /druckvorschau\.js/, f);
 });
+
+test("🎨 Corporate Design: Farben, Kopf und Fuß (links Dokument · Mitte Seite x/y · rechts Name) sind festgelegt", () => {
+  const dv = readFileSync(new URL("../js/app/druckvorschau.js", import.meta.url), "utf8"), cd = readFileSync(new URL("../docs/CORPORATE_DESIGN.md", import.meta.url), "utf8");
+  for (const f of ["#f2b705", "#1a1500", "#8a6400"]) { assert.ok(dv.includes(f), f); assert.ok(cd.includes(f), f); }
+  assert.match(dv, /Seite \$\{i \+ 1\}\/\$\{n\}/, "Seite 1/2"); assert.match(dv, /icons\/logo\.png/);
+  assert.match(dv, /kuerzen\(g, DV\.titel/, "links das Dokument"); assert.match(dv, /B - CD\.rand - g\.measureText\(r\)/, "rechts der Name");
+  assert.match(dv, /dv-druckseite/, "Drucken nutzt die gesetzten Seiten");
+});

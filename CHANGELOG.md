@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.50.1 DEV – 09.11.2026
+- ✥ Startseite: Nach „✅ Fertig“ beim Anordnen fehlte der Knopf „✥ Anordnen“, bis die Seite neu gezeichnet wurde – jetzt ist er immer da (nur ein-/ausgeblendet)
+- 🧪 Rundgang: Einstiegsfrage „Wie viel Hilfe?“ vorab beantwortet und auf jedes Neuzeichnen gewartet (in der CI schlug der Rundgang sonst fehl, 0.50.0 wurde darum nicht veröffentlicht)
+
 ## 0.50.0 DEV – 09.11.2026
 Anrufe, Runder Tisch und Fernhilfe (wie KC-CLUB-ANRUF, KC-CLUB-RUNDER-TISCH, KC-CLUB-FERNHILFE). Ton, Bild und Daten gehen direkt von Gerät zu Gerät (WebRTC, verschlüsselt), nichts wird aufgezeichnet; der Club-Server vermittelt nur den Aufbau (neue Tabelle `anrufe`, Aktionen `anruf_lage`/`tisch_lage`, Einträge nach 2 Tagen gelöscht). Kostenlos: öffentlicher STUN-Server, eigener STUN/TURN über `konfig.rtc_server` möglich.
 - 📞🎥 **Anrufe**: im Einzelchat oben 📞 und 🎥; Klingeln mit Annehmen/Ablehnen (Ton, Vibration, Push), Gespräch mit Stumm, Kamera aus, Kamera wechseln, Auflegen; verpasste Anrufe als Zahl an der Kachel „📞 Anrufe“ mit Rückruf. 🔒 Kinderschutz auf dem Server: Minderjährige telefonieren nur mit den eigenen Eltern, unter Erwachsenen gelten die Chat-Regeln

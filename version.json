@@ -1,11 +1,12 @@
 {
-  "version": "0.50.0",
+  "version": "0.50.1",
   "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
     "📞 Anrufen und 🎥 Videoanruf direkt aus dem Einzelchat – Kinder nur mit den eigenen Eltern",
     "🪑 Runder Tisch: Online-Treffen mit Bild und Ton für bis zu 8 Erwachsene, auch zur Sitzung",
-    "🛟 Fernhilfe: die Leitung schaut mit auf deinen Bildschirm und zeigt dir den Weg"
+    "🛟 Fernhilfe: die Leitung schaut mit auf deinen Bildschirm und zeigt dir den Weg",
+    "✥ Nach „Fertig“ beim Anordnen ist der Knopf „Anordnen“ sofort wieder da"
   ],
   "verlauf": [
     {

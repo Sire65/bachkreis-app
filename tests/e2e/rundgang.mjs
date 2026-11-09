@@ -26,6 +26,8 @@ await p.route("https://api.open-meteo.com/**", (r) => {
 });
 await p.goto(BASIS + "/index.html");
 await p.waitForSelector(".kachel");
+// 🙋 Einstiegsfrage „Wie viel Hilfe?“ vorab beantworten – sonst geht sie zufällig mitten im Rundgang auf und verdeckt Knöpfe
+await p.evaluate(async () => (await import("/js/app/zustand.js")).einstSetzen("hilfeStufe", "etwas"));
 // 📌 Pinnwand wie KC 2.858: neue Zettel öffnen sich nie von selbst (nur Hinweis) → Pinnwand öffnen, Zettel anheften, erledigt abhaken
 if (await p.waitForSelector("#pwFensterHg", { timeout: 2500 }).catch(() => null)) fehler.push("Pinnwand: Fenster ging von selbst auf");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("pinnwand")); await p.waitForSelector("#pwWand .zettel");
@@ -89,9 +91,11 @@ await p.evaluate(() => document.querySelector("#raster > .kachel").scrollIntoVie
   if ((await p.$eval("#raster > .kachel:nth-child(1)", (e) => e.dataset.id)) === erste) fehler.push("Startseite: Ziehen verschiebt nicht");
   await p.screenshot({ path: `${BILDER}start-anordnen.png`, fullPage: true });
   await p.evaluate(() => document.querySelector('#raster > .kachel[data-id="buehne"]')?.scrollIntoView({ block: "center" })); await p.waitForTimeout(150);
-  await p.click('#raster > .kachel[data-id="buehne"] .kweg', { force: true }); await p.click('[data-a="kaFertig"]', { force: true }); await p.waitForTimeout(200);
+  // auf jedes Neuzeichnen warten statt blind zu klicken (auf langsamen CI-Rechnern kam der Klick sonst vor dem Knopf)
+  await p.click('#raster > .kachel[data-id="buehne"] .kweg', { force: true }); await p.waitForSelector('#raster > .kachel[data-id="buehne"]', { state: "detached", timeout: 10000 }).catch(() => {});
+  await p.waitForSelector('[data-a="kaFertig"]', { state: "visible", timeout: 10000 }); await p.click('[data-a="kaFertig"]'); await p.waitForSelector(".ka-leiste", { state: "detached", timeout: 10000 }).catch(() => {});
   if (await p.$('#raster > .kachel[data-id="buehne"]')) fehler.push("Startseite: ✕ blendet nicht aus");
-  await p.click('[data-a="kaNurAus"][data-x="1"]'); await p.click('[data-a="kaAnordnen"] >> nth=0'); await p.waitForTimeout(200);
+  await p.waitForSelector('[data-a="kaNurAus"][data-x="1"]', { state: "visible", timeout: 10000 }); await p.click('[data-a="kaNurAus"][data-x="1"]'); await p.click('[data-a="kaAnordnen"] >> nth=0'); await p.waitForTimeout(200);
   await p.click('#raster > .kachel[data-id="buehne"] [data-a="kaEin"]', { force: true }); await p.click('[data-a="kaStandard"]', { force: true }); await p.click('[data-a="kaFertig"]', { force: true }); await p.waitForTimeout(200);
   if (!(await p.$('#raster > .kachel[data-id="buehne"]'))) fehler.push("Startseite: 👁️ Einblenden / Standard wirkt nicht"); }
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start", {}, { ersetzen: true })); await p.waitForTimeout(200);

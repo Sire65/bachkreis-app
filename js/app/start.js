@@ -257,7 +257,7 @@ VIEWS.start = {
     return `<section id="v-start" class="${e.einfach ? "ansicht-einfach" : "ansicht-erweitert"}">
       <div id="kopfPlatz"></div>
       <div id="updateHinweis"></div>
-      <div class="abschnitt"><h3>${e.einfach ? "🟢 Einfache Ansicht" : "Schnellzugriff"}</h3>${ANO.an ? "" : `<button type="button" class="knopf klein" data-a="kaAnordnen" title="Kacheln verschieben${e.einfach ? "" : " oder ausblenden"}">✥ Anordnen</button>`}</div>
+      <div class="abschnitt"><h3>${e.einfach ? "🟢 Einfache Ansicht" : "Schnellzugriff"}</h3><button type="button" class="knopf klein" data-a="kaAnordnen" title="Kacheln verschieben${e.einfach ? "" : " oder ausblenden"}" ${ANO.an ? "hidden" : ""}>✥ Anordnen</button></div>
       <div id="rasterBlock">${rasterBlock()}</div>
       ${e.einfach || ANO.an ? "" : `<div class="wischhinweis">‹ wischen für weitere Bereiche · doppelt tippen dreht eine Kachel um · lange drücken ordnet an ›</div>`}
       <div class="karte"><h3>Heute wichtig${istLehrkraft() || istVorstand() ? ' <button type="button" class="knopf klein" data-a="tagesinfo">📋 Übersicht</button>' : ""}</h3>${heuteWichtig()}</div>

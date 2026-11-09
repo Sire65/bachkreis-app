@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["leihvertraege", "tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -117,6 +117,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
     case "ausleihen": return ctx.meine.has(z.person_id);
+    case "leihvertraege": return ctx.meine.has(z.person_id) || hatRolle(ctx, LV_VERWALTER); // 📝 0.52.0 eigene/Kinder + Instrumentenverwaltung
     case "reparaturen": return z.gemeldet_von === ctx.ich || ctx.inventar.has(z.inventar_id);
     case "termine": return ctx.termine.has(z.id);
     case "antworten": return ctx.meine.has(z.person_id) || (ctx.registerLeute.has(z.person_id) && ctx.termine.has(z.termin_id));
@@ -587,6 +588,38 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "leihvertraege": {
+      // 📝 0.52.0 Leihvertrag-Formular: Verwaltung legt an und ändert (solange noch niemand unterschrieben hat);
+      // Mitglied und Erziehungsberechtigte setzen nur IHRE Unterschrift. Name/Zeit/Gerät jeder Unterschrift setzt der Server; gesetzte Unterschriften bleiben.
+      const chef = hatRolle(ctx, LV_VERWALTER), pid = alt?.person_id || neu.person_id;
+      const person = (ctx.personen || []).find((x) => x.id === pid); if (!person) return { ok: false, grund: "UNBEKANNT" };
+      const minderjaehrig = person.typ === "schueler" && istMinderjaehrig(person);
+      const altU = alt?.unterschriften || {}, neuU = neu.unterschriften && typeof neu.unterschriften === "object" ? neu.unterschriften : {};
+      const bildOk = (b) => typeof b === "string" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(b) && b.length < 150000;
+      const unterschriften = { ...altU };
+      for (const rolle of ["mitglied", "eltern", "bachkreis"]) {
+        const u = neuU[rolle]; if (!u || altU[rolle]) continue; // schon unterschrieben → bleibt
+        const darf = rolle === "bachkreis" ? chef : rolle === "mitglied" ? ctx.ich === pid || (chef && u.vor_ort) : ctx.kinder.has(pid) || (chef && u.vor_ort);
+        if (!darf) return { ok: false, grund: "NICHT_DEINE_UNTERSCHRIFT" };
+        if (!bildOk(u.bild)) return { ok: false, grund: "UNTERSCHRIFT_UNGUELTIG" };
+        const nameU = String(u.name || "").trim().slice(0, 80); if (!nameU) return { ok: false, grund: "NAME_FEHLT" };
+        unterschriften[rolle] = { name: nameU, bild: u.bild, zeit: jetzt, von: ctx.ich, vor_ort: !!(chef && u.vor_ort && rolle !== "bachkreis") };
+      }
+      const noetig = ["mitglied", "bachkreis", ...(minderjaehrig ? ["eltern"] : [])];
+      const fertig = noetig.every((r) => unterschriften[r]);
+      if (!chef) { // Mitglied / Eltern: nur unterschreiben, sonst nichts ändern
+        if (!alt || !(ctx.ich === pid || ctx.kinder.has(pid))) return { ok: false, grund: "NUR_VERWALTUNG" };
+        if (!["wartet", "entwurf"].includes(alt.status)) return { ok: false, grund: "NICHT_MEHR_OFFEN" };
+        return { ok: true, zeile: { ...alt, unterschriften, status: fertig ? "unterschrieben" : "wartet" } };
+      }
+      if (alt && Object.keys(altU).length && ["inventar_ids", "ausstattung_ids", "von", "bis", "kaution", "gebuehr", "klausel", "person_id"].some((k) => k in neu && JSON.stringify(neu[k]) !== JSON.stringify(alt[k])))
+        return { ok: false, grund: "SCHON_UNTERSCHRIEBEN" }; // was unterschrieben ist, ändert niemand mehr
+      const ids = (k) => [...new Set(Array.isArray(neu[k] ?? alt?.[k]) ? (neu[k] ?? alt[k]).map(String) : [])].slice(0, 20);
+      const status = neu.geloescht_am ? alt?.status : neu.status === "beendet" && (alt?.status === "unterschrieben" || alt?.status === "beendet") ? "beendet" : fertig ? "unterschrieben" : neu.status === "wartet" || Object.keys(unterschriften).length ? "wartet" : "entwurf";
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "nr", "eltern_id", "anschrift", "geburtsdatum", "eltern_name", "eltern_anschrift", "telefon", "zubehoer_frei", "von", "bis", "kaution", "gebuehr", "versicherung", "klausel", "hinweis", "geloescht_am"]),
+        person_id: pid, inventar_ids: ids("inventar_ids"), ausstattung_ids: ids("ausstattung_ids"), zubehoer: (Array.isArray(neu.zubehoer ?? alt?.zubehoer) ? neu.zubehoer ?? alt.zubehoer : []).filter((z) => LEIH_ZUBEHOER[z]),
+        unterschriften, status: LV_STATUS[status] ? status : "entwurf" } };
     }
     case "geheimschluessel": {
       // 🔑 0.51.0 jeder pflegt nur seinen eigenen öffentlichen Schlüssel (Zeile = Person); nur EC P-256, nur öffentliche Teile

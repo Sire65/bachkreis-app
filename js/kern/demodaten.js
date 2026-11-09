@@ -3,7 +3,7 @@
 // Deterministisch (fester Zufallsstartwert) – jede Vorführung sieht gleich aus.
 
 import { KOM_STANDARD } from "./kom-standard.js";
-import { pwAppPerson, pwEmpfaenger, pwGelesenId } from "./schema.js";
+import { pwAppPerson, pwEmpfaenger, pwGelesenId, LV_KLAUSEL } from "./schema.js";
 import { CHRONIK_WEBSITE } from "./orte.js";
 function zufall(seed) {
   let s = seed >>> 0;
@@ -298,6 +298,15 @@ export function erzeugeDemodaten(heute = new Date()) {
   // eine Rückgabe überfällig für das Cockpit
   if (d.ausleihen[1]) d.ausleihen[1].bis = isoTag(tag(jetzt, -5));
   if (d.ausleihen[3]) d.ausleihen[3].bis = isoTag(tag(jetzt, 9));
+  // 📝 0.52.0 ein Leihvertrag, der noch auf die Unterschriften wartet (für die erste Ausleihe eines Kindes)
+  d.leihvertraege = [];
+  { const a = d.ausleihen.find((x) => d.personen.find((p) => p.id === x.person_id)?.typ === "schueler");
+    if (a) { const p = d.personen.find((x) => x.id === a.person_id), ek = d.eltern_kind.find((e) => e.kind_id === p.id), e = ek && d.personen.find((x) => x.id === ek.eltern_id);
+      d.leihvertraege.push({ id: "lv-1", nr: `LV-${new Date(jetzt).getFullYear()}-001`, person_id: p.id, eltern_id: e?.id || null, anschrift: [p.strasse, [p.plz, p.ort].filter(Boolean).join(" ")].filter(Boolean).join(", "),
+        geburtsdatum: p.geburtsdatum || null, eltern_name: e ? `${e.vorname} ${e.nachname}` : null, eltern_anschrift: e ? [e.strasse, [e.plz, e.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ") : null, telefon: e?.mobil || p.mobil || null,
+        inventar_ids: [a.inventar_id], ausstattung_ids: [], zubehoer: ["koffer", "bogen", "kolophonium"], zubehoer_frei: "", von: a.von, bis: a.bis, kaution: 50, gebuehr: null, versicherung: "verein",
+        klausel: LV_KLAUSEL, hinweis: "Instrument in gutem Zustand, kleiner Kratzer am Boden.", unterschriften: {}, status: "wartet" });
+      a.leihvertrag_id = "lv-1"; } }
   // Reparaturen
   const rep1 = d.inventar.find((i) => i.typ_id === "t-vc" && i.status === "verfuegbar");
   const rep2 = d.inventar.find((i) => i.typ_id === "t-hr");

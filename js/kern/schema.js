@@ -94,6 +94,17 @@ export const PARTNER_ARTEN = { musikschule: "🎓 Musikschule", orchester: "🎻
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
+// 📝 0.52.0 Leihvertrag-Formular
+export const LV_STATUS = { entwurf: "✏️ Entwurf", wartet: "✍️ wartet auf Unterschrift", unterschrieben: "✅ unterschrieben", beendet: "↩️ zurückgegeben" };
+export const LV_VERWALTER = ["admin", "leitung", "vorstand", "instrumentenwart"];
+export const LV_ROLLEN = { mitglied: "Mitglied (Entleiher/in)", eltern: "Erziehungsberechtigte/r", bachkreis: "für den Bachkreis" };
+export const LV_KLAUSEL = `1. Das Instrument und das Zubehör bleiben Eigentum des Bachkreises (bzw. seines Fördervereins) und werden nur für das Musizieren im Bachkreis und den Unterricht überlassen.
+2. Instrument und Zubehör sind pfleglich zu behandeln: trocken lagern, nicht in die Nähe von Heizung oder Sonne, nicht im Auto liegen lassen, nach dem Spielen reinigen.
+3. Reparaturen und Einstellarbeiten macht nur der Bachkreis bzw. eine von ihm beauftragte Werkstatt. Eigene Eingriffe sind nicht erlaubt.
+4. Schäden, Verlust oder Diebstahl sind sofort zu melden (bei Diebstahl mit Anzeige bei der Polizei).
+5. Für Schäden, die über die normale Abnutzung hinausgehen, sowie bei Verlust haftet die/der Entleiher/in – bei Minderjährigen die Erziehungsberechtigten – bis zur Höhe der Reparaturkosten bzw. des Zeitwerts. Eine bestehende Versicherung wird zuerst in Anspruch genommen; die Kaution kann verrechnet werden.
+6. Eine Weitergabe an Dritte ist nicht erlaubt.
+7. Die Rückgabe erfolgt zum vereinbarten Termin, bei Austritt aus dem Bachkreis oder auf Anforderung – vollständig und gereinigt. Die Kaution wird nach ordnungsgemäßer Rückgabe erstattet.`;
 export const LEIH_ZUBEHOER = { koffer: "Koffer / Tasche", bogen: "Bogen", kolophonium: "Kolophonium", schulterstuetze: "Schulterstütze", mundstueck: "Mundstück", gurt: "Gurt", rohre: "Rohrblätter", pflege: "Pflegeset", staender: "Ständer" };
 export const TEILNAHME = { pflicht: ["❗", "Teilnahme erforderlich"], erwuenscht: ["🙂", "Teilnahme erwünscht"], info: ["ℹ️", "Nur zur Info"] };
 
@@ -773,8 +784,38 @@ export const TABELLEN = {
       { k: "gebuehr_bezahlt_bis", t: "Leihgebühr bezahlt bis", typ: "datum" },
       { k: "versicherung", t: "Versicherung", typ: "wahl", werte: { verein: "über den Förderverein", privat: "privat (Hausrat)", keine: "keine" } },
       { k: "vertrag_id", t: "Leihvertrag (Zustimmung)", typ: "ref", ref: "genehmigungen" },
+      { k: "leihvertrag_id", t: "📝 Leihvertrag (Formular)", typ: "ref", ref: "leihvertraege" }, // 0.52.0
     ],
     liste: ["inventar_id", "person_id", "von", "bis", "status", "kaution_status"],
+  },
+  // 📝 0.52.0 Leihvertrag als Formular: mehrere Instrumente + Zubehör, Anschrift/Geburtsdatum zum Zeitpunkt des Vertrags, Schadensklausel,
+  // Unterschriften von Mitglied, Erziehungsberechtigten (bei Minderjährigen) und Bachkreis – mit dem Finger, vor Ort oder jede/r auf dem eigenen Gerät
+  leihvertraege: {
+    titel: "Leihverträge", sym: "📝", gruppe: "Instrumente", lesen: [], schreiben: [],
+    felder: [
+      { k: "nr", t: "Vertrags-Nr.", typ: "text" },
+      { k: "person_id", t: "Entleiher/in (Mitglied)", typ: "ref", ref: "personen", pflicht: true },
+      { k: "eltern_id", t: "Erziehungsberechtigte/r", typ: "ref", ref: "personen" },
+      { k: "anschrift", t: "Anschrift (zum Vertragszeitpunkt)", typ: "text" },
+      { k: "geburtsdatum", t: "Geburtsdatum", typ: "datum" },
+      { k: "eltern_name", t: "Name Erziehungsberechtigte/r", typ: "text" },
+      { k: "eltern_anschrift", t: "Anschrift Erziehungsberechtigte/r", typ: "text" },
+      { k: "telefon", t: "Telefon", typ: "text" },
+      { k: "inventar_ids", t: "Instrumente", typ: "refs", ref: "inventar" },
+      { k: "ausstattung_ids", t: "Ausstattung", typ: "refs", ref: "ausstattung" },
+      { k: "zubehoer", t: "Zubehör", typ: "liste", werte: LEIH_ZUBEHOER },
+      { k: "zubehoer_frei", t: "weiteres Zubehör", typ: "text" },
+      { k: "von", t: "Leihe ab", typ: "datum", pflicht: true },
+      { k: "bis", t: "Leihe bis", typ: "datum" },
+      { k: "kaution", t: "Kaution (€)", typ: "geld" },
+      { k: "gebuehr", t: "Leihgebühr je Jahr (€)", typ: "geld" },
+      { k: "versicherung", t: "Versicherung", typ: "wahl", werte: { verein: "über den Förderverein", privat: "privat (Hausrat)", keine: "keine" } },
+      { k: "klausel", t: "Leihbedingungen & Schadensklausel", typ: "lang" },
+      { k: "hinweis", t: "Besonderheiten / Zustand bei Ausgabe", typ: "lang" },
+      { k: "unterschriften", t: "Unterschriften (technisch)", typ: "json" },
+      { k: "status", t: "Status", typ: "wahl", werte: LV_STATUS },
+    ],
+    liste: ["nr", "person_id", "von", "bis", "status"],
   },
   reparaturen: {
     titel: "Reparaturen & Wartung", sym: "🔧", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],

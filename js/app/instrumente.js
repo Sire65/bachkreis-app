@@ -198,9 +198,11 @@ AKTIONEN.ausgabeForm = (id) => {
     <div class="feld"><label>Zubehör</label><div class="t-wahl">${Object.entries(LEIH_ZUBEHOER).map(([z, t]) => `<label class="t-chip"><input type="checkbox" name="zubehoer" value="${z}" ${z === "koffer" ? "checked" : ""}><span>${esc(t)}</span></label>`).join("")}</div></div>
     <div class="gs-zwei"><div class="feld"><label>Kaution (€)</label><input type="number" name="kaution" min="0" step="1" value="${esc(k.leih_kaution ?? "")}"></div><div class="feld"><label>Leihgebühr je Jahr (€)</label><input type="number" name="gebuehr" min="0" step="1" value="${esc(k.leih_gebuehr ?? "")}"></div></div>
     <div class="feld"><label>Versicherung</label><select name="versicherung"><option value="verein">über den Förderverein</option><option value="privat">privat (Hausrat)</option><option value="keine">keine</option></select></div>
+    <p class="hinweis">📝 Mit vollständigem Vertrag (mehrere Instrumente, Anschrift, Unterschriften): <button type="button" class="link" data-a="lvMitInstrument" data-x="${id}">Leihvertrag-Formular</button></p>
     <label class="schalter"><span>Leihvertrag zur Zustimmung an die Eltern senden</span><input type="checkbox" name="vertrag" checked></label>
     <button class="knopf haupt breit" data-a="ausgabeSpeichern" data-x="${id}">🤝 Ausgeben</button></div>`);
 };
+AKTIONEN.lvMitInstrument = (id) => { blattZu(); zeige("leihvertragForm", { inventar: id }); };
 AKTIONEN.ausgabeSpeichern = async (id) => {
   const f = formWerte(document.getElementById("ausForm")), kaution = Number(f.kaution) || 0;
   const a = await speichere("ausleihen", { inventar_id: id, person_id: f.person, von: tagIso(new Date()), bis: f.bis, status: "aktiv", zustand_ausgabe: f.zustand, zubehoer: [].concat(f.zubehoer || []),

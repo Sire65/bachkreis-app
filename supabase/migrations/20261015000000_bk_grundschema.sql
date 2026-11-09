@@ -667,6 +667,7 @@ create table if not exists bk_ausleihen (
   gebuehr_bezahlt_bis date,
   versicherung text check (versicherung is null or versicherung in ('verein', 'privat', 'keine')),
   vertrag_id text,
+  leihvertrag_id text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -679,6 +680,43 @@ revoke all on bk_ausleihen from public, anon, authenticated;
 grant select, insert, update, delete on bk_ausleihen to service_role;
 drop trigger if exists bk_ausleihen_stempel on bk_ausleihen;
 create trigger bk_ausleihen_stempel before update on bk_ausleihen for each row execute function bk_abgleich_stempel();
+
+-- Leihverträge
+create table if not exists bk_leihvertraege (
+  id text primary key default gen_random_uuid()::text,
+  nr text,
+  person_id text not null,
+  eltern_id text,
+  anschrift text,
+  geburtsdatum date,
+  eltern_name text,
+  eltern_anschrift text,
+  telefon text,
+  inventar_ids text[],
+  ausstattung_ids text[],
+  zubehoer text[],
+  zubehoer_frei text,
+  von date not null,
+  bis date,
+  kaution numeric(10,2),
+  gebuehr numeric(10,2),
+  versicherung text check (versicherung is null or versicherung in ('verein', 'privat', 'keine')),
+  klausel text,
+  hinweis text,
+  unterschriften jsonb,
+  status text check (status is null or status in ('entwurf', 'wartet', 'unterschrieben', 'beendet')),
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_leihvertraege_geaendert on bk_leihvertraege (geaendert_am);
+alter table bk_leihvertraege enable row level security;
+revoke all on bk_leihvertraege from public, anon, authenticated;
+grant select, insert, update, delete on bk_leihvertraege to service_role;
+drop trigger if exists bk_leihvertraege_stempel on bk_leihvertraege;
+create trigger bk_leihvertraege_stempel before update on bk_leihvertraege for each row execute function bk_abgleich_stempel();
 
 -- Reparaturen & Wartung
 create table if not exists bk_reparaturen (
@@ -2149,6 +2187,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausle
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_ausstattung_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_ausstattung_id_fk foreign key (ausstattung_id) references bk_ausstattung(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_person_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_vertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_vertrag_id_fk foreign key (vertrag_id) references bk_genehmigungen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_leihvertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_leihvertrag_id_fk foreign key (leihvertrag_id) references bk_leihvertraege(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_leihvertraege_person_id_fk') then alter table bk_leihvertraege add constraint bk_leihvertraege_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_leihvertraege_eltern_id_fk') then alter table bk_leihvertraege add constraint bk_leihvertraege_eltern_id_fk foreign key (eltern_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reparaturen_inventar_id_fk') then alter table bk_reparaturen add constraint bk_reparaturen_inventar_id_fk foreign key (inventar_id) references bk_inventar(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reparaturen_ausstattung_id_fk') then alter table bk_reparaturen add constraint bk_reparaturen_ausstattung_id_fk foreign key (ausstattung_id) references bk_ausstattung(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reparaturen_werkstatt_id_fk') then alter table bk_reparaturen add constraint bk_reparaturen_werkstatt_id_fk foreign key (werkstatt_id) references bk_personen(id) on delete restrict; end if; end $$;

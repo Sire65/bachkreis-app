@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.52.0 DEV – 09.11.2026
+📝 **Leihvertrag als Formular** (Wunsch Hansi): Kachel „📝 Leihverträge“ für Leitung, Vorstand und Instrumentenwart – und für Mitglieder/Eltern, sobald es einen Vertrag für sie gibt.
+- Formular: Entleiher/in wählen → **Anschrift und Geburtsdatum** kommen aus der Kartei und werden mit dem Vertrag festgehalten; bei Minderjährigen die/der **Erziehungsberechtigte** (Auswahl aus den hinterlegten Eltern); **ein oder mehrere Instrumente** und weitere Ausstattung, **Zubehör** (Koffer, Bogen, Kolophonium …) plus Freitext, **Leihe ab/bis**, Kaution, Leihgebühr, Versicherung, Zustand bei Ausgabe, **Leihbedingungen mit Schadensklausel** (Muster, je Vertrag anpassbar; Standard unter ⚙️ Leihbedingungen – bitte vom Vorstand prüfen lassen)
+- ✍️ **Unterschriften** mit dem Finger: Mitglied, Erziehungsberechtigte (nur bei Minderjährigen) und „für den Bachkreis“ – vor Ort auf einem Gerät (vermerkt) oder jede/r auf dem eigenen Handy; Eltern sehen oben „📝 Leihvertrag wartet auf Ihre Unterschrift“. Der Server setzt Name, Zeit und Gerät, lässt nur den eigenen Platz zu und sperrt Änderungen, sobald unterschrieben ist
+- 🤝 Nach allen Unterschriften: „Instrumente ausgeben“ legt die Ausleihen an (Inventar „verliehen“); ↩️ Rückgabe mit Zustand
+- 🖨️ **Drucken / PDF** des Vertrags und **leeres Formular** für Papier; aus der bisherigen „Instrument ausleihen“-Maske gibt es den Weg zum Formular
+- Neue Tabelle `leihvertraege` (Migration 20261120000000), Ausleihen verweisen auf ihren Vertrag
+
 ## 0.51.0 DEV – 09.11.2026
 Paket A aus dem Abgleich mit der KC Club App – Nachrichten & Anrufe:
 - 🔒 **Geheim schreiben** (wie KC-CLUB-VERSCHLUESSELT): im Einzelchat unter Erwachsenen das 🔒 in der Schreibleiste – Ende-zu-Ende verschlüsselt (WebCrypto: ECDH P-256 + AES-GCM), der Server speichert nur Zeichensalat und den Platzhalter „🔒 Geheime Nachricht“; geheime Nachrichten lassen sich nicht ändern. 🔑 **Schlüsselbund** (Technik): eigenen Schlüssel mit Passwort aufs zweite Gerät mitnehmen. Kinderschutz: bei Minderjährigen nie (dort bleibt alles für die Eltern lesbar); Admin kann „Geheim schreiben“ abschalten. Neue Tabelle `geheimschluessel` (nur öffentliche Schlüssel)

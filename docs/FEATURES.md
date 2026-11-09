@@ -143,6 +143,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F133 | 🙋 Gäste am Runden Tisch mit eigenem Link (gast.html) | ✅ | tests/paket-a.test.mjs |
 | BK-F134 | 💼 Tasche am Runden Tisch (PDF, Foto, Musik zeigen) | ✅ | tests/paket-a.test.mjs |
 | BK-F135 | 🔒 Geheim schreiben (Ende-zu-Ende, Einzelchat unter Erwachsenen), 🔑 Schlüsselbund | ✅ | tests/paket-a.test.mjs |
+| BK-F136 | 📝 Leihvertrag-Formular (mehrere Instrumente, Zubehör, Anschrift/Geb.-Datum, Schadensklausel) | ✅ | tests/leihvertrag.test.mjs |
+| BK-F137 | ✍️ Unterschriften Mitglied/Eltern/Bachkreis mit dem Finger, nur eigener Platz, Unterschriebenes unveränderlich | ✅ | tests/leihvertrag.test.mjs |
+| BK-F138 | 🖨️ Leihvertrag drucken/PDF und leeres Papierformular, ⚙️ Leihbedingungen für die Leitung | ✅ | tests/leihvertrag.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

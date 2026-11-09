@@ -28,6 +28,7 @@ import { pruefenFuerMich } from "./pruefung.js";
 import { verpassteAnrufe, anrufAn } from "./anruf.js";
 import { fernhilfeKachelDa } from "./fernhilfe.js";
 import { tischDa } from "./tisch.js";
+import { lvChef, meineOffenenUnterschriften } from "./leihvertrag.js";
 import { geheimTechnik } from "../kern/geheim.js";
 import { erwachsen } from "../kern/schema.js";
 const erwachsenIch = () => erwachsen(S.ich);
@@ -96,6 +97,7 @@ export const KACHELN = {
     { id: "pinnwand", sym: "📌", t: "Pinnwand", u: "Post-its · wichtig · für alle oder privat", v: "pinnwand", zahl: () => pwOffenZahl() },
     { id: "projekte", sym: "🎭", t: "Konzerte & Projekte", u: "Programm · Ablauf · Checkliste", v: "projekte" },
     { id: "noten", sym: "📚", t: "Notenarchiv", u: "Orchester › Stücke › Noten je Instrument", v: "noten", nur: () => istVerwalter() },
+    { id: "leihvertraege", sym: "📝", t: "Leihverträge", u: "Instrumente leihen · unterschreiben · drucken", v: "leihvertraege", nur: () => lvChef() || liste("leihvertraege", (v) => v.person_id === S.ich?.id || liste("eltern_kind", (e) => e.eltern_id === S.ich?.id && e.kind_id === v.person_id).length).length > 0, zahl: () => meineOffenenUnterschriften() || (lvChef() ? liste("leihvertraege", (v) => v.status === "wartet").length : 0) },
     { id: "instrumente", sym: "🎻", t: "Instrumente", u: "Inventar · Verleih · Reparatur", v: "instrumente", nur: () => istVerwalter(), zahl: () => liste("reparaturen", (r) => r.status === "gemeldet" || r.status === "angebot").length },
     { id: "genehmigungen", sym: "✍️", t: "Genehmigungen", u: "Einverständnis der Eltern", v: "genehmigungen", nur: () => istLehrkraft() },
     { id: "anwesenheit", sym: "📋", t: "Anwesenheit", u: "Fehlzeiten je Kind · Orchester", v: "anwesenheit", nur: () => hatRolle("admin", "leitung", "lehrkraft", "terminplaner") },

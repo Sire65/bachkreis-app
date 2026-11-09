@@ -7,6 +7,7 @@ import { liste } from "../kern/daten.js";
 import { kinderVon, termineFuer, antwortVon, teilnahmeVon, ausleihenVon, tagIso } from "../kern/logik.js";
 import { gesundheitVon } from "./schutz.js";
 import { pwWichtigFuerMich } from "./pinnwand.js";
+import { meineOffenenUnterschriften } from "./leihvertrag.js";
 
 export const elternAnsicht = () => istEltern() && einst().elternAlle !== true;
 const kinder = () => kinderVon(db, S.ich.id).filter((id) => liste("personen", (p) => p.id === id && p.status !== "ausgetreten").length);
@@ -23,6 +24,8 @@ export function elternErledigen(ks = gewaehlt(), heute = new Date()) {
   }
   const gen = liste("genehmigungen", (g) => ks.includes(g.kind_id) && g.status === "ausstehend").length;
   if (gen) z.unshift({ sym: "✍️", text: `<b>${gen}</b> Genehmigung${gen > 1 ? "en warten" : " wartet"} auf Ihre Antwort`, a: "kachel", x: "meinegenehmigungen" });
+  const lv = meineOffenenUnterschriften(); // 📝 0.52.0
+  if (lv) z.unshift({ sym: "📝", text: `<b>${lv}</b> Leihvertrag${lv > 1 ? "e warten" : " wartet"} auf Ihre Unterschrift`, a: "kachel", x: "leihvertraege" });
   const zettel = pwWichtigFuerMich().length;
   if (zettel) z.push({ sym: "📌", text: `<b>${zettel}</b> wichtige${zettel > 1 ? "" : "r"} Zettel an der Pinnwand`, a: "kachel", x: "pinnwand" });
   return z;

@@ -50,6 +50,7 @@ import "./anruf.js"; // 📞 0.50.0
 import "./tisch.js"; // 🪑 0.50.0
 import "./fernhilfe.js"; // 🛟 0.50.0
 import "./chatextra.js"; // 👤👥🔒 0.51.0
+import "./leihvertrag.js"; // 📝 0.52.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";

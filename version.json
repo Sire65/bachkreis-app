@@ -1,15 +1,24 @@
 {
-  "version": "0.51.0",
+  "version": "0.52.0",
   "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
-    "🔒 Geheim schreiben: im Einzelchat unter Erwachsenen können nur noch ihr zwei die Nachricht lesen – mit 🔑 Schlüsselbund fürs zweite Gerät",
-    "👤 Kontakt teilen und 👥 Konferenz (nur Ton, bis 4) direkt aus dem Chat",
-    "👋 Anklopfen: schreiben oder sprechen? – und 📼 Sprachnachricht, wenn keiner Zeit hat",
-    "🪑 Runder Tisch: sehen, wer schon da sitzt · 💼 Tasche mit PDF, Foto, Musik · 🙋 Gäste mit eigenem Link",
-    "📶 Ohne Netz geschrieben? Die Nachricht wartet mit 🕓 und geht von selbst raus · 🐌 ehrlicher Hinweis, wenn Laden dauert"
+    "📝 Leihvertrag als Formular: Name, Anschrift, Geburtsdatum, ein oder mehrere Instrumente, Zubehör, Leihe ab/bis, Schadensklausel",
+    "✍️ Unterschreiben mit dem Finger – Mitglied, Eltern und Bachkreis, vor Ort oder jede/r auf dem eigenen Handy",
+    "🖨️ Leihvertrag drucken oder als PDF speichern – auch als leeres Papierformular"
   ],
   "verlauf": [
+    {
+      "version": "0.51.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🔒 Geheim schreiben: im Einzelchat unter Erwachsenen können nur noch ihr zwei die Nachricht lesen – mit 🔑 Schlüsselbund fürs zweite Gerät",
+        "👤 Kontakt teilen und 👥 Konferenz (nur Ton, bis 4) direkt aus dem Chat",
+        "👋 Anklopfen: schreiben oder sprechen? – und 📼 Sprachnachricht, wenn keiner Zeit hat",
+        "🪑 Runder Tisch: sehen, wer schon da sitzt · 💼 Tasche mit PDF, Foto, Musik · 🙋 Gäste mit eigenem Link",
+        "📶 Ohne Netz geschrieben? Die Nachricht wartet mit 🕓 und geht von selbst raus · 🐌 ehrlicher Hinweis, wenn Laden dauert"
+      ]
+    },
     {
       "version": "0.50.1",
       "datum": "2026-11-09",

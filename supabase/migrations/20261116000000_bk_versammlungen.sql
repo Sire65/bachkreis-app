@@ -17,6 +17,7 @@ create table if not exists bk_versammlungen (
   beendet_am timestamptz,
   leiter text,
   protokoll_id text,
+  anwesenheit jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -50,6 +51,7 @@ alter table bk_versammlungen add column if not exists gestartet_am timestamptz;
 alter table bk_versammlungen add column if not exists beendet_am timestamptz;
 alter table bk_versammlungen add column if not exists leiter text;
 alter table bk_versammlungen add column if not exists protokoll_id text;
+alter table bk_versammlungen add column if not exists anwesenheit jsonb;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versammlungen_leiter_fk') then alter table bk_versammlungen add constraint bk_versammlungen_leiter_fk foreign key (leiter) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versammlungen_protokoll_id_fk') then alter table bk_versammlungen add constraint bk_versammlungen_protokoll_id_fk foreign key (protokoll_id) references bk_dokumente(id) on delete restrict; end if; end $$;
 

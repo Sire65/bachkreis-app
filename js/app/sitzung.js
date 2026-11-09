@@ -76,10 +76,12 @@ VIEWS.sitzung = {
 const L = { top: 0, start: 0, takt: null };
 function leitenHtml(s) {
   const to = s.tagesordnung || [], i = Math.min(L.top, to.length - 1), p = to[i] || {};
-  return `<div class="karte sitz-live"><div class="sitz-live-kopf"><b>TOP ${i + 1} von ${to.length}</b><span id="sitzUhr" class="sitz-uhr" aria-live="off">0:00</span>${p.minuten ? `<small>geplant ${p.minuten} Min.</small>` : ""}</div>
+  const anw = Object.values(s.anwesenheit || {}).filter((v) => v === "da").length;
+  return `<div class="knopfreihe"><button type="button" class="knopf" data-a="sitzAnwesenheit" data-x="${esc(s.id)}">👥 Anwesenheit${anw ? ` (${anw} da)` : ""}</button></div><div class="karte sitz-live"><div class="sitz-live-kopf"><b>TOP ${i + 1} von ${to.length}</b><span id="sitzUhr" class="sitz-uhr" aria-live="off">0:00</span>${p.minuten ? `<small>geplant ${p.minuten} Min.</small>` : ""}</div>
     <h3>${esc(p.titel || "")}</h3>
     <div class="feld"><label for="sitzNotiz">📝 Notiz</label><textarea id="sitzNotiz" rows="4" maxlength="2000">${esc(p.notiz || "")}</textarea></div>
     <div class="feld"><label for="sitzBeschluss">✅ Beschluss / Ergebnis</label><input id="sitzBeschluss" maxlength="1000" value="${esc(p.beschluss || "")}" placeholder="z. B. einstimmig angenommen"></div>
+    <label class="schalter"><span><b>⏭️ Vertagt</b><div class="hinweis">Kommt bei der nächsten Sitzung wieder auf die Tagesordnung</div></span><input type="checkbox" id="sitzVertagt" ${p.vertagt ? "checked" : ""}></label>
     <div class="knopfreihe"><button type="button" class="knopf" data-a="sitzTopGehe" data-x="${esc(s.id)}|${i - 1}" ${i ? "" : "disabled"}>‹ Zurück</button>${i < to.length - 1 ? `<button type="button" class="knopf haupt" data-a="sitzTopGehe" data-x="${esc(s.id)}|${i + 1}">✓ Nächster TOP ›</button>` : `<button type="button" class="knopf haupt" data-a="sitzEnde" data-x="${esc(s.id)}">⏹️ Sitzung beenden</button>`}</div></div>
     <div class="karte"><ol class="sitz-to">${to.map((x, k) => `<li class="${k === i ? "jetzt" : x.erledigt ? "ok" : ""}">${x.erledigt ? "✅ " : ""}${esc(x.titel)}</li>`).join("")}</ol></div>`;
 }
@@ -105,7 +107,10 @@ AKTIONEN.sitzAendern = (id) => sitzForm(hole("versammlungen", id));
 AKTIONEN.sitzSpeichern = async (id) => {
   const f = formWerte(document.getElementById("sitzForm")); if (!String(f.titel || "").trim()) return toast("Bitte einen Titel eingeben");
   const alt = id ? hole("versammlungen", id) : null;
-  const z = await speichere("versammlungen", { ...(alt || { id: neueId(), status: "planung", tagesordnung: [{ titel: "Begrüßung & Protokoll der letzten Sitzung", minuten: 5 }], leiter: S.ich.id }), art: f.art, titel: f.titel.trim(), zielgruppe: f.zielgruppe, beginn: vonLokal(f.beginn), ort: f.ort || null, frist_tage: Number(f.frist_tage) || 0 });
+  // ⏭️ 0.49.0 (wie KC-CLUB-PROTOKOLL-VERTAGT): vertagte Punkte der letzten Sitzung gleicher Art kommen als „Offen aus dem letzten Protokoll“ gleich nach der Begrüßung
+  const vertagt = alt ? [] : (letzteSitzung(f.art)?.tagesordnung || []).filter((p) => p.vertagt).map((p) => ({ titel: `Offen aus dem letzten Protokoll: ${p.titel.replace(/^Offen aus dem letzten Protokoll: /, "")}`, minuten: p.minuten || 10, vs_id: p.vs_id || null, von: p.vs_id ? "vorschlag" : null }));
+  if (vertagt.length) toast(`⏭️ ${vertagt.length} vertagte${vertagt.length > 1 ? " Punkte" : "r Punkt"} aus der letzten Sitzung übernommen`, 3500);
+  const z = await speichere("versammlungen", { ...(alt || { id: neueId(), status: "planung", tagesordnung: [{ titel: "Begrüßung & Protokoll der letzten Sitzung", minuten: 5 }, ...vertagt], leiter: S.ich.id }), art: f.art, titel: f.titel.trim(), zielgruppe: f.zielgruppe, beginn: vonLokal(f.beginn), ort: f.ort || null, frist_tage: Number(f.frist_tage) || 0 });
   blattZu(); toast("💾 Gespeichert"); zeige("sitzung", { id: z.id }, { ersetzen: !!alt });
 };
 AKTIONEN.sitzTopNeu = async (id) => {
@@ -115,7 +120,8 @@ AKTIONEN.sitzTopNeu = async (id) => {
 };
 AKTIONEN.sitzTopWeg = async (x) => { const [s, n] = holeS(x); if (s) await sichern(s, { tagesordnung: (s.tagesordnung || []).filter((_, i) => i !== Number(n)) }); };
 AKTIONEN.sitzTopHoch = async (x) => { const [s, n] = holeS(x); if (!s || !Number(n)) return; const t = [...(s.tagesordnung || [])], i = Number(n); [t[i - 1], t[i]] = [t[i], t[i - 1]]; await sichern(s, { tagesordnung: t }); };
-AKTIONEN.sitzVsUebernehmen = async (x) => { const [s, vid] = holeS(x), v = hole("vorschlaege", vid); if (!s || !v) return; await sichern(s, { tagesordnung: [...(s.tagesordnung || []), { titel: v.titel, von: "vorschlag", minuten: 10 }] }, "💡 Auf der Tagesordnung"); };
+AKTIONEN.sitzVsUebernehmen = async (x) => { const [s, vid] = holeS(x), v = hole("vorschlaege", vid); if (!s || !v) return; await sichern(s, { tagesordnung: [...(s.tagesordnung || []), { titel: v.titel, von: "vorschlag", vs_id: v.id, minuten: 10 }] }, "💡 Auf der Tagesordnung"); };
+export const letzteSitzung = (art, vor = null) => liste("versammlungen", (x) => x.art === art && x.status === "beendet" && (!vor || x.beginn < vor)).sort((a, b) => String(b.beginn).localeCompare(String(a.beginn)))[0] || null;
 const toText = (s) => (s.tagesordnung || []).map((p, i) => `${i + 1}. ${p.titel}${p.minuten ? ` (${p.minuten} Min.)` : ""}`).join("\n");
 AKTIONEN.sitzEinladen = async (id) => {
   const s = hole("versammlungen", id); if (!s) return; const an = empfaenger(s).filter((p) => p !== S.ich.id);
@@ -131,20 +137,44 @@ AKTIONEN.sitzErinnern = async (id) => {
 AKTIONEN.sitzStart = async (id) => { const s = hole("versammlungen", id); if (!s) return; L.top = 0; L.start = Date.now(); await sichern(s, { status: "laeuft", gestartet_am: new Date().toISOString(), leiter: s.leiter || S.ich.id }); };
 async function topMerken(s) {
   const to = [...(s.tagesordnung || [])], i = Math.min(L.top, to.length - 1); if (i < 0) return s;
-  to[i] = { ...to[i], notiz: document.getElementById("sitzNotiz")?.value || null, beschluss: document.getElementById("sitzBeschluss")?.value || null, erledigt: true };
+  to[i] = { ...to[i], notiz: document.getElementById("sitzNotiz")?.value || null, beschluss: document.getElementById("sitzBeschluss")?.value || null, vertagt: !!document.getElementById("sitzVertagt")?.checked, erledigt: true };
   return speichere("versammlungen", { ...s, tagesordnung: to });
 }
 AKTIONEN.sitzTopGehe = async (x) => { const [s, n] = holeS(x); if (!s) return; await topMerken(s); L.top = Math.max(0, Number(n)); L.start = Date.now(); zeichne(); };
-AKTIONEN.sitzEnde = async (id) => { let s = hole("versammlungen", id); if (!s) return; s = await topMerken(s); await sichern(s, { status: "beendet", beendet_am: new Date().toISOString() }, "⏹️ Sitzung beendet – jetzt das Protokoll erzeugen"); };
-export function protokollText(s, jetzt = new Date()) {
-  const to = s.tagesordnung || [];
-  return [`${SITZUNG_ARTEN[s.art] || "Sitzung"}: ${s.titel}`, `Datum: ${datum(s.beginn)}, ${uhr(s.beginn)}${s.beendet_am ? `–${uhr(s.beendet_am)}` : ""} Uhr${s.ort ? ` · Ort: ${s.ort}` : ""}`, `Sitzungsleitung: ${s.leiter ? name(s.leiter) : "–"}`, "",
-    ...to.flatMap((p, i) => [`TOP ${i + 1}: ${p.titel}`, ...(p.notiz ? [p.notiz] : []), ...(p.beschluss ? [`Beschluss: ${p.beschluss}`] : []), ""]),
+AKTIONEN.sitzEnde = async (id) => {
+  let s = hole("versammlungen", id); if (!s) return; s = await topMerken(s);
+  // 💡 0.49.0 (wie KC-CLUB-VORSCHLAG-BEHANDELT): Vorschläge auf der Tagesordnung gelten als behandelt – vertagte bleiben offen
+  let n = 0;
+  for (const p of (s.tagesordnung || []).filter((x) => x.vs_id && !x.vertagt)) {
+    const v = hole("vorschlaege", p.vs_id); if (!v || v.status !== "offen") continue;
+    try { await speichere("vorschlaege", { ...v, status: "erledigt", ergebnis: `Behandelt in „${s.titel}“ am ${datum(s.beginn)}${p.beschluss ? ` – ${p.beschluss}` : ""}` }); n++; } catch {}
+  }
+  await sichern(s, { status: "beendet", beendet_am: new Date().toISOString() }, `⏹️ Sitzung beendet${n ? ` · 💡 ${n} Vorschlag${n > 1 ? "e" : ""} als behandelt markiert` : ""} – jetzt das Protokoll erzeugen`);
+};
+// 👥 Anwesenheit (wie KC-CLUB-TEILNAHME): je eingeladene Person da / entschuldigt / fehlt
+AKTIONEN.sitzAnwesenheit = (id) => {
+  const s = hole("versammlungen", id); if (!s) return; const a = s.anwesenheit || {};
+  blatt("👥 Anwesenheit", `<ul class="liste sitz-anw">${empfaenger(s).sort((x, y) => name(x).localeCompare(name(y))).map((pid) => `<li><div class="fl">${esc(name(pid))}</div><div class="umschalter klein" role="group" aria-label="${esc(name(pid))}">${[["da", "✅ da"], ["entschuldigt", "🙏 entsch."], ["fehlt", "✖ fehlt"]].map(([k, t]) => `<button type="button" class="${a[pid] === k ? "an" : ""}" aria-pressed="${a[pid] === k}" data-a="sitzAnwSetzen" data-x="${esc(id)}|${esc(pid)}|${k}">${t}</button>`).join("")}</div></li>`).join("")}</ul>`);
+};
+AKTIONEN.sitzAnwSetzen = async (x) => { const [id, pid, k] = String(x).split("|"), s = hole("versammlungen", id); if (!s) return; await speichere("versammlungen", { ...s, anwesenheit: { ...(s.anwesenheit || {}), [pid]: k } }); AKTIONEN.sitzAnwesenheit(id); };
+// ✅☐ Aufgaben-Stand aus dem letzten Protokoll gleicher Art (wie KC-CLUB-PROTOKOLL-AUFGABEN-STAND)
+export function aufgabenAusText(inhalt) {
+  const z = String(inhalt || "").split("\n"), i = z.findIndex((x) => /^Aufgaben \(wer · was · bis wann\):/.test(x)); if (i < 0) return [];
+  const l = []; for (const x of z.slice(i + 1)) { if (!x.trim()) { if (l.length) break; continue; } const t = x.replace(/^\s*[-•☐✓]\s*/, "").trim(); if (/^Protokoll erstellt/.test(t)) break; if (t) l.push(t); }
+  return l;
+}
+export function protokollText(s, jetzt = new Date(), vorherAufgaben = []) {
+  const to = s.tagesordnung || [], anw = s.anwesenheit || {}, wer = (k) => Object.entries(anw).filter(([, v]) => v === k).map(([p]) => name(p)).sort();
+  return [`${SITZUNG_ARTEN[s.art] || "Sitzung"}: ${s.titel}`, `Datum: ${datum(s.beginn)}, ${uhr(s.beginn)}${s.beendet_am ? `–${uhr(s.beendet_am)}` : ""} Uhr${s.ort ? ` · Ort: ${s.ort}` : ""}`, `Sitzungsleitung: ${s.leiter ? name(s.leiter) : "–"}`,
+    ...(wer("da").length ? [`Anwesend (${wer("da").length}): ${wer("da").join(", ")}`] : []), ...(wer("entschuldigt").length ? [`Entschuldigt: ${wer("entschuldigt").join(", ")}`] : []), "",
+    ...(vorherAufgaben.length ? ["Aufgaben aus dem letzten Protokoll (bitte abhaken):", ...vorherAufgaben.map((a) => `☐ offen – ${a}`), ""] : []),
+    ...to.flatMap((p, i) => [`TOP ${i + 1}: ${p.titel}${p.vertagt ? " – ⏭️ vertagt" : ""}`, ...(p.notiz ? [p.notiz] : []), ...(p.beschluss ? [`Beschluss: ${p.beschluss}`] : []), ""]),
     "Aufgaben (wer · was · bis wann):", "- ", "", `Protokoll erstellt am ${datum(jetzt.toISOString())} mit der Bachkreis-App.`].join("\n");
 }
 AKTIONEN.sitzProtokoll = async (id) => {
   const s = hole("versammlungen", id); if (!s) return;
-  const d = await speichere("dokumente", { id: neueId(), titel: `Protokoll: ${s.titel} (${datum(s.beginn)})`, art: "protokoll", ordner: "protokolle", sichtbar: s.art === "vorstand" ? "vorstand" : "leitung", jahr: new Date(s.beginn).getFullYear(), inhalt: protokollText(s) });
+  const vor = letzteSitzung(s.art, s.beginn), vorherAufgaben = vor?.protokoll_id ? aufgabenAusText(hole("dokumente", vor.protokoll_id)?.inhalt) : [];
+  const d = await speichere("dokumente", { id: neueId(), titel: `Protokoll: ${s.titel} (${datum(s.beginn)})`, art: "protokoll", ordner: "protokolle", sichtbar: s.art === "vorstand" ? "vorstand" : "leitung", jahr: new Date(s.beginn).getFullYear(), inhalt: protokollText(s, new Date(), vorherAufgaben) });
   await sichern(s, { protokoll_id: d.id }, "🗒️ Protokoll liegt im Büro – Aufgaben ergänzen und freigeben");
   zeige("buerodok", { id: d.id });
 };

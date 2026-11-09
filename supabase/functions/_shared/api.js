@@ -9,7 +9,7 @@ import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
 import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
-import { termineFuer, ics, eigeneVorkommen, einwilligung } from "./logik.js";
+import { termineFuer, ics, eigeneVorkommen, einwilligung, nutzungAuswerten } from "./logik.js";
 import * as kom from "./kom/kern.js";
 
 const SITZUNG_TAGE = 180;
@@ -58,6 +58,14 @@ async function adminLage(db, s) {
   lage.wartung = { an: k.wartung === true || k.wartung === "true", text: k.wartung_text || null }; lage.module_aus = Array.isArray(k.module_aus) ? k.module_aus : [];
   const sp = await speicherLage(db, s); if (sp.json?.ok) lage.speicher = sp.json;
   return { status: 200, json: { ok: true, ...lage } };
+}
+// 📈 0.49.0 „So nutzen wir die App“: für alle Angemeldeten, nur Summen (nutzungAuswerten in logik.js) – nie Personen, nie Inhalte
+async function nutzungLage(db, body) {
+  const tage = [7, 30, 90].includes(Number(body.tage)) ? Number(body.tage) : 30, ab = `now() - interval '${tage * 2} days'`;
+  const aenderungen = await db.q(`select zeit, tabelle, md5(coalesce(wer, '')) as wer from bk_aenderungen where zeit > ${ab} and tabelle not in ('nachricht_status', 'aenderungen') order by zeit limit 50000`);
+  const nachrichten = await db.q(`select zeit from bk_nachrichten where zeit > ${ab} and geloescht_am is null limit 50000`);
+  const versand = await db.q(`select zeit, kanal from bk_versand where zeit > ${ab} limit 50000`);
+  return { status: 200, json: { ok: true, ...nutzungAuswerten({ aenderungen, nachrichten, versand }, tage) } };
 }
 async function speicherLage(db, s) {
   if (!rollenMit(s.person.rollen || []).some((r) => r === "leitung" || r === "admin")) return fehler(403, "NUR_LEITUNG");
@@ -506,6 +514,7 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     if (aktion === "online") return await online(db, s, body);
     if (aktion === "zugang_lage") return await zugangLage(db, s);
     if (aktion === "speicher_lage") return await speicherLage(db, s);
+    if (aktion === "nutzung_lage") return await nutzungLage(db, body);
     if (aktion === "anklopfen") return await anklopfen(db, s, body, dienste);
     if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
       const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);

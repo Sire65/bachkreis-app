@@ -578,9 +578,11 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       // 🎬 0.48.0 nur Leitung/Vorstand/Admin planen, laden ein und leiten; Tagesordnung bleibt eine einfache Liste
       if (!hatRolle(ctx, SITZUNG_PLANER)) return { ok: false, grund: "NUR_LEITUNG" };
       const to = (Array.isArray(neu.tagesordnung) ? neu.tagesordnung : alt?.tagesordnung || []).slice(0, 30).map((p) => ({ titel: String(p?.titel ?? "").slice(0, 160), minuten: Math.max(0, Math.min(240, Math.round(Number(p?.minuten) || 0))) || null,
-        von: p?.von ? String(p.von).slice(0, 40) : null, notiz: String(p?.notiz ?? "").slice(0, 2000) || null, beschluss: String(p?.beschluss ?? "").slice(0, 1000) || null, erledigt: !!p?.erledigt })).filter((p) => p.titel);
+        von: p?.von ? String(p.von).slice(0, 40) : null, notiz: String(p?.notiz ?? "").slice(0, 2000) || null, beschluss: String(p?.beschluss ?? "").slice(0, 1000) || null, erledigt: !!p?.erledigt,
+        vertagt: !!p?.vertagt, vs_id: p?.vs_id ? String(p.vs_id).slice(0, 80) : null })).filter((p) => p.titel);
+      const anw = Object.fromEntries(Object.entries(neu.anwesenheit && typeof neu.anwesenheit === "object" ? neu.anwesenheit : alt?.anwesenheit || {}).slice(0, 300).filter(([k, v]) => /^[\w-]{1,80}$/.test(k) && ["da", "entschuldigt", "fehlt"].includes(v)));
       const titel = String(neu.titel ?? alt?.titel ?? "").trim().slice(0, 120); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
-      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "beginn", "ort", "eingeladen_am", "erinnert_am", "gestartet_am", "beendet_am", "protokoll_id", "leiter", "geloescht_am"]), titel, tagesordnung: to,
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "beginn", "ort", "eingeladen_am", "erinnert_am", "gestartet_am", "beendet_am", "protokoll_id", "leiter", "geloescht_am"]), titel, tagesordnung: to, anwesenheit: anw,
         art: SITZUNG_ARTEN[neu.art] ? neu.art : alt?.art || "vorstand", zielgruppe: SITZUNG_FUER[neu.zielgruppe] ? neu.zielgruppe : alt?.zielgruppe || "vorstand",
         status: ["planung", "eingeladen", "laeuft", "beendet"].includes(neu.status) ? neu.status : alt?.status || "planung", frist_tage: Math.max(0, Math.min(30, Math.round(Number(neu.frist_tage ?? alt?.frist_tage ?? 3)))) } };
     }

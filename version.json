@@ -1,13 +1,23 @@
 {
-  "version": "0.48.0",
-  "datum": "2026-11-08",
+  "version": "0.49.0",
+  "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
-    "🎬 Sitzungen: Vorstand, Elternabend, Leitungsrunde – Schritt für Schritt vorbereiten, einladen, leiten und das Protokoll gleich mitschreiben",
-    "📁 Meine Unterlagen: Bescheinigungen, Verträge und Atteste je Familie an einem Ort",
-    "🪧 Schilder-Druckerei: Wegweiser, Reserviert, Kuchenbuffet, Pultkarten im Bachkreis-Design"
+    "📈 So nutzen wir die App: wann am meisten los ist, Nachrichten und Benachrichtigungen – für alle, ohne Namen",
+    "🎬 Sitzungen: Anwesenheit, vertagte Punkte kommen automatisch wieder, Vorschläge werden als behandelt markiert",
+    "🔎 Protokolle prüft der Schriftführer, bevor alle sie lesen",
+    "🕰️ Rotes ✕ an der Stunden-Uhr – auf Wunsch ganz aus"
   ],
   "verlauf": [
+    {
+      "version": "0.48.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🎬 Sitzungen: Vorstand, Elternabend, Leitungsrunde – Schritt für Schritt vorbereiten, einladen, leiten und das Protokoll gleich mitschreiben",
+        "📁 Meine Unterlagen: Bescheinigungen, Verträge und Atteste je Familie an einem Ort",
+        "🪧 Schilder-Druckerei: Wegweiser, Reserviert, Kuchenbuffet, Pultkarten im Bachkreis-Design"
+      ]
+    },
     {
       "version": "0.47.0",
       "datum": "2026-11-08",

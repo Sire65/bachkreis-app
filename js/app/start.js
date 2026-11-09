@@ -24,6 +24,7 @@ import { passFuer, meineFahrten } from "./notfallpass.js";
 import { boerseFuerMich, helferOffen } from "./boerse.js";
 import { momenteOffen } from "./jahrbuch.js";
 import { naechsteSitzung, sitzungenFuerMich } from "./sitzung.js";
+import { pruefenFuerMich } from "./pruefung.js";
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
@@ -100,7 +101,7 @@ export const KACHELN = {
     { id: "erstattung", sym: "💶", t: "Erstattung", u: "Fahrtkosten · Auslagen mit Beleg", v: "erstattung", nur: () => darfErstattung(), zahl: () => erOffen() },
     { id: "rueckmeldungen", sym: "🆘", t: "Hilfe & Rückmeldung", u: "Klappt etwas nicht? · Idee · Lob", v: "rueckmeldungen", zahl: () => rmNeu() },
     { id: "protokolle", sym: "🗒️", t: "Protokolle", u: "Elternabende · Besprechungen · meine Aufgaben", v: "protokolle", zahl: () => neueProtokolle() },
-    { id: "sitzungen", sym: "🎬", t: "Sitzungen", u: () => { const s = naechsteSitzung(); return s ? `${new Date(s.beginn).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} · ${s.titel}` : "Vorbereiten · Einladen · Leiten"; }, v: "sitzungen", nur: () => sitzungenFuerMich().length > 0 || hatRolle("admin", "leitung", "vorstand") },
+    { id: "sitzungen", sym: "🎬", t: "Sitzungen", u: () => { const s = naechsteSitzung(); return s ? `${new Date(s.beginn).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} · ${s.titel}` : "Vorbereiten · Einladen · Leiten"; }, v: "sitzungen", nur: () => sitzungenFuerMich().length > 0 || hatRolle("admin", "leitung", "vorstand"), zahl: () => pruefenFuerMich() },
     { id: "schilder", sym: "🪧", t: "Schilder-Druckerei", u: "Wegweiser · Reserviert · Buffet · Pultkarten", v: "schilder", nur: () => istVerwalter() || istEltern() },
     { id: "boerse", sym: "🛍️", t: "Börse & Helfer", u: "Biete · Suche · Helfer gesucht", v: "boerse", nur: () => boerseFuerMich(), zahl: () => helferOffen() },
     { id: "jahrbuch", sym: "📖", t: "Jahrbuch", u: "Unser Bachkreis-Jahr zum Blättern", v: "jahrbuch", zahl: () => momenteOffen() },
@@ -145,6 +146,7 @@ export const KACHELN = {
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
     { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },
+    { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung" },
     { id: "ueberblick", sym: "🗺️", t: "Alles auf einen Blick", u: "Jeder Bereich der App", v: "ueberblick" },
     { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt", v: "hilfe" },
     { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter() },

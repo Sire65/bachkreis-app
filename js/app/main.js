@@ -44,6 +44,8 @@ import "./spiele.js"; // 🎲 0.47.0
 import "./sitzung.js"; // 🎬 0.48.0
 import "./unterlagen.js"; // 📁 0.48.0
 import "./schilder.js"; // 🪧 0.48.0
+import "./nutzung.js"; // 📈 0.49.0
+import "./pruefung.js"; // 🔎 0.49.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";

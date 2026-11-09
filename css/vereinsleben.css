@@ -160,3 +160,21 @@
 .sd-pult-innen { display: grid; place-items: center; align-content: center; position: relative; } .sd-pult-innen b { font-size: 9cqw; } .sd-pult-innen small { font-size: 3cqw; } .sd-pult-innen .sd-logo { width: 8cqw; }
 @media print { body.sd-druck * { visibility: hidden; } body.sd-druck #sdBlatt, body.sd-druck #sdBlatt * { visibility: visible; } body.sd-druck #sdBlatt { position: absolute; inset: 0; margin: 0; gap: 0; }
   body.sd-druck .sd-schild, body.sd-druck .sd-pultkarte { border-radius: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid; } body.sd-druck .sd-quer .sd-schild { height: 190mm; aspect-ratio: auto; } body.sd-druck .sd-hoch .sd-schild { height: 277mm; aspect-ratio: auto; } }
+/* 📈 0.49.0 So nutzen wir die App */
+.nz-zahlen { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 10px 0; }
+.nz-zahl { background: var(--karte); border-radius: var(--radius); box-shadow: var(--schatten); padding: 10px; display: grid; justify-items: center; text-align: center; }
+.nz-zahl span { font-size: 1.4rem; } .nz-zahl b { font-size: 1.5rem; } .nz-zahl small { color: var(--grau); }
+.nz-trend { font-size: 1rem; margin-left: 4px; color: var(--grau); } .nz-trend.hoch { color: var(--gruen); } .nz-trend.runter { color: var(--rot); }
+.nz-feld { display: grid; grid-template-columns: 2.2em repeat(24, minmax(0, 1fr)); gap: 2px; font-size: .7rem; min-width: 0; }
+.nz-feld i { min-width: 0; } .nz-h { white-space: nowrap; overflow: hidden; }
+.nz-feld i { aspect-ratio: 1; border-radius: 3px; background: color-mix(in srgb, var(--gold) calc(var(--a) * 100%), var(--karte2)); }
+.nz-wt { color: var(--grau); font-weight: 700; } .nz-h { color: var(--grau); }
+.nz-balken { display: flex; align-items: flex-end; gap: 2px; height: 120px; border-bottom: 1px solid var(--linie); }
+.nz-tag { flex: 1; height: 100%; display: flex; flex-direction: column-reverse; } .nz-tag i { display: block; }
+.nz-balken .n, .nz-legende .n { background: #1e88e5; } .nz-balken .p, .nz-legende .p { background: #f2b705; } .nz-balken .m, .nz-legende .m { background: #43a047; }
+.nz-legende { font-size: .8rem; color: var(--grau); } .nz-legende i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 2px 0 8px; }
+.nz-top { padding-left: 1.4em; } .nz-top li span { display: inline-block; min-width: 70%; }
+/* 🔎 0.49.0 Protokoll-Prüfung · 👥 Anwesenheit */
+.pf-karte { border-left: 5px solid var(--gold); }
+.pf-wunsch { display: flex; gap: 8px; align-items: flex-start; } .pf-ok { text-decoration: line-through; color: var(--grau); }
+.sitz-anw li { flex-wrap: wrap; } .sitz-anw .umschalter { margin: 0; } .sitz-anw .umschalter button { padding: 6px 8px; font-size: .82rem; }

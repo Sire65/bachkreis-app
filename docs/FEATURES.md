@@ -129,6 +129,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F119 | 🎬 Sitzung vorbereiten & leiten mit Protokoll | ✅ | tests/paket4.test.mjs |
 | BK-F120 | 📁 Unterlagen je Familie | ✅ | tests/paket4.test.mjs |
 | BK-F121 | 🪧 Schilder-Druckerei | ✅ | tests/paket4.test.mjs |
+| BK-F122 | 📈 So nutzen wir die App (nur Summen) | ✅ | tests/paket5.test.mjs |
+| BK-F123 | 🎬 Sitzung: Anwesenheit, vertagt, Vorschläge behandelt, Aufgaben-Stand | ✅ | tests/paket5.test.mjs |
+| BK-F124 | 🔎 Protokoll-Prüfung durch den Schriftführer | ✅ | tests/paket5.test.mjs |
+| BK-F125 | ⚡ Abfragen bei Aussetzern wiederholen, 🕰️ ✕ an der Uhr | ✅ | tests/paket5.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

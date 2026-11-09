@@ -1,5 +1,15 @@
 # Änderungen
 
+## 0.49.0 DEV – 09.11.2026
+Abgleich mit der KC Club App 2.80x–2.88x, Paket 5 „Feinschliff“:
+- 📈 **So nutzen wir die App** (wie KC-CLUB-NUTZUNG-ALLE): für alle unter Technik – 7/30/90 Tage, Aktionen, „machen mit“ (erst ab 3), Nachrichten, Benachrichtigungen mit ↑↓ zum Zeitraum davor, Farbfeld Wochentag × Uhrzeit („Am meisten los: mittwochs gegen 19 Uhr“), pro Tag, beliebteste Bereiche. Nur Summen (gemeinsame Auswertung `nutzungAuswerten` in logik.js, Server-Aktion `nutzung_lage`) – nie Personen, nie Inhalte
+- 🎬 **Sitzungen**: 👥 Anwesenheit (da / entschuldigt / fehlt) im Protokoll; ⏭️ vertagte Punkte kommen bei der nächsten Sitzung gleicher Art als „Offen aus dem letzten Protokoll“ (wie KC-CLUB-PROTOKOLL-VERTAGT); 💡 Vorschläge auf der Tagesordnung werden beim Beenden als behandelt abgeschlossen (KC-CLUB-VORSCHLAG-BEHANDELT); ☐ Aufgaben aus dem letzten Protokoll stehen im neuen zum Abhaken (KC-CLUB-PROTOKOLL-AUFGABEN-STAND)
+- 🔎 **Protokoll-Prüfung durch den Schriftführer** (wie KC-CLUB-PROTOKOLL-PRUEFUNG): „📨 Zur Prüfung an …“, Prüfer: „✅ Stimmt so – freigeben“ oder „✏️ Änderung wünschen“; Wünsche als Abhak-Liste, „📨 Nochmal zur Prüfung“; Veröffentlichen erst nach Freigabe, sonst „📢 Trotzdem veröffentlichen“ mit Vermerk; 🔔 Erinnern 1× am Tag; Zahl an der Sitzungs-Kachel
+- ⚡ **Kurze Server-Aussetzer** (wie KC-CLUB-DB-AUSSETZER): reine Abfragen fragt die App nach 4 und 8 Sekunden selbst nochmal – Speichern, Senden, Anmelden nie doppelt
+- 🕰️ **Rotes ✕ an der Stunden-Uhr** (wie KC-CLUB-UHR-X) mit der Frage „ganz aus?“
+- Migration 20261117000000_bk_feinschliff.sql (Anwesenheit, Prüf-Felder an Dokumenten); tests/paket5.test.mjs
+
+
 ## 0.48.0 DEV – 08.11.2026
 Abgleich mit der KC Club App, Paket 4 „Leitung“ (letztes Paket der Liste):
 - 🎬 **Sitzung vorbereiten & leiten** (wie KC-CLUB-SITZUNG-ABLAUF, -SCHRITTE, -FRIST): Vorstandssitzung, Elternabend, Leitungsrunde, Mitgliederversammlung – Schritte mit Häkchen: 💡 offene Vorschläge übernehmen · 📝 Tagesordnung (Minuten, Reihenfolge, voraussichtliches Ende) · 📨 Einladen mit Frist („bis spätestens …“, rot wenn verpasst) an die Zielgruppe · 🔔 Erinnern · ▶️ Leiten TOP für TOP mit Uhr, Notiz und Beschluss · 🗒️ Protokoll als fertiger Text im Büro-Ordner „Protokolle“ (danach wie gewohnt freigeben). Planen: Leitung, Vorstand, Admin; Eingeladene sehen die Tagesordnung ab der Einladung. Tabelle bk_versammlungen (bk_sitzungen ist die Anmelde-Sitzung)

@@ -12,6 +12,8 @@ import { netzMessung } from "./netz.js";
 const ABGLEICH_MS = 30000;
 const TOKEN_KEY = (art) => (art === "verwaltung" ? "bk_token_verwaltung" : "bk_token");
 
+const NUR_LESEN = /^(laden|abgleich|wach|online|admin_lage|zugang_lage|speicher_lage|nutzung_lage)$/;
+export const AUSSETZER = { zahl: 0, zuletzt: null };
 export class AnmeldungNoetig extends Error { constructor() { super("Anmeldung nötig"); this.code = "ANMELDUNG"; } }
 
 export function erzeugeSupabaseAdapter({ url = "", quelle = "app" } = {}) {
@@ -24,7 +26,18 @@ export function erzeugeSupabaseAdapter({ url = "", quelle = "app" } = {}) {
   const hinweis = (t) => { for (const f of meldungen) f(t); };
   const tokenLesen = () => { try { return localStorage.getItem(TOKEN_KEY(quelle)); } catch { return null; } };
 
+  // ⚡ 0.49.0 (wie KC-CLUB-DB-AUSSETZER): antwortet der Server kurz nicht (Netzfehler, 502/503/504), fragt die App bei reinen Abfragen
+  // nach 4 und 8 Sekunden selbst nochmal – Speichern, Senden und Anmelden nie doppelt. Aussetzer werden gezählt (aussetzer()).
   async function api(aktion, nutzlast = {}) {
+    const lesend = NUR_LESEN.test(aktion);
+    for (let versuch = 0; ; versuch++) {
+      try { const r = await apiEinmal(aktion, nutzlast); if (!lesend || ![502, 503, 504].includes(r.status) || versuch >= 2) return r; }
+      catch (e) { if (!lesend || e instanceof AnmeldungNoetig || versuch >= 2) throw e; }
+      AUSSETZER.zahl++; AUSSETZER.zuletzt = new Date().toISOString();
+      await new Promise((ok) => setTimeout(ok, versuch ? 8000 : 4000));
+    }
+  }
+  async function apiEinmal(aktion, nutzlast = {}) {
     const t0 = performance.now(); let r; // 📡 nur Dauer und Erfolg fürs Verbindungs-Symbol
     try { r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { "x-bk-token": token } : {}) }, body: JSON.stringify({ aktion, quelle, ...nutzlast }) }); }
     catch (e) { netzMessung(0, false, "keine Antwort"); throw e; }

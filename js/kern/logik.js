@@ -557,3 +557,30 @@ export function repertoire(db) {
   for (const c of db.liste("chronik", (x) => x.programm)) for (const z of String(c.programm).split("\n").map((s) => s.trim()).filter(Boolean)) dazu(z.toLowerCase(), z, c.jahr, c.titel);
   return [...m.values()].map((e) => ({ ...e, auftritte: e.auftritte.sort((a, b) => (b.jahr || 0) - (a.jahr || 0)) })).sort((a, b) => a.anzeige.localeCompare(b.anzeige, "de"));
 }
+
+// 📈 0.49.0 „So nutzen wir die App“ (wie KC-CLUB-NUTZUNG-ALLE): nur Summen – nie Personen, nie Inhalte. Gemeinsam für App (Vorführung) und Server.
+// Eingang: aenderungen [{zeit, tabelle, wer}], nachrichten [{zeit}], versand [{zeit, kanal}] aus dem doppelten Zeitraum (für den Vergleich ↑↓).
+const berlinTeile = (iso) => { const p = new Intl.DateTimeFormat("de-DE", { timeZone: "Europe/Berlin", weekday: "short", hour: "2-digit", hour12: false, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(iso));
+  const g = (t) => p.find((x) => x.type === t)?.value; return { wt: g("weekday")?.replace(".", ""), h: Number(g("hour")) % 24, tag: `${g("year")}-${g("month")}-${g("day")}` }; };
+export const WOCHENTAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+export function nutzungAuswerten({ aenderungen = [], nachrichten = [], versand = [] }, tage = 30, jetzt = new Date()) {
+  const ende = jetzt.getTime(), start = ende - tage * 86400000, vorher = start - tage * 86400000;
+  const im = (z) => { const t = new Date(z).getTime(); return t > start && t <= ende; }, davor = (z) => { const t = new Date(z).getTime(); return t > vorher && t <= start; };
+  const a = aenderungen.filter((x) => im(x.zeit)), a0 = aenderungen.filter((x) => davor(x.zeit));
+  const feld = WOCHENTAGE.map(() => Array(24).fill(0));
+  for (const x of a) { const b = berlinTeile(x.zeit), w = WOCHENTAGE.indexOf(b.wt); if (w >= 0) feld[w][b.h]++; }
+  let spitze = { w: 0, h: 0, n: 0 }; feld.forEach((r, w) => r.forEach((n, h) => { if (n > spitze.n) spitze = { w, h, n }; }));
+  const leute = (l) => new Set(l.map((x) => x.wer).filter(Boolean)).size;
+  const proTag = {}; for (const x of a) { const t = berlinTeile(x.zeit).tag; (proTag[t] ||= { aktiv: new Set(), nachrichten: 0, push: 0, mail: 0 }).aktiv.add(x.wer); }
+  for (const n of nachrichten.filter((x) => im(x.zeit))) { const t = berlinTeile(n.zeit).tag; (proTag[t] ||= { aktiv: new Set(), nachrichten: 0, push: 0, mail: 0 }).nachrichten++; }
+  for (const v of versand.filter((x) => im(x.zeit) && ["push", "mail"].includes(x.kanal))) { const t = berlinTeile(v.zeit).tag; (proTag[t] ||= { aktiv: new Set(), nachrichten: 0, push: 0, mail: 0 })[v.kanal]++; }
+  const bereiche = {}; for (const x of a) bereiche[x.tabelle] = (bereiche[x.tabelle] || 0) + 1;
+  const zahl = (jetztN, vorN) => ({ n: jetztN, vorher: vorN, trend: vorN ? (jetztN > vorN * 1.1 ? "hoch" : jetztN < vorN * 0.9 ? "runter" : "gleich") : null });
+  const mitglieder = leute(a);
+  return { tage, feld, spitze: spitze.n ? { tag: WOCHENTAGE[spitze.w], stunde: spitze.h } : null,
+    aktionen: zahl(a.length, a0.length), mitglieder: zahl(mitglieder >= 3 ? mitglieder : null, leute(a0) >= 3 ? leute(a0) : null),
+    nachrichten: zahl(nachrichten.filter((x) => im(x.zeit)).length, nachrichten.filter((x) => davor(x.zeit)).length),
+    benachrichtigungen: zahl(versand.filter((x) => im(x.zeit) && ["push", "mail"].includes(x.kanal)).length, versand.filter((x) => davor(x.zeit) && ["push", "mail"].includes(x.kanal)).length),
+    tage_liste: Object.entries(proTag).sort(([x], [y]) => x.localeCompare(y)).map(([tag, v]) => ({ tag, aktiv: v.aktiv.size >= 3 ? v.aktiv.size : 0, nachrichten: v.nachrichten, push: v.push, mail: v.mail })),
+    bereiche: Object.entries(bereiche).sort((x, y) => y[1] - x[1]).slice(0, 10).map(([t, n]) => ({ t, n })) };
+}

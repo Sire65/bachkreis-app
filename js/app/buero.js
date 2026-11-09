@@ -3,6 +3,7 @@
 // Dokumente liegen in der vorhandenen Tabelle „dokumente“ (kein zweiter Speicher): Datei hochladen, Text schreiben oder Link.
 // Aus 📄 Vorlagen entsteht ein Brief: Platzhalter füllen → 🖨️ drucken (Briefbogen) · 📣 als Rundschreiben senden · 💾 in „Elternbriefe“ ablegen.
 // Sichtbarkeit „Büro: Leitung & Lehrkräfte“ bzw. „Büro: Vorstand & Leitung“ prüft der Server (bueroDarf in regeln.js).
+import { pruefungHtml, vorVeroeffentlichen } from "./pruefung.js";
 import { S, VIEWS, zeige, zeichne, kopf, name, rollen, db } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz, datum, uhr, frage, BACHKREIS_LOGO } from "../kern/ui.js";
 import { liste, hole, speichere, loesche, konfig } from "../kern/daten.js";
@@ -73,7 +74,7 @@ VIEWS.buerodok = {
       <div class="knopfreihe">${d.datei ? `<button type="button" class="knopf haupt" data-a="dokOeffnen" data-x="${esc(d.id)}">📎 Datei öffnen</button>` : ""}${d.url ? `<a class="knopf" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer">🔗 Link öffnen ↗</a>` : ""}
       ${d.art === "vorlage" ? `<button type="button" class="knopf haupt" data-a="buBriefNeu" data-x="${esc(d.id)}">✉️ Brief daraus</button>` : ""}${d.inhalt ? `<button type="button" class="knopf" data-a="buDrucken" data-x="${esc(d.id)}">🖨️ Drucken</button>` : ""}
       <button type="button" class="knopf" data-a="buBearbeiten" data-x="${esc(d.id)}">✏️ Bearbeiten</button>
-      ${d.art === "protokoll" ? `<button type="button" class="knopf" data-a="protokollFreigeben" data-x="${esc(d.id)}">📣 ${["leitung", "vorstand"].includes(d.sichtbar) ? "Für Mitglieder freigeben" : "Freigabe ändern"}</button>` : ""}</div></div>`;
+      ${d.art === "protokoll" ? `<button type="button" class="knopf" data-a="protokollVeroeffentlichen" data-x="${esc(d.id)}">📣 ${["leitung", "vorstand"].includes(d.sichtbar) ? "Für Mitglieder freigeben" : "Freigabe ändern"}</button>` : ""}</div></div>${pruefungHtml(d)}`;
   },
 };
 AKTIONEN.buOrdner = (k) => zeige("buero", { ordner: k });
@@ -157,3 +158,6 @@ AKTIONEN.buProtokollNeu = () => {
     inhalt: `Besprechung am ${datum(new Date().toISOString())}\nOrt: \nAnwesend: ${name(S.ich)}\nProtokoll: ${name(S.ich)}\n\nTOP 1 – \n\nTOP 2 – \n\nBeschlüsse:\n- \n\nAufgaben (wer · was · bis wann):\n- \n\nNächste Besprechung: ` });
 };
 AKTIONEN.dokOeffnen = AKTIONEN.dokOeffnen || (async (id) => { const d = hole("dokumente", id); try { await dateiOeffnen(String(d.datei).replace(/^datei:/, ""), d.titel, "application/pdf"); } catch (e) { toast("⚠️ " + e.message); } });
+
+// 🔎 0.49.0 erst prüfen lassen, dann veröffentlichen (ohne Freigabe nur mit Rückfrage)
+AKTIONEN.protokollVeroeffentlichen = (id) => vorVeroeffentlichen(hole("dokumente", id), () => AKTIONEN.protokollFreigeben(id));

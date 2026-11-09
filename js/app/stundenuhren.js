@@ -3,7 +3,7 @@
 // Mehrere gewählt → jede Stunde die nächste. Aufnahmen werden erst beim ersten Gebrauch geladen; fehlen sie (offline), klingt eine selbst
 // erzeugte Glocke – nie Stille. Nur bei offener App; nachts (22–7 Uhr) ohne Ton.
 import { einst, einstSetzen } from "./zustand.js";
-import { esc, AKTIONEN, toast } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
 
 const CC_BY_SA = "CC BY-SA 4.0", GEKUERZT = "gekürzt, lautstärkeangepasst";
 export const UHR_AUFNAHMEN = {
@@ -60,6 +60,10 @@ export function stundenuhrZeigen(id, h, tonImmer = false) {
   const u = document.createElement("div"); u.className = "kuckuck stundenuhr"; u.setAttribute("role", "img"); u.setAttribute("aria-label", `${U.t}: ${h} Uhr`); u.title = `${U.t} · ${h} Uhr – antippen schließt`;
   u.innerHTML = `${turmSvg(h, U.sym)}<div class="kk-zahl" aria-hidden="true">${h}</div><div class="su-name">${esc(U.t)}</div>`;
   const zu = () => { clearTimeout(u._t); u.classList.remove("an"); setTimeout(() => u.remove(), 600); };
+  // ✕ 0.49.0 (wie KC-CLUB-UHR-X): rotes X schließt – danach die Frage, ob die Uhr ganz aus soll (nicht bei der Probe in den Einstellungen)
+  const x = document.createElement("button"); x.type = "button"; x.className = "su-x"; x.setAttribute("aria-label", "Uhr schließen"); x.textContent = "✕";
+  x.addEventListener("click", (e) => { e.stopPropagation(); zu(); if (!tonImmer) uhrAusFragen(); });
+  u.appendChild(x); u.setAttribute("role", "group");
   document.body.appendChild(u); requestAnimationFrame(() => requestAnimationFrame(() => u.classList.add("an")));
   const ablauf = async () => {
     try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); await Promise.race([audio.resume?.(), new Promise((r) => setTimeout(r, 1500))]); } catch { audio = null; }
@@ -78,6 +82,11 @@ export function stundenuhrZeigen(id, h, tonImmer = false) {
   }
   ablauf(); return n;
 }
+function uhrAusFragen() {
+  blatt("🕰️ Uhr zur vollen Stunde", `<p>Soll die Uhr zur vollen Stunde ganz aus sein? Du kannst sie unter ⚙️ › ✨ Effekte jederzeit wieder einschalten.</p>
+    <div class="knopfspalte"><button type="button" class="knopf haupt" data-a="uhrGanzAus">🔕 Ja, ganz aus</button><button type="button" class="knopf" data-a="blattZu">Nein, nur jetzt</button></div>`);
+}
+AKTIONEN.uhrGanzAus = () => { einstSetzen("kuckuck", false); blattZu(); toast("🔕 Die Uhr zur vollen Stunde ist aus"); };
 AKTIONEN.stundenuhrUm = (wert, el) => { // data-c: (Wert, Element) – die Uhr steht in data-x
   const id = el?.dataset?.x, l = new Set(stundenuhrenGewaehlt()); if (!id) return; if (el.checked) l.add(id); else l.delete(id);
   if (!l.size) { toast("Mindestens eine Uhr bleibt ausgewählt"); if (el) el.checked = true; return; }

@@ -548,6 +548,13 @@ create table if not exists bk_dokumente (
   ordner text check (ordner is null or ordner in ('protokolle', 'noten', 'grafik', 'vorlagen', 'elternbriefe', 'konzerte', 'vertraege', 'presse', 'finanzen', 'schule', 'archiv')),
   jahr integer,
   inhalt text,
+  pruefer text,
+  pruef_status text check (pruef_status is null or pruef_status in ('offen', 'wuensche', 'frei', 'ohne')),
+  pruef_wuensche jsonb,
+  pruef_von text,
+  pruef_am timestamptz,
+  geprueft_am timestamptz,
+  pruef_erinnert timestamptz,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -1210,6 +1217,7 @@ create table if not exists bk_versammlungen (
   beendet_am timestamptz,
   leiter text,
   protokoll_id text,
+  anwesenheit jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -2059,6 +2067,8 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_anfra
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chronik_projekt_id_fk') then alter table bk_chronik add constraint bk_chronik_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chronik_aufnahme_id_fk') then alter table bk_chronik add constraint bk_chronik_aufnahme_id_fk foreign key (aufnahme_id) references bk_aufnahmen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_chronik_partner_id_fk') then alter table bk_chronik add constraint bk_chronik_partner_id_fk foreign key (partner_id) references bk_partner(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_dokumente_pruefer_fk') then alter table bk_dokumente add constraint bk_dokumente_pruefer_fk foreign key (pruefer) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_dokumente_pruef_von_fk') then alter table bk_dokumente add constraint bk_dokumente_pruef_von_fk foreign key (pruef_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_person_id_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_aufgabe_id_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_aufgabe_id_fk foreign key (aufgabe_id) references bk_uebeaufgaben(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_uebe_ergebnisse_rueckmeldung_von_fk') then alter table bk_uebe_ergebnisse add constraint bk_uebe_ergebnisse_rueckmeldung_von_fk foreign key (rueckmeldung_von) references bk_personen(id) on delete restrict; end if; end $$;

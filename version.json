@@ -1,14 +1,23 @@
 {
-  "version": "0.49.0",
+  "version": "0.50.0",
   "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
-    "📈 So nutzen wir die App: wann am meisten los ist, Nachrichten und Benachrichtigungen – für alle, ohne Namen",
-    "🎬 Sitzungen: Anwesenheit, vertagte Punkte kommen automatisch wieder, Vorschläge werden als behandelt markiert",
-    "🔎 Protokolle prüft der Schriftführer, bevor alle sie lesen",
-    "🕰️ Rotes ✕ an der Stunden-Uhr – auf Wunsch ganz aus"
+    "📞 Anrufen und 🎥 Videoanruf direkt aus dem Einzelchat – Kinder nur mit den eigenen Eltern",
+    "🪑 Runder Tisch: Online-Treffen mit Bild und Ton für bis zu 8 Erwachsene, auch zur Sitzung",
+    "🛟 Fernhilfe: die Leitung schaut mit auf deinen Bildschirm und zeigt dir den Weg"
   ],
   "verlauf": [
+    {
+      "version": "0.49.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "📈 So nutzen wir die App: wann am meisten los ist, Nachrichten und Benachrichtigungen – für alle, ohne Namen",
+        "🎬 Sitzungen: Anwesenheit, vertagte Punkte kommen automatisch wieder, Vorschläge werden als behandelt markiert",
+        "🔎 Protokolle prüft der Schriftführer, bevor alle sie lesen",
+        "🕰️ Rotes ✕ an der Stunden-Uhr – auf Wunsch ganz aus"
+      ]
+    },
     {
       "version": "0.48.0",
       "datum": "2026-11-08",

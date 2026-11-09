@@ -26,6 +26,7 @@ import { textHtml, erkennen, terminErkennen, NA_FARBEN } from "../kern/chattext.
 import { kinderVon as kinderVonL, termineFuer, antwortVon, tagIso } from "../kern/logik.js";
 import { terminVorlage, eigenTerminVorlage } from "./termine.js";
 import { erwaehnteIn } from "../kern/schema.js";
+import { anrufKnoepfe } from "./anruf.js";
 import { stummAn, archiviert, favorit, archivAufwachen, angeheftetHtml, darfAnheften, gemerkt, zurueckholbar, erwaehnungVorschlag, erwaehnungenMarkieren, chatGestenVerdrahten, runterNeu } from "./chatplus.js";
 
 const ich = () => S.ich?.id;
@@ -455,7 +456,7 @@ VIEWS.unterhaltung = {
     const l = empfaengerVon(db, u), p = chatPartnerVon(u);
     const unter = p ? ({ schueler: "Schüler/in", eltern: "Eltern", lehrkraft: "Lehrkraft", leitung: "Leitung" }[hole("personen", p)?.typ] || "Bachkreis") : u.art === "verteiler" ? `📣 Rundschreiben · ${l.length} Empfänger` : `${u.art === "runde" ? "Runde" : "Gruppe"} · ${l.length} Mitglieder`;
     return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${stummAn(id) ? '<span title="stumm" aria-label="stumm">🔕</span> ' : ""}${esc(chatTitel(u))}</h2><div class="hinweis kk-zeile" id="kkZeile">${esc(unter)}${!p && l.length ? ` · Mit: ${esc(l.filter((x) => x !== ich()).map((x) => vorn(x)).join(", "))}` : ""}</div></div><button type="button" class="kk-pfeil" data-a="chatKopfKlappe" aria-label="Alle Namen zeigen" aria-expanded="false" hidden><span class="kl-pfeil zu" aria-hidden="true">▾</span></button>
-      <button type="button" class="chat-kopf-knopf" data-a="chatSucheAuf" data-x="${esc(id)}" aria-label="Im Chat suchen">🔍</button><button type="button" class="chat-kopf-knopf" data-a="chatMenue" data-x="${esc(id)}" aria-label="Mehr zum Chat">⋮</button></div>
+      ${p ? anrufKnoepfe(p) : ""}<button type="button" class="chat-kopf-knopf" data-a="chatSucheAuf" data-x="${esc(id)}" aria-label="Im Chat suchen">🔍</button><button type="button" class="chat-kopf-knopf" data-a="chatMenue" data-x="${esc(id)}" aria-label="Mehr zum Chat">⋮</button></div>
       ${angeheftetHtml(u)}<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat" id="chatVerlauf">${verlaufHtml(u)}</div>${eingabeHtml(u)}`;
   },
   nach(w, { id }) {

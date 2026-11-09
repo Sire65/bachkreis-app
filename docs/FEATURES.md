@@ -133,6 +133,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F123 | 🎬 Sitzung: Anwesenheit, vertagt, Vorschläge behandelt, Aufgaben-Stand | ✅ | tests/paket5.test.mjs |
 | BK-F124 | 🔎 Protokoll-Prüfung durch den Schriftführer | ✅ | tests/paket5.test.mjs |
 | BK-F125 | ⚡ Abfragen bei Aussetzern wiederholen, 🕰️ ✕ an der Uhr | ✅ | tests/paket5.test.mjs |
+| BK-F126 | 📞🎥 Anrufe und Videoanrufe aus dem Einzelchat (Kinderschutz serverseitig) | ✅ | tests/anrufe.test.mjs |
+| BK-F127 | 🪑 Runder Tisch: Online-Treffen bis 8 Erwachsene, Hand heben, Bildschirm teilen | ✅ | tests/anrufe.test.mjs |
+| BK-F128 | 🛟 Fernhilfe: Bildschirm zeigen, Zeigen/Bedienen nur mit Erlaubnis, Chats nie | ✅ | tests/anrufe.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

@@ -9,6 +9,7 @@ import { liste, hole, speichere, neueId } from "../kern/daten.js";
 import { SITZUNG_ARTEN, SITZUNG_FUER, SITZUNG_STATUS, SITZUNG_PLANER, sitzungFuerMich, rollenMit, VS_AN } from "../kern/schema.js";
 import { senden } from "../kern/versand.js";
 import { klappe } from "../kern/klappen.js";
+import { tischDa } from "./tisch.js";
 
 export const darfPlanen = () => hatRolle(...SITZUNG_PLANER);
 const tagMs = 86400000;
@@ -50,7 +51,7 @@ VIEWS.sitzung = {
     const s = hole("versammlungen", id); if (!s) return kopf("🎬 Sitzung") + '<div class="leer">Nicht gefunden.</div>';
     const planer = darfPlanen(), to = s.tagesordnung || [], min = to.reduce((a, p) => a + (p.minuten || 0), 0);
     const kopfInfo = `<div class="karte sitz-kopf"><div class="badge">${esc(SITZUNG_ARTEN[s.art] || "")}</div><h3>${esc(s.titel)}</h3><p>📅 ${esc(datum(s.beginn))}, ${esc(uhr(s.beginn))} Uhr${s.ort ? ` · 📍 ${esc(s.ort)}` : ""}<br>👥 ${esc(SITZUNG_FUER[s.zielgruppe] || "")} · ${esc(SITZUNG_STATUS[s.status] || "")}${s.leiter ? ` · Leitung: ${esc(name(s.leiter))}` : ""}</p>
-      ${planer ? `<button type="button" class="knopf klein" data-a="sitzAendern" data-x="${esc(s.id)}">✏️ Daten ändern</button>` : ""}</div>`;
+      <div class="knopfreihe">${planer ? `<button type="button" class="knopf klein" data-a="sitzAendern" data-x="${esc(s.id)}">✏️ Daten ändern</button>` : ""}${s.status !== "beendet" && tischDa() ? `<button type="button" class="knopf klein" data-a="tiOeffnen" data-x="${esc(s.id)}">🪑 Online dabei sein</button>` : ""}</div></div>`;
     if (!planer) return kopf("🎬 Sitzung") + kopfInfo + `<div class="karte"><h3>📝 Tagesordnung</h3><ol class="sitz-to">${to.map((p) => `<li><b>${esc(p.titel)}</b>${p.minuten ? ` <small>(${p.minuten} Min.)</small>` : ""}${s.status === "beendet" && p.beschluss ? `<div class="sitz-beschluss">✅ ${esc(p.beschluss)}</div>` : ""}</li>`).join("") || "<li>Folgt.</li>"}</ol></div>
       <div class="knopfreihe"><button type="button" class="knopf" data-a="kachel" data-x="vorschlaege">💡 Vorschlag einbringen</button></div>`;
     if (s.status === "laeuft") return kopf("🔴 Sitzung läuft") + leitenHtml(s);
@@ -77,7 +78,7 @@ const L = { top: 0, start: 0, takt: null };
 function leitenHtml(s) {
   const to = s.tagesordnung || [], i = Math.min(L.top, to.length - 1), p = to[i] || {};
   const anw = Object.values(s.anwesenheit || {}).filter((v) => v === "da").length;
-  return `<div class="knopfreihe"><button type="button" class="knopf" data-a="sitzAnwesenheit" data-x="${esc(s.id)}">👥 Anwesenheit${anw ? ` (${anw} da)` : ""}</button></div><div class="karte sitz-live"><div class="sitz-live-kopf"><b>TOP ${i + 1} von ${to.length}</b><span id="sitzUhr" class="sitz-uhr" aria-live="off">0:00</span>${p.minuten ? `<small>geplant ${p.minuten} Min.</small>` : ""}</div>
+  return `<div class="knopfreihe"><button type="button" class="knopf" data-a="sitzAnwesenheit" data-x="${esc(s.id)}">👥 Anwesenheit${anw ? ` (${anw} da)` : ""}</button>${tischDa() ? `<button type="button" class="knopf" data-a="tiOeffnen" data-x="${esc(s.id)}">🪑 Runder Tisch online</button>` : ""}</div><div class="karte sitz-live"><div class="sitz-live-kopf"><b>TOP ${i + 1} von ${to.length}</b><span id="sitzUhr" class="sitz-uhr" aria-live="off">0:00</span>${p.minuten ? `<small>geplant ${p.minuten} Min.</small>` : ""}</div>
     <h3>${esc(p.titel || "")}</h3>
     <div class="feld"><label for="sitzNotiz">📝 Notiz</label><textarea id="sitzNotiz" rows="4" maxlength="2000">${esc(p.notiz || "")}</textarea></div>
     <div class="feld"><label for="sitzBeschluss">✅ Beschluss / Ergebnis</label><input id="sitzBeschluss" maxlength="1000" value="${esc(p.beschluss || "")}" placeholder="z. B. einstimmig angenommen"></div>

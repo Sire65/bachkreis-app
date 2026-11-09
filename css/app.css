@@ -311,3 +311,47 @@ details.kl details.kl .kl-zahl { background: var(--karte); }
 :root.ohne-zahlblink .fuss-leiste button[class*="alt-"] .zaehler, :root.ohne-zahlblink .kachel[class*="na-"] .zahl, :root.ohne-zahlblink .mini.mini-neu b { animation: none !important; }
 :root.ohne-ledpuls .led.rot { animation: none !important; }
 :root.ohne-pfeilblink .kopf-pfeil.kp-neu { animation: none !important; }
+
+/* 📞🎥 0.50.0 Anrufe */
+.anruf-fenster { position: fixed; inset: 0; z-index: 9000; background: #0d1b2a; color: #fff; display: flex; flex-direction: column; padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)); }
+.af-kopf { display: flex; gap: 12px; align-items: center; z-index: 2; }
+.af-bild { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: #fff2; display: grid; place-items: center; font-size: 28px; flex: none; }
+.af-bild img, .af-bild svg { width: 100%; height: 100%; object-fit: cover; }
+.af-status { opacity: .9; font-size: .95rem; }
+.af-fern { flex: 1; min-height: 0; width: 100%; object-fit: cover; border-radius: 16px; background: #000; margin: 12px 0; }
+.af-fern.nur-ton { visibility: hidden; flex: 1; }
+.af-eigen { position: absolute; right: 24px; top: 96px; width: 28vw; max-width: 160px; aspect-ratio: 3/4; object-fit: cover; border-radius: 12px; border: 2px solid #fff8; background: #000; transform: scaleX(-1); }
+.af-eigen.aus { display: none; }
+.af-knoepfe { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.af-k, .ti-k { width: 60px; height: 60px; border-radius: 50%; border: 0; font-size: 26px; background: #ffffff2e; color: #fff; cursor: pointer; }
+.af-k.aus, .ti-k.aus { background: #fff; color: #000; }
+.af-k.rot, .ti-k.rot { background: #c62828; }
+.af-k.gruen { background: #2e7d32; }
+.af-k:focus-visible, .ti-k:focus-visible { outline: 3px solid #ffd54f; outline-offset: 2px; }
+
+/* 🪑 Runder Tisch */
+.ti-gitter { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+.ti-gitter[data-n="1"] { grid-template-columns: minmax(0, 1fr); }
+.ti-gitter[data-n="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ti-kachel { position: relative; margin: 0; aspect-ratio: 4/3; background: #1b263b; border-radius: 12px; overflow: hidden; border: 3px solid transparent; min-width: 0; }
+.ti-kachel.hand { border-color: #ffb300; }
+.ti-kachel video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ti-kachel[data-pid] video[muted] { transform: scaleX(-1); }
+.ti-kachel figcaption { position: absolute; left: 6px; bottom: 6px; right: 6px; color: #fff; background: #000a; border-radius: 8px; padding: 2px 8px; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ti-leiste { position: sticky; bottom: 8px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin: 12px 0; padding: 10px; background: #0d1b2ae6; border-radius: 40px; }
+
+/* 🛟 Fernhilfe */
+.fh-leiste { position: fixed; left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); z-index: 8500; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; padding: 8px 12px; background: #b71c1c; color: #fff; border-radius: 16px; box-shadow: 0 4px 16px #0006; }
+.fh-k { border: 2px solid #fff; background: transparent; color: #fff; border-radius: 20px; padding: 6px 12px; font: inherit; cursor: pointer; min-height: 40px; }
+.fh-k.an { background: #fff; color: #b71c1c; }
+.fh-k.rot { background: #fff; color: #b71c1c; font-weight: 700; }
+.fh-zeiger { position: fixed; width: 56px; height: 56px; margin: -28px 0 0 -28px; border: 5px solid #e53935; border-radius: 50%; z-index: 8600; pointer-events: none; opacity: 0; }
+.fh-zeiger.an { animation: fhZeig 2s ease-out; }
+@keyframes fhZeig { 0% { opacity: 1; transform: scale(.4); } 20% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+.fh-schirm { position: relative; max-width: 420px; margin: 12px auto; border-radius: 14px; overflow: hidden; border: 3px solid var(--rand, #ccc); background: #0001; min-height: 160px; }
+.fh-schirm img { display: block; width: 100%; cursor: crosshair; }
+.fh-schirm.leer img { display: none; }
+.fh-schirm:not(.leer) p { display: none; }
+.fh-schirm p { text-align: center; padding: 48px 12px; }
+.fh-tipp { position: absolute; width: 36px; height: 36px; margin: -18px 0 0 -18px; border: 4px solid #e53935; border-radius: 50%; pointer-events: none; animation: fhZeig .9s ease-out; }
+@media (prefers-reduced-motion: reduce) { .fh-zeiger.an, .fh-tipp { animation-duration: .01s; opacity: 1; } }

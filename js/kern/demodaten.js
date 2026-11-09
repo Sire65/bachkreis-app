@@ -519,6 +519,8 @@ export function erzeugeDemodaten(heute = new Date()) {
         ...(n.express ? { express_antwort: "geoeffnet", express_bestaetigt_am: bis(4 * 60000) } : {}) });
     });
   }
+  // 📞 0.50.0 Anrufe: Beispiel eines verpassten Anrufs (nur Vermittlungsdaten)
+  d.anrufe = [{ id: "an-1", art: "audio", von: "p-lk1", an: ["p-leitung"], status: "verpasst", beginn: iso(tag(jetzt, -1, 17, 40)), ende: iso(tag(jetzt, -1, 17, 41)) }];
   // 📁 0.48.0 Unterlagen (Beispiel: Teilnahmebescheinigung, Leihvertrag)
   d.unterlagen = demoSchueler ? [
     { id: "ul-1", person_id: demoSchueler.id, titel: "Teilnahmebescheinigung Probenfreizeit", art: "bescheinigung", datei: "bild:bilder/demo/probe.svg", von: "p-leitung", jahr: jetzt.getFullYear() },

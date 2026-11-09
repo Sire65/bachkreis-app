@@ -389,6 +389,8 @@ export async function wartung(db, adapter, umg = {}) {
   }
   if (ua.length) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${ua.length} abgelaufene Übe-Aufnahmen gelöscht` });
   await db.q(`delete from bk_kom_ereignisse where zeit < now() - interval '90 days'`);
+  // 📞 0.50.0 Vermittlungs-Zeilen von Anrufen/Rundem Tisch nach 2 Tagen löschen (enthalten nur Technik, keine Inhalte)
+  try { await db.q(`delete from bk_anrufe where beginn < now() - interval '2 days'`); } catch {}
   // 📈 0.43.0 Messwerte für den Verlauf im Admin-Bereich (wie KC kc_club_messwerte): einmal pro Stunde nur Zahlen
   if (!(await db.q(`select 1 from bk_kom_ereignisse where code = 'MESSWERT' and zeit > now() - interval '55 minutes' limit 1`)).length) {
     const z = async (sql) => { try { return Number((await db.q(sql))[0]?.n) || 0; } catch { return null; } };

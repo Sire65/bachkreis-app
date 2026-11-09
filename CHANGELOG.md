@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.50.0 DEV – 09.11.2026
+Anrufe, Runder Tisch und Fernhilfe (wie KC-CLUB-ANRUF, KC-CLUB-RUNDER-TISCH, KC-CLUB-FERNHILFE). Ton, Bild und Daten gehen direkt von Gerät zu Gerät (WebRTC, verschlüsselt), nichts wird aufgezeichnet; der Club-Server vermittelt nur den Aufbau (neue Tabelle `anrufe`, Aktionen `anruf_lage`/`tisch_lage`, Einträge nach 2 Tagen gelöscht). Kostenlos: öffentlicher STUN-Server, eigener STUN/TURN über `konfig.rtc_server` möglich.
+- 📞🎥 **Anrufe**: im Einzelchat oben 📞 und 🎥; Klingeln mit Annehmen/Ablehnen (Ton, Vibration, Push), Gespräch mit Stumm, Kamera aus, Kamera wechseln, Auflegen; verpasste Anrufe als Zahl an der Kachel „📞 Anrufe“ mit Rückruf. 🔒 Kinderschutz auf dem Server: Minderjährige telefonieren nur mit den eigenen Eltern, unter Erwachsenen gelten die Chat-Regeln
+- 🪑 **Runder Tisch**: Online-Treffen bis 8 Erwachsene – „Offener Tisch“ oder direkt aus der Sitzung („🪑 Online dabei sein“); Mikro, Kamera, 🖥️ Bildschirm teilen, ✋ Hand heben, 🚪 Verlassen
+- 🛟 **Fernhilfe**: Mitglied bittet Leitung/Admin (wer gerade online ist, steht oben); der Helfer sieht den Bildschirm und zeigt mit rotem Kreis; tippen darf er nur nach „🖱️ Bedienen erlauben“; Chat-Verläufe und Videos werden nie mitgeschickt; jeder kann sofort beenden
+- 🧩 Admin kann Anrufe, Runden Tisch und Fernhilfe einzeln abschalten (Module); Vorführung: zwei Tabs im selben Browser können sich wirklich anrufen
+
 ## 0.49.0 DEV – 09.11.2026
 Abgleich mit der KC Club App 2.80x–2.88x, Paket 5 „Feinschliff“:
 - 📈 **So nutzen wir die App** (wie KC-CLUB-NUTZUNG-ALLE): für alle unter Technik – 7/30/90 Tage, Aktionen, „machen mit“ (erst ab 3), Nachrichten, Benachrichtigungen mit ↑↓ zum Zeitraum davor, Farbfeld Wochentag × Uhrzeit („Am meisten los: mittwochs gegen 19 Uhr“), pro Tag, beliebteste Bereiche. Nur Summen (gemeinsame Auswertung `nutzungAuswerten` in logik.js, Server-Aktion `nutzung_lage`) – nie Personen, nie Inhalte

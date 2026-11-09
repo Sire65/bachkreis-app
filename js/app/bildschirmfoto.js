@@ -10,7 +10,7 @@ import { hochladen } from "../kern/dateien.js";
 export const STIFTE = [["#e53935", "Rot"], ["#fdd835", "Gelb"], ["#43a047", "Grün"], ["#1e88e5", "Blau"], ["#111111", "Schwarz"], ["#ffffff", "Weiß"]];
 const F = { canvas: null, striche: [], farbe: (() => { try { return localStorage.getItem("bk_bf_farbe") || STIFTE[0][0]; } catch { return STIFTE[0][0]; } })(), ansicht: null, weiter: null };
 let ladend = null;
-const laden = () => (globalThis.html2canvas ? Promise.resolve() : (ladend ||= new Promise((ok, nein) => { const s = document.createElement("script"); s.src = "lib/html2canvas/html2canvas.min.js"; s.onload = ok; s.onerror = () => { ladend = null; nein(new Error("Foto-Baustein nicht geladen – Internet prüfen")); }; document.head.appendChild(s); })));
+export const laden = () => (globalThis.html2canvas ? Promise.resolve() : (ladend ||= new Promise((ok, nein) => { const s = document.createElement("script"); s.src = "lib/html2canvas/html2canvas.min.js"; s.onload = ok; s.onerror = () => { ladend = null; nein(new Error("Foto-Baustein nicht geladen – Internet prüfen")); }; document.head.appendChild(s); })));
 
 // weiter: optionaler Rückweg (z. B. Rückmeldung) – bekommt die fertige Datei
 export function fotoAusloeser(weiter = null) {
@@ -30,8 +30,8 @@ export function fotoAusloeser(weiter = null) {
 AKTIONEN.bildschirmfoto = () => fotoAusloeser();
 
 // nicht mit aufs Foto: Auslöser, Meldungen, Warte-Anzeige und alles, was gerade unsichtbar ist (z. B. Texte nur für Bildschirmleser)
-function unsichtbar(el) {
-  if (["bfAusloeserRahmen", "toast", "warten"].includes(el.id) || el.classList?.contains("versteckt") || el.classList?.contains("sr-only")) return true;
+export function unsichtbar(el) {
+  if (["bfAusloeserRahmen", "toast", "warten", "fhLeiste", "fhZeiger"].includes(el.id) || el.classList?.contains("versteckt") || el.classList?.contains("sr-only")) return true;
   if (el.nodeType !== 1) return false;
   if (["OPTION", "NOSCRIPT", "SCRIPT", "STYLE", "TEMPLATE"].includes(el.tagName)) return true; // sonst malt html2canvas sie oben links hin
   const st = getComputedStyle(el); return st.visibility === "hidden" || st.opacity === "0" || (st.position === "absolute" && st.clip === "rect(0px, 0px, 0px, 0px)") || (parseFloat(st.width) <= 1 && parseFloat(st.height) <= 1 && st.overflow === "hidden");

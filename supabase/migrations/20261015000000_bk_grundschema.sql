@@ -1178,6 +1178,31 @@ grant select, insert, update, delete on bk_erstattungen to service_role;
 drop trigger if exists bk_erstattungen_stempel on bk_erstattungen;
 create trigger bk_erstattungen_stempel before update on bk_erstattungen for each row execute function bk_abgleich_stempel();
 
+-- Anrufe & Runder Tisch (Vermittlung)
+create table if not exists bk_anrufe (
+  id text primary key default gen_random_uuid()::text,
+  art text not null check (art is null or art in ('audio', 'video', 'fernhilfe', 'tisch', 'tisch_da')),
+  von text,
+  an text[],
+  raum_id text,
+  status text check (status is null or status in ('klingelt', 'angenommen', 'abgelehnt', 'beendet', 'verpasst')),
+  angebot jsonb,
+  antwort jsonb,
+  beginn timestamptz,
+  ende timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_anrufe_geaendert on bk_anrufe (geaendert_am);
+alter table bk_anrufe enable row level security;
+revoke all on bk_anrufe from public, anon, authenticated;
+grant select, insert, update, delete on bk_anrufe to service_role;
+drop trigger if exists bk_anrufe_stempel on bk_anrufe;
+create trigger bk_anrufe_stempel before update on bk_anrufe for each row execute function bk_abgleich_stempel();
+
 -- Unterlagen (Familien-Ordner)
 create table if not exists bk_unterlagen (
   id text primary key default gen_random_uuid()::text,
@@ -2116,6 +2141,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_rueck
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_termin_id_fk') then alter table bk_erstattungen add constraint bk_erstattungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_erstattungen_bearbeitet_von_fk') then alter table bk_erstattungen add constraint bk_erstattungen_bearbeitet_von_fk foreign key (bearbeitet_von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_anrufe_von_fk') then alter table bk_anrufe add constraint bk_anrufe_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_unterlagen_person_id_fk') then alter table bk_unterlagen add constraint bk_unterlagen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_unterlagen_von_fk') then alter table bk_unterlagen add constraint bk_unterlagen_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_versammlungen_leiter_fk') then alter table bk_versammlungen add constraint bk_versammlungen_leiter_fk foreign key (leiter) references bk_personen(id) on delete restrict; end if; end $$;

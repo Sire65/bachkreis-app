@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -131,6 +131,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "rueckmeldungen": return z.von === ctx.ich || hatRolle(ctx, RM_LEITUNG);
     case "fehlerberichte": return hatRolle(ctx, ["admin"]);
     case "boerse": return boerseDarf(ctx.person) || z.von === ctx.ich; // 🛍️ 0.47.0 nur Erwachsene
+    case "anrufe": return z.von === ctx.ich || (z.an || []).includes(ctx.ich) || (z.art === "tisch_da" && erwachsen(ctx.person) && z.status !== "beendet"); // 📞 0.50.0
     case "unterlagen": return ctx.meine.has(z.person_id) || hatRolle(ctx, UNTERLAGEN_LEITUNG); // 📁 0.48.0 eigene/Kinder + Leitung
     case "versammlungen": return hatRolle(ctx, SITZUNG_PLANER) || (z.status !== "planung" && sitzungFuerMich(z, ctx.person, ctx.rollen)); // 🎬 0.48.0 Planung nur fürs Büro
     case "jahrbuch_momente": return z.von === ctx.ich || z.freigegeben === true || hatRolle(ctx, MODERATION); // 📖 0.47.0
@@ -563,6 +564,26 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "anrufe": {
+      // 📞🪑🛟 0.50.0 Vermittlung von Anrufen: nur die Beteiligten; Kinder nur mit den eigenen Eltern; Runder Tisch und Fernhilfe nur Erwachsene
+      const art = alt?.art || neu.art; if (!ANRUF_ARTEN[art]) return { ok: false, grund: "ART_UNGUELTIG" };
+      const modul = art === "fernhilfe" ? "fernhilfe" : art.startsWith("tisch") ? "tisch" : "anrufe";
+      if ((ctx.konfig?.module_aus || []).includes(modul) && !hatRolle(ctx, ["admin"])) return { ok: false, grund: "MODUL_AUS" };
+      const sdp = (x) => (x && typeof x === "object" && ["offer", "answer"].includes(x.type) && typeof x.sdp === "string" && x.sdp.length < 30000 ? { type: x.type, sdp: x.sdp } : null);
+      if (!alt) {
+        const an = [...new Set(Array.isArray(neu.an) ? neu.an : [])].filter((x) => x !== ctx.ich);
+        if (art === "tisch_da") { if (!erwachsen(ctx.person)) return { ok: false, grund: "NUR_ERWACHSENE" }; if (!/^[\w-]{1,80}$/.test(String(neu.raum_id || ""))) return { ok: false, grund: "RAUM_FEHLT" };
+          return { ok: true, zeile: { ...nur(neu, ["id"]), art, von: ctx.ich, an: [], raum_id: neu.raum_id, status: "angenommen", beginn: jetzt } }; }
+        if (an.length !== 1) return { ok: false, grund: "GENAU_EINE_PERSON" };
+        const p = (ctx.personen || []).find((x) => x.id === an[0]); if (!p) return { ok: false, grund: "UNBEKANNT" };
+        if (art === "tisch" ? !(erwachsen(ctx.person) && erwachsen(p)) : !anrufErlaubt(ctx.person, p, { art, verwandt: ctx.kinder.has(p.id) || ctx.eltern.has(p.id) })) return { ok: false, grund: "ANRUF_NICHT_ERLAUBT" };
+        if (art === "tisch" && !/^[\w-]{1,80}$/.test(String(neu.raum_id || ""))) return { ok: false, grund: "RAUM_FEHLT" };
+        return { ok: true, zeile: { ...nur(neu, ["id"]), art, von: ctx.ich, an, raum_id: art === "tisch" ? neu.raum_id : null, status: "klingelt", angebot: sdp(neu.angebot), antwort: null, beginn: jetzt, ende: null } };
+      }
+      if (alt.von === ctx.ich) return { ok: true, zeile: { ...alt, status: ["beendet", "verpasst"].includes(neu.status) ? neu.status : alt.status, ende: ["beendet", "verpasst"].includes(neu.status) || (alt.art === "tisch_da" && neu.lebt) ? jetzt : alt.ende, angebot: sdp(neu.angebot) || alt.angebot } };
+      if ((alt.an || []).includes(ctx.ich)) return { ok: true, zeile: { ...alt, status: ["angenommen", "abgelehnt", "beendet"].includes(neu.status) ? neu.status : alt.status, antwort: sdp(neu.antwort) || alt.antwort, ende: ["abgelehnt", "beendet"].includes(neu.status) ? jetzt : alt.ende } };
+      return { ok: false, grund: "NUR_BETEILIGTE" };
     }
     case "unterlagen": {
       // 📁 0.48.0 Leitung legt für alle ab; Eltern/Erwachsene für sich und ihre Kinder; löschen: wer abgelegt hat oder Leitung

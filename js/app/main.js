@@ -46,6 +46,9 @@ import "./unterlagen.js"; // 📁 0.48.0
 import "./schilder.js"; // 🪧 0.48.0
 import "./nutzung.js"; // 📈 0.49.0
 import "./pruefung.js"; // 🔎 0.49.0
+import "./anruf.js"; // 📞 0.50.0
+import "./tisch.js"; // 🪑 0.50.0
+import "./fernhilfe.js"; // 🛟 0.50.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";

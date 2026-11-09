@@ -4,7 +4,7 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt } from "./schema.js";
+import { rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung } from "./regeln.js";
@@ -58,6 +58,22 @@ async function adminLage(db, s) {
   lage.wartung = { an: k.wartung === true || k.wartung === "true", text: k.wartung_text || null }; lage.module_aus = Array.isArray(k.module_aus) ? k.module_aus : [];
   const sp = await speicherLage(db, s); if (sp.json?.ok) lage.speicher = sp.json;
   return { status: 200, json: { ok: true, ...lage } };
+}
+// 📞 0.50.0 Vermittlung während des Klingelns bzw. am Runden Tisch: nur die eigene Zeile bzw. die Zeilen des Raums (Anwesenheit + eigene Verbindungen).
+// Nur kurz gefragt (beim Klingeln alle 2 s, höchstens 60 s; am Tisch alle 4 s) – das Gespräch selbst läuft direkt von Gerät zu Gerät.
+async function anrufLage(db, s, body) {
+  const z = (await db.q(`select to_jsonb(a) as z from bk_anrufe a where id = $1`, [String(body.id || "")]))[0]?.z;
+  if (!z || !(z.von === s.person.id || (z.an || []).includes(s.person.id))) return fehler(404, "NICHT_GEFUNDEN");
+  return { status: 200, json: { ok: true, anruf: z } };
+}
+async function tischLage(db, s, body) {
+  const raum = String(body.raum || ""); if (!/^[\w-]{1,80}$/.test(raum)) return fehler(400, "RAUM_FEHLT");
+  if (s.person.typ === "schueler" && istMinderjaehrig(s.person)) return fehler(403, "NUR_ERWACHSENE");
+  const l = (await db.q(`select to_jsonb(a) as z from bk_anrufe a where raum_id = $1 and beginn > now() - interval '6 hours' and geloescht_am is null
+    and (art = 'tisch_da' or von = $2 or $2 = any(an))`, [raum, s.person.id])).map((r) => r.z);
+  const pids = [...new Set(l.filter((x) => x.art === "tisch_da" && x.status !== "beendet").map((x) => x.von))];
+  const namen = pids.length ? Object.fromEntries((await db.q(`select id, vorname, nachname from bk_personen where id = any($1::text[])`, [pids])).map((p) => [p.id, `${p.vorname || ""} ${p.nachname || ""}`.trim()])) : {};
+  return { status: 200, json: { ok: true, zeilen: l, namen } };
 }
 // 📈 0.49.0 „So nutzen wir die App“: für alle Angemeldeten, nur Summen (nutzungAuswerten in logik.js) – nie Personen, nie Inhalte
 async function nutzungLage(db, body) {
@@ -515,6 +531,8 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     if (aktion === "zugang_lage") return await zugangLage(db, s);
     if (aktion === "speicher_lage") return await speicherLage(db, s);
     if (aktion === "nutzung_lage") return await nutzungLage(db, body);
+    if (aktion === "anruf_lage") return await anrufLage(db, s, body);
+    if (aktion === "tisch_lage") return await tischLage(db, s, body);
     if (aktion === "anklopfen") return await anklopfen(db, s, body, dienste);
     if (aktion === "abmelden_andere") { // ⚙️ Mehr › Privatsphäre: alle anderen Geräte abmelden
       const r = await db.q(`update bk_sitzungen set widerrufen_am = now() where person_id = $1 and id <> $2 and widerrufen_am is null returning id`, [s.person.id, s.sid]);

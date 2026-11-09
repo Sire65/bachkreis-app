@@ -25,6 +25,9 @@ import { boerseFuerMich, helferOffen } from "./boerse.js";
 import { momenteOffen } from "./jahrbuch.js";
 import { naechsteSitzung, sitzungenFuerMich } from "./sitzung.js";
 import { pruefenFuerMich } from "./pruefung.js";
+import { verpassteAnrufe, anrufAn } from "./anruf.js";
+import { fernhilfeKachelDa } from "./fernhilfe.js";
+import { tischDa } from "./tisch.js";
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
@@ -146,6 +149,9 @@ export const KACHELN = {
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
     { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },
+    { id: "anrufe", sym: "📞", t: "Anrufe", u: "📞 Anruf · 🎥 Video – im Einzelchat", v: "anrufe", nur: () => anrufAn(), zahl: () => verpassteAnrufe() },
+    { id: "tisch", sym: "🪑", t: "Runder Tisch", u: "Online-Treffen mit Bild und Ton", v: "tisch", nur: () => tischDa() },
+    { id: "fernhilfe", sym: "🛟", t: "Fernhilfe", u: "Jemand schaut mit auf deinen Bildschirm", v: "fernhilfe", nur: () => fernhilfeKachelDa() },
     { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung" },
     { id: "ueberblick", sym: "🗺️", t: "Alles auf einen Blick", u: "Jeder Bereich der App", v: "ueberblick" },
     { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt", v: "hilfe" },

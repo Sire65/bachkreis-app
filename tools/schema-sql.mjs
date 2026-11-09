@@ -93,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261118000000_bk_anrufe.sql": { titel: "📞 Anrufe & Video, 🪑 Runder Tisch, 🛟 Fernhilfe – nur Vermittlung (0.50.0)", tabellen: ["anrufe"], extra: ["create index if not exists bk_anrufe_raum on bk_anrufe (raum_id) where raum_id is not null;"] },
   "20261117000000_bk_feinschliff.sql": { titel: "🎬 Anwesenheit in Sitzungen, 🔎 Protokoll-Prüfung durch den Schriftführer (0.49.0)", tabellen: ["versammlungen", "dokumente"] },
   "20261116000000_bk_versammlungen.sql": { titel: "🎬 Sitzungen & Versammlungen vorbereiten und leiten, 📁 Unterlagen je Familie (0.48.0)", tabellen: ["versammlungen", "unterlagen"] },
   "20261115000000_bk_boerse_jahrbuch.sql": { titel: "🛍️ Bachkreis-Börse (Biete/Suche/Helfer), 📖 Jahrbuch-Momente (0.47.0)", tabellen: ["boerse", "jahrbuch_momente"] },

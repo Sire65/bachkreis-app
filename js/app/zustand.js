@@ -3,6 +3,7 @@ import * as D from "../kern/daten.js";
 import { esc, $, toast, beschriftungenVerknuepfen } from "../kern/ui.js";
 import { klappenEinrichten } from "../kern/klappen.js";
 import { rollenMit } from "../kern/schema.js";
+import { teilFuerAnsicht, teilLaden } from "./teile.js";
 
 export const db = { liste: D.liste, hole: D.hole, konfig: D.konfig };
 export const S = { ich: null, ansicht: "leitung", view: "start", params: {}, register: "bachkreis", verlauf: [] };
@@ -52,6 +53,10 @@ export function alsPerson(personId) {
 
 // ---------- Navigation ----------
 export function zeige(view, params = {}, { ersetzen = false } = {}) {
+  if (!VIEWS[view] && teilFuerAnsicht(view)) { // 📦 0.55.0 Teil erst jetzt laden, dann öffnen
+    teilLaden(teilFuerAnsicht(view)).then(() => zeige(view, params, { ersetzen })).catch(() => toast("📶 Dieser Bereich konnte nicht geladen werden – Netz prüfen."));
+    return;
+  }
   if (!VIEWS[view]) { toast("Diese Ansicht gibt es noch nicht."); return; }
   if (!ersetzen && S.view !== view) S.verlauf.push({ view: S.view, params: S.params });
   S.view = view; S.params = params;
@@ -67,6 +72,7 @@ export function zurueck() {
 }
 export function zeichne() {
   document.dispatchEvent(new CustomEvent("bk-ansicht"));
+  if (!VIEWS[S.view] && teilFuerAnsicht(S.view)) { teilLaden(teilFuerAnsicht(S.view)).then(() => zeichne()).catch(() => {}); } // 📦 0.55.0
   const v = VIEWS[S.view] || VIEWS.start;
   const ziel = $("#inhalt");
   try {

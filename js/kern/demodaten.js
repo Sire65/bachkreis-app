@@ -301,6 +301,8 @@ export function erzeugeDemodaten(heute = new Date()) {
   // 📝 0.52.0 ein Leihvertrag, der noch auf die Unterschriften wartet (für die erste Ausleihe eines Kindes)
   // 📥 0.53.0 Eingangskorb: eine Notiz der Leitung für das Demo-Elternteil, ein Merkzettel für die Leitung
   d.eingangskorb = [{ id: "ek-1", person_id: "p-leitung", titel: "Ideen fürs Frühjahrskonzert", text: "Programm: Haydn Sinfonie Nr. 94 (Paukenschlag) · Solo-Ansage üben · Plakat bis Februar", quelle: "notiz", von: "p-leitung", gelesen_am: null }];
+  // ⚖️ 0.55.0 Zustimmungen: in der Vorführung haben alle zugestimmt – außer den Ehemaligen (damit „Fehlt noch“ etwas zeigt)
+  d.zustimmungen = d.personen.filter((p) => p.typ !== "ehemalig" && p.status !== "ausgetreten").flatMap((p, i) => ["datenschutz", "regeln"].map((art) => ({ id: `zs-${i}-${art}`, person_id: p.id, fuer_id: p.id, art, fassung: "2026-11-09", zeit: iso(tag(jetzt, -3, 18, i % 60)) })));
   d.leihvertraege = [];
   { const a = d.ausleihen.find((x) => d.personen.find((p) => p.id === x.person_id)?.typ === "schueler");
     if (a) { const p = d.personen.find((x) => x.id === a.person_id), ek = d.eltern_kind.find((e) => e.kind_id === p.id), e = ek && d.personen.find((x) => x.id === ek.eltern_id);

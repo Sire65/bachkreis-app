@@ -1,12 +1,20 @@
 {
-  "version": "0.54.0",
+  "version": "0.55.0",
   "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
-    "🎨 Bachkreis-Design für alle Drucke und PDFs: Logo und Name im Kopf, unten links das Dokument, Mitte „Seite 1/2“, rechts Bachkreis Bergkamen",
-    "🖨️ Vorschau zeigt die echten Seiten – genau so wird gedruckt und ins PDF gelegt"
+    "⚖️ Datenschutz und Nutzungsregeln in der App – beim ersten Start einmal bestätigen, Eltern auch für ihre Kinder",
+    "⚡ Schnellerer Start: selten gebrauchte Programmteile werden erst bei Bedarf geladen"
   ],
   "verlauf": [
+    {
+      "version": "0.54.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🎨 Bachkreis-Design für alle Drucke und PDFs: Logo und Name im Kopf, unten links das Dokument, Mitte „Seite 1/2“, rechts Bachkreis Bergkamen",
+        "🖨️ Vorschau zeigt die echten Seiten – genau so wird gedruckt und ins PDF gelegt"
+      ]
+    },
     {
       "version": "0.53.0",
       "datum": "2026-11-09",

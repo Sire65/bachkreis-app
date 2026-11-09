@@ -158,6 +158,8 @@ export const KACHELN = {
     { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },
     { id: "anrufe", sym: "📞", t: "Anrufe", u: "📞 Anruf · 🎥 Video – im Einzelchat", v: "anrufe", nur: () => anrufAn(), zahl: () => verpassteAnrufe() },
     { id: "tisch", sym: "🪑", t: "Runder Tisch", u: "Online-Treffen mit Bild und Ton", v: "tisch", nur: () => tischDa() },
+    { id: "datenschutz", sym: "⚖️", t: "Datenschutz", u: "Was mit deinen Daten passiert · Regeln", v: "datenschutz" },
+    { id: "zustimmungen", sym: "✅", t: "Zustimmungen", u: "Wer hat Datenschutz & Regeln bestätigt?", v: "zustimmungen", nur: () => hatRolle("admin", "leitung", "vorstand") },
     { id: "schluesselbund", sym: "🔑", t: "Schlüsselbund", u: "🔒 Geheime Nachrichten auf jedem Gerät lesen", v: "schluesselbund", nur: () => geheimTechnik() && erwachsenIch() },
     { id: "fernhilfe", sym: "🛟", t: "Fernhilfe", u: "Jemand schaut mit auf deinen Bildschirm", v: "fernhilfe", nur: () => fernhilfeKachelDa() },
     { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung" },

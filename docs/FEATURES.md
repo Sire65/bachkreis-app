@@ -150,6 +150,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F140 | 📥 Eingangskorb (privat, nur eigene Dateien, Leitung legt hinein) | ✅ | tests/druck-korb.test.mjs |
 | BK-F141 | 📲 Teilen-Ziel „Teilen → Bachkreis“ (Manifest share_target, Service Worker) | ✅ | tests/druck-korb.test.mjs |
 | BK-F142 | 🎨 Corporate Design (docs/CORPORATE_DESIGN.md): Kopf Logo/Name/Datum, Fuß Dokument · Seite x/y · Name; Vorschau = Druck = PDF | ✅ | tests/druck-korb.test.mjs |
+| BK-F143 | ⚖️ Datenschutzerklärung, Nutzungsregeln, Zustimmung beim ersten Start (Eltern für Kinder u16), Nachweis, Vorstandsunterlagen | ✅ | tests/rechtliches.test.mjs |
+| BK-F144 | 📦 Programmteile bei Bedarf laden (teile-karte, Nachladen von Ansichten und Aktionen) | ✅ | tests/teile.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

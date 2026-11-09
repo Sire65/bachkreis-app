@@ -431,3 +431,11 @@ body.dv-offen { overflow: hidden; }
 .ek-knoepfe { display: flex; gap: 4px; } .ek-text { white-space: normal; overflow-wrap: anywhere; background: rgba(127,127,127,.1); padding: 8px 10px; border-radius: 10px; margin: 8px 0; }
 .knopf.breit.links { text-align: left; justify-content: flex-start; }
 body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau liegt darüber */
+/* ⚖️ 0.55.0 Datenschutz & Zustimmung */
+.ds-text { line-height: 1.5; } .ds-text h3 { margin: 14px 0 4px; font-size: 1.05rem; } .ds-text ul { padding-left: 20px; } .ds-regeln li { margin: 4px 0; }
+.zs-fenster { position: fixed; inset: 0; z-index: 9500; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 12px; }
+.zs-blatt { background: var(--karte, #fff); color: inherit; border-radius: 16px; max-width: 560px; width: 100%; max-height: 92vh; overflow: auto; padding: 18px 16px; box-shadow: 0 8px 30px rgba(0,0,0,.35); border-top: 6px solid #f2b705; }
+.zs-blatt h2 { margin-top: 0; }
+.zs-klappe { border: 1px solid rgba(127,127,127,.3); border-radius: 10px; padding: 6px 10px; margin: 8px 0; } .zs-klappe summary { cursor: pointer; font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.zs-haken { display: flex; gap: 10px; align-items: flex-start; margin: 10px 0; cursor: pointer; } .zs-haken input { width: 22px; height: 22px; flex: 0 0 22px; margin-top: 1px; }
+.zs-kinder { border: 1px solid rgba(127,127,127,.3); border-radius: 10px; padding: 6px 12px; margin: 10px 0; }

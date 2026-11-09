@@ -1,20 +1,14 @@
 // Start der Bachkreis-App: Datenquelle starten, Person bestimmen (Zugangscode ?k= / gemerkte Person / Demo-Rolle),
 // Ansichten laden, Service Worker mit atomarem Update (AGENTS.md Regel 16).
 import { datenStarten, liste, hole, abonnieren, konfig, speichere, datenInfo, istEchtbetrieb, anmelden, abmelden, beiHinweis } from "../kern/daten.js";
-import { AKTIONEN, aktionenStarten, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
+import { AKTIONEN, aktionenStarten, nachladenSetzen, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
 import { fehlerHookSetzen, S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
 import { setzeEmpfaengerGeraet, pushAbonnieren } from "../kern/versand.js";
 import "./start.js";
 import "./termine.js";
 import "./terminumfrage.js"; // 🗳️ 0.39.0
-import "./kommunikation.js";
 import { pinnwandStart } from "./pinnwand.js";
 import { nachrichtenStart, expressPruefen } from "./nachrichten.js";
-import "./sprachsteuerung.js";
-import "./orchester.js";
-import "./instrumente.js";
-import "./leitung.js";
-import "./notenarchiv.js";
 import "./notenblatt.js";
 import "./schutz.js";
 import "./extras.js";
@@ -23,11 +17,8 @@ import "./vereinsleben.js";
 import { uebenStart } from "./ueben.js";
 import { termineStart } from "./termine.js";
 import { onlineStart } from "./online.js";
-import "./kalender.js";
-import "./meins.js";
 import "./hilfezentrum.js"; // ❓🔍 0.39.0
 import "./pdfansicht.js"; // 📖 0.40.0
-import "./fotoalbum.js"; // 📷 0.40.0
 import "./vorschlaege.js"; // 💡🗳️ 0.41.0
 import "./protokolle.js"; // 🗒️ 0.41.0
 import "./advent.js"; // 🎄 0.41.0
@@ -36,15 +27,10 @@ import "./erstattung.js"; // 💶 0.42.0
 import { fehlerMelden, wartungsHinweis } from "./adminbereich.js"; // 🛡️ 0.43.0
 import "./ueberblick.js"; // 🗺️ 0.45.0
 import "./notfallpass.js"; // 🪪 0.46.0
-import "./standorte.js"; // 📍 0.46.0
 import "./bildschirmfoto.js"; // 📸 0.46.0
 import "./boerse.js"; // 🛍️ 0.47.0
 import "./jahrbuch.js"; // 📖 0.47.0
-import "./spiele.js"; // 🎲 0.47.0
 import "./sitzung.js"; // 🎬 0.48.0
-import "./unterlagen.js"; // 📁 0.48.0
-import "./schilder.js"; // 🪧 0.48.0
-import "./nutzung.js"; // 📈 0.49.0
 import "./pruefung.js"; // 🔎 0.49.0
 import "./anruf.js"; // 📞 0.50.0
 import "./tisch.js"; // 🪑 0.50.0
@@ -52,7 +38,9 @@ import "./fernhilfe.js"; // 🛟 0.50.0
 import "./chatextra.js"; // 👤👥🔒 0.51.0
 import "./leihvertrag.js"; // 📝 0.52.0
 import "./druckvorschau.js"; // 🖨️ 0.53.0
+import { aktionNachladen } from "./teile.js"; // 📦 0.55.0 selten Gebrauchtes erst bei Bedarf
 import { teilenPruefen } from "./eingangskorb.js"; // 📥📲 0.53.0
+import { zustimmungPruefen } from "./datenschutz.js"; // ⚖️ 0.55.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";
@@ -126,6 +114,7 @@ AKTIONEN.abmeldenApp = async () => { if (!confirm("Von diesem Gerät abmelden?")
 async function starten() {
   einstAnwenden(); anwendenDesign();
   matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", einstAnwenden);
+  nachladenSetzen(aktionNachladen); // 📦 0.55.0
   aktionenStarten();
   const url = new URL(location.href);
   const code = url.searchParams.get("k");
@@ -164,6 +153,7 @@ async function starten() {
   const sn = !express && snPruefen(); // 📣 Startnachricht der Leitung (Pflicht-Fenster)
   onlineStart(); // 🟢 Wer ist online · 👋 Anklopfen
   setTimeout(() => teilenPruefen().catch(() => {}), 400); // 📲 0.53.0 „Teilen → Bachkreis“ angekommen?
+  setTimeout(() => zustimmungPruefen(), 900); // ⚖️ 0.55.0 Datenschutz & Regeln beim ersten Start bestätigen
   beimStart(express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });

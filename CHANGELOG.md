@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.55.0 DEV – 09.11.2026
+⚖️ **Rechtliches** (aus „Was fehlt noch für eine professionelle App?“, Punkt 1):
+- **Datenschutzerklärung** in der App (Kachel „⚖️ Datenschutz“ unter Technik, Link unter ⚙️ › Impressum): Verantwortlicher (aus den Impressum-Angaben), Datenarten, Rechtsgrundlagen, Kinder und Jugendliche, Empfänger/Auftragsverarbeiter, Fristen, Rechte, Aufsichtsbehörde NRW – druckbar als PDF. Dazu **📜 Nutzungsregeln**
+- **Zustimmung beim ersten Start** (und wieder bei neuer Fassung): Datenschutz + Regeln bestätigen; **Eltern bestätigen auch für Kinder unter 16**, Kinder bestätigen nur die Regeln. Server setzt Zeit und Fassung, Zustimmungen sind unveränderlich (neue Tabelle `zustimmungen`)
+- **✅ Zustimmungen** (Leitung/Vorstand/Admin): Nachweis, wer wann welche Fassung bestätigt hat, mit Druck/PDF und Vorschau des Zustimmungsfensters
+- **Vorstandsunterlagen (Muster)** in `docs/rechtliches/`: Verarbeitungsverzeichnis, Kurz-Risikoabschätzung, Auftragsverarbeiter-Liste, Löschkonzept
+📦 **Programmteile bei Bedarf laden** (Punkt 2, wie KC-CLUB-TEILE): 14 selten gebrauchte Teile (Instrumente, Orchester, Notenarchiv, Fotoalbum, Leitung, Kommunikation, Standorte, Spiele, Schilder, Kalender, Unterlagen, Nutzung, Meins, Sprachsteuerung) werden erst beim ersten Öffnen geladen – der Start lädt deutlich weniger. Offline weiterhin alles im Service Worker; Karte `js/app/teile-karte.js` wird mit `node tools/teile-karte.mjs` erzeugt und vom Test geprüft
+📱 **Gerätetest-Plan** `docs/GERAETETEST.md` (iPhone, iPad, Android, PC, Mac – Ablauf je Gerät)
+
 ## 0.54.0 DEV – 09.11.2026
 🎨 **Corporate Design Bachkreis** (Wunsch Hansi „mit dem Logo und Name und Seite 1/2 und rechts Name und links Dokument“) – festgeschrieben in `docs/CORPORATE_DESIGN.md`:
 - **Kopf auf jeder Seite:** Logo · **Bachkreis Bergkamen** · *Jugendsinfonieorchester* (Dunkelgold) · rechts das Datum · Goldlinie

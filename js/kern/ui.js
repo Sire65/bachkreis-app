@@ -55,11 +55,15 @@ export function herunterladen(name, inhalt, typ = "text/plain") {
 
 // Zentrale Aktions-Registry
 export const AKTIONEN = { blattZu };
+// 📦 0.55.0 Aktionen aus nachladbaren Programmteilen: lädt den Teil beim ersten Antippen (setzt app/teile.js über main.js)
+let nachladen = null;
+export const nachladenSetzen = (f) => { nachladen = f; };
 export function aktionenStarten(wurzel = document) {
   wurzel.addEventListener("click", (e) => {
     const el = e.target.closest("[data-a]");
     if (!el || el.disabled) return;
     const f = AKTIONEN[el.dataset.a];
+    if (!f && nachladen) { e.preventDefault(); nachladen(el.dataset.a).then((ok) => ok && AKTIONEN[el.dataset.a]?.(el.dataset.x, el, e)).catch((err) => toast("⚠️ " + err.message)); return; } // 📦 0.55.0
     if (!f) { console.warn("Unbekannte Aktion", el.dataset.a); return; }
     e.preventDefault();
     Promise.resolve(f(el.dataset.x, el, e)).catch((err) => { console.error(err); toast("⚠️ " + err.message); });
@@ -68,6 +72,7 @@ export function aktionenStarten(wurzel = document) {
     const el = e.target.closest("[data-c]");
     if (!el) return;
     const f = AKTIONEN[el.dataset.c];
+    if (!f && nachladen) { nachladen(el.dataset.c).then((ok) => ok && AKTIONEN[el.dataset.c]?.(el.value, el, e)).catch(() => {}); return; }
     if (f) Promise.resolve(f(el.value, el, e)).catch((err) => { console.error(err); toast("⚠️ " + err.message); });
   });
 }

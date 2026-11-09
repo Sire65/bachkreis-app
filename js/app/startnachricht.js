@@ -17,7 +17,7 @@ export const SN_ZIELE = {
 };
 function sprung(ziel) {
   if (ziel === "uebebuehne") return zeige("buehne", { modus: "ueben" });
-  if (ziel === "gesicht") return AKTIONEN.meinGesicht?.();
+  if (ziel === "gesicht") return import("./teile.js").then(async (t) => { await t.aktionNachladen("meinGesicht"); AKTIONEN.meinGesicht?.(); }); // 📦 liegt in orchester.js (nachladbar)
   if (SN_ZIELE[ziel]) zeige(ziel);
 }
 const gruppenVon = (pid) => { const ids = new Set([pid, ...kinderVon(db, pid)]); return new Set(liste("gruppe_zuordnung", (z) => ids.has(z.person_id)).map((z) => z.gruppe_id)); };

@@ -118,7 +118,7 @@ VIEWS.ueber = {
       <p>Versand: <b>BK Communicator</b> – ${adapterInfo().map((a) => esc(a.name)).join(" · ")} · WhatsApp-Übergabe (wa.me)</p>
       <p class="hinweis">Abgeleitet aus der KC Club App (Muster für Termine, Zusagen, Nachrichten, SOS, Register & Kacheln). Kostenfrei: keine kostenpflichtigen Dienste oder APIs.</p>
       <p class="hinweis">Mitgelieferte Bibliothek: qrcode-generator (Kazuhiko Arase, MIT-Lizenz).</p>
-      <div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachel" data-x="impressum">§ Impressum</button>${konfig().webseite ? `<a class="knopf klein" href="${esc(konfig().webseite)}" target="_blank" rel="noopener">🌐 Bachkreis im Internet ↗</a>` : ""}${konfig().instagram ? `<a class="knopf klein" href="${esc(konfig().instagram)}" target="_blank" rel="noopener">📸 Instagram ↗</a>` : ""}<button class="knopf klein" data-a="ueberChronik">📜 Chronik & Über uns</button></div></div>`;
+      <div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachel" data-x="impressum">§ Impressum</button><button type="button" class="knopf klein" data-a="kachel" data-x="datenschutz">⚖️ Datenschutz</button>${konfig().webseite ? `<a class="knopf klein" href="${esc(konfig().webseite)}" target="_blank" rel="noopener">🌐 Bachkreis im Internet ↗</a>` : ""}${konfig().instagram ? `<a class="knopf klein" href="${esc(konfig().instagram)}" target="_blank" rel="noopener">📸 Instagram ↗</a>` : ""}<button class="knopf klein" data-a="ueberChronik">📜 Chronik & Über uns</button></div></div>`;
   },
 };
 // § Impressum (0.30.0, wie KC-CLUB-IMPRESSUM): Angaben pflegt die Leitung in der PC-Verwaltung (Einstellungen › Impressum).

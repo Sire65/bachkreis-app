@@ -95,6 +95,10 @@ export const PARTNER_ARTEN = { musikschule: "🎓 Musikschule", orchester: "🎻
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
+// ⚖️ 0.55.0 Datenschutz & Nutzungsregeln: Stand der Texte – ändert er sich, fragt die App beim nächsten Start erneut
+export const DS_VERSION = "2026-11-09";
+export const ZUSTIMMUNG_ARTEN = { datenschutz: "Datenschutzerklärung gelesen", regeln: "Nutzungsregeln angenommen" };
+export const ZUSTIMMUNG_NACHWEIS = ["admin", "leitung", "vorstand"];
 // 📥 0.53.0 Eingangskorb: wer anderen etwas hineinlegen darf
 export const EK_VERTEILER = ["admin", "leitung", "lehrkraft", "vorstand"];
 export const EK_QUELLEN = { teilen: "📲 geteilt", druck: "🖨️ aus der Druckvorschau", leitung: "📤 von der Leitung", notiz: "📝 Notiz" };
@@ -791,6 +795,18 @@ export const TABELLEN = {
       { k: "leihvertrag_id", t: "📝 Leihvertrag (Formular)", typ: "ref", ref: "leihvertraege" }, // 0.52.0
     ],
     liste: ["inventar_id", "person_id", "von", "bis", "status", "kaution_status"],
+  },
+  // ⚖️ 0.55.0 Zustimmungen: wer hat wann welcher Fassung zugestimmt (Eltern auch für ihre Kinder unter 16) – Nachweis für den Vorstand
+  zustimmungen: {
+    titel: "Zustimmungen (Datenschutz & Regeln)", sym: "⚖️", gruppe: "Verwaltung", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "zugestimmt von", typ: "ref", ref: "personen", pflicht: true },
+      { k: "fuer_id", t: "für", typ: "ref", ref: "personen", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: ZUSTIMMUNG_ARTEN, pflicht: true },
+      { k: "fassung", t: "Fassung (Stand der Texte)", typ: "text", pflicht: true },
+      { k: "zeit", t: "Zeitpunkt", typ: "zeit" },
+    ],
+    liste: ["fuer_id", "art", "fassung", "zeit"],
   },
   // 📥 0.53.0 Eingangskorb (wie KC-CLUB-EINGANGSKORB): was man sich selbst über „Teilen“ oder aus der Druckvorschau hineinlegt –
   // und was die Leitung einem hineinlegt. Privat: nur die Person (bei Kindern auch die Eltern) und wer es hineingelegt hat.

@@ -57,7 +57,7 @@ VIEWS.notfallpass = {
 };
 AKTIONEN.npKind = (id) => zeige("notfallpass", { id }, { ersetzen: true });
 AKTIONEN.npFahrt = (id) => zeige("notfallpass", { fahrt: id });
-AKTIONEN.npDrucken = () => { document.body.classList.add("np-druck"); setTimeout(() => { print(); document.body.classList.remove("np-druck"); }, 50); };
+AKTIONEN.npDrucken = async () => (await import("./druckvorschau.js")).ansichtDrucken(); // 🖨️ 0.53.0 mit Vorschau/PDF
 // für das SOS: Knöpfe zu den Pässen
 export function sosPassHtml() {
   const eigene = passFuer(), fahrten = meineFahrten();

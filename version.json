@@ -1,13 +1,22 @@
 {
-  "version": "0.52.0",
+  "version": "0.53.0",
   "datum": "2026-11-09",
   "stufe": "DEV",
   "neu": [
-    "📝 Leihvertrag als Formular: Name, Anschrift, Geburtsdatum, ein oder mehrere Instrumente, Zubehör, Leihe ab/bis, Schadensklausel",
-    "✍️ Unterschreiben mit dem Finger – Mitglied, Eltern und Bachkreis, vor Ort oder jede/r auf dem eigenen Handy",
-    "🖨️ Leihvertrag drucken oder als PDF speichern – auch als leeres Papierformular"
+    "🖨️ Überall Druckvorschau mit Bachkreis-Kopf: Drucken, 📄 PDF teilen/speichern, 💬 in einen Chat, 📥 in den Eingangskorb",
+    "📥 Eingangskorb für alle: Geteiltes, Abgelegtes, eigene Notizen – und was die Leitung einem hineinlegt",
+    "📲 Am Handy über „Teilen → Bachkreis“ PDFs, Fotos und Texte direkt in die App schicken"
   ],
   "verlauf": [
+    {
+      "version": "0.52.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "📝 Leihvertrag als Formular: Name, Anschrift, Geburtsdatum, ein oder mehrere Instrumente, Zubehör, Leihe ab/bis, Schadensklausel",
+        "✍️ Unterschreiben mit dem Finger – Mitglied, Eltern und Bachkreis, vor Ort oder jede/r auf dem eigenen Handy",
+        "🖨️ Leihvertrag drucken oder als PDF speichern – auch als leeres Papierformular"
+      ]
+    },
     {
       "version": "0.51.0",
       "datum": "2026-11-09",

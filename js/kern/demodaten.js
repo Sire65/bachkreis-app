@@ -299,6 +299,8 @@ export function erzeugeDemodaten(heute = new Date()) {
   if (d.ausleihen[1]) d.ausleihen[1].bis = isoTag(tag(jetzt, -5));
   if (d.ausleihen[3]) d.ausleihen[3].bis = isoTag(tag(jetzt, 9));
   // 📝 0.52.0 ein Leihvertrag, der noch auf die Unterschriften wartet (für die erste Ausleihe eines Kindes)
+  // 📥 0.53.0 Eingangskorb: eine Notiz der Leitung für das Demo-Elternteil, ein Merkzettel für die Leitung
+  d.eingangskorb = [{ id: "ek-1", person_id: "p-leitung", titel: "Ideen fürs Frühjahrskonzert", text: "Programm: Haydn Sinfonie Nr. 94 (Paukenschlag) · Solo-Ansage üben · Plakat bis Februar", quelle: "notiz", von: "p-leitung", gelesen_am: null }];
   d.leihvertraege = [];
   { const a = d.ausleihen.find((x) => d.personen.find((p) => p.id === x.person_id)?.typ === "schueler");
     if (a) { const p = d.personen.find((x) => x.id === a.person_id), ek = d.eltern_kind.find((e) => e.kind_id === p.id), e = ek && d.personen.find((x) => x.id === ek.eltern_id);

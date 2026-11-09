@@ -30,7 +30,7 @@ export function schildHtml(v = SCH.vorlage, w = wert) {
 VIEWS.schilder = {
   render() {
     const vor = VORLAGEN[SCH.vorlage];
-    return kopf("🪧 Schilder-Druckerei", '<button type="button" class="knopf haupt klein" data-a="sdDrucken">🖨️ Drucken</button>')
+    return kopf("🪧 Schilder-Druckerei", '<button type="button" class="knopf haupt klein" data-a="sdDrucken">🖨️ Drucken</button> <button type="button" class="knopf klein" data-a="sdPdf">📄 PDF</button>')
       + `<p class="hinweis">Vorlage wählen, Text eintragen, drucken – für Konzerte, Proben und Fahrten.</p>
       <div class="wahlen" role="group" aria-label="Vorlage">${Object.entries(VORLAGEN).map(([k, x]) => `<button type="button" class="chip-wahl${SCH.vorlage === k ? " an" : ""}" aria-pressed="${SCH.vorlage === k}" data-a="sdVorlage" data-x="${k}">${x.t}</button>`).join("")}</div>
       <div class="karte sd-form">${vor.felder.map(([k, t]) => `<div class="feld"><label for="sd_${k}">${esc(t)}</label>${k === "preise" ? `<textarea id="sd_${k}" rows="4" data-sd="${k}">${esc(wert(k))}</textarea>` : `<input id="sd_${k}" maxlength="60" value="${esc(wert(k))}" data-sd="${k}">`}</div>`).join("")}
@@ -51,6 +51,8 @@ AKTIONEN.sdVorlage = (k) => { SCH.vorlage = k; if (k === "pult") SCH.format = "q
 AKTIONEN.sdFormat = (k) => { SCH.format = k; merke(); zeichne(); };
 AKTIONEN.sdStil = (k) => { SCH.stil = k; merke(); zeichne(); };
 AKTIONEN.sdPfeil = (k) => { SCH.pfeil = k; merke(); zeichne(); };
+// 📄 0.53.0 Schild als PDF / in den Chat / Eingangskorb über die Druckvorschau (Drucken direkt bleibt wie bisher – randlos im eigenen Format)
+AKTIONEN.sdPdf = async () => { const b = document.getElementById("sdBlatt"); if (b) (await import("./druckvorschau.js")).druckVorschau({ titel: "Schild", html: `<div class="sd-vorschau sd-${SCH.format} sd-${SCH.stil} dv-schild">${b.innerHTML}</div>`, format: SCH.format === "quer" ? "quer" : "hoch" }); };
 AKTIONEN.sdDrucken = () => {
   const st = document.createElement("style"); st.id = "sdSeite"; st.textContent = `@page { size: A4 ${SCH.format === "quer" ? "landscape" : "portrait"}; margin: 8mm; }`;
   document.getElementById("sdSeite")?.remove(); document.head.appendChild(st);

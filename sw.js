@@ -1,7 +1,7 @@
 // Service Worker der Bachkreis-App – atomares Update (AGENTS.md Regel 16):
 // Eine Version = ein Cache mit ALLEN Dateien. Die neue Version wird erst aktiv, wenn die App „jetzt-aktivieren“ sendet
 // (Knopf „Jetzt aktualisieren“). Bis dahin liefert der alte Worker ausschließlich Dateien der alten Version – kein Mischstand.
-const VERSION = "0.52.0";
+const VERSION = "0.53.0";
 const CACHE = "bk-" + VERSION;
 const DATEIEN = [
   "./", "index.html", "verwaltung.html", "manifest.webmanifest",
@@ -11,7 +11,7 @@ const DATEIEN = [
   "js/kern/version.js", "js/kern/umgebung.js", "js/kern/speicher-idb.js", "js/kern/schema.js", "js/kern/daten.js", "js/kern/adapter-lokal.js", "js/kern/adapter-supabase.js",
   "js/kern/demodaten.js", "js/kern/kom-standard.js", "js/kern/logik.js", "js/kern/klappen.js", "js/kern/ui.js", "js/kern/versand.js", "js/kern/musik.js", "js/kern/warten.js", "js/kern/dateien.js", "js/kern/rhythmus.js", "js/kern/griffe.js", "js/kern/stimmton.js", "js/kern/uebematerial.js", "js/kern/chattext.js", "js/kern/quiz.js", "js/kern/klangproben.js", "js/kern/orte.js", "js/kern/buerotisch.js", "js/kern/suche.js", "js/kern/hilfe.js", "js/kern/advent.js", "js/kern/glueck.js",
   "js/app/main.js", "js/app/zustand.js", "js/app/start.js", "js/app/termine.js", "js/app/terminumfrage.js", "js/app/kommunikation.js",
-  "js/app/orchester.js", "js/app/instrumente.js", "js/app/leitung.js", "js/app/meins.js", "js/app/buehne.js", "js/app/uebebuehne.js", "js/app/vereinsleben.js", "js/app/startseite.js", "js/app/bedienung.js", "js/app/stundenuhren.js", "js/app/startnachricht.js", "js/app/zugang.js", "js/app/quiz.js", "js/app/kinderstart.js", "js/app/buero.js", "js/app/bueroraum.js", "js/app/elternstart.js", "js/app/kopf.js", "js/app/wetter.js", "js/app/jahreszeiten.js", "js/app/fuss.js", "js/app/darstellung.js", "js/app/effekte.js", "js/app/einstellungen.js", "js/app/pinnwand.js", "js/app/nachrichten.js", "js/app/chatplus.js", "js/app/hilfezentrum.js", "js/app/pdfansicht.js", "js/app/fotoalbum.js", "js/app/vorschlaege.js", "js/app/protokolle.js", "js/app/advent.js", "js/app/rueckmeldung.js", "js/app/erstattung.js", "js/app/glueck.js", "js/app/adminbereich.js", "js/app/ueberblick.js", "js/app/notfallpass.js", "js/app/standorte.js", "js/app/bildschirmfoto.js", "js/app/boerse.js", "js/app/jahrbuch.js", "js/app/spiele.js", "js/kern/stimme.js", "js/app/sitzung.js", "js/app/unterlagen.js", "js/app/schilder.js", "js/app/nutzung.js", "js/app/pruefung.js", "js/kern/rtc.js", "js/app/anruf.js", "js/app/tisch.js", "js/app/fernhilfe.js", "js/kern/geheim.js", "js/kern/tischnetz.js", "js/app/chatextra.js", "js/app/leihvertrag.js", "js/gast.js", "gast.html", "js/app/sprache.js", "js/app/sprachsteuerung.js", "js/app/gesichter.js", "js/app/netzsymbol.js", "js/app/notenarchiv.js", "js/app/notenblatt.js", "js/app/schutz.js", "js/app/konzert.js", "js/app/extras.js", "js/kern/notensatz.js", "js/app/ueben.js", "js/app/kalender.js", "js/app/online.js", "js/kern/netz.js", "js/app/instrumentenkunde.js",
+  "js/app/orchester.js", "js/app/instrumente.js", "js/app/leitung.js", "js/app/meins.js", "js/app/buehne.js", "js/app/uebebuehne.js", "js/app/vereinsleben.js", "js/app/startseite.js", "js/app/bedienung.js", "js/app/stundenuhren.js", "js/app/startnachricht.js", "js/app/zugang.js", "js/app/quiz.js", "js/app/kinderstart.js", "js/app/buero.js", "js/app/bueroraum.js", "js/app/elternstart.js", "js/app/kopf.js", "js/app/wetter.js", "js/app/jahreszeiten.js", "js/app/fuss.js", "js/app/darstellung.js", "js/app/effekte.js", "js/app/einstellungen.js", "js/app/pinnwand.js", "js/app/nachrichten.js", "js/app/chatplus.js", "js/app/hilfezentrum.js", "js/app/pdfansicht.js", "js/app/fotoalbum.js", "js/app/vorschlaege.js", "js/app/protokolle.js", "js/app/advent.js", "js/app/rueckmeldung.js", "js/app/erstattung.js", "js/app/glueck.js", "js/app/adminbereich.js", "js/app/ueberblick.js", "js/app/notfallpass.js", "js/app/standorte.js", "js/app/bildschirmfoto.js", "js/app/boerse.js", "js/app/jahrbuch.js", "js/app/spiele.js", "js/kern/stimme.js", "js/app/sitzung.js", "js/app/unterlagen.js", "js/app/schilder.js", "js/app/nutzung.js", "js/app/pruefung.js", "js/kern/rtc.js", "js/app/anruf.js", "js/app/tisch.js", "js/app/fernhilfe.js", "js/kern/geheim.js", "js/kern/tischnetz.js", "js/app/chatextra.js", "js/app/leihvertrag.js", "js/kern/pdf.js", "js/app/druckvorschau.js", "js/app/eingangskorb.js", "js/gast.js", "gast.html", "js/app/sprache.js", "js/app/sprachsteuerung.js", "js/app/gesichter.js", "js/app/netzsymbol.js", "js/app/notenarchiv.js", "js/app/notenblatt.js", "js/app/schutz.js", "js/app/konzert.js", "js/app/extras.js", "js/kern/notensatz.js", "js/app/ueben.js", "js/app/kalender.js", "js/app/online.js", "js/kern/netz.js", "js/app/instrumentenkunde.js",
   "schriften/bangers.woff2", "schriften/creepster.woff2", "schriften/dancing-script.woff2", "schriften/lobster.woff2", "schriften/mountains-of-christmas.woff2", "schriften/pacifico.woff2", "schriften/rye.woff2", "schriften/unifrakturmaguntia.woff2",
   "js/verwaltung/main.js", "js/verwaltung/werkzeuge.js",
 ];
@@ -26,8 +26,20 @@ self.addEventListener("message", (e) => { if (e.data === "jetzt-aktivieren") sel
 self.addEventListener("activate", (e) => {
   e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k.startsWith("bk-") && k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()));
 });
+// 📲 0.53.0 Teilen-Ziel („Teilen → Bachkreis“): das Geteilte kurz beiseitelegen und die App mit ?teilen=1 öffnen (eingangskorb.js nimmt es an)
+async function teilenAnnehmen(req) {
+  try {
+    const f = await req.formData(), c = await caches.open("bk-teilen"), dateien = f.getAll("dateien").filter((x) => x && typeof x === "object" && x.size).slice(0, 10);
+    await Promise.all((await c.keys()).map((k) => c.delete(k)));
+    for (const [i, d] of dateien.entries()) await c.put(`teilen-datei-${i}`, new Response(d, { headers: { "Content-Type": d.type || "application/octet-stream" } }));
+    await c.put("teilen-daten", new Response(JSON.stringify({ titel: String(f.get("titel") || "").slice(0, 200), text: String(f.get("text") || "").slice(0, 4000), url: String(f.get("url") || "").slice(0, 1000),
+      dateien: dateien.map((d) => ({ name: d.name, type: d.type })), zeit: Date.now() }), { headers: { "Content-Type": "application/json" } }));
+  } catch { /* App meldet „nichts angekommen“ */ }
+  return Response.redirect(new URL("./?teilen=1", self.registration.scope).href, 303);
+}
 self.addEventListener("fetch", (e) => {
   const req = e.request;
+  if (req.method === "POST" && new URL(req.url).origin === location.origin && new URL(req.url).pathname.endsWith("/teilen")) return e.respondWith(teilenAnnehmen(req));
   if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
   e.respondWith((async () => {
     const c = await caches.open(CACHE);

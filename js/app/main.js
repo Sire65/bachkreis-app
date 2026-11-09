@@ -51,6 +51,8 @@ import "./tisch.js"; // 🪑 0.50.0
 import "./fernhilfe.js"; // 🛟 0.50.0
 import "./chatextra.js"; // 👤👥🔒 0.51.0
 import "./leihvertrag.js"; // 📝 0.52.0
+import "./druckvorschau.js"; // 🖨️ 0.53.0
+import { teilenPruefen } from "./eingangskorb.js"; // 📥📲 0.53.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
 import { beimStart } from "./einstellungen.js";
@@ -161,6 +163,7 @@ async function starten() {
   const pw = pinnwandStart();
   const sn = !express && snPruefen(); // 📣 Startnachricht der Leitung (Pflicht-Fenster)
   onlineStart(); // 🟢 Wer ist online · 👋 Anklopfen
+  setTimeout(() => teilenPruefen().catch(() => {}), 400); // 📲 0.53.0 „Teilen → Bachkreis“ angekommen?
   beimStart(express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });

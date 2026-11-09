@@ -406,3 +406,30 @@ details.kl details.kl .kl-zahl { background: var(--karte); }
 @media print { body.lv-druck > *:not(#lvDruck) { display: none !important; } body.lv-druck #lvDruck { display: block; } body.lv-druck .lv-dokument { box-shadow: none; padding: 0; } body.lv-druck .lv-u-bild button { display: none; } }
 .lv-zeile-knopf { all: unset; box-sizing: border-box; display: flex; gap: 10px; align-items: center; width: 100%; cursor: pointer; min-width: 0; }
 .lv-zeile-knopf:focus-visible { outline: 3px solid var(--haupt, #c9a227); outline-offset: 2px; border-radius: 8px; }
+
+/* 🖨️📥 0.53.0 Druckvorschau & Eingangskorb */
+.dv-fenster { position: fixed; inset: 0; z-index: 8800; background: #5b5b5b; display: flex; flex-direction: column; }
+body.dv-offen { overflow: hidden; }
+.dv-leiste { position: relative; z-index: 2; display: flex; flex-wrap: wrap; gap: 6px; padding: max(8px, env(safe-area-inset-top)) 10px 8px; background: var(--karte, #fff); box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+.dv-leiste .knopf { flex: 0 0 auto; }
+.dv-flaeche { flex: 1; overflow: auto; padding: 12px 8px 40px; }
+.dv-huelle { margin: 0 auto; overflow: hidden; } .dv-massstab { transform-origin: top left; }
+.dv-papier { background: #fff; color: #111; padding: 40px 48px 36px; box-shadow: 0 4px 18px rgba(0,0,0,.35); min-height: 600px; font: 15px/1.5 system-ui, sans-serif; display: flex; flex-direction: column; }
+.dv-papier.dv-hoch { min-height: 1123px; } .dv-papier.dv-quer { min-height: 794px; }
+.dv-kopf { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #c9a227; padding-bottom: 8px; margin-bottom: 16px; }
+.dv-kopf b { display: block; font-size: 17px; } .dv-kopf small { display: block; color: #555; }
+.dv-kopf-r { margin-left: auto; text-align: right; }
+.dv-inhalt { flex: 1; } .dv-inhalt .karte { box-shadow: none; border: 1px solid #ddd; background: #fff; color: #111; }
+.dv-inhalt h2 { font-size: 18px; } .dv-inhalt * { color: #111 !important; } .dv-inhalt .badge { border: 1px solid #999; }
+.dv-fuss { border-top: 1px solid #ccc; margin-top: 20px; padding-top: 6px; font-size: 12px; color: #666; }
+.dv-brief .dv-abs { font-size: 11px; color: #555; margin-bottom: 26px; } .dv-brief .dv-datum { text-align: right; margin-bottom: 18px; } .dv-brief h1 { font-size: 17px; }
+.dv-mess { position: fixed; left: -20000px; top: 0; }
+#dvFenster .lv-dokument { box-shadow: none; padding: 0; }
+@media print { body.dv-druck > *:not(#dvFenster) { display: none !important; } body.dv-druck .dv-fenster { position: static; background: none; display: block; } body.dv-druck .dv-leiste { display: none; }
+  body.dv-druck .dv-flaeche { overflow: visible; padding: 0; } body.dv-druck .dv-huelle, body.dv-druck .dv-massstab { transform: none !important; width: auto !important; height: auto !important; overflow: visible; }
+  body.dv-druck .dv-papier { box-shadow: none; padding: 0; width: auto !important; min-height: 0; } }
+.ek-liste li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; } .ek-sym { font-size: 1.5rem; } .ek-neu b::after { content: " •"; color: #c62828; }
+.ek-knoepfe { display: flex; gap: 4px; } .ek-text { white-space: normal; overflow-wrap: anywhere; background: rgba(127,127,127,.1); padding: 8px 10px; border-radius: 10px; margin: 8px 0; }
+.knopf.breit.links { text-align: left; justify-content: flex-start; }
+body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau liegt darüber */
+#dvFenster .lv-kopf img, .dv-mess .lv-kopf img { display: none; } /* Logo steht schon im Kopf der Druckvorschau */

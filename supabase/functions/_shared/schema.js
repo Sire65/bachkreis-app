@@ -95,6 +95,9 @@ export const PARTNER_ARTEN = { musikschule: "🎓 Musikschule", orchester: "🎻
 export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_social"];
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
+// 📥 0.53.0 Eingangskorb: wer anderen etwas hineinlegen darf
+export const EK_VERTEILER = ["admin", "leitung", "lehrkraft", "vorstand"];
+export const EK_QUELLEN = { teilen: "📲 geteilt", druck: "🖨️ aus der Druckvorschau", leitung: "📤 von der Leitung", notiz: "📝 Notiz" };
 // 📝 0.52.0 Leihvertrag-Formular
 export const LV_STATUS = { entwurf: "✏️ Entwurf", wartet: "✍️ wartet auf Unterschrift", unterschrieben: "✅ unterschrieben", beendet: "↩️ zurückgegeben" };
 export const LV_VERWALTER = ["admin", "leitung", "vorstand", "instrumentenwart"];
@@ -788,6 +791,24 @@ export const TABELLEN = {
       { k: "leihvertrag_id", t: "📝 Leihvertrag (Formular)", typ: "ref", ref: "leihvertraege" }, // 0.52.0
     ],
     liste: ["inventar_id", "person_id", "von", "bis", "status", "kaution_status"],
+  },
+  // 📥 0.53.0 Eingangskorb (wie KC-CLUB-EINGANGSKORB): was man sich selbst über „Teilen“ oder aus der Druckvorschau hineinlegt –
+  // und was die Leitung einem hineinlegt. Privat: nur die Person (bei Kindern auch die Eltern) und wer es hineingelegt hat.
+  eingangskorb: {
+    titel: "Eingangskorb", sym: "📥", gruppe: "Kommunikation", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "für", typ: "ref", ref: "personen", pflicht: true },
+      { k: "titel", t: "Titel", typ: "text", pflicht: true },
+      { k: "text", t: "Text / Notiz", typ: "lang" },
+      { k: "datei", t: "Datei", typ: "text" },
+      { k: "name", t: "Dateiname", typ: "text" },
+      { k: "mime", t: "Dateiart", typ: "text" },
+      { k: "groesse", t: "Größe (Byte)", typ: "zahl" },
+      { k: "quelle", t: "Woher", typ: "wahl", werte: EK_QUELLEN },
+      { k: "von", t: "von", typ: "ref", ref: "personen" },
+      { k: "gelesen_am", t: "angesehen", typ: "zeit" },
+    ],
+    liste: ["titel", "person_id", "quelle"],
   },
   // 📝 0.52.0 Leihvertrag als Formular: mehrere Instrumente + Zubehör, Anschrift/Geburtsdatum zum Zeitpunkt des Vertrags, Schadensklausel,
   // Unterschriften von Mitglied, Erziehungsberechtigten (bei Minderjährigen) und Bachkreis – mit dem Finger, vor Ort oder jede/r auf dem eigenen Gerät

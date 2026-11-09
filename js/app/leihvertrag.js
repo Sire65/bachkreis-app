@@ -204,13 +204,9 @@ AKTIONEN.lvRueckgabe = async (id) => {
   await speichere("leihvertraege", { ...v, status: "beendet" }); toast("↩️ Zurückgegeben"); zeichne();
 };
 // ---------- 🖨️ Drucken ----------
-function drucken(html) {
-  let d = document.getElementById("lvDruck"); if (!d) { d = document.createElement("div"); d.id = "lvDruck"; document.body.appendChild(d); }
-  d.innerHTML = html; document.body.classList.add("lv-druck");
-  setTimeout(() => { try { print(); } catch {} document.body.classList.remove("lv-druck"); d.innerHTML = ""; }, 60);
-}
-AKTIONEN.lvDrucken = () => { const a = document.querySelector("#inhalt .lv-dokument"); if (a) drucken(a.outerHTML); };
-AKTIONEN.lvLeerDrucken = () => drucken(vertragHtml(null));
+async function drucken(html, titel) { (await import("./druckvorschau.js")).druckVorschau({ titel, html }); } // 🖨️ 0.53.0 Vorschau/PDF/Chat/Eingangskorb
+AKTIONEN.lvDrucken = () => { const a = document.querySelector("#inhalt .lv-dokument"); if (!a) return; const k = a.cloneNode(true); k.querySelectorAll("button").forEach((b) => b.remove()); drucken(k.outerHTML, `Leihvertrag ${hole("leihvertraege", S.params?.id)?.nr || ""}`.trim()); };
+AKTIONEN.lvLeerDrucken = () => drucken(vertragHtml(null), "Leihvertrag (Formular)");
 // ---------- ⚙️ Standard-Leihbedingungen (Leitung) ----------
 AKTIONEN.lvKlausel = () => blatt("⚙️ Leihbedingungen & Schadensklausel", `<p class="hinweis">Gilt für neue Leihverträge. Bitte vom Vorstand prüfen lassen – das ist ein Muster, keine Rechtsberatung.</p>
   <textarea id="lvKlauselText" rows="14" aria-label="Leihbedingungen">${esc(konfig().leih_klausel || LV_KLAUSEL)}</textarea>

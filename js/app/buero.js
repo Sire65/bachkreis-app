@@ -5,7 +5,7 @@
 // Sichtbarkeit „Büro: Leitung & Lehrkräfte“ bzw. „Büro: Vorstand & Leitung“ prüft der Server (bueroDarf in regeln.js).
 import { pruefungHtml, vorVeroeffentlichen } from "./pruefung.js";
 import { S, VIEWS, zeige, zeichne, kopf, name, rollen, db } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz, datum, uhr, frage, BACHKREIS_LOGO } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz, datum, uhr, frage, BACHKREIS_LOGO } from "../kern/ui.js"; // eslint-disable-line no-unused-vars
 import { liste, hole, speichere, loesche, konfig } from "../kern/daten.js";
 import { BUERO_ORDNER, DOKUMENT_ARTEN, DOKUMENT_SICHT, bueroDarf, bueroZugang } from "../kern/schema.js";
 import { cockpit, termineFuer } from "../kern/logik.js";
@@ -133,15 +133,9 @@ AKTIONEN.buBriefVorlage = (id) => AKTIONEN.buBriefNeu(id || undefined);
 const briefWerte = () => formWerte(document.getElementById("briefForm"));
 export function briefDrucken(betreff, text) {
   const k = konfig(), absender = [k.impressum_name || k.name || "Bachkreis Bergkamen", k.impressum_anschrift || ""].filter(Boolean).join(" · ").replace(/\n/g, ", ");
-  const w = window.open("", "_blank"); if (!w) return toast("Bitte Pop-ups erlauben, um zu drucken.");
-  w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>${esc(betreff)}</title><style>
-    body{font:12pt/1.5 Georgia,serif;margin:20mm 22mm;color:#111} .kopf{display:flex;align-items:center;gap:14px;border-bottom:2px solid #d4a017;padding-bottom:8px;margin-bottom:24px}
-    .kopf img{width:64px;height:64px} .kopf b{font-size:16pt} .abs{font-size:8pt;color:#555;margin-bottom:28px} .datum{text-align:right;margin-bottom:20px} h1{font-size:13pt;margin:0 0 16px}
-    .fuss{position:fixed;bottom:12mm;left:22mm;right:22mm;font-size:8pt;color:#666;border-top:1px solid #ccc;padding-top:4px} @media print{button{display:none}}</style></head><body>
-    <div class="kopf">${BACHKREIS_LOGO.replace('src="icons/', `src="${location.origin}${location.pathname.replace(/[^/]*$/, "")}icons/`)}<div><b>${esc(k.name || "Bachkreis Bergkamen")}</b><br>${esc(k.untertitel || "Jugendorchester")}</div></div>
-    <div class="abs">${esc(absender)}</div><div class="datum">${esc(datum(new Date().toISOString()))}</div><h1>${esc(betreff)}</h1><div>${esc(text).replace(/\n/g, "<br>")}</div>
-    <div class="fuss">${esc(absender)}${k.webseite ? " · " + esc(k.webseite) : ""}</div></body></html>`);
-  w.document.close(); setTimeout(() => { try { w.print(); } catch {} }, 400);
+  // 🖨️ 0.53.0 über die Druckvorschau (Kopf mit Logo, Drucken, PDF, Chat, Eingangskorb)
+  import("./druckvorschau.js").then((m) => m.druckVorschau({ titel: betreff, html: `<div class="dv-brief"><div class="dv-abs">${esc(absender)}</div><div class="dv-datum">${esc(datum(new Date().toISOString()))}</div>
+    <h1>${esc(betreff)}</h1><div>${esc(text).replace(/\n/g, "<br>")}</div></div>` }));
 }
 AKTIONEN.buBriefDrucken = () => { const f = briefWerte(); briefDrucken(f.betreff, String(f.text).replace(/\{vorname\}/g, "…")); };
 AKTIONEN.buBriefSenden = () => { const f = briefWerte(); blattZu(); zeige("rundschreiben", { betreff: f.betreff, text: f.text }); };

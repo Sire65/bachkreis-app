@@ -271,6 +271,10 @@ async function speichern(db, s, body) {
   // 💶 0.42.0 Erstattung: Beleg muss eine eigene Datei sein; km-Satz aus der Konfiguration
   // 🙋 0.51.0 Verbindungen zu Gästen am Runden Tisch: gültige Einladungen (Gast-Kennung → Raum)
   if (tab === "anrufe" && zeilen.some((z) => (z?.an || []).some?.((x) => /^gast-/.test(String(x))))) ctx.tischGaeste = await tischGaesteGueltig(db);
+  if (tab === "eingangskorb") { // 📥 0.53.0 nur eigene Dateien dürfen in einen Korb
+    const ids = [...new Set(zeilen.map((z) => String(z?.datei || "").replace(/^datei:/, "")).filter(Boolean))];
+    ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
+  }
   if (tab === "erstattungen") {
     const ids = [...new Set(zeilen.map((z) => String(z?.beleg || "").replace(/^datei:/, "")).filter(Boolean))];
     ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
@@ -423,6 +427,7 @@ async function dateiHolen(db, s, body, ablage) {
     if (!darf) darf = filtern("unterlagen", (await db.q(`select to_jsonb(u) as z from bk_unterlagen u where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📁 0.48.0
     if (!darf) darf = filtern("boerse", (await db.q(`select to_jsonb(b) as z from bk_boerse b where foto = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 🛍️ 0.47.0
     if (!darf) darf = filtern("fotos", (await db.q(`select to_jsonb(f) as z from bk_fotos f where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📷 0.40.0
+    if (!darf) darf = filtern("eingangskorb", (await db.q(`select to_jsonb(k) as z from bk_eingangskorb k where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📥 0.53.0
     if (!darf) darf = filtern("uebe_ergebnisse", (await db.q(`select to_jsonb(e) as z from bk_uebe_ergebnisse e where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
   }
   if (!darf) return fehler(403, "KEIN_ZUGRIFF");

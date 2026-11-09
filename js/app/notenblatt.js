@@ -73,7 +73,7 @@ AKTIONEN.nbSpielen = async () => {
   zeichne();
 };
 AKTIONEN.nbZoom = (x) => { einstSetzen("notenTakte", Math.max(1, Math.min(6, takte() - Number(x)))); zeichne(); };
-AKTIONEN.nbDrucken = () => window.print();
+AKTIONEN.nbDrucken = async () => (await import("./druckvorschau.js")).ansichtDrucken(); // 🖨️ 0.53.0 mit Vorschau/PDF
 AKTIONEN.nbSpeichern = (sid) => {
   const d = stimmeVon(sid); if (!d) return;
   const svg = notenSvg(d.st, { takteJeZeile: 4, titel: `${d.w.titel} – ${d.s.bezeichnung}` }).replace('fill="currentColor"', 'fill="#000" color="#000"').replace('stroke="currentColor"', 'stroke="#000"');

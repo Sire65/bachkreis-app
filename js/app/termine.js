@@ -276,7 +276,7 @@ AKTIONEN.anwesend = async (wert, el) => {
   await speichere("antworten", { ...(alt || { termin_id: tid, person_id: pid, antwort: wert === "ja" ? "ja" : "nein", notiz: "ohne Rückmeldung" }), anwesend: wert });
   toast("Anwesenheit gespeichert");
 };
-AKTIONEN.drucken = () => window.print();
+// 🖨️ AKTIONEN.drucken: allgemeine Druckvorschau (druckvorschau.js, 0.53.0)
 // 📆 Ein Termin in den eigenen Kalender: Apple/Outlook per Kalenderdatei, Google per Vorlage (dort „Speichern“)
 AKTIONEN.terminIcs = (id) => {
   const t = hole("termine", id);

@@ -29,6 +29,7 @@ import { verpassteAnrufe, anrufAn } from "./anruf.js";
 import { fernhilfeKachelDa } from "./fernhilfe.js";
 import { tischDa } from "./tisch.js";
 import { lvChef, meineOffenenUnterschriften } from "./leihvertrag.js";
+import { korbNeu } from "./eingangskorb.js";
 import { geheimTechnik } from "../kern/geheim.js";
 import { erwachsen } from "../kern/schema.js";
 const erwachsenIch = () => erwachsen(S.ich);
@@ -126,6 +127,7 @@ export const KACHELN = {
     { id: "foerderverein", sym: "💛", t: "Förderverein", u: "Einkauf · Spenden · Freigaben", v: "foerderverein", nur: () => istVorstand() || istLeitung() },
   ],
   meins: [
+    { id: "eingangskorb", sym: "📥", t: "Eingangskorb", u: "Geteiltes · Abgelegtes · von der Leitung", v: "eingangskorb", zahl: () => korbNeu() },
     { id: "meinetermine", sym: "🗓️", t: () => (istEltern() ? "Termine meiner Kinder" : "Meine Termine"), u: "Zusagen auf einen Blick", v: "termine", p: { filter: "meine" }, zahl: () => offeneAntworten() },
     { id: "kinder", sym: "👪", t: "Meine Kinder", u: "Gruppe · Instrument · Termine", v: "kinder", nur: () => istEltern() },
     { id: "meinegenehmigungen", sym: "✍️", t: "Genehmigungen", u: "Zustimmen · Ablehnen · Widerrufen", v: "meinegenehmigungen", nur: () => istEltern(), zahl: () => offeneGenehmigungen() },

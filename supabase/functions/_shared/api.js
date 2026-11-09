@@ -4,11 +4,12 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig } from "./schema.js";
+import { rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig, KARTEN_JE_STANDARD, KARTEN_CODE_ZEICHEN } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
 import { kontext, filtern, schreibPruefung, TISCH_GAST_EINLADEN } from "./regeln.js";
 import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
+import { registrierungPruefen, anmeldungPruefen, b64u } from "./passkey.js";
 import { termineFuer, ics, eigeneVorkommen, einwilligung, nutzungAuswerten } from "./logik.js";
 import * as kom from "./kom/kern.js";
 
@@ -102,6 +103,48 @@ async function gastPruefen(db, token) {
   return (await db.q(`select id, raum_id, name from bk_tischgaeste where id = $1 and token_hash = $2 and geloescht_am is null and gueltig_bis > now()`, [id, await sha256("gast:" + geheim)]))[0] || null;
 }
 const sdpSauber = (x) => (x && typeof x === "object" && ["offer", "answer"].includes(x.type) && typeof x.sdp === "string" && x.sdp.length < 30000 ? { type: x.type, sdp: x.sdp } : null);
+// 🎟️ 0.56.0 Konzertkarten ohne Konto: nur mit dem Karten-Link eines Konzerts (karten.html#k=…). Gibt nur Titel, Zeit, Ort, Hinweis und
+// freie Plätze heraus – keine Namen anderer Besucher. Reservieren: Name (+ freiwillig E-Mail), Anzahl; Plätze werden in EINER Anweisung
+// geprüft und vergeben (kein Überbuchen). Höchstens 5 Reservierungen je Internet-Anschluss und Stunde (nur als Hash gespeichert).
+const kartenCode = () => { const z = KARTEN_CODE_ZEICHEN, b = crypto.getRandomValues(new Uint8Array(6)); return [...b].map((x) => z[x % z.length]).join(""); };
+async function konzertKarten(db, body, meta) {
+  const k = String(body.k || "");
+  if (!/^[\w-]{12,80}$/.test(k)) return fehler(404, "LINK_UNGUELTIG");
+  const t = (await db.q(`select id, titel, beginn, ende, ort, karten_plaetze, karten_je, karten_hinweis from bk_termine
+    where karten_token = $1 and karten_aktiv is true and geloescht_am is null and status is distinct from 'abgesagt'`, [k]))[0];
+  if (!t) return fehler(404, "LINK_UNGUELTIG");
+  const belegt = async () => Number((await db.q(`select coalesce(sum(anzahl), 0)::int as n from bk_kartenreservierungen where termin_id = $1 and status <> 'storniert' and geloescht_am is null`, [t.id]))[0].n);
+  const je = Math.max(1, Number(t.karten_je) || KARTEN_JE_STANDARD), plaetze = t.karten_plaetze == null ? null : Number(t.karten_plaetze);
+  const vorbei = new Date(t.beginn).getTime() < Date.now();
+  const info = async () => ({ titel: t.titel, beginn: t.beginn, ende: t.ende, ort: t.ort || "", hinweis: t.karten_hinweis || "", je, frei: plaetze == null ? null : Math.max(0, plaetze - (await belegt())), vorbei });
+  const unter = String(body.unter || "info");
+  if (unter === "info") return { status: 200, json: { ok: true, konzert: await info() } };
+  if (vorbei) return fehler(409, "VORBEI");
+  if (unter === "reservieren") {
+    const name = String(body.name || "").replace(/\s+/g, " ").trim().slice(0, 80), email = String(body.email || "").trim().slice(0, 120), n = Math.round(Number(body.anzahl));
+    if (name.length < 2) return fehler(400, "NAME_FEHLT");
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fehler(400, "EMAIL_UNGUELTIG");
+    if (!(n >= 1 && n <= je)) return fehler(400, "ANZAHL_UNGUELTIG");
+    const ip = await sha256("karten-ip:" + (meta.ip || "unbekannt"));
+    if (Number((await db.q(`select count(*)::int as n from bk_kartenreservierungen where ip_hash = $1 and erstellt_am > now() - interval '1 hour'`, [ip]))[0].n) >= 5) return fehler(429, "ZU_VIELE");
+    const code = kartenCode();
+    const r = (await db.q(`insert into bk_kartenreservierungen (id, termin_id, name, email, anzahl, code, status, quelle, zeit, ip_hash, version, erstellt_am, geaendert_am, geaendert_von)
+      select $1, $2, $3, $4, $5::int, $6, 'reserviert', 'online', now(), $7, 1, now(), now(), '🎟️ online'
+      where $8::int is null or (select coalesce(sum(anzahl), 0) from bk_kartenreservierungen where termin_id = $2 and status <> 'storniert' and geloescht_am is null) + $5::int <= $8::int
+      returning code, anzahl`, [crypto.randomUUID(), t.id, name, email || null, n, code, ip, plaetze]))[0];
+    if (!r) return fehler(409, "AUSVERKAUFT", { konzert: await info() });
+    return { status: 200, json: { ok: true, code: r.code, anzahl: r.anzahl, konzert: await info() } };
+  }
+  if (unter === "stornieren") {
+    const code = String(body.code || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (code.length !== 6) return fehler(400, "CODE_UNGUELTIG");
+    const r = await db.q(`update bk_kartenreservierungen set status = 'storniert', geaendert_am = now(), version = version + 1, geaendert_von = '🎟️ online storniert'
+      where termin_id = $1 and code = $2 and status = 'reserviert' and geloescht_am is null returning id`, [t.id, code]);
+    if (!r.length) return fehler(404, "CODE_UNBEKANNT");
+    return { status: 200, json: { ok: true, konzert: await info() } };
+  }
+  return fehler(400, "UNBEKANNT");
+}
 async function gastTisch(db, body) {
   const g = await gastPruefen(db, body.token);
   if (!g) return fehler(403, "LINK_UNGUELTIG");
@@ -235,6 +278,55 @@ async function anmelden(db, body, meta) {
     [p.id, await sha256(token), body.verwaltung ? "verwaltung" : "app", String(SITZUNG_TAGE), String(meta.geraet || "").slice(0, 200)]);
   await db.q(`update bk_zugaenge set zuletzt = now() where id = $1`, [z.id]);
   return { status: 200, json: { ok: true, token, person: p, verwaltung: !!z.verwaltung } };
+}
+
+// ---------- 🔑 Passkeys (0.56.0) ----------
+// Ablauf: Challenge vom Server (5 Minuten, nur einmal) → Gerät unterschreibt → Server prüft mit dem gespeicherten öffentlichen Schlüssel.
+// Anmelden geht nur, solange die Person einen aktiven Zugang hat (Zugang gesperrt = Passkeys gesperrt). Fehlversuche zählen wie beim Code.
+async function challengeNeu(db, art, personId = null) {
+  const id = crypto.randomUUID(), challenge = zufallsToken(32);
+  await db.q(`delete from bk_passkey_challenges where ablauf < now() - interval '1 hour'`);
+  await db.q(`insert into bk_passkey_challenges (id, challenge, person_id, art, ablauf) values ($1, $2, $3, $4, now() + interval '5 minutes')`, [id, challenge, personId, art]);
+  return { id, challenge };
+}
+async function challengeNehmen(db, id, art, personId = null) {
+  const r = await db.q(`update bk_passkey_challenges set benutzt = true where id = $1 and art = $2 and not benutzt and ablauf > now() and person_id is not distinct from $3 returning challenge`, [String(id || ""), art, personId]);
+  return r[0]?.challenge || null;
+}
+async function passkeyStart(db, s) {
+  const { id, challenge } = await challengeNeu(db, "registrieren", s.person.id);
+  const vorhanden = (await db.q(`select cred_id from bk_passkeys where person_id = $1 and geloescht_am is null`, [s.person.id])).map((r) => r.cred_id);
+  return { status: 200, json: { ok: true, id, challenge, user: { id: b64u(new TextEncoder().encode(s.person.id)), name: name(s.person), displayName: name(s.person) }, vorhanden } };
+}
+async function passkeyRegistrieren(db, s, body) {
+  const challenge = await challengeNehmen(db, body.id, "registrieren", s.person.id);
+  if (!challenge) return fehler(400, "CHALLENGE_ABGELAUFEN");
+  if (Number((await db.q(`select count(*)::int as n from bk_passkeys where person_id = $1 and geloescht_am is null`, [s.person.id]))[0].n) >= 10) return fehler(400, "ZU_VIELE_GERAETE");
+  let r; try { r = await registrierungPruefen(body, challenge); } catch (e) { return fehler(400, "PASSKEY_UNGUELTIG", { grund: String(e.message).slice(0, 40) }); }
+  if ((await db.q(`select 1 from bk_passkeys where cred_id = $1`, [r.credId])).length) return fehler(409, "SCHON_EINGERICHTET");
+  const geraet = String(body.name || "").trim().slice(0, 60) || "Gerät";
+  const z = (await db.q(`insert into bk_passkeys (id, person_id, name, cred_id, public_key, rp_hash, zaehler, zuletzt, version, erstellt_am, geaendert_am, geaendert_von)
+    values ($1, $2, $3, $4, $5::jsonb, $6, $7, null, 1, now(), now(), $8) returning id, person_id, name, cred_id, zuletzt, version, erstellt_am, geaendert_am`,
+    [crypto.randomUUID(), s.person.id, geraet, r.credId, JSON.stringify(r.jwk), r.rpHash, r.zaehler, name(s.person)]))[0];
+  return { status: 200, json: { ok: true, passkey: z } };
+}
+async function passkeyAnmelden(db, body, meta) {
+  const ipHash = await sha256("ip:" + (meta.ip || "unbekannt"));
+  if ((await db.q(`select count(*)::int as n from bk_anmeldeversuche where ip_hash = $1 and ok = false and zeit > now() - interval '15 minutes'`, [ipHash]))[0].n >= MAX_FEHLVERSUCHE) return fehler(429, "ZU_VIELE_VERSUCHE");
+  const nein = async (code) => { await db.q(`insert into bk_anmeldeversuche (ip_hash, ok) values ($1, false)`, [ipHash]); return fehler(403, code); };
+  const challenge = await challengeNehmen(db, body.id, "anmelden");
+  if (!challenge) return nein("CHALLENGE_ABGELAUFEN");
+  const pk = (await db.q(`select k.*, to_jsonb(p) as p from bk_passkeys k join bk_personen p on p.id = k.person_id
+    where k.cred_id = $1 and k.geloescht_am is null and p.geloescht_am is null and p.status is distinct from 'ausgetreten'
+      and exists (select 1 from bk_zugaenge z where z.person_id = p.id and z.aktiv is true and z.geloescht_am is null)`, [String(body.credId || "")]))[0];
+  if (!pk) return nein("PASSKEY_UNBEKANNT");
+  let r; try { r = await anmeldungPruefen(body, challenge, pk); } catch { return nein("PASSKEY_UNGUELTIG"); }
+  await db.q(`insert into bk_anmeldeversuche (ip_hash, ok) values ($1, true)`, [ipHash]);
+  await db.q(`update bk_passkeys set zaehler = $2, zuletzt = now() where id = $1`, [pk.id, r.zaehler]);
+  const token = zufallsToken();
+  await db.q(`insert into bk_sitzungen (person_id, token_hash, art, ablauf, geraet) values ($1, $2, 'app', now() + ($3 || ' days')::interval, $4)`,
+    [pk.person_id, await sha256(token), String(SITZUNG_TAGE), String(meta.geraet || "").slice(0, 200)]);
+  return { status: 200, json: { ok: true, token, person: pk.p, verwaltung: false } };
 }
 
 // ---------- Laden (Delta-Abgleich) ----------
@@ -567,6 +659,9 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     // 💤 0.36.0 Wach-Aufruf (GitHub, einmal pro Woche): eine Mini-Abfrage, damit das kostenlose Supabase-Projekt in den Ferien nicht einschläft.
     // Ohne Anmeldung, gibt nichts preis außer „ok“.
     if (aktion === "wach") { await db.q(`select 1`); return { status: 200, json: { ok: true } }; }
+    if (aktion === "passkey_optionen") return { status: 200, json: { ok: true, ...(await challengeNeu(db, "anmelden")) } }; // 🔑 0.56.0
+    if (aktion === "passkey_anmelden") return await passkeyAnmelden(db, body, meta);
+    if (aktion === "karten") return await konzertKarten(db, body, meta); // 🎟️ 0.56.0 Konzertkarten ohne Konto, nur mit Karten-Link
     if (aktion === "gast_tisch") return await gastTisch(db, body); // 🙋 0.51.0 Gast am Runden Tisch – ohne Konto, nur mit Link
     const s = await sitzungPruefen(db, meta.token);
     if (!s) return fehler(401, "NICHT_ANGEMELDET");
@@ -606,6 +701,8 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
       await db.q(`insert into bk_konfig (schluessel, wert, geaendert_am) values ($1, $2::jsonb, now()) on conflict (schluessel) do update set wert = excluded.wert, geaendert_am = now()`, [k, JSON.stringify(body.wert ?? null)]);
       return { status: 200, json: { ok: true } };
     }
+    if (aktion === "passkey_start") return await passkeyStart(db, s); // 🔑 0.56.0
+    if (aktion === "passkey_registrieren") return await passkeyRegistrieren(db, s, body);
     if (aktion === "kalender_link") return await kalenderLink(db, s, body, dienste);
     if (aktion === "online") return await online(db, s, body);
     if (aktion === "zugang_lage") return await zugangLage(db, s);

@@ -25,6 +25,7 @@ export function einstAnwenden() {
   r.classList.toggle("riesig", e.schrift === "riesig");
   r.classList.toggle("ohne-effekt", !e.effekte);
   r.classList.toggle("ohne-zahlblink", e.zahlBlinken === false); r.classList.toggle("ohne-ledpuls", e.ledPuls === false); r.classList.toggle("ohne-pfeilblink", e.pfeilBlinken === false); // ✨ 0.45.0 Blinken
+  if (e.sprache === "en") import("../kern/englisch.js").then((m) => m.englischAn()).catch(() => {}); // 🌐 0.56.0 English
   document.dispatchEvent(new CustomEvent("bk-einst")); // Farbdesign/Tag-Nacht: darstellung.js
 }
 

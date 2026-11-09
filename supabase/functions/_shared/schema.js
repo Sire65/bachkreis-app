@@ -96,6 +96,11 @@ export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
 // ⚖️ 0.55.0 Datenschutz & Nutzungsregeln: Stand der Texte – ändert er sich, fragt die App beim nächsten Start erneut
+// 🎟️ 0.56.0 Konzertkarten
+export const KARTEN_STATUS = { reserviert: "reserviert", abgeholt: "abgeholt", storniert: "storniert" };
+export const KARTEN_ROLLEN = ["admin", "leitung", "vorstand"];
+export const KARTEN_JE_STANDARD = 6;
+export const KARTEN_CODE_ZEICHEN = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // ohne 0/O, 1/I/L
 export const DS_VERSION = "2026-11-09";
 export const ZUSTIMMUNG_ARTEN = { datenschutz: "Datenschutzerklärung gelesen", regeln: "Nutzungsregeln angenommen" };
 export const ZUSTIMMUNG_NACHWEIS = ["admin", "leitung", "vorstand"];
@@ -797,6 +802,37 @@ export const TABELLEN = {
     liste: ["inventar_id", "person_id", "von", "bis", "status", "kaution_status"],
   },
   // ⚖️ 0.55.0 Zustimmungen: wer hat wann welcher Fassung zugestimmt (Eltern auch für ihre Kinder unter 16) – Nachweis für den Vorstand
+  // 🔑 0.56.0 Passkeys: Anmelden mit Fingerabdruck/Gesicht/Geräte-PIN. Öffentlicher Schlüssel bleibt auf dem Server (intern),
+  // die Person sieht ihre Geräte und kann sie entfernen. Angelegt wird nur über die Server-Aktion passkey_registrieren.
+  passkeys: {
+    titel: "Passkeys", sym: "🔑", gruppe: "Verwaltung", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "name", t: "Gerät", typ: "text" },
+      { k: "cred_id", t: "Kennung", typ: "text", pflicht: true },
+      { k: "zuletzt", t: "zuletzt benutzt", typ: "zeit" },
+    ],
+    intern: [{ k: "public_key", typ: "json" }, { k: "rp_hash", typ: "text" }, { k: "zaehler", typ: "zahl" }],
+    liste: ["person_id", "name", "zuletzt"],
+  },
+  // 🎟️ 0.56.0 Kartenreservierungen fürs Konzert – Besucher reservieren ohne Konto über den Karten-Link; Leitung/Vorstand sehen die Liste
+  // und haken an der Abendkasse ab. Gelöscht 30 Tage nach dem Konzert (Löschkonzept).
+  kartenreservierungen: {
+    titel: "Kartenreservierungen", sym: "🎟️", gruppe: "Termine", lesen: [], schreiben: [],
+    felder: [
+      { k: "termin_id", t: "Konzert", typ: "ref", ref: "termine", pflicht: true },
+      { k: "name", t: "Name", typ: "text", pflicht: true },
+      { k: "email", t: "E-Mail (freiwillig)", typ: "email" },
+      { k: "anzahl", t: "Karten", typ: "zahl", pflicht: true },
+      { k: "code", t: "Reservierungs-Nr.", typ: "text" },
+      { k: "status", t: "Status", typ: "wahl", werte: KARTEN_STATUS },
+      { k: "quelle", t: "Quelle", typ: "wahl", werte: { online: "online", kasse: "an der Kasse / von Hand" } },
+      { k: "notiz", t: "Notiz", typ: "text" },
+      { k: "zeit", t: "reserviert am", typ: "zeit" },
+    ],
+    intern: [{ k: "ip_hash", typ: "text" }],
+    liste: ["termin_id", "name", "anzahl", "code", "status"],
+  },
   zustimmungen: {
     titel: "Zustimmungen (Datenschutz & Regeln)", sym: "⚖️", gruppe: "Verwaltung", lesen: [], schreiben: [],
     felder: [
@@ -980,6 +1016,12 @@ export const TABELLEN = {
       // 🎼 Probenplan (0.24.0): was geprobt wird – und danach kurz, wie es lief
       { k: "probenplan", t: "Probenplan (Stücke, Takte, Reihenfolge)", typ: "lang" },
       { k: "protokoll", t: "Probenprotokoll (nach der Probe, intern)", typ: "lang", vermerk: true },
+      // 🎟️ 0.56.0 Konzertkarten: öffentliche Reservierung über einen eigenen Link (karten.html#k=…)
+      { k: "karten_aktiv", t: "🎟️ Kartenreservierung online", typ: "ja" },
+      { k: "karten_plaetze", t: "Plätze insgesamt", typ: "zahl", nur: (z) => z.karten_aktiv },
+      { k: "karten_je", t: "höchstens Karten je Reservierung", typ: "zahl", nur: (z) => z.karten_aktiv },
+      { k: "karten_hinweis", t: "Hinweis für Besucher (Eintritt, Einlass …)", typ: "text", nur: (z) => z.karten_aktiv },
+      { k: "karten_token", t: "Karten-Link (Kennung)", typ: "text", nur: (z) => z.karten_aktiv },
     ],
     liste: ["beginn", "titel", "art_id", "ort", "gruppen", "status"],
     anzeige: (z) => z.titel,

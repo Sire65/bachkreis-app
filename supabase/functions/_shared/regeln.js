@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["zustimmungen", "eingangskorb", "leihvertraege", "tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["passkeys", "zustimmungen", "eingangskorb", "leihvertraege", "tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -117,6 +117,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
     case "ausleihen": return ctx.meine.has(z.person_id);
+    case "passkeys": return z.person_id === ctx.ich; // 🔑 0.56.0 nur die eigenen Geräte
+    case "kartenreservierungen": return hatRolle(ctx, KARTEN_ROLLEN); // 🎟️ 0.56.0 Besucherdaten nur für Leitung/Vorstand
     case "zustimmungen": return ctx.meine.has(z.fuer_id) || z.person_id === ctx.ich || hatRolle(ctx, ZUSTIMMUNG_NACHWEIS); // ⚖️ 0.55.0
     case "eingangskorb": return ctx.meine.has(z.person_id) || z.von === ctx.ich; // 📥 0.53.0 privat: Person, Eltern, wer es hineingelegt hat
     case "leihvertraege": return ctx.meine.has(z.person_id) || hatRolle(ctx, LV_VERWALTER); // 📝 0.52.0 eigene/Kinder + Instrumentenverwaltung
@@ -163,6 +165,8 @@ function zeileSichtbar(tab, z, ctx) {
 const NUR_NAME = ["id", "vorname", "nachname", "typ", "status", "jahrgang", "rollen", "avatar", "version", "geaendert_am", "geloescht_am"];
 function kuerzen(tab, z, ctx, alleLesen) {
   let out = z;
+  if (tab === "passkeys") { const { public_key: _a, rp_hash: _b, zaehler: _c, ...rest } = z; return rest; } // 🔑 0.56.0
+  if (tab === "kartenreservierungen") { const { ip_hash: _weg, ...rest } = z; return rest; } // 🎟️ 0.56.0
   if (tab === "tischgaeste") { const { token_hash: _weg, ...rest } = z; return rest; } // 🙋 0.51.0 der Link-Hash verlässt nie den Server
   if (tab === "personen" && !alleLesen && !ctx.meine.has(z.id) && !ctx.eltern.has(z.id)) {
     out = Object.fromEntries(NUR_NAME.map((k) => [k, z[k]]));
@@ -590,6 +594,22 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "passkeys": {
+      // 🔑 0.56.0 angelegt wird nur über die Anmelde-Prüfung; selbst umbenennen oder entfernen
+      if (!alt) return { ok: false, grund: "NUR_UEBER_GERAET" };
+      if (alt.person_id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE" };
+      return { ok: true, zeile: { ...alt, name: String(neu.name ?? alt.name ?? "").slice(0, 60), geloescht_am: neu.geloescht_am || alt.geloescht_am || null } };
+    }
+    case "kartenreservierungen": {
+      // 🎟️ 0.56.0 Leitung/Vorstand: an der Abendkasse abhaken, stornieren, Name/Anzahl/Notiz korrigieren, Reservierung von Hand (Telefon, Kasse)
+      if (!hatRolle(ctx, KARTEN_ROLLEN)) return { ok: false, grund: "NUR_LEITUNG_VORSTAND" };
+      const status = KARTEN_STATUS[neu.status] ? neu.status : alt?.status || "reserviert";
+      const anzahl = Math.max(1, Math.min(50, Math.round(Number(neu.anzahl ?? alt?.anzahl) || 1)));
+      const name = String(neu.name ?? alt?.name ?? "").trim().slice(0, 80); if (!name) return { ok: false, grund: "NAME_FEHLT" };
+      if (alt) return { ok: true, zeile: { ...alt, name, anzahl, status, notiz: String(neu.notiz ?? alt.notiz ?? "").slice(0, 200) } };
+      if (!neu.termin_id) return { ok: false, grund: "TERMIN_FEHLT" };
+      return { ok: true, zeile: { ...nur(neu, ["id"]), termin_id: String(neu.termin_id), name, anzahl, status, quelle: "kasse", notiz: String(neu.notiz || "").slice(0, 200), email: String(neu.email || "").slice(0, 120) || null, code: null, zeit: jetzt } };
     }
     case "zustimmungen": {
       // ⚖️ 0.55.0 Zustimmung nur im eigenen Namen – für sich und für die eigenen Kinder; Zeit und Fassung setzt der Server; nie ändern oder löschen

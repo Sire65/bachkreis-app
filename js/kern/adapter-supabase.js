@@ -43,7 +43,7 @@ export function erzeugeSupabaseAdapter({ url = "", quelle = "app" } = {}) {
     catch (e) { netzMessung(0, false, "keine Antwort"); throw e; }
     netzMessung(performance.now() - t0, r.status < 500, r.status >= 500 ? "Server-Fehler " + r.status : "");
     const j = await r.json().catch(() => ({ ok: false, fehler: "ANTWORT_UNLESBAR" }));
-    if (r.status === 401 && aktion !== "anmelden") {
+    if (r.status === 401 && !["anmelden", "passkey_anmelden", "passkey_optionen"].includes(aktion)) {
       try { localStorage.removeItem(TOKEN_KEY(quelle)); } catch {}
       token = null; throw new AnmeldungNoetig();
     }
@@ -156,7 +156,7 @@ export function erzeugeSupabaseAdapter({ url = "", quelle = "app" } = {}) {
     async aktion(name, nutzlast) { return api(name, nutzlast); },
     abgleichen,
     async anmelden(code, verwaltung = false) {
-      const r = await api("anmelden", { code, verwaltung });
+      const r = typeof code === "object" && code?.passkey ? await api("passkey_anmelden", code.passkey) : await api("anmelden", { code, verwaltung }); // 🔑 0.56.0
       if (!r.ok) return r;
       token = r.token; try { localStorage.setItem(TOKEN_KEY(quelle), token); } catch {}
       if (db) await idbLeeren(db);

@@ -19,6 +19,11 @@ create table if not exists bk_termine (
   soll jsonb,
   probenplan text,
   protokoll text,
+  karten_aktiv boolean,
+  karten_plaetze integer,
+  karten_je integer,
+  karten_hinweis text,
+  karten_token text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -52,6 +57,11 @@ alter table bk_termine add column if not exists register text[];
 alter table bk_termine add column if not exists soll jsonb;
 alter table bk_termine add column if not exists probenplan text;
 alter table bk_termine add column if not exists protokoll text;
+alter table bk_termine add column if not exists karten_aktiv boolean;
+alter table bk_termine add column if not exists karten_plaetze integer;
+alter table bk_termine add column if not exists karten_je integer;
+alter table bk_termine add column if not exists karten_hinweis text;
+alter table bk_termine add column if not exists karten_token text;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_termine_art_id_fk') then alter table bk_termine add constraint bk_termine_art_id_fk foreign key (art_id) references bk_terminarten(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_termine_projekt_id_fk') then alter table bk_termine add constraint bk_termine_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
 

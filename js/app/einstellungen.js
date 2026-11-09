@@ -139,6 +139,7 @@ VIEWS.einstellungen = {
     const kanaele = ["push", "mail", "app"];
     const matrix = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th></th>${kanaele.map((k) => `<th style="font-size:.8rem">${KANAELE[k]}</th>`).join("")}</tr>${Object.entries(EREIGNISSE).map(([k, t]) => `<tr><td style="padding:6px 0;font-weight:700;font-size:.9rem">${t}</td>${kanaele.map((c) => `<td style="text-align:center"><input type="checkbox" data-c="benachWahl" data-x="${k}|${c}" ${wahlVon(ich, k).includes(c) ? "checked" : ""} ${k === "sos" && c === "push" ? "disabled" : ""}></td>`).join("")}</tr>`).join("")}</table></div>`;
     const sz = `<div class="einst-zeile"><b>🔍 Schriftgröße der Texte</b><span style="flex:1"></span><button class="knopf klein" data-a="szAendern" data-x="-0.1" aria-label="kleiner">A−</button><span class="sz-wert">${Math.round(D.SZ.wert * 100)} %</span><button class="knopf klein" data-a="szAendern" data-x="0.1" aria-label="größer">A+</button><button class="knopf klein" data-a="szAendern" data-x="0">100 %</button></div><p class="hinweis">Nachrichten und Zettel werden größer, Knöpfe bleiben gleich. Auch mit zwei Fingern auseinanderziehen.</p>`;
+    const sprache = `<div class="feld"><label>🌐 Sprache / Language</label><div class="umschalter" translate="no">${[["de", "Deutsch"], ["en", "English"]].map(([v, n]) => `<button class="${(e.sprache || "de") === v ? "an" : ""}" data-a="spracheWahl" data-x="${v}">${n}</button>`).join("")}</div><p class="hinweis">English: buttons and menus – messages and event titles stay as written.</p></div>`;
     const gross = `<div class="feld"><label>🔠 Große Schrift (ganze App)</label><div class="umschalter">${[["normal", "Normal"], ["gross", "Groß"], ["riesig", "Sehr groß"]].map(([v, n]) => `<button class="${e.schrift === v ? "an" : ""}" data-a="schriftWahl" data-x="${v}">${n}</button>`).join("")}</div></div>`;
     const modus = `<div class="feld"><label>🌗 Tag- und Nachtmodus</label><div class="umschalter modus3">${[["auto", "🔄 Automatisch"], ["tag", "☀️ Immer Tag"], ["nacht", "🌙 Immer Nacht"]].map(([m, t]) => `<button class="${D.DS.modus === m ? "an" : ""}" data-a="modusWahl" data-x="${m}">${t}</button>`).join("")}</div><p class="hinweis">${esc(D.modusInfo())} Der Mond/Sonne-Knopf oben schaltet reihum A → T → N.</p></div>`;
     const tipps = `<h4>🙋 Wie viel Hilfe möchtest du?</h4>${chips(HILFE_STUFEN.map(([k, t]) => [k, t]), e.hilfeStufe || "etwas", "hilfeStufe")}
@@ -161,7 +162,7 @@ VIEWS.einstellungen = {
     const darstellung = unter("farbe", "🎨 Farbdesign", `${designWahlHtml()}<button class="knopf" data-a="designStandard">↺ Standard wiederherstellen</button>`, true)
       + unter("themen", "🎭 Themen", themaWahlHtml())
       + unter("modus", "🌗 Tag & Nacht", modus)
-      + unter("schrift", "🔠 Schrift & Größe", `${gross}${sz}`)
+      + unter("schrift", "🔠 Schrift & Größe", `${sprache}${gross}${sz}`)
       + unter("schatten", "🌗 Schatten, Ecken & Tippflächen", schatten)
       + unter("chatfarben", "💬 Chat-Farben & Hintergrund", `<div class="schalter"><span><b>💬 Chat-Farben & Hintergrund</b><div class="hinweis">Farbe deiner und der fremden Sprechblasen, Hintergrund mit Motiv – gilt für alle Chats</div></span><button class="knopf klein" data-a="cfOeffnen">🎨 Wählen</button></div>`)
       + unter("warte", "⏳ Warte-Bild", `<p class="hinweis">Was sich dreht oder bewegt, während die App kurz arbeitet.</p>${chips(WARTE_WAHL, e.warteBild || "logo", "warteBildWahl")}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="warteVorschau">▶ Alle ansehen</button></div>`)
@@ -229,7 +230,7 @@ VIEWS.einstellungen = {
         ${schalter("ruhe", "🌙 Nicht stören", `Keine Push-Töne von ${e.ruheVon} bis ${e.ruheBis} Uhr (SOS kommt immer durch)`, !!e.ruhe)}
         <div class="schalter"><span><b>🙂 Mein Gesicht</b><div class="hinweis">Gezeichnetes Gesicht fürs Orchester und die Instrumentenkunde</div></span><button class="knopf klein" data-a="meinGesicht">✏️ Gestalten</button></div>
         <h4>🎨 Lieblingsfarbe</h4><div class="designwahl">${D.DESIGNS.filter((d) => !d.mehr).slice(0, 4).map(designKnopf).join("")}</div><p class="hinweis">Alle Farben unter 🎨 Darstellung.</p>
-        ${gross}${sz}${schalter("einfach", "🟢 Einfache Ansicht", "Große Kacheln, nur das Wichtigste", !!e.einfach)}`)
+        ${sprache}${gross}${sz}${schalter("einfach", "🟢 Einfache Ansicht", "Große Kacheln, nur das Wichtigste", !!e.einfach)}`)
       + bereich("benachrichtigung", "🔔 Benachrichtigungen", `<div class="knopfreihe"><button class="knopf" data-a="pushErlauben">📲 Push auf diesem Handy</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>
         ${schalter("ruhe", "🌙 Nicht stören", "", !!e.ruhe)}<div class="einst-zeile"><label>von <input type="time" data-c="ruheZeit" data-x="ruheVon" value="${esc(e.ruheVon)}"></label><label>bis <input type="time" data-c="ruheZeit" data-x="ruheBis" value="${esc(e.ruheBis)}"></label></div>
         <h4>Was willst du wie bekommen?</h4>${matrix}`)
@@ -274,6 +275,7 @@ AKTIONEN.einstBereich = (id) => {
 
 // ---------- Aktionen ----------
 AKTIONEN.schriftWahl = (v) => { einstSetzen("schrift", v); neu(); };
+AKTIONEN.spracheWahl = (v) => { if ((einst().sprache || "de") === v) return; einstSetzen("sprache", v); location.reload(); }; // 🌐 0.56.0
 AKTIONEN.kachelGroesseWahl = (x) => { einstSetzen("kachelGroesse", x); neu(); };
 AKTIONEN.countdownWahl = (x) => { einstSetzen("countdown", x); neu(); };
 AKTIONEN.kachelnAlleAn = (r) => { const ids = KACHELN[r].map((k) => k.id); einstSetzen("kachelnAus", einst().kachelnAus.filter((x) => !ids.includes(x))); neu(); };

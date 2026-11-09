@@ -98,6 +98,7 @@ function anmeldeSeite(meldung = "", grund = "") {
     ${meldung ? `<p class="badge b-rot">${esc(meldung)}</p>` : ""}${grund ? linkHilfeHtml(grund) : ""}
     <div class="feld"><input id="anmeldeCode" placeholder="z. B. AB12CD34" autocomplete="one-time-code" autocapitalize="characters" style="text-align:center;font-size:1.2rem;letter-spacing:.12em"></div>
     <button class="knopf haupt breit" data-a="anmeldenCode">Anmelden</button>
+    ${window.PublicKeyCredential && istEchtbetrieb() ? '<button class="knopf breit" data-a="pkAnmelden">👆 Mit Fingerabdruck / Gesicht anmelden</button>' : ""}
     <p class="hinweis">Tipp: Den QR-Code auf deiner Einrichtungskarte mit der Handy-Kamera scannen – dann geht es automatisch. Keine Karte? Bitte bei der Leitung melden.</p></div>`;
   document.getElementById("anmeldeCode")?.addEventListener("keydown", (e) => { if (e.key === "Enter") AKTIONEN.anmeldenCode(); });
 }

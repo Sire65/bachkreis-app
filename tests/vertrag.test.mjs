@@ -20,7 +20,7 @@ test("Versionsvertrag: version.js, version.json, sw.js, HTML ?v= und package.jso
   assert.equal(vj.stufe, APP_STUFE);
   assert.match(lies("sw.js"), new RegExp(`const VERSION = "${APP_VERSION.replace(/\./g, "\\.")}"`));
   assert.equal(JSON.parse(lies("package.json")).version, APP_VERSION);
-  for (const h of ["index.html", "verwaltung.html", "gast.html"]) {
+  for (const h of ["index.html", "verwaltung.html", "gast.html", "karten.html"]) {
     const vs = [...lies(h).matchAll(/\?v=([\w.-]+)/g)].map((m) => m[1]);
     assert.ok(vs.length > 0, h);
     for (const v of vs) assert.equal(v, APP_VERSION, `${h} enthält ?v=${v}`);
@@ -63,7 +63,7 @@ test("Supabase-Migration ist aus dem aktuellen Schema erzeugt (npm run schema)",
 });
 
 test("Keine Inline-Event-Handler (CSP script-src 'self')", () => {
-  for (const d of [...jsDateien, "index.html", "verwaltung.html", "gast.html"]) assert.ok(!/\son(click|change|input|load|submit)=/.test(lies(d)), `${d} enthält Inline-Handler`);
+  for (const d of [...jsDateien, "index.html", "verwaltung.html", "gast.html", "karten.html"]) assert.ok(!/\son(click|change|input|load|submit)=/.test(lies(d)), `${d} enthält Inline-Handler`);
 });
 
 test("Keine externen Skripte/Dienste im Browsercode (Zero-Cost, Datenschutz)", () => {

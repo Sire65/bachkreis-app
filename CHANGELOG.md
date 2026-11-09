@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.56.0 DEV – 09.11.2026
+Aus „Was fehlt noch für eine professionelle App?“, Punkt 5:
+- 🎟️ **Konzertkarten** (Kachel für Leitung/Vorstand): je Konzert die Online-Reservierung einschalten (Plätze, Höchstzahl je Reservierung, Hinweis für Besucher) und den **Karten-Link teilen** (Plakat, Website, WhatsApp). Besucher reservieren **ohne Konto** auf `karten.html` mit Name (E-Mail freiwillig) und bekommen eine **Reservierungs-Nr.**; mit der Nr. selbst stornieren. **Abendkasse:** Liste mit Suche, ✅ abgeholt, Reservierung von Hand (Telefon/Kasse), Liste drucken/PDF. Server vergibt Plätze in einer Anweisung (kein Überbuchen), höchstens 5 Reservierungen je Anschluss und Stunde; Besucherdaten sehen nur Leitung/Vorstand und werden **30 Tage nach dem Konzert gelöscht**. Neue Tabelle `kartenreservierungen`, neue Felder an `termine`
+- 👆 **Anmelden ohne Code (Passkey)**: Gerät einmal einrichten (Technik › „Anmelden ohne Code“), danach auf der Anmeldeseite mit **Fingerabdruck, Gesicht oder Geräte-PIN** anmelden. WebAuthn ohne Bibliothek (Server prüft Signatur, Seite und Zähler); ist der Zugang gesperrt, sind auch die Passkeys gesperrt. Geräte-Liste privat, Entfernen jederzeit. Neue Tabellen `passkeys`, `bk_passkey_challenges`
+- 📊 **Jahresbericht** (Leitung/Vorstand): Schul- oder Kalenderjahr wählen – Mitglieder (neu/ausgetreten), Termine nach Art, Proben, Anwesenheitsquote, Konzerte, Fahrten mit Teilnehmerzahl, Instrumente (Bestand, verliehen, Reparaturen und Kosten), Spenden, Fotos; **Drucken/PDF** im Bachkreis-Design. Nur Zahlen – keine Inhalte aus Chats
+- 🌐 **English** (⚙️ › Schrift & Größe › Sprache / Language): Kacheln, Register, Fußleiste, Knöpfe und Einstellungen auf Englisch – für Gäste, Austausch-Orchester und Familien. Inhalte (Nachrichten, Termintitel) bleiben, wie sie geschrieben wurden; das Wörterbuch wird nur geladen, wenn English gewählt ist
+
 ## 0.55.0 DEV – 09.11.2026
 ⚖️ **Rechtliches** (aus „Was fehlt noch für eine professionelle App?“, Punkt 1):
 - **Datenschutzerklärung** in der App (Kachel „⚖️ Datenschutz“ unter Technik, Link unter ⚙️ › Impressum): Verantwortlicher (aus den Impressum-Angaben), Datenarten, Rechtsgrundlagen, Kinder und Jugendliche, Empfänger/Auftragsverarbeiter, Fristen, Rechte, Aufsichtsbehörde NRW – druckbar als PDF. Dazu **📜 Nutzungsregeln**

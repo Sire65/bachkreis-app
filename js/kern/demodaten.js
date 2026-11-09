@@ -199,7 +199,8 @@ export function erzeugeDemodaten(heute = new Date()) {
   termin({ titel: "Generalprobe Herbstkonzert", art_id: "ta-gp", beginn: iso(tag(konzertTag, -1, 10, 0)), ende: iso(tag(konzertTag, -1, 13, 0)), ort: "PZ Städt. Gymnasium Bergkamen", gruppen: ["g-a", "g-b"], projekt_id: "pr-herbst", frist: isoTag(tag(konzertTag, -7)), soll: SOLL_A,
     beschreibung: "Mit Aufbau. Bitte Notenständer mitbringen." });
   termin({ titel: "Herbstkonzert", art_id: "ta-konzert", beginn: iso(tag(konzertTag, 0, 17, 0)), ende: iso(tag(konzertTag, 0, 19, 30)), ort: "PZ Städt. Gymnasium Bergkamen", gruppen: ["g-a", "g-b"], projekt_id: "pr-herbst", frist: isoTag(tag(konzertTag, -10)), soll: SOLL_A,
-    beschreibung: "Treffpunkt 16:00 zum Einspielen. Kleidung: schwarz. Eintritt 7 € / Schüler 4 €." });
+    beschreibung: "Treffpunkt 16:00 zum Einspielen. Kleidung: schwarz. Eintritt 7 € / Schüler 4 €.",
+    karten_aktiv: true, karten_plaetze: 220, karten_je: 6, karten_hinweis: "Eintritt 7 € / Schüler 4 € an der Abendkasse. Einlass 16:30.", karten_token: "demo-herbstkonzert-2026" });
   termin({ titel: "Probenfreizeit A-Orchester", art_id: "ta-freizeit", beginn: iso(tag(freizeitTag, 0, 15, 0)), ende: iso(tag(freizeitTag, 2, 14, 0)), ort: "Jugendherberge (Beispiel)", gruppen: ["g-a"], projekt_id: "pr-freizeit", frist: isoTag(tag(freizeitTag, -14)), soll: SOLL_A,
     beschreibung: "Einverständniserklärung der Eltern erforderlich." });
   termin({ titel: "Fördervereinsfest", art_id: "ta-fest", beginn: iso(tag(konzertTag, 21, 15, 0)), ende: iso(tag(konzertTag, 21, 19, 0)), ort: "Forum der Schule", gruppen: ["g-a", "g-b", "g-c", "g-d"], frist: isoTag(tag(konzertTag, 14)) });
@@ -303,6 +304,12 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.eingangskorb = [{ id: "ek-1", person_id: "p-leitung", titel: "Ideen fürs Frühjahrskonzert", text: "Programm: Haydn Sinfonie Nr. 94 (Paukenschlag) · Solo-Ansage üben · Plakat bis Februar", quelle: "notiz", von: "p-leitung", gelesen_am: null }];
   // ⚖️ 0.55.0 Zustimmungen: in der Vorführung haben alle zugestimmt – außer den Ehemaligen (damit „Fehlt noch“ etwas zeigt)
   d.zustimmungen = d.personen.filter((p) => p.typ !== "ehemalig" && p.status !== "ausgetreten").flatMap((p, i) => ["datenschutz", "regeln"].map((art) => ({ id: `zs-${i}-${art}`, person_id: p.id, fuer_id: p.id, art, fassung: "2026-11-09", zeit: iso(tag(jetzt, -3, 18, i % 60)) })));
+  // 🔑 0.56.0 ein eingerichtetes Gerät der Leitung (nur Anzeige – Passkeys gehen nur im Echtbetrieb)
+  d.passkeys = [{ id: "pk-1", person_id: "p-leitung", name: "iPhone · Beispiel", cred_id: "demo-geraet", zuletzt: iso(tag(jetzt, -1, 7, 40)) }];
+  // 🎟️ 0.56.0 ein paar Kartenreservierungen fürs Herbstkonzert (ausgedachte Namen)
+  const hk = d.termine.find((t) => t.karten_token === "demo-herbstkonzert-2026");
+  d.kartenreservierungen = hk ? [["Familie Brandt", 4, "K7MQ2A"], ["Oma Gerda", 2, "P3XT9E"], ["Herr Yilmaz", 3, "HV4N8R"], ["Frau Lehmann", 2, null], ["Nachbarn Kowalski", 5, "Z2DWB6"]]
+    .map(([name, anzahl, code], i) => ({ id: `kr-${i}`, termin_id: hk.id, name, anzahl, code, status: i === 1 ? "storniert" : "reserviert", quelle: code ? "online" : "kasse", zeit: iso(tag(jetzt, -5 + i, 19, i * 7)) })) : [];
   d.leihvertraege = [];
   { const a = d.ausleihen.find((x) => d.personen.find((p) => p.id === x.person_id)?.typ === "schueler");
     if (a) { const p = d.personen.find((x) => x.id === a.person_id), ek = d.eltern_kind.find((e) => e.kind_id === p.id), e = ek && d.personen.find((x) => x.id === ek.eltern_id);

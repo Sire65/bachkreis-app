@@ -681,6 +681,55 @@ grant select, insert, update, delete on bk_ausleihen to service_role;
 drop trigger if exists bk_ausleihen_stempel on bk_ausleihen;
 create trigger bk_ausleihen_stempel before update on bk_ausleihen for each row execute function bk_abgleich_stempel();
 
+-- Passkeys
+create table if not exists bk_passkeys (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  name text,
+  cred_id text not null,
+  zuletzt timestamptz,
+  public_key jsonb,
+  rp_hash text,
+  zaehler integer,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_passkeys_geaendert on bk_passkeys (geaendert_am);
+alter table bk_passkeys enable row level security;
+revoke all on bk_passkeys from public, anon, authenticated;
+grant select, insert, update, delete on bk_passkeys to service_role;
+drop trigger if exists bk_passkeys_stempel on bk_passkeys;
+create trigger bk_passkeys_stempel before update on bk_passkeys for each row execute function bk_abgleich_stempel();
+
+-- Kartenreservierungen
+create table if not exists bk_kartenreservierungen (
+  id text primary key default gen_random_uuid()::text,
+  termin_id text not null,
+  name text not null,
+  email text,
+  anzahl integer not null,
+  code text,
+  status text check (status is null or status in ('reserviert', 'abgeholt', 'storniert')),
+  quelle text check (quelle is null or quelle in ('online', 'kasse')),
+  notiz text,
+  zeit timestamptz,
+  ip_hash text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kartenreservierungen_geaendert on bk_kartenreservierungen (geaendert_am);
+alter table bk_kartenreservierungen enable row level security;
+revoke all on bk_kartenreservierungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_kartenreservierungen to service_role;
+drop trigger if exists bk_kartenreservierungen_stempel on bk_kartenreservierungen;
+create trigger bk_kartenreservierungen_stempel before update on bk_kartenreservierungen for each row execute function bk_abgleich_stempel();
+
 -- Zustimmungen (Datenschutz & Regeln)
 create table if not exists bk_zustimmungen (
   id text primary key default gen_random_uuid()::text,
@@ -942,6 +991,11 @@ create table if not exists bk_termine (
   soll jsonb,
   probenplan text,
   protokoll text,
+  karten_aktiv boolean,
+  karten_plaetze integer,
+  karten_je integer,
+  karten_hinweis text,
+  karten_token text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -2235,6 +2289,8 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausle
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_person_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_vertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_vertrag_id_fk foreign key (vertrag_id) references bk_genehmigungen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_leihvertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_leihvertrag_id_fk foreign key (leihvertrag_id) references bk_leihvertraege(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_passkeys_person_id_fk') then alter table bk_passkeys add constraint bk_passkeys_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kartenreservierungen_termin_id_fk') then alter table bk_kartenreservierungen add constraint bk_kartenreservierungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_zustimmungen_person_id_fk') then alter table bk_zustimmungen add constraint bk_zustimmungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_zustimmungen_fuer_id_fk') then alter table bk_zustimmungen add constraint bk_zustimmungen_fuer_id_fk foreign key (fuer_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_eingangskorb_person_id_fk') then alter table bk_eingangskorb add constraint bk_eingangskorb_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;

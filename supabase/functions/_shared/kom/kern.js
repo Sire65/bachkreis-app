@@ -391,6 +391,7 @@ export async function wartung(db, adapter, umg = {}) {
   await db.q(`delete from bk_kom_ereignisse where zeit < now() - interval '90 days'`);
   // 📞 0.50.0 Vermittlungs-Zeilen von Anrufen/Rundem Tisch nach 2 Tagen löschen (enthalten nur Technik, keine Inhalte)
   try { await db.q(`delete from bk_anrufe where beginn < now() - interval '2 days'`); } catch {}
+  try { await db.q(`delete from bk_kartenreservierungen r using bk_termine t where t.id = r.termin_id and t.beginn < now() - interval '30 days'`); } catch {} // 🎟️ 0.56.0 Besucherdaten 30 Tage nach dem Konzert löschen
   try { await db.q(`update bk_tischgaeste set geloescht_am = now() where geloescht_am is null and gueltig_bis < now() - interval '7 days'`); } catch {} // 🙋 0.51.0 abgelaufene Gast-Links
   // 📈 0.43.0 Messwerte für den Verlauf im Admin-Bereich (wie KC kc_club_messwerte): einmal pro Stunde nur Zahlen
   if (!(await db.q(`select 1 from bk_kom_ereignisse where code = 'MESSWERT' and zeit > now() - interval '55 minutes' limit 1`)).length) {

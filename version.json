@@ -1,13 +1,22 @@
 {
-  "version": "0.61.0",
+  "version": "0.62.0",
   "datum": "2026-11-10",
   "stufe": "DEV",
   "neu": [
-    "⚡ „Schnellzugriff“ antippen zeigt oben die Schnellstart-Symbole",
-    "🟢 Einfache / 🔧 Erweiterte Ansicht direkt über den Kacheln umschalten",
-    "🪪 Rechts der QR-Knopf: dein persönlicher Ausweis zum Vorzeigen"
+    "🔍 Ausweis prüfen: Leitung hält die Kamera auf den QR-Code – ✅ gültig mit Name oder ❌",
+    "👪 Eltern-Startseite aufgeräumt: die 8 wichtigsten Kacheln, dazu QR-Ausweis",
+    "⌃⌃ Kopf ganz eingerollt: die Statusleiste mit Status und Knöpfen bleibt sichtbar"
   ],
   "verlauf": [
+    {
+      "version": "0.61.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "⚡ „Schnellzugriff“ antippen zeigt oben die Schnellstart-Symbole",
+        "🟢 Einfache / 🔧 Erweiterte Ansicht direkt über den Kacheln umschalten",
+        "🪪 Rechts der QR-Knopf: dein persönlicher Ausweis zum Vorzeigen"
+      ]
+    },
     {
       "version": "0.60.0",
       "datum": "2026-11-10",

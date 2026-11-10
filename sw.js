@@ -1,13 +1,13 @@
 // Service Worker der Bachkreis-App – atomares Update (AGENTS.md Regel 16):
 // Eine Version = ein Cache mit ALLEN Dateien. Die neue Version wird erst aktiv, wenn die App „jetzt-aktivieren“ sendet
 // (Knopf „Jetzt aktualisieren“). Bis dahin liefert der alte Worker ausschließlich Dateien der alten Version – kein Mischstand.
-const VERSION = "0.61.0";
+const VERSION = "0.62.0";
 const CACHE = "bk-" + VERSION;
 const DATEIEN = [
   "./", "index.html", "verwaltung.html", "manifest.webmanifest",
   "css/app.css", "css/verwaltung.css", "css/buehne.css", "css/kopf.css", "css/einstellungen.css", "css/pinnwand.css", "css/nachrichten.css", "css/instrumente.css", "css/orchester.css", "css/noten.css", "css/ueben.css", "css/uebebuehne.css", "css/vereinsleben.css", "css/startseite.css", "css/bedienung.css", "ton/kuckuck-ruf.mp3",
   "icons/logo.png", "icons/favicon.png", "icons/icon-192.png", "icons/icon-512.png",
-  "lib/qrcode/qrcode.js",
+  "lib/qrcode/qrcode.js", "lib/jsqr/jsQR.js",
   "js/kern/version.js", "js/kern/umgebung.js", "js/kern/speicher-idb.js", "js/kern/schema.js", "js/kern/daten.js", "js/kern/adapter-lokal.js", "js/kern/adapter-supabase.js",
   "js/kern/demodaten.js", "js/kern/kom-standard.js", "js/kern/logik.js", "js/kern/klappen.js", "js/kern/ui.js", "js/kern/versand.js", "js/kern/musik.js", "js/kern/warten.js", "js/kern/dateien.js", "js/kern/rhythmus.js", "js/kern/griffe.js", "js/kern/stimmton.js", "js/kern/uebematerial.js", "js/kern/chattext.js", "js/kern/quiz.js", "js/kern/klangproben.js", "js/kern/orte.js", "js/kern/buerotisch.js", "js/kern/suche.js", "js/kern/hilfe.js", "js/kern/advent.js", "js/kern/glueck.js",
   "js/app/main.js", "js/app/zustand.js", "js/app/start.js", "js/app/termine.js", "js/app/terminumfrage.js", "js/app/kommunikation.js",

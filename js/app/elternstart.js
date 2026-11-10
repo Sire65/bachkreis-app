@@ -30,8 +30,9 @@ export function elternErledigen(ks = gewaehlt(), heute = new Date()) {
   if (zettel) z.push({ sym: "📌", text: `<b>${zettel}</b> wichtige${zettel > 1 ? "" : "r"} Zettel an der Pinnwand`, a: "kachel", x: "pinnwand" });
   return z;
 }
-export const ELTERN_KACHELN = [["meinetermine", "📅", "Termine"], ["meinstatus", "🤒", "Krank / Status"], ["nachrichten", "💬", "Nachrichten"], ["meinegenehmigungen", "✍️", "Genehmigungen"], ["mitfahrboerse", "🚗", "Mitfahrbörse"],
-  ["ueben", "🎻", "Üben"], ["gesundheit", "🩺", "Notfall"], ["meininstrument", "🎻", "Leihinstrument"], ["pinnwand", "📌", "Pinnwand"], ["dokumente", "📂", "Elternbereich"], ["kinder", "👪", "Meine Kinder"]];
+// 0.62.0 die 8 wichtigsten (Wunsch Hansi); Mitfahrbörse, Üben und Elternbereich stehen unter „Alle Bereiche“
+export const ELTERN_KACHELN = [["meinetermine", "📅", "Termine"], ["meinstatus", "🤒", "Krank / Status"], ["nachrichten", "💬", "Nachrichten"], ["meinegenehmigungen", "✍️", "Genehmigungen"],
+  ["pinnwand", "📌", "Pinnwand"], ["gesundheit", "🩺", "Notfall"], ["meininstrument", "🎻", "Leihinstrument"], ["kinder", "👪", "Meine Kinder"]];
 
 export function elternStartHtml() {
   const ks = kinder(), w = einst().elternKind && ks.includes(einst().elternKind) ? einst().elternKind : "", sicht = gewaehlt();
@@ -45,6 +46,8 @@ export function elternStartHtml() {
     <div class="karte eltern-todo"><h3>✅ Bitte erledigen${todo.length ? ` <span class="badge b-gelb">${todo.length}</span>` : ""}</h3>
       ${todo.length ? `<div class="ifzliste kind-ich">${todo.map((x) => `<button type="button" class="ifz" data-a="${x.a}" data-x="${esc(x.x)}"><span>${x.sym}</span><span class="ifzt">${x.text}</span><span>›</span></button>`).join("")}</div>` : "<p>👍 Alles erledigt – danke!</p>"}</div>
     <div class="karte"><h3>📅 Die nächsten Termine</h3>${termine.length ? `<ul class="liste">${termine.slice(0, 5).map(({ t, k }) => `<li class="klick" data-a="oeffne" data-x="termin|${esc(t.id)}"><span>${k.map((x) => antw(t, x)).join("")}</span><div class="fl"><div class="zeile-titel">${esc(t.titel)}</div><div class="zeile-unter">${esc(datum(t.beginn))}, ${uhr(t.beginn)} Uhr · ${k.map((x) => esc(vorname(x))).join(", ")}</div></div><span>›</span></li>`).join("")}</ul>` : '<p class="hinweis">Gerade keine Termine.</p>'}</div>
+    <div class="abschnitt sz-zeile"><h3><span>Für Sie</span><button type="button" class="ansichtname erw" data-a="elternAlle" data-x="1" title="Antippen: alle Bereiche der App zeigen">&lt; Alle Bereiche &gt;</button></h3>
+      <span class="sz-rechts"><button type="button" class="ausweis-knopf" data-a="ausweisZeigen" title="Mein Ausweis-QR – zum Vorzeigen" aria-label="QR – mein Ausweis"><svg class="qr-sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h6v6H1zM2.5 2.5v3h3v-3zM9 1h6v6H9zm1.5 1.5v3h3v-3zM1 9h6v6H1zm1.5 1.5v3h3v-3zM9 9h2v2H9zm4 0h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2H9zm4 0h2v2h-2z" fill="currentColor" fill-rule="evenodd"/></svg> QR</button></span></div>
     <div class="raster kind-raster eltern-raster" id="raster">${ELTERN_KACHELN.map(([id, sym, t]) => `<button type="button" class="kachel kind-kachel" data-a="elternKachel" data-x="${id}" data-id="${id}"><div class="sym" aria-hidden="true">${sym}</div><b>${esc(t)}</b></button>`).join("")}</div>
     <button type="button" class="knopf breit ansicht-knopf" data-a="elternAlle" data-x="1">🔧 Alle Bereiche anzeigen</button></section>`;
 }

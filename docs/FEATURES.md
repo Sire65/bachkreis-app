@@ -161,6 +161,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F151 | 🔘 Schalter wie in der Club App (grün/grau) · 🇩🇪/🇬🇧 Sprach-Schalter mit einer Flagge | ✅ | tests/englisch.test.mjs |
 | BK-F152 | 🧹 Lint sauber · ♿ axe 0 Verstöße · ⚡ Einstellungen/Admin nachladbar · 🌐 English erweitert | ✅ | tests/teile.test.mjs, tests/englisch.test.mjs, tests/e2e/barrierefrei.mjs |
 | BK-F153 | ⚡ Schnellzugriff-Link zum Schnellstart · 🟢/🔧 Ansicht-Umschalter · 🪪 Ausweis-QR (HMAC, prüfbar) | ✅ | tests/ausweis.test.mjs |
+| BK-F154 | 🔍 Ausweis prüfen (Kamera, BarcodeDetector/jsQR, Server-Prüfcode) · 👪 Eltern-Start 8 Kacheln + QR · ⌃⌃ Statusleiste bleibt | ✅ | tests/ausweis.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

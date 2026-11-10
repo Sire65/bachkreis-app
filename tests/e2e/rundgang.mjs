@@ -216,6 +216,10 @@ const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);
 for (let i = 0; i < karten; i++) { await p.click(`#infoPunkte .ipunkt[data-x="${i}"]`); await p.waitForTimeout(150); }
 await p.click('#infoPunkte .ipunkt[title="Wetter"]'); await p.waitForSelector(".wtag", { timeout: 8000 }); await p.click('.wtag[data-wtag="2"]');
 for (const art of ["halb", "ganz", "ganz"]) { await p.click(`[data-a="kopfRollo"][data-x="${art}"]`); await p.waitForTimeout(2300); }
+// 0.62.0: „ganz eingerollt“ zeigt nur noch die Statusleiste (Logo/Gruß weg) – für die nächsten Schritte wieder ganz ausrollen
+if (await p.$("#bkHero.eingerollt")) { await p.click('[data-a="kopfRollo"][data-x="ganz"]'); await p.waitForTimeout(2300); }
+if (await p.$("#bkHero.halb-eingerollt")) { await p.click('[data-a="kopfRollo"][data-x="halb"]'); await p.waitForTimeout(2300); }
+if (await p.$("#bkHero.eingerollt, #bkHero.halb-eingerollt")) fehler.push("Kopf lässt sich nicht wieder ausrollen");
 for (const x of ["herbst", "advent", "winter", "fruehling", "sommer", "kirmes", "wiesn", "karibik", "karneval", "halloween"]) {
   await p.evaluate(async (x) => (await import("/js/app/jahreszeiten.js")).jahreszeitVorschau(x), x); await p.waitForTimeout(700);
 }
@@ -275,9 +279,9 @@ for (let i = 0; i < 5; i++) { await p.waitForSelector(".quiz-opt:not([disabled])
 await p.waitForSelector(".quiz-ende", { timeout: 4000 }).catch(() => fehler.push("Quiz: Runde endet nicht"));
 await p.screenshot({ path: `${BILDER}quiz-ende.png` });
 await p.click('.fuss-leiste [data-x="kindich"]'); await p.waitForSelector(".quiz-stand");
-// 👪 0.33.0 Eltern-Ansicht: „Bitte erledigen“, Kinder-Umschalter, 11 Kacheln (0.58.0: + Krank / Status) · 🏢 Büro: Regal, Brief aus Vorlage ablegen, Vorstand sieht nur Finanzen
+// 👪 0.33.0 Eltern-Ansicht: „Bitte erledigen“, Kinder-Umschalter, 8 Kacheln (0.62.0: die wichtigsten, Rest unter „Alle Bereiche“) · 🏢 Büro: Regal, Brief aus Vorlage ablegen, Vorstand sieht nur Finanzen
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));
-if (!(await p.$(".eltern-todo")) || (await p.$$(".eltern-raster .kachel")).length !== 11) fehler.push("Eltern-Ansicht: Erledigen-Liste oder Kacheln fehlen");
+if (!(await p.$(".eltern-todo")) || (await p.$$(".eltern-raster .kachel")).length !== 8) fehler.push("Eltern-Ansicht: Erledigen-Liste oder Kacheln fehlen");
 if ((await p.$$(".eltern-kinder button")).length >= 2) { await p.click(".eltern-kinder button >> nth=0"); await p.waitForSelector(".eltern-kinder button.an >> nth=0"); await p.click('.eltern-kinder [data-x=""]'); }
 await p.screenshot({ path: `${BILDER}eltern-start.png`, fullPage: true });
 await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));

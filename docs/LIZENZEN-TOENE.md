@@ -44,6 +44,8 @@ Selbst erzeugt (WebAudio, keine Aufnahme): Ersatzklang der Instrumente (offline/
 
 `lib/pdfjs/` – **pdf.js 4.10.38** (Mozilla Foundation, Apache License 2.0, Lizenztext in `lib/pdfjs/LICENSE`), unveränderter „legacy build“ aus pdfjs-dist, übernommen aus der KC Club App. Wird erst beim ersten Öffnen eines PDFs geladen; nichts kommt von fremden Servern.
 
+`lib/jsqr/` – **jsQR 1.4.0** (Cosmo Wolfe, Apache License 2.0, Lizenztext in `lib/jsqr/LICENSE`), unveränderte Datei `dist/jsQR.js` aus dem npm-Paket – liest QR-Codes aus dem Kamerabild (🔍 Ausweis prüfen, 0.62.0), nur wenn der Browser keinen eigenen QR-Leser hat (z. B. iPhone).
+
 ## Beispielbilder und Beispiel-PDF (0.40.0)
 
 `bilder/demo/*.svg` (Fotoalbum der Vorführversion) und `bilder/demo/probenplan.pdf` sind selbst erzeugt (keine echten Fotos, keine erkennbaren Personen) – frei verwendbar.

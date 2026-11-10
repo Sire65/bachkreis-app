@@ -165,6 +165,7 @@ export const KACHELN = {
     { id: "passkeys", sym: "👆", t: "Anmelden ohne Code", u: "Fingerabdruck / Gesicht (Passkey)", v: "passkeys" },
     { id: "schluesselbund", sym: "🔑", t: "Schlüsselbund", u: "🔒 Geheime Nachrichten auf jedem Gerät lesen", v: "schluesselbund", nur: () => geheimTechnik() && erwachsenIch() },
     { id: "fernhilfe", sym: "🛟", t: "Fernhilfe", u: "Jemand schaut mit auf deinen Bildschirm", v: "fernhilfe", nur: () => fernhilfeKachelDa() },
+    { id: "ausweispruefen", sym: "🔍", t: "Ausweis prüfen", u: "QR scannen · Abendkasse, Abfahrt, Ausgabe", v: "ausweispruefen", nur: () => hatRolle("admin", "leitung", "lehrkraft", "vorstand") },
     { id: "konzertkarten", sym: "🎟️", t: "Konzertkarten", u: "Online reservieren · Abendkasse", v: "konzertkarten", nur: () => hatRolle("admin", "leitung", "vorstand") },
     { id: "jahresbericht", sym: "📊", t: "Jahresbericht", u: "Das Jahr in Zahlen · für Vorstand & Versammlung", v: "jahresbericht", nur: () => hatRolle("admin", "leitung", "vorstand") },
     { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung" },

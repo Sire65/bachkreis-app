@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.62.0 DEV – 10.11.2026
+- 🔍 **Ausweis prüfen** (Kachel für Leitung, Lehrkräfte, Vorstand; auch aus „🪪 Mein Ausweis“): Kamera auf den QR-Code – die App zeigt groß **✅ gültig** mit Gesicht, Name und Art oder **❌ nicht gültig** (gefälscht, fremd, kein Bachkreis-Ausweis); kurzes Vibrieren. „🔄 Nächsten prüfen“ für die Schlange an der Abendkasse oder bei der Abfahrt. Liest mit dem eingebauten QR-Leser des Browsers (Android) oder mit **jsQR** (iPhone u. a., `lib/jsqr`, Apache-2.0, nur beim Prüfen geladen). Das Kamerabild bleibt auf dem Gerät
+- 👪 **Eltern-Startseite**: die **8 wichtigsten Kacheln** (Termine, Krank/Status, Nachrichten, Genehmigungen, Pinnwand, Notfall, Leihinstrument, Meine Kinder) – Mitfahrbörse, Üben und Elternbereich unter „Alle Bereiche“. Darüber die Zeile **„Für Sie · < Alle Bereiche >“** und rechts der **QR-Ausweis**
+- ⌃⌃ **Kopf ganz eingerollt**: die Statusleiste (Status, LEDs, 🌙 ↻ 🎤) bleibt jetzt stehen – es gehen nur Logo und Gruß
+- Behoben: Beim Einrollen rutschten die beiden Pfeile in die Statusleiste (Namensgleichheit mit dem Instrumenten-Karussell)
+
 ## 0.61.0 DEV – 10.11.2026
 ⚡🪪 **Zeile über den Kacheln wie in der Club App** (Wunsch Hansi):
 - **„Schnellzugriff“** ist ein Link: antippen springt oben im Kopf zum **⚡ Schnellstart** mit den 8 Symbolen (in der einfachen Ansicht fragt die App, ob sie zur erweiterten wechseln soll; ausgeschalteter Schnellstart wird eingeschaltet)

@@ -114,7 +114,7 @@ VIEWS.ueber = {
     return kopf("ℹ️ Über die App") + `<div class="karte"><h3>Bachkreis-App</h3><p>Version <b>${APP_VERSION} ${APP_STUFE}</b></p><p>Datenquelle: <b>${esc(ADAPTER[i.art]?.name || i.art)}</b><br><span class="hinweis">${esc(i.hinweis || "")} · Speicher: ${esc(i.speicher || "")}</span></p>
       <p>Versand: <b>BK Communicator</b> – ${adapterInfo().map((a) => esc(a.name)).join(" · ")} · WhatsApp-Übergabe (wa.me)</p>
       <p class="hinweis">Abgeleitet aus der KC Club App (Muster für Termine, Zusagen, Nachrichten, SOS, Register & Kacheln). Kostenfrei: keine kostenpflichtigen Dienste oder APIs.</p>
-      <p class="hinweis">Mitgelieferte Bibliothek: qrcode-generator (Kazuhiko Arase, MIT-Lizenz).</p>
+      <p class="hinweis">Mitgelieferte Bibliotheken: qrcode-generator (Kazuhiko Arase, MIT-Lizenz), jsQR (Cosmo Wolfe, Apache-2.0), pdf.js (Mozilla, Apache-2.0).</p>
       <div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachel" data-x="impressum">§ Impressum</button><button type="button" class="knopf klein" data-a="kachel" data-x="datenschutz">⚖️ Datenschutz</button>${konfig().webseite ? `<a class="knopf klein" href="${esc(konfig().webseite)}" target="_blank" rel="noopener">🌐 Bachkreis im Internet ↗</a>` : ""}${konfig().instagram ? `<a class="knopf klein" href="${esc(konfig().instagram)}" target="_blank" rel="noopener">📸 Instagram ↗</a>` : ""}<button class="knopf klein" data-a="ueberChronik">📜 Chronik & Über uns</button></div></div>`;
   },
 };

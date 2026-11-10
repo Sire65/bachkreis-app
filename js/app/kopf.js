@@ -63,7 +63,7 @@ function kopfBauen() {
   h.className = "hero"; h.id = "bkHero";
   h.innerHTML = `
     <button type="button" class="kopf-pfeil kp-halb" id="kopfPfeilHalb" data-a="kopfRollo" data-x="halb" title="Kopf halb einrollen – Statusleiste mit LEDs bleibt" aria-label="Kopf halb einrollen" aria-expanded="true"><span>⌃</span></button>
-    <button type="button" class="kopf-pfeil kp-ganz" id="kopfPfeil" data-a="kopfRollo" data-x="ganz" title="Kopf ganz einrollen – nur die Kopfzeile bleibt" aria-label="Kopf ganz einrollen" aria-expanded="true"><span class="kp-doppel">⌃<b>⌃</b></span></button>
+    <button type="button" class="kopf-pfeil kp-ganz" id="kopfPfeil" data-a="kopfRollo" data-x="ganz" title="Kopf ganz einrollen – nur die Statusleiste bleibt" aria-label="Kopf ganz einrollen" aria-expanded="true"><span class="kp-doppel">⌃<b>⌃</b></span></button>
     <div class="kopf-glanz" id="kopfGlanz" aria-hidden="true"><b></b><u></u></div>
     <div class="kopf-oben-rechts">
   <button type="button" class="kopf-netz" id="kopfNetz" data-a="ledBlatt" title="Verbindung & Status – antippen für Messwerte" aria-label="Verbindung und Status"><span class="kb-balken" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b class="kn-warn" hidden aria-hidden="true">!</b></button>
@@ -361,7 +361,7 @@ document.addEventListener("bk-kopf-neu", () => setTimeout(kopfNeuPruefen, 50));
 function kopfPfeileZeigen(stand) {
   if (stand === "offen") { KPN.an = KPN.nachricht = KPN.mitglied = false; KPN.neuOnline.clear(); }
   const g = $("kopfPfeil"), hb = $("kopfPfeilHalb");
-  if (g) { const zu = stand === "ganz"; g.classList.toggle("dreh", zu); g.setAttribute("aria-expanded", zu ? "false" : "true"); g.title = zu ? "Kopf ausrollen – alles zeigen" : "Kopf ganz einrollen – nur die Kopfzeile bleibt"; g.setAttribute("aria-label", g.title.split(" – ")[0]); }
+  if (g) { const zu = stand === "ganz"; g.classList.toggle("dreh", zu); g.setAttribute("aria-expanded", zu ? "false" : "true"); g.title = zu ? "Kopf ausrollen – alles zeigen" : "Kopf ganz einrollen – nur die Statusleiste bleibt"; g.setAttribute("aria-label", g.title.split(" – ")[0]); }
   if (hb) { const zu = stand !== "offen"; hb.classList.toggle("dreh", zu); hb.setAttribute("aria-expanded", zu ? "false" : "true"); hb.title = stand === "halb" ? "Kopf ausrollen – alles zeigen" : stand === "ganz" ? "Kopf halb ausrollen – Statusleiste mit LEDs zeigen" : "Kopf halb einrollen – Statusleiste mit LEDs bleibt"; hb.setAttribute("aria-label", hb.title.split(" – ")[0]); }
 }
 async function kopfRolloFahren(ziel) {
@@ -372,8 +372,8 @@ async function kopfRolloFahren(ziel) {
   kopfPfeileZeigen(ziel);
   const zu = ROLLO_RANG[ziel] > ROLLO_RANG[von];
   const hoehe = (s) => { kopfRolloKlassen(h, s); return h.offsetHeight; };
-  // Die Jalousie deckt nur den Teil ab, der verschwindet: bei „halb“ alles unter der Statusleiste, bei „ganz“ alles unter der Kopfzeile
-  const kante = (s) => (s === "ganz" ? kz.offsetTop + kz.offsetHeight : sl.offsetTop + sl.offsetHeight) + 6;
+  // Die Jalousie deckt den Teil unter der Statusleiste ab (halb und ganz – bei „ganz“ gehen zusätzlich Logo und Gruß)
+  const kante = () => sl.offsetTop + sl.offsetHeight + 6; // 0.62.0 auch „ganz“ behält die Statusleiste
   const offenerStand = zu ? von : ziel, engerStand = zu ? ziel : von;
   const klein = hoehe(engerStand), gross = hoehe(offenerStand), oben = kante(engerStand);
   const vorhang = document.createElement("div"); vorhang.className = "rollo-lamellen"; vorhang.style.top = oben + "px"; vorhang.style.height = Math.max(0, gross - oben) + "px";

@@ -1,8 +1,8 @@
 // ♿ Barrierefreiheit (WCAG 2.1 A/AA) mit axe-core – Werkzeug aus dem KC Infrastructure Control Center (@axe-core/playwright).
 // Prüft jede Ansicht in jeder Demo-Rolle und alle Bereiche des PC-Programms (inkl. Formular-Fenster).
-// Lokal: npm start, dann  npm i --no-save playwright-core @axe-core/playwright  und  BASIS=http://localhost:8080 node tests/e2e/barrierefrei.mjs
+// Lokal: npm start, dann  npm i --no-save playwright @axe-core/playwright  und  BASIS=http://localhost:8080 node tests/e2e/barrierefrei.mjs
 // Ergebnis: Liste der Verstöße; Exit-Code 1, wenn welche gefunden wurden. NURPC=1 prüft nur das PC-Programm.
-import { chromium } from "playwright-core";
+import { chromium } from "playwright"; // dasselbe Paket wie der Rundgang (dessen Browser ist in GitHub installiert)
 import AxeBuilder from "@axe-core/playwright";
 const BASIS = process.env.BASIS || "http://localhost:8080";
 const VIEWS = "buero buerodok quiz kindich zahlen zugang startnachricht impressum start termine nachrichten pinnwand instrumente noten orchester einstellungen meinedaten kinder kalender ueben cockpit genehmigungen meingesicht instrumentenkunde buehne mitfahrboerse projekte foerderverein einkauf meininstrument meinenoten meinegenehmigungen hilfe ueber sicherheit sos anwesenheit fotoliste gesundheit meinregister uebefortschritt chronik dokumente austausch anfragen partner".split(" ");

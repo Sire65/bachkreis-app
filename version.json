@@ -1,14 +1,23 @@
 {
-  "version": "0.56.0",
-  "datum": "2026-11-09",
+  "version": "0.57.0",
+  "datum": "2026-11-10",
   "stufe": "DEV",
   "neu": [
-    "🎟️ Konzertkarten: Besucher reservieren ohne Konto über einen Link, an der Abendkasse abhaken",
-    "👆 Anmelden mit Fingerabdruck oder Gesicht (Passkey) statt Code",
-    "📊 Jahresbericht für Vorstand und Versammlung – mit Druck/PDF",
-    "🌐 English: Bedienung auf Englisch (Einstellungen › Sprache)"
+    "🇩🇪/🇬🇧 Sprache oben im Kopf mit einem Tipp umschalten",
+    "📶 Balken oben zeigen, wie gut die Verbindung ist – antippen für Messwerte",
+    "👋 Kopf neu angeordnet: „Guten Abend, Bettina!“ wird nicht mehr abgeschnitten"
   ],
   "verlauf": [
+    {
+      "version": "0.56.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🎟️ Konzertkarten: Besucher reservieren ohne Konto über einen Link, an der Abendkasse abhaken",
+        "👆 Anmelden mit Fingerabdruck oder Gesicht (Passkey) statt Code",
+        "📊 Jahresbericht für Vorstand und Versammlung – mit Druck/PDF",
+        "🌐 English: Bedienung auf Englisch (Einstellungen › Sprache)"
+      ]
+    },
     {
       "version": "0.55.0",
       "datum": "2026-11-09",

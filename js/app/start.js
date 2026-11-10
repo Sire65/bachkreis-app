@@ -14,6 +14,7 @@ import { mitfahrtZahlen } from "./extras.js";
 import { wochenStand } from "./ueben.js";
 import { startseiteVerbinden, ANO, anordnenHtml, anordnenLeiste, nachDemZeichnen, laufbandHtml, laufbandStarten, countdownHtml, schnellstartHtml, schnellstartAn, vorschlagPruefen, nuTagZaehlen, ansichtFrage, tagesinfoBeimStart, kachelOffenHinten, drehZeichen } from "./startseite.js";
 import { gbvPruefen } from "./bedienung.js";
+import { netzBlattFuellen } from "./netzsymbol.js";
 import { kindAnsicht, kinderStartHtml, kindGross } from "./kinderstart.js";
 import { bueroDa } from "./buero.js";
 import { adventDa, adventHinweis } from "./advent.js";
@@ -343,8 +344,9 @@ AKTIONEN.themaUmschalten = () => dunkelUmschalten(); // reihum A → T → N wie
 AKTIONEN.ledBlatt = () => {
   const az = adminZustaende();
   const z = (f, t, x) => `<li><i class="led ${f}"></i><div class="fl"><b>${t}</b><div class="zeile-unter">${esc(x)}</div></div></li>`;
-  blatt("Verbindung & Status", `<ul class="liste">${z(az.daten[0], "Daten", az.daten[1])}${z(az.versand[0], "Versand (Push/Mail)", az.versand[1])}${z(az.push[0], "Push auf diesem Gerät", az.push[1])}</ul>
+  blatt("Verbindung & Status", `<div id="netzBlatt" class="nz-blatt"></div><h3>Status</h3><ul class="liste">${z(az.daten[0], "Daten", az.daten[1])}${z(az.versand[0], "Versand (Push/Mail)", az.versand[1])}${z(az.push[0], "Push auf diesem Gerät", az.push[1])}${(() => { const w = document.getElementById("ledWetter"); return w ? z(w.className.replace("led ", ""), "Wetter", w.title.replace(/^Wetter: /, "")) : ""; })()}</ul>
     <p class="hinweis">Grün = gemessen und in Ordnung · Gelb = aufpassen · Rot = Problem · <b>Grau = unbekannt</b> (nie „in Ordnung“). In der Vorführversion gibt es keinen Server – deshalb grau.</p>`);
+  netzBlattFuellen(); // 📶 0.57.0 Balken im Kopf → Messwerte hier
 };
 AKTIONEN.oeffne = (x) => { const [view, id] = String(x).split("|"); zeige(view, id ? { id } : {}); };
 

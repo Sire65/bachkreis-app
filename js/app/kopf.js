@@ -1,5 +1,5 @@
 // Kopf der Startseite – aufgebaut wie in der KC Club App:
-//  - Kopfzeile (Logo + Version, Name, Begrüßung, Tag/Nacht, Aktualisieren), Statusleiste (Ansicht, LEDs), Lichtschein beim Öffnen
+//  - Kopfzeile (Logo + Version, Name, Begrüßung zweizeilig), Statusleiste (Ansicht, 📶 Balken, 🇩🇪/🇬🇧, Tag/Nacht, Aktualisieren, 🎤), Lichtschein beim Öffnen
 //  - Jalousie: links ⌃ rollt das Infofeld ein (Statusleiste bleibt), rechts ⌃⌃ rollt alles bis auf die Kopfzeile ein (KC-CLUB-KOPF-ROLLO)
 //  - Infofeld zum Blättern: ‹ › und « » auf dem Rahmen, Punkte darunter, Wischen im Feld (KC-CLUB-INFOFELD)
 //    Karten: Nächster Termin · Wetter · Für dich · Demnächst · Kommunikationszentrale · Leitungszentrale
@@ -21,6 +21,7 @@ import { jahreszeitKopf, jzEisLaenge, jzVorschauLeiste, jzPruefen, JZ_KONTEXT, i
 import { ESELSOHR } from "./buehne.js";
 import { anwendenDesign } from "./darstellung.js";
 import { spracheMoeglich } from "./sprache.js";
+import { netzQualitaet, netzAbonnieren } from "../kern/netz.js";
 
 const $ = (id) => document.getElementById(id);
 const K = { hero: null, glanzGelaufen: false, infoLetztes: "", adminZustaende: () => ({}), ungelesen: () => 0, meineUnterhaltungen: () => [], offeneGenehmigungen: () => 0 };
@@ -38,7 +39,11 @@ export function naechsterTermin() {
   return l[0] || null;
 }
 JZ_KONTEXT.naechsterTermin = () => naechsterTermin()?.t || null;
-const gruss = () => { const h = new Date().getHours(); return h < 11 ? "Guten Morgen" : h < 18 ? "Hallo" : "Guten Abend"; };
+const englisch = () => einst().sprache === "en";
+const gruss = () => { const h = new Date().getHours(), i = h < 11 ? 0 : h < 18 ? 1 : 2; return (englisch() ? ["Good morning", "Hello", "Good evening"] : ["Guten Morgen", "Hallo", "Guten Abend"])[i]; };
+// 🇩🇪/🇬🇧 0.57.0 Flaggen für den Sprach-Schalter im Kopf (eigene kleine Bilder, keine Datei nötig)
+const FLAGGE_DE = '<svg viewBox="0 0 5 3" aria-hidden="true"><rect width="5" height="1" fill="#000"/><rect y="1" width="5" height="1" fill="#dd0000"/><rect y="2" width="5" height="1" fill="#ffce00"/></svg>';
+const FLAGGE_GB = '<svg viewBox="0 0 60 30" aria-hidden="true"><rect width="60" height="30" fill="#012169"/><path d="M0 0L60 30M60 0L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0L60 30M60 0L0 30" stroke="#C8102E" stroke-width="2.5"/><path d="M30 0V30M0 15H60" stroke="#fff" stroke-width="10"/><path d="M30 0V30M0 15H60" stroke="#C8102E" stroke-width="6"/></svg>';
 
 // ---------- Aufbau (einmal) ----------
 function kopfBauen() {
@@ -51,16 +56,16 @@ function kopfBauen() {
     <div class="kopfzeile">
       <div class="kopflogo"><button class="logo" data-a="webseite" aria-label="Internetseite des Bachkreises öffnen" title="Zur Bachkreis-Internetseite">${BACHKREIS_LOGO}</button><button class="kopf-version" id="kopfVersion" data-a="updatePruefen" title="Update prüfen" aria-label="Version – Update prüfen">v${APP_VERSION}</button></div>
       <div class="kopftext"><div class="marke-klein" id="kopfMarke"></div><div class="gruss"><span id="begruessung">Hallo!</span></div></div>
-      <div class="kopfrechts"><div class="knopfreihe">
-        <button class="rund" id="spracheKnopf" data-a="sprachsteuerung" title="Sprachsteuerung – sag, was passieren soll" aria-label="Sprachsteuerung" hidden>🎤</button>
-        <button class="rund" id="modusKnopf" data-a="themaUmschalten" title="Tag/Nacht umschalten" aria-label="Tag/Nacht umschalten">🌙</button>
-        <button class="rund" id="aktualisierenKnopf" data-a="kopfAktualisieren" title="Aktualisieren" aria-label="Aktualisieren">↻</button>
-      </div></div>
     </div>
     <div class="statusleiste">
       <button class="statuschip" id="statusChip" data-a="kachel" data-x="meinedaten"></button>
       <span class="sl-luecke"></span>
-      <button class="leds" id="leds" data-a="ledBlatt" title="Verbindung & Status" aria-label="Verbindung und Status"><i class="led grau" id="ledDaten"></i><i class="led grau" id="ledComm"></i><i class="led grau" id="ledPush"></i><i class="led-trenner" aria-hidden="true"></i><i class="led grau" id="ledWetter"></i></button>
+      <button type="button" class="kopf-netz" id="kopfNetz" data-a="ledBlatt" title="Verbindung & Status – antippen für Messwerte" aria-label="Verbindung und Status"><span class="kb-balken" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b class="kn-warn" hidden aria-hidden="true">!</b></button>
+      <button type="button" class="kopf-sprache" id="kopfSprache" data-a="spracheToggle" role="switch" translate="no" aria-label="Sprache: Deutsch / English"><span class="ks-de">${FLAGGE_DE}</span><span class="ks-en">${FLAGGE_GB}</span></button>
+      <button class="rund klein" id="modusKnopf" data-a="themaUmschalten" title="Tag/Nacht umschalten" aria-label="Tag/Nacht umschalten">🌙</button>
+      <button class="rund klein" id="aktualisierenKnopf" data-a="kopfAktualisieren" title="Aktualisieren" aria-label="Aktualisieren">↻</button>
+      <button class="rund klein" id="spracheKnopf" data-a="sprachsteuerung" title="Sprachsteuerung – sag, was passieren soll" aria-label="Sprachsteuerung" hidden>🎤</button>
+      <span class="leds" id="leds" hidden><i class="led grau" id="ledDaten"></i><i class="led grau" id="ledComm"></i><i class="led grau" id="ledPush"></i><i class="led grau" id="ledWetter"></i></span>
     </div>
     <div class="info" id="heroInfo"><h2>Einen Moment …</h2><div class="unter">Daten werden geladen.</div></div>
     <div class="ipunkte" id="infoPunkte"></div>
@@ -117,7 +122,8 @@ export function kopfAuffrischen() {
   const h = K.hero; if (!h || !S.ich) return;
   const az = K.adminZustaende();
   h.querySelector("#kopfMarke").textContent = (konfig().name || "Bachkreis Bergkamen").toUpperCase();
-  h.querySelector("#begruessung").textContent = `${gruss()}, ${S.ich.vorname}!`;
+  h.querySelector("#begruessung").innerHTML = `${esc(gruss())},<br><span class="gruss-name">${esc(S.ich.vorname)}!</span>`;
+  const sp = h.querySelector("#kopfSprache"); if (sp) { const en = englisch(); sp.classList.toggle("en", en); sp.setAttribute("aria-checked", String(en)); sp.title = en ? "Sprache: English – antippen für Deutsch" : "Sprache: Deutsch – tap for English"; }
   h.querySelector("#statusChip").textContent = `${ANSICHTEN[S.ansicht] || "🎻"} ▾`;
   anwendenDesign(); // Mond/Sonne mit A/T/N am Knopf
   h.querySelector("#kopfVersion").textContent = `v${APP_VERSION}`;
@@ -127,9 +133,23 @@ export function kopfAuffrischen() {
   if (az.push) led("ledPush", az.push, "Push");
   const w = WET.r?.daten ? (Date.now() - new Date(WET.r.stand) > 3 * 3600000 ? ["gelb", "Wetter veraltet"] : ["gruen", "Wetter aktuell"]) : WET.r ? ["rot", "Wetter nicht erreichbar"] : ["grau", "Wetter noch nicht geladen"];
   led("ledWetter", w, "Wetter");
+  kopfNetzAuffrischen();
   infoFelderAktualisieren();
   heroZeigen();
 }
+
+// 📶 0.57.0 Verbindungs-Balken im Kopf (wie beim Handy-Empfang): 4 grün = sehr gut … 1 rot = schwach, grau = unbekannt, ✕ = offline.
+// Steht eine Status-LED (Daten, Versand, Push, Wetter) auf Rot, zeigt ein kleines „!“ am Balken; Antippen öffnet Verbindung & Status.
+export function kopfNetzAuffrischen() {
+  const b = K.hero?.querySelector("#kopfNetz"); if (!b) return;
+  const q = netzQualitaet(), stufe = q.stufe ?? -1;
+  b.className = `kopf-netz f-${q.farbe} s${stufe < 0 ? "x" : stufe}`;
+  const rot = [...K.hero.querySelectorAll("#leds .led")].filter((e) => e.classList.contains("rot")).map((e) => e.title);
+  b.querySelector(".kn-warn").hidden = !rot.length;
+  b.title = `Verbindung: ${q.text}${rot.length ? " · ⚠️ " + rot.join(" · ") : ""} – antippen für Messwerte`; b.setAttribute("aria-label", b.title);
+}
+netzAbonnieren(() => kopfNetzAuffrischen());
+AKTIONEN.spracheToggle = () => { einstSetzen("sprache", englisch() ? "de" : "en"); location.reload(); }; // 🇩🇪/🇬🇧 0.57.0
 
 // ---------- Infofeld (KC-CLUB-INFOFELD) ----------
 const INFO_ALLE = [

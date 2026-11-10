@@ -156,6 +156,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F146 | 👆 Passkey-Anmeldung (WebAuthn, ES256, ohne Bibliothek) | ✅ | tests/passkey.test.mjs |
 | BK-F147 | 📊 Jahresbericht mit Druck/PDF | ✅ | tests/karten.test.mjs |
 | BK-F148 | 🌐 English (Bedienelemente, Wörterbuch bei Bedarf geladen) | ✅ | tests/englisch.test.mjs |
+| BK-F149 | 👋 Kopf: Gruß zweizeilig, Statusleiste mit 📶 Verbindungs-Balken und 🇩🇪/🇬🇧-Sprach-Schalter | ✅ | tests/englisch.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

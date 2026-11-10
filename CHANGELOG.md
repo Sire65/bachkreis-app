@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.57.0 DEV – 10.11.2026
+👋 **Kopf neu angeordnet** (Wunsch Hansi, Vorschlag A): Oben stehen nur noch Logo und der Gruß – zweizeilig („Guten Abend, / Bettina!“), nichts wird mehr abgeschnitten. Alle kleinen Knöpfe sitzen jetzt in der Statusleiste darunter:
+- **📶 Verbindungs-Balken** wie beim Handy-Empfang (4 grün = sehr gut, gelb = mäßig, 1 rot = schwach, grau = unbekannt, ✕ = offline). Antippen öffnet „Verbindung & Status“ mit Messwerten, „📏 Jetzt messen“ und den Status von Daten, Versand, Push und Wetter. Steht dort etwas auf Rot, zeigt ein kleines rotes „!“ am Balken (die vier Status-Punkte entfallen dafür)
+- **🇩🇪/🇬🇧 Sprach-Schalter** als Toggle: ein Tipp schaltet zwischen Deutsch und English um; auf Englisch grüßt der Kopf mit „Good evening, Bettina!“
+- Tag/Nacht, Aktualisieren und 🎤 Sprachsteuerung daneben (etwas kleiner)
+- Behoben: Die Balken im Verbindungs-Fenster (💬 Nachrichten › 📡) wurden riesig gezeichnet (Namensgleichheit mit der Nutzungs-Statistik)
+
 ## 0.56.0 DEV – 09.11.2026
 Aus „Was fehlt noch für eine professionelle App?“, Punkt 5:
 - 🎟️ **Konzertkarten** (Kachel für Leitung/Vorstand): je Konzert die Online-Reservierung einschalten (Plätze, Höchstzahl je Reservierung, Hinweis für Besucher) und den **Karten-Link teilen** (Plakat, Website, WhatsApp). Besucher reservieren **ohne Konto** auf `karten.html` mit Name (E-Mail freiwillig) und bekommen eine **Reservierungs-Nr.**; mit der Nr. selbst stornieren. **Abendkasse:** Liste mit Suche, ✅ abgeholt, Reservierung von Hand (Telefon/Kasse), Liste drucken/PDF. Server vergibt Plätze in einer Anweisung (kein Überbuchen), höchstens 5 Reservierungen je Anschluss und Stunde; Besucherdaten sehen nur Leitung/Vorstand und werden **30 Tage nach dem Konzert gelöscht**. Neue Tabelle `kartenreservierungen`, neue Felder an `termine`

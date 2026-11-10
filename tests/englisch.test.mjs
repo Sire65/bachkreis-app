@@ -19,3 +19,9 @@ test("🌐 Alle Kachel-Titel haben eine Übersetzung; kein Ziel ist wieder ein d
   const z = readFileSync(new URL("../js/app/zustand.js", import.meta.url), "utf8");
   assert.ok(z.includes('import("../kern/englisch.js")'), "nur bei Bedarf geladen");
 });
+test("🇩🇪/🇬🇧 📶 0.57.0 Kopf: Sprach-Schalter und Verbindungs-Balken in der Statusleiste, Gruß zweizeilig (nie abgeschnitten)", () => {
+  const k = readFileSync(new URL("../js/app/kopf.js", import.meta.url), "utf8"), css = readFileSync(new URL("../css/kopf.css", import.meta.url), "utf8");
+  assert.match(k, /id="kopfSprache" data-a="spracheToggle" role="switch"/); assert.match(k, /AKTIONEN\.spracheToggle/);
+  assert.match(k, /id="kopfNetz" data-a="ledBlatt"/); assert.match(k, /netzAbonnieren\(/);
+  assert.match(k, /Good evening/); assert.ok(!/\.kopftext \.gruss \{[^}]*text-overflow: ellipsis/.test(css), "Gruß nicht mehr abgeschnitten");
+});

@@ -41,7 +41,7 @@ export function netzSymbolAuffrischen() {
   if (b.dataset.schl !== schl) { b.dataset.schl = schl; b.innerHTML = netzSvg(art, q.stufe, q.farbe); }
   if (document.getElementById("netzBlatt")) netzBlattFuellen();
 }
-function netzBlattFuellen() {
+export function netzBlattFuellen() {
   const el = document.getElementById("netzBlatt"); if (!el) return;
   const { art, quelle } = netzArt(gewaehlt()), q = netzQualitaet(), c = navigator.connection, m = NETZ.messung;
   const zeit = (t) => new Date(t).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -49,7 +49,7 @@ function netzBlattFuellen() {
   el.innerHTML = `<div class="nz-gross${blinkt(q) ? " nz-blink" : ""}">${netzSvg(art, q.stufe, q.farbe)}</div>
     <p class="nz-mitte"><b>${art ? NAME[art] : "🌐 Netzart unbekannt"}</b><br><small class="hinweis">${quelle === "erkannt" ? "vom Handy erkannt" : quelle === "gewaehlt" ? "von dir gewählt – das Handy verrät die Netzart nicht" : "Das Handy verrät die Netzart nicht (iPhone nie). Wähle sie selbst:"}</small></p>
     ${quelle !== "erkannt" ? `<div class="knopfreihe nz-mitte"><button type="button" class="knopf klein${art === "wlan" ? " haupt" : ""}" data-a="netzWahl" data-x="wlan">📶 Ich bin im WLAN</button><button type="button" class="knopf klein${art === "mobil" ? " haupt" : ""}" data-a="netzWahl" data-x="mobil">🛰️ Mobilfunk</button></div>` : ""}
-    <p class="nz-mitte"><span class="nz-balken s${q.stufe ?? "x"} ${q.farbe}" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Verbindungsqualität: ${esc(q.text)}</b></p>
+    <p class="nz-mitte"><span class="nzq-balken s${q.stufe ?? "x"} ${q.farbe}" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b>Verbindungsqualität: ${esc(q.text)}</b></p>
     <table class="nz-tabelle">
       ${z("Handy", navigator.onLine ? "online" : "offline")}
       ${z("Antwortzeit", q.ms != null ? `Ø ${q.ms.toLocaleString("de-DE")} ms (letzte ${Math.min(5, NETZ.zeiten.length)} Anfragen)` : "–")}

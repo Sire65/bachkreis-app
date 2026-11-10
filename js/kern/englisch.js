@@ -39,7 +39,7 @@ export const EN = {
   "Alle Konzerte": "All concerts", "Dieses Gerät einrichten": "Set up this device", "Deine Geräte": "Your devices", "Zustimmen und loslegen": "Agree and start",
   "Datenschutzerklärung lesen": "Read the privacy policy", "Nutzungsregeln lesen": "Read the rules of use", "Vorschau schließen": "Close preview",
   // Einstellungen
-  "Darstellung": "Appearance", "Effekte": "Effects", "Startseite": "Home screen", "Installieren": "Install", "Familie": "Family", "Leitung": "Management",
+  "Darstellung": "Appearance", "Effekte": "Effects", "Startseite": "Home screen", "Installieren": "Install", "Familie": "Family", "Leitung": "Leaders",
   "Für alle (Admin)": "For everyone (admin)", "Entwickler": "Developer", "Normal": "Normal", "Groß": "Large", "Sehr groß": "Very large", "Hell": "Light", "Dunkel": "Dark",
   "Automatisch": "Automatic", "Benachrichtigungen": "Notifications", "Privatsphäre": "Privacy", "Sprache": "Language", "Deutsch": "Deutsch", "English": "English",
   // Häufige Wörter

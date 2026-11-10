@@ -6,6 +6,7 @@
 - ♿ **Barrierefreiheit (axe, WCAG 2.1 AA): 0 Verstöße** statt 20 – vorgelesene Namen enthalten jetzt den sichtbaren Text (Version, Status, Tag/Nacht, „Neu“, A−/A+, „Alle auf“, Büro-Ordner und -Gegenstände, „Tipp“); Zahlen-Abzeichen blinken nicht mehr durchsichtig, sondern pulsieren (immer gut lesbar), Chat-Zähler in dunklerem Grün
 - ⚡ **Schnellerer Start:** ⚙️ Einstellungen und der Admin-Bereich (zusammen 78 KB) werden erst nach dem Start geladen – der Wartungshinweis nur, wenn Wartung an ist
 - 🟢 **Status im Kopf kurz:** „🏖️ Urlaub bis 20.11.“, „🔴 nicht da“ – passt auch auf schmale Handys; der volle Text steht beim Antippen und für Vorlese-Programme
+- ♿ Die Barrierefreiheits-Prüfung läuft jetzt bei jedem Hochladen automatisch mit (GitHub „Tests“) – ein neuer Verstoß macht die Tests rot
 - 🌐 **English erweitert:** alle Untertitel der Kacheln, Seitentitel, Startseite („I'm coming“, „Quick access“ …) und „krank bis 19.11.“ → „ill until 19.11.“
 
 ## 0.59.0 DEV – 10.11.2026

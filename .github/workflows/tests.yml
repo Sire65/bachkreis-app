@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci && npm i --no-save playwright@1.56.1 && npx playwright install --with-deps chromium
+      - run: npm ci && npm i --no-save playwright@1.56.1 @axe-core/playwright@4.14.0 && npx playwright install --with-deps chromium
       - name: Rundgang Vorführversion (alle Rollen, alle Kacheln)
         run: |
           python3 -m http.server 8080 &
@@ -28,6 +28,11 @@ jobs:
           BASIS=http://localhost:8080 node tests/e2e/rundgang.mjs
       - name: Echtbetrieb (Server-Logik + PostgreSQL, Anmeldung, Datenschutz, Abgleich)
         run: node tests/e2e/echtbetrieb.mjs
+      - name: Barrierefreiheit (axe, WCAG 2.1 AA – jede Ansicht, jede Rolle; ♿ 0.60.0 muss bei 0 bleiben)
+        run: |
+          curl -s -o /dev/null http://localhost:8080/ || (python3 -m http.server 8080 &)
+          sleep 1
+          BASIS=http://localhost:8080 node tests/e2e/barrierefrei.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

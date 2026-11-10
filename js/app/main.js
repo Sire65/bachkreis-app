@@ -24,7 +24,6 @@ import "./protokolle.js"; // 🗒️ 0.41.0
 import "./advent.js"; // 🎄 0.41.0
 import "./rueckmeldung.js"; // 🆘 0.42.0
 import "./erstattung.js"; // 💶 0.42.0
-import { fehlerMelden, wartungsHinweis } from "./adminbereich.js"; // 🛡️ 0.43.0
 import "./ueberblick.js"; // 🗺️ 0.45.0
 import "./notfallpass.js"; // 🪪 0.46.0
 import "./bildschirmfoto.js"; // 📸 0.46.0
@@ -38,12 +37,11 @@ import "./fernhilfe.js"; // 🛟 0.50.0
 import "./chatextra.js"; // 👤👥🔒 0.51.0
 import "./leihvertrag.js"; // 📝 0.52.0
 import "./druckvorschau.js"; // 🖨️ 0.53.0
-import { aktionNachladen } from "./teile.js"; // 📦 0.55.0 selten Gebrauchtes erst bei Bedarf
+import { aktionNachladen, teilLaden } from "./teile.js"; // 📦 0.55.0 selten Gebrauchtes erst bei Bedarf
 import { teilenPruefen } from "./eingangskorb.js"; // 📥📲 0.53.0
 import { zustimmungPruefen } from "./datenschutz.js"; // ⚖️ 0.55.0
 import "./fuss.js";
 import { anwendenDesign } from "./darstellung.js";
-import { beimStart } from "./einstellungen.js";
 import { snPruefen } from "./startnachricht.js";
 import { linkHilfeHtml, installEinladungPruefen } from "./zugang.js";
 import "./bedienung.js";
@@ -141,7 +139,9 @@ async function starten() {
   S.ansicht = ansichtVonPerson(S.ich);
   S.register = einst().startRegister || "bachkreis";
   setzeEmpfaengerGeraet(S.ich.id);
-  fehlerHookSetzen(fehlerMelden); wartungsHinweis();
+  // 🛡️ 0.43.0 Fehlerberichte und Wartungshinweis – Admin-Teil wird erst geladen, wenn er gebraucht wird (📦 0.60.0)
+  fehlerHookSetzen((...a) => teilLaden("adminbereich.js").then((m) => m.fehlerMelden(...a)).catch(() => {}));
+  if (konfig().wartung === true) teilLaden("adminbereich.js").then((m) => m.wartungsHinweis()).catch(() => {});
   if (!istEchtbetrieb()) demoLeiste();
   // Echtbetrieb: Push-Abo dieses Geräts auffrischen, wenn Benachrichtigungen schon erlaubt sind (still im Hintergrund)
   else if (globalThis.Notification?.permission === "granted") pushAbonnieren().catch((e) => console.warn("Push-Abo", e));
@@ -155,11 +155,11 @@ async function starten() {
   onlineStart(); // 🟢 Wer ist online · 👋 Anklopfen
   setTimeout(() => teilenPruefen().catch(() => {}), 400); // 📲 0.53.0 „Teilen → Bachkreis“ angekommen?
   setTimeout(() => zustimmungPruefen(), 900); // ⚖️ 0.55.0 Datenschutz & Regeln beim ersten Start bestätigen
-  beimStart(express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen()); // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
+  { const ohne = express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen(); teilLaden("einstellungen.js").then((m) => m.beimStart(ohne)).catch(() => {}); } // 📦 0.60.0 Einstellungen erst nach dem Start laden // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
   // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird
-  abonnieren((tabs) => {
+  abonnieren(() => {
     if (S.ich) { const neu = hole("personen", S.ich.id); if (neu) S.ich = neu; }
     const fokus = document.activeElement;
     if (fokus && $("#inhalt").contains(fokus) && /INPUT|TEXTAREA|SELECT/.test(fokus.tagName)) return;

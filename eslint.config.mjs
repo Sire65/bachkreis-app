@@ -5,5 +5,5 @@ import globals from "globals";
 export default [
   js.configs.recommended,
   { languageOptions: { ecmaVersion: 2024, sourceType: "module", globals: { ...globals.browser, ...globals.node, ...globals.serviceworker, Deno: "readonly" } },
-    rules: { "no-undef": "error", "no-unused-vars": ["warn", { argsIgnorePattern: "^_", caughtErrors: "none" }], "no-unreachable": "error", "no-dupe-keys": "error", "no-empty": ["error", { allowEmptyCatch: true }] } },
+    rules: { "no-undef": "error", "no-unused-vars": ["warn", { argsIgnorePattern: "^_", varsIgnorePattern: "^_", ignoreRestSiblings: true, caughtErrors: "none" }], "no-unreachable": "error", "no-dupe-keys": "error", "no-empty": ["error", { allowEmptyCatch: true }] } },
 ];

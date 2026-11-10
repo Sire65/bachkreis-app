@@ -10,7 +10,7 @@
 import { STIMMEN, stimmeAnwenden } from "../kern/stimme.js";
 import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, istLeitung, istVerwalter, einst, einstSetzen } from "./zustand.js";
 import { meineUnterhaltungen, gelesenVonMir, lokalGelesen } from "./start.js";
-import { esc, AKTIONEN, toast, uhr, frage, blatt, blattZu, $ } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, uhr, frage, blatt, blattZu } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, konfig, abonnieren, neueId, istEchtbetrieb, jetztAbgleichen, serverAktion, wartend } from "../kern/daten.js";
 import { CHAT, nsId, nachrichtFrei, nachrichtAbgelaufen, chatPartnerErlaubt, pwAppPerson, chatMitgliederMitKopie, rollenMit } from "../kern/schema.js";
 import { empfaengerVon, naechsteSendung, nachrichtEreignis, nachrichtKurz, kinderVon, elternVon, instrumenteVon } from "../kern/logik.js";
@@ -34,7 +34,6 @@ import { stummAn, archiviert, favorit, archivAufwachen, angeheftetHtml, darfAnhe
 const ich = () => S.ich?.id;
 const jetztIso = () => new Date().toISOString();
 const C = { anlagen: [], ablauf: null, aufnahme: null, diktat: null, offen: {}, antwort: null, wichtig: false, express: false, zustell: { push: false, mail: false, whatsapp: false }, zustellOffen: false, emoji: false, trenner: {}, suche: "", wfZuletzt: {} };
-const PRIVAT = ["einzel", "runde"];
 const expressMax = () => (Number(konfig().express_max_tag) > 0 ? Number(konfig().express_max_tag) : CHAT.expressMax);
 const bearbeitenMin = () => (Number(konfig().bearbeiten_minuten) > 0 ? Number(konfig().bearbeiten_minuten) : CHAT.bearbeitenMin);
 const expressUnbegrenzt = () => rollenMit(S.ich?.rollen).some((r) => CHAT.expressUnbegrenzt.includes(r));
@@ -136,7 +135,7 @@ VIEWS.nachrichten = {
     const roh = chatEintraege(), imArchiv = roh.filter((e) => archiviert(e.u.id) && !archivAufwachen(e.u.id, e.letzte?.zeit) && !e.neu), alle = roh.filter((e) => !imArchiv.includes(e)), zahl = { alle: alle.length, neu: alle.filter((e) => e.neu).length, gruppen: alle.filter((e) => e.u.art !== "einzel").length, einzel: alle.filter((e) => e.u.art === "einzel").length };
     const l = alle.filter(({ u, letzte, neu }) => (!q || chatTitel(u).toLowerCase().includes(q) || String(letzte?.text || "").toLowerCase().includes(q))
       && (f === "alle" || (f === "neu" && neu) || (f === "gruppen" && u.art !== "einzel") || (f === "einzel" && u.art === "einzel")));
-    const rechts = `${spracheMoeglich() && einst().sprachsteuerung !== false ? `<button class="knopf klein" data-a="sprachsteuerung" title="Sprachsteuerung" aria-label="Sprachsteuerung">🎤</button>` : ""}<button class="knopf klein" data-a="merklisteAuf" title="Gemerkte Nachrichten" aria-label="Gemerkte Nachrichten">🔖</button><button class="knopf klein" data-a="ungelesenAuf" title="Wer hat meine Nachrichten noch nicht gelesen?" aria-label="Wer hat noch nicht gelesen">👁</button><button class="knopf haupt klein" data-a="chatNeu" title="Neue Nachricht" aria-label="Neue Nachricht">＋ Neu</button>${istVerwalter() ? '<button class="knopf klein" data-a="kachel" data-x="rundschreiben" title="Rundschreiben" aria-label="Rundschreiben">📣</button>' : ""}`;
+    const rechts = `${spracheMoeglich() && einst().sprachsteuerung !== false ? `<button class="knopf klein" data-a="sprachsteuerung" title="Sprachsteuerung" aria-label="Sprachsteuerung">🎤</button>` : ""}<button class="knopf klein" data-a="merklisteAuf" title="Gemerkte Nachrichten" aria-label="Gemerkte Nachrichten">🔖</button><button class="knopf klein" data-a="ungelesenAuf" title="Wer hat meine Nachrichten noch nicht gelesen?" aria-label="Wer hat noch nicht gelesen">👁</button><button class="knopf haupt klein" data-a="chatNeu" title="Neue Nachricht" aria-label="Neu – neue Nachricht">＋ Neu</button>${istVerwalter() ? '<button class="knopf klein" data-a="kachel" data-x="rundschreiben" title="Rundschreiben" aria-label="Rundschreiben">📣</button>' : ""}`;
     const netz = netzSymbolHtml(); // 📡 statt 💬 vorn, wenn das Verbindungs-Symbol an ist
     const chips = `<div class="chat-filter" role="group" aria-label="Chats filtern">${[["alle", "Alle"], ["neu", "🔴 Ungelesen"], ["gruppen", "👥 Gruppen"], ["einzel", "💬 Einzeln"]].map(([k, t]) => `<button type="button" class="${f === k ? "an" : ""}" data-a="chatListFilter" data-x="${k}" aria-pressed="${f === k}">${t} <small>${zahl[k]}</small></button>`).join("")}
       <select data-c="chatGliederung" aria-label="Gliederung">${Object.entries(GLIED).map(([k, t]) => `<option value="${k}" ${art === k ? "selected" : ""}>${k === "aus" ? "ohne Abschnitte" : "nach " + t}</option>`).join("")}</select></div>`;
@@ -707,7 +706,7 @@ AKTIONEN.naMenue = (id) => {
     <div class="na-schnell">${SCHNELL.map((e) => `<button type="button" class="${meine === e ? "an" : ""}" data-a="naReagieren" data-x="${esc(id)}|${e}" aria-label="Mit ${e} reagieren">${e}</button>`).join("")}</div>
     <div class="na-knoepfe"><button class="knopf" data-a="naAntworten" data-x="${esc(id)}">↩️ Antworten</button>
     ${n.text ? `<button class="knopf" data-a="naKopieren" data-x="${esc(id)}">📋 Kopieren</button>` : ""}
-    ${(n.anlagen || []).filter((a) => a.id).map((a, i) => `<button class="knopf" data-a="anhangOeffnen" data-x="${esc(id)}|${(n.anlagen || []).indexOf(a)}">⬇️ ${esc(a.art === "sprache" ? "Sprachnachricht" : a.name)} öffnen / speichern</button>`).join("")}
+    ${(n.anlagen || []).filter((a) => a.id).map((a) => `<button class="knopf" data-a="anhangOeffnen" data-x="${esc(id)}|${(n.anlagen || []).indexOf(a)}">⬇️ ${esc(a.art === "sprache" ? "Sprachnachricht" : a.name)} öffnen / speichern</button>`).join("")}
     ${bearbeitbar ? `<button class="knopf" data-a="naBearbeiten" data-x="${esc(id)}">✏️ Bearbeiten (noch ${Math.max(1, Math.ceil((bearbeitenMin() * 60000 - (Date.now() - Date.parse(n.zeit))) / 60000))} Min.)</button>` : ""}
     <button class="knopf" data-a="naWeiterleiten" data-x="${esc(id)}">↪️ Weiterleiten</button>
     <button class="knopf" data-a="naMerken" data-x="${esc(id)}">🔖 ${gemerkt(id) ? "Nicht mehr merken" : "Merken"}</button>

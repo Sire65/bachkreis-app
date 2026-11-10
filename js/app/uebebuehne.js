@@ -2,7 +2,7 @@
 // Übe-Arten: 🎼 Mitspielen (Tempo, Stelle, Schleife, Tempo steigern) · ✋ Noten & Griffe · 🥁 Rhythmus (mittippen, Auswertung)
 // 🎯 Stimmgerät & Ton halten (Mikrofon nur im Gerät) · 👂 Ohr-Spiele. Aufgaben der Lehrkräfte öffnen die passende Übe-Art direkt;
 // Ergebnisse sind nur Zahlen (Sterne, Tempo, Minuten), geübte Zeit geht ins Übe-Tagebuch. Vorspiel-Aufnahme nur mit Einwilligung.
-import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istEltern, istSchueler, hatRolle } from "./zustand.js";
+import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz, frage } from "../kern/ui.js";
 import { liste, hole, speichere, loesche } from "../kern/daten.js";
 import { kinderVon, registerVon, tagIso, einwilligung, aufgabeGiltFuer, aufgabeKinder, uebeZielErreicht, uebeStand } from "../kern/logik.js";
@@ -321,7 +321,7 @@ function rhythmusHtml() {
     <div class="ub-anzeige" id="ubAnzeige" aria-live="polite">${UB.phase === "bereit" ? "Erst 👂 anhören, dann ▶ mittippen" : ""}</div>
     <div class="ub-knoepfe"><button type="button" class="knopf" data-a="ubRHoeren">👂 Anhören</button><button type="button" class="knopf haupt" data-a="ubRTippen">▶ Mittippen</button>
       <label class="ub-klein"><input type="checkbox" class="schalter-cb" data-c="ubRHilfe" ${UB.rHilfe ? "checked" : ""}> leise mitspielen</label></div>
-    <button type="button" class="ub-tipp" id="ubTipp" aria-label="Tippen">TIPP</button>${ergebnisHtml}
+    <button type="button" class="ub-tipp" id="ubTipp" aria-label="Tipp – im Takt tippen">TIPP</button>${ergebnisHtml}
     <p class="hinweis">Tippe auf die große Fläche (am Computer: Leertaste) – genau dann, wenn eine Note beginnt. Vorher zählt das Metronom einen Takt ein.</p>`);
 }
 AKTIONEN.ubStufe = (_, el) => { audioStopp(); UB.stufe = el.value; UB.rErgebnis = null; UB.phase = "bereit"; zeichne(); };
@@ -461,7 +461,7 @@ function gehoerHtml() {
     <p class="ub-frage">${UB.spiel === "hoehe" ? "Ist der zweite Ton höher oder tiefer?" : UB.spiel === "durmoll" ? "Klingt der Akkord fröhlich (Dur) oder traurig (Moll)?" : "Hör zu – dann tippe den Rhythmus nach."}</p>
     <div class="ub-anzeige" id="ubAnzeige" aria-live="polite">${g.meldung || ""}</div>
     ${antworten.length ? `<div class="ub-antworten">${antworten.map(([k, t]) => `<button type="button" class="knopf gross" data-a="ubAntwort" data-x="${k}" ${g.phase !== "frage" ? "disabled" : ""}>${t}</button>`).join("")}</div>`
-      : `<button type="button" class="ub-tipp" id="ubTipp" aria-label="Tippen">TIPP</button>`}
+      : `<button type="button" class="ub-tipp" id="ubTipp" aria-label="Tipp – im Takt tippen">TIPP</button>`}
     <div class="ub-knoepfe"><button type="button" class="knopf" data-a="ubNochmal">🔁 Nochmal hören</button>${g.phase === "loesung" ? `<button type="button" class="knopf haupt" data-a="ubWeiter">Weiter ›</button>` : ""}</div>`);
 }
 AKTIONEN.ubSpiel = (k) => { audioStopp(); UB.spiel = k; UB.gr = null; zeichne(); };

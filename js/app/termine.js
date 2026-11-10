@@ -3,9 +3,9 @@
 import { klappe, klappenAlleKnopf } from "../kern/klappen.js";
 import { mitfahrtHtml, mitfahrtZahlen } from "./extras.js";
 import { offeneFuerMich } from "./terminumfrage.js";
-import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istLehrkraft, istLeitung, istEltern, hatRolle } from "./zustand.js";
+import { S, VIEWS, db, einst, zeige, zurueck, zeichne, kopf, name, vorname, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, datum, datumKurz, uhr, wochentag, monatKurz, MONATE, toast, blatt, blattZu, formWerte, zuLokal, vonLokal, herunterladen, frage } from "../kern/ui.js";
-import { liste, hole, speichere, speichereViele, loesche } from "../kern/daten.js";
+import { liste, hole, speichere, speichereViele } from "../kern/daten.js";
 import { feiertage, termineFuer, antwortVon, antwortZaehler, besetzung, gesamtAmpel, eingeladene, eingeladen, kinderVon, ics, googleKalenderLink, tagIso, registerVon, instrumenteVon, teilnahmeVon, eigeneVorkommen } from "../kern/logik.js";
 import { TERMIN_PLANER, TEILNAHME, ANWESENHEIT } from "../kern/schema.js";
 import { senden, whatsapp } from "../kern/versand.js";
@@ -63,7 +63,7 @@ function terminKarte(t, { mitAntwort = true } = {}) {
     ${antwort}</div>`;
 }
 function eigenKarte(e) {
-  const [s, n] = EIGEN_ART[e.art] || EIGEN_ART.sonstiges;
+  const [s] = EIGEN_ART[e.art] || EIGEN_ART.sonstiges;
   return `<div class="karte termin eigen klick" data-a="eigenBearbeiten" data-x="${esc(e.eigen_id)}">
     <div class="kopf"><div class="datum">${wochentag(e.beginn)}<br>${new Date(e.beginn).getDate()}<small>${monatKurz(e.beginn)}</small></div>
       <div class="fl" style="flex:1;min-width:0"><div class="zeile-titel">${s} ${esc(e.titel)}</div>

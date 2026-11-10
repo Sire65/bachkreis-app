@@ -2,13 +2,12 @@
 // (Musik-Engine js/kern/musik.js) oder Konzertaufnahmen (Datei/Mitschnitt) – die Musiker bewegen sich passend dazu.
 // Erreichbar über das Eselsohr am Kopf (doppelt tippen = Kopf umdrehen) und über die Kachel „Bühne“.
 import { S, VIEWS, kopf, istLehrkraft, zeige } from "./zustand.js";
-import { esc, AKTIONEN, toast, datumKurz, herunterladen } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, datumKurz } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
 
 const B = { ctx: null, lauf: null, audio: null, quelle: null, analyser: null, raf: 0, modus: "melodien", stueck: STUECKE[0].id, tempo: 1, laut: 0.8, applaus: true, mitschnitt: null, blobUrl: null, tipp: 0 };
-const ALLE_SEK = ["v1", "v2", "va", "vc", "kb", "fl", "ob", "kl", "fg", "hr", "tr", "pos", "pk"];
 
 // ---------- Zeichnung ----------
 // 0.15.0: Die Musiker tragen die Gesichter der echten Bachkreis-Mitglieder (gezeichnet, aus „Mein Gesicht“), sitzen auf ihrem

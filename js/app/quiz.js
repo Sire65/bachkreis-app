@@ -4,7 +4,7 @@ import { S, VIEWS, zeichne, kopf } from "./zustand.js";
 import { esc, AKTIONEN, toast } from "../kern/ui.js";
 import { liste } from "../kern/daten.js";
 import { tagIso } from "../kern/logik.js";
-import { QUIZ_BEREICHE, QUIZ_RUNDE, quizRunde, sterneFuer, ABZEICHEN, uebeSerie } from "../kern/quiz.js";
+import { QUIZ_BEREICHE, quizRunde, sterneFuer, ABZEICHEN, uebeSerie } from "../kern/quiz.js";
 import { LEHRE, lehreKlang } from "./instrumentenkunde.js";
 
 const Q = { bereich: null, schwer: null, runde: [], i: 0, richtig: 0, antwort: null, neueAbz: [] };

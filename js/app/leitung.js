@@ -1,9 +1,9 @@
 // Leitungs-Cockpit, Vorgänge/Aufgaben, Genehmigungen (Leitung & Eltern), Notenarchiv & „Meine Noten“.
 import { istDemoNoten, notenblattZeigen } from "./notenblatt.js";
-import { S, VIEWS, db, zeige, zurueck, zeichne, kopf, name, vorname, hatRolle, istLehrkraft, istLeitung, istVorstand, istEltern, istSchueler } from "./zustand.js";
+import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, hatRolle, istLehrkraft, istLeitung, istVorstand, istEltern } from "./zustand.js";
 import { esc, AKTIONEN, datumKurz, uhr, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele } from "../kern/daten.js";
-import { cockpit, genehmigungsUebersicht, genehmigungStatus, kinderVon, elternVon, wirksameGruppen, instrumenteVon, termineFuer, antwortZaehler, tagIso, gruppenMitglieder, verteilerAufloesen, verteilerListe, generellerWechselPlan } from "../kern/logik.js";
+import { cockpit, genehmigungsUebersicht, genehmigungStatus, kinderVon, elternVon, wirksameGruppen, instrumenteVon, termineFuer, tagIso, verteilerAufloesen, verteilerListe, generellerWechselPlan } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
 import { hochladen, dateiOeffnen } from "../kern/dateien.js";
 

@@ -1,6 +1,6 @@
 // 🎻 Instrumentenkunde: Instrument antippen → eine Figur mit DEINEM Gesicht hält es, spielt es vor (selbst erzeugter Klang),
 // dazu Steckbrief (Tonumfang, Schlüssel, Stimmung), worauf man achten sollte, Pflege, Einstieg – und wer im Bachkreis es spielt.
-import { S, VIEWS, db, zeige, kopf, name, istVerwalter } from "./zustand.js";
+import { S, VIEWS, zeige, kopf, name, istVerwalter } from "./zustand.js";
 import { esc, AKTIONEN, toast } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
 import { instrumentSpielen, midi, klaengeBereit, klaengeLaden } from "../kern/musik.js";

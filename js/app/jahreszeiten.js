@@ -2,7 +2,7 @@
 // Bachkreis angepasst: Schneemann mit Dirigenten-Zylinder und goldenem Schal, Notenständer am Probentag statt Kochtopf,
 // ein Orchesterwart (🧑‍🎓) statt Twinkey. Alles läuft nur im Gerät (Canvas/SVG), nichts geht an einen Server.
 // Die Kommentare mit Versionsnummern („2.247.0 …“) stammen aus der KC Club App und erklären die Herkunft der Details.
-import { S, einst as bkEinst, einstSetzen, zeige } from "./zustand.js";
+import { S, einst as bkEinst, zeige } from "./zustand.js";
 import { esc, toast } from "../kern/ui.js";
 import { WET, WETTER_VERALTET_MIN, wetterArt } from "./wetter.js";
 import { themaWert, themaEigenSetzen, SPAR, jahreszeitArtSetzen, beiThemaWechsel } from "./darstellung.js";
@@ -11,7 +11,6 @@ import { themaWert, themaEigenSetzen, SPAR, jahreszeitArtSetzen, beiThemaWechsel
 const $ = (id) => document.getElementById(id);
 const EINST_NAME = { animiert: "effekte" };
 const einst = (k, std) => { const v = bkEinst()[EINST_NAME[k] || k]; return v === undefined ? std : v; };
-const einstellung = (k, v) => einstSetzen(EINST_NAME[k] || k, v);
 const einfach = () => !!bkEinst().einfach;
 const fxAn = () => einst("animiert", true) && !SPAR.an && typeof document !== "undefined" && !!document.body?.animate;
 const fxAusHinweis = () => toast("Effekte sind aus – unter Meins › Einstellungen „Kachel-Effekte“ einschalten.", 4000);
@@ -242,7 +241,6 @@ function jahreszeitKopf() {
   s.innerHTML = Array.from({ length: n }, (_, i) => `<i style="--x:${(i * 97 + 13) % 100};--v:${(i * 37) % 11};--d:${(art === "silvester" ? 2.4 : 7) + ((i * 53) % 9) * 0.7}s;--s:${0.6 + ((i * 29) % 7) / 10}">${teile[i % teile.length]}</i>`).join("");
   h.prepend(s);
 }
-function jahreszeitUmschalten(an) { einstellung("jahreszeit", an); jahreszeitKopf(); }
 // Automatik: wechselt die Jahreszeit (z. B. um Mitternacht oder genau zum Winteranfang), stellt sich der Kopf von selbst um – und Frost lässt Eiszapfen wachsen
 setInterval(() => { try { const h = document.querySelector("#v-start .hero"); if (!h || JZB.vorschau) return; const art = jahreszeitAktuell(), eis = jzTieferWinter(art);
   if (art !== JZ_LETZTE.art) jahreszeitKopf(); else if (eis !== JZ_LETZTE.eis) jzEiszapfen(h, art); else jzEisLaenge(); JZ_LETZTE.eis = eis; } catch {} }, 60000);
@@ -910,10 +908,6 @@ function jzbFest(dt) {
   }
 }
 // ---- gemeinsame Teile ----
-function jzbKetteY(x, y0, hang) { // Girlande in zwei Bögen über die Breite
-  const J = JZB, a = JZB_RAND, b = J.w - JZB_RAND, m = (a + b) / 2, l = x < m ? a : m, r = x < m ? m : b, u = (x - l) / (r - l);
-  return y0 + Math.sin(u * Math.PI) * hang;
-}
 function jzbHerzMalen(c, x, y0, k, t) { // 🧡 Lebkuchenherz mit Zuckerguss und dem eigenen Vornamen – hängt am Band und schaukelt
   const J = JZB, name = jzbEisNameText() || "Bachkreis", b = 16 * k, w = Math.sin(J.T * 1.4 + 1) * .07;
   c.save(); c.translate(x, y0); c.rotate(w);
@@ -1114,7 +1108,7 @@ function jzbKamelleMalen(c, m, k) {
   c.fillStyle = "rgba(255,255,255,.6)"; c.fillRect(-.6 * k, -1.6 * k, 1.2 * k, 3.2 * k); c.restore();
 }
 function jzbKarnevalMalen(c, F) {
-  const J = JZB, k = J.k, T = J.T;
+  const J = JZB, k = J.k;
   // 2.336.0 (Wunsch Hansi „ganz oben nichts“): keine Luftschlangen mehr vom oberen Rand – die bunten Wimpel hängen als Deko an der Leiste
   const blatt = (p) => { c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.scale(p.ph === undefined ? 1 : Math.max(.15, Math.abs(Math.cos(p.ph))), 1); c.fillStyle = p.farbe; c.fillRect(-p.w * k / 2, -p.w * k * .35, p.w * k, p.w * k * .7); c.restore(); };
   for (const p of F.liegt) blatt(p);
@@ -1649,7 +1643,7 @@ function jzbRaupeMalen(c, R, k) {
   c.restore();
 }
 function jzbSkiMalen(c, f, dir, k) {
-  const J = JZB, y = jzbGrund(f.x) + 1, d = f.dreh || 0, kipp = d * .22, hoch = Math.abs(d) * 1.2;
+  const y = jzbGrund(f.x) + 1, d = f.dreh || 0, kipp = d * .22, hoch = Math.abs(d) * 1.2;
   c.save(); c.translate(f.x, y - hoch); c.scale(dir * k * 1.15, k * 1.15); c.lineCap = "round"; c.lineJoin = "round";
   // Skier (vorne hochgebogen), leicht schräg im Schwung
   c.save(); c.rotate(d * .06); c.strokeStyle = f.f[0]; c.lineWidth = 1.6; c.beginPath(); c.moveTo(-13, 0); c.lineTo(11, 0); c.quadraticCurveTo(15, 0, 15, -3); c.stroke();

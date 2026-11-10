@@ -3,7 +3,7 @@
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { verarbeiten } from "../supabase/functions/_shared/api.js";
-import { kontext, filtern } from "../supabase/functions/_shared/regeln.js";
+import { kontext } from "../supabase/functions/_shared/regeln.js";
 import { chatPartnerErlaubt, pwAppPerson, elternZugriff } from "../js/kern/schema.js";
 import { eingeladen, schuljahrVorschlaege, personenDaten, loeschKandidaten } from "../js/kern/logik.js";
 import { erzeugeDemodaten } from "../js/kern/demodaten.js";

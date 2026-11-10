@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 const W = path.resolve(import.meta.dirname, "..");
 // Nur Teile, die NICHTS beim Start tun und von keinem anderen Programmteil importiert werden (nur main.js)
-export const NACHLADBAR = ["instrumente.js", "orchester.js", "notenarchiv.js", "fotoalbum.js", "leitung.js", "kommunikation.js", "standorte.js", "spiele.js", "schilder.js", "kalender.js", "unterlagen.js", "nutzung.js", "meins.js", "sprachsteuerung.js", "jahresbericht.js", "konzertkarten.js", "passkey.js"];
+export const NACHLADBAR = ["instrumente.js", "orchester.js", "notenarchiv.js", "fotoalbum.js", "leitung.js", "kommunikation.js", "standorte.js", "spiele.js", "schilder.js", "kalender.js", "unterlagen.js", "nutzung.js", "meins.js", "sprachsteuerung.js", "jahresbericht.js", "konzertkarten.js", "passkey.js", "einstellungen.js", "adminbereich.js"];
 export function karteBauen() {
   const views = {}, aktionen = {};
   for (const d of NACHLADBAR) {

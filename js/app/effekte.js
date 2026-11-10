@@ -3,18 +3,14 @@
 // die kleine Fee schwebt ab und zu durchs Startbild; Gelöschtes läuft durch einen Reißwolf; neue Zettel werden angepinnt; Zahlen zählen hoch.
 // Alles nur im Gerät, abschaltbar (⚙️ Mehr › ✨ Effekte), ruhig im Sparmodus. Kommentare mit Versionsnummern stammen aus der KC Club App.
 import { S, einst as bkEinst, einstSetzen } from "./zustand.js";
-import { esc, toast, blatt } from "../kern/ui.js";
-import { themaWert, themaEigenSetzen, SPAR, sparWahl, sparSetzen } from "./darstellung.js";
+import { toast, blatt } from "../kern/ui.js";
+import { themaWert, themaEigenSetzen, SPAR, sparSetzen } from "./darstellung.js";
 
-const $ = (id) => document.getElementById(id);
 const EINST_NAME = { animiert: "effekte" };
 const einst = (k, std) => { const v = bkEinst()[EINST_NAME[k] || k]; return v === undefined ? std : v; };
 const einstellung = (k, v) => einstSetzen(EINST_NAME[k] || k, v);
-const einfach = () => !!bkEinst().einfach;
 const melde = (t) => toast(t, 3000);
-const frage = async (t) => window.confirm(t.replace(/\n/g, "\n"));
 export const fxAn = () => einst("animiert", true) && !SPAR?.an && typeof document !== "undefined" && !!document.body?.animate;
-const INIT = null, api = () => Promise.resolve();
 // Effekte sind aus → Grund nennen und mit einem Tipp einschalten (KC-CLUB-EFFEKTE-GRUND)
 async function fxAusHinweis(nochmal) {
   if (!einst("animiert", true)) {
@@ -215,19 +211,6 @@ function sendeFahrzeug(r, art) {
 const fxReihe = (mid) => { let h = 0; for (const c of String(mid)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return SENDE_REIHE[h % SENDE_REIHE.length]; };
 const fxArt = (wahl, wichtig, mid, express) => wahl === "aus" ? null : express ? "express" : wichtig ? "blaulicht" : wahl === "wechsel" ? (mid ? fxReihe(mid) : SENDE_REIHE[SENDE_FX_N++ % SENDE_REIHE.length]) : SENDE_REIHE.includes(wahl) ? wahl : null;
 function sendeEffektMelden() {} // Bachkreis: Wahl gilt nur auf diesem Gerät
-const EMPF = { chat: null, letzte: null };
-function empfangsEffekt(u) {
-  const letzte = [...(u?.nachrichten || [])].reverse().find((m) => !m.eigen);
-  const erst = EMPF.chat !== u?.id; EMPF.chat = u?.id;
-  if (!letzte) { EMPF.letzte = null; return; }
-  const neu = !erst && letzte.id !== EMPF.letzte; EMPF.letzte = letzte.id;
-  // 2.179.0 (Wunsch Hansi „auch spätere Nachrichten sollen die Animation bekommen“): beim Öffnen einer Unterhaltung bekommt die erste
-  // ungelesene Nachricht anderer ihren Effekt – genau die, zu der die App springt („⬇ Neue Nachrichten“). Höchstens 7 Tage alt.
-  const ziel = neu ? letzte : erst && u.gelesenBis ? u.nachrichten.find((m) => !m.eigen && m.zeit > u.gelesenBis) : null;
-  if (!ziel || document.hidden || !fxAn() || sendeEffektWahl() === "aus" || Date.now() - Date.parse(ziel.zeit) > (neu ? 120000 : 7 * 86400000)) return;
-  const art = fxArt(u.sendeEffekte?.[ziel.vonId], ziel.wichtig, ziel.id, !!ziel.express); if (!art) return;
-  setTimeout(() => { const el = document.getElementById("msg-" + ziel.id); if (el) ankunftEffekt(el, art).catch(() => {}); }, neu ? 450 : 750);
-}
 const fxWarte = (a) => new Promise((ok) => { a.onfinish = a.oncancel = () => ok(); });
 const fxEl = (html, x, y) => { const f = document.createElement("div"); f.className = "papierflieger"; f.setAttribute("aria-hidden", "true"); f.innerHTML = html; f.style.left = x + "px"; f.style.top = y + "px"; document.body.appendChild(f); return f; };
 const fxHuepfen = (el) => el.animate([{ transform: "none" }, { transform: "translateY(-6px) scale(1.04)" }, { transform: "translateY(2px) scale(.99)" }, { transform: "none" }], { duration: 520, easing: "ease-out" });

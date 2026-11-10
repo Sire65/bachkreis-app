@@ -227,7 +227,7 @@ export function anwendenDesign() {
   w.style.setProperty("--marke", f.gold);
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", nacht ? f.bg : f.hero1);
   const mk = document.getElementById("modusKnopf"), mz = MODI[DS.modus] || MODI.auto;
-  if (mk) { mk.innerHTML = `${nacht ? "☀️" : "🌙"}<span class="modusbuchstabe" aria-hidden="true">${mz[0]}</span>`; mk.title = `Tag/Nacht umschalten – eingestellt: ${mz[1]}`; mk.setAttribute("aria-label", mk.title); }
+  if (mk) { mk.innerHTML = `${nacht ? "☀️" : "🌙"}<span class="modusbuchstabe" aria-hidden="true">${mz[0]}</span>`; mk.title = `Tag/Nacht umschalten – eingestellt: ${mz[1]}`; mk.setAttribute("aria-label", `${mz[0]} – Tag/Nacht umschalten, eingestellt: ${mz[1]}`); }
   themaSchriftAnwenden(); cfAnwenden();
 }
 function designSpeichern() { LSsetzen("bk_design", JSON.stringify(DS)); anwendenDesign(); lichtSensorStarten(); }

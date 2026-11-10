@@ -1,7 +1,7 @@
 // Instrumente: Inventar, Verleih (Ausgabe/Rückgabe mit Zustand), Reparatur (Meldung → Kostenvoranschlag → Freigabe →
 // Werkstatt → erledigt), Einkauf, Förderverein (Spenden & Freigaben), „Mein Leihinstrument“. Vorbild: KC Club Leihmodul.
-import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istLeitung, istVorstand, istVerwalter, istEltern, hatRolle } from "./zustand.js";
-import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
+import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istLeitung, istVorstand, istVerwalter, istEltern } from "./zustand.js";
+import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon, einkaufInventar } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";

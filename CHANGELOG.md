@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.60.0 DEV – 10.11.2026
+🧹 **Optimierung** (Liste „Was muss noch optimiert werden?“):
+- **Programm aufgeräumt:** alle 81 Lint-Hinweise behoben – ungenutzte Importe, Variablen und drei nie benutzte Funktionen entfernt (0 Fehler, 0 Hinweise)
+- ♿ **Barrierefreiheit (axe, WCAG 2.1 AA): 0 Verstöße** statt 20 – vorgelesene Namen enthalten jetzt den sichtbaren Text (Version, Status, Tag/Nacht, „Neu“, A−/A+, „Alle auf“, Büro-Ordner und -Gegenstände, „Tipp“); Zahlen-Abzeichen blinken nicht mehr durchsichtig, sondern pulsieren (immer gut lesbar), Chat-Zähler in dunklerem Grün
+- ⚡ **Schnellerer Start:** ⚙️ Einstellungen und der Admin-Bereich (zusammen 78 KB) werden erst nach dem Start geladen – der Wartungshinweis nur, wenn Wartung an ist
+- 🟢 **Status im Kopf kurz:** „🏖️ Urlaub bis 20.11.“, „🔴 nicht da“ – passt auch auf schmale Handys; der volle Text steht beim Antippen und für Vorlese-Programme
+- 🌐 **English erweitert:** alle Untertitel der Kacheln, Seitentitel, Startseite („I'm coming“, „Quick access“ …) und „krank bis 19.11.“ → „ill until 19.11.“
+
 ## 0.59.0 DEV – 10.11.2026
 🔘 **Schalter wie in der Club App** (Wunsch Hansi): Alle Ein/Aus-Schalter sind jetzt Handy-Schalter – **grün = an, grau = aus**, mit weißem Knopf (52 × 30, wie KC). Gilt für alle Einstellungen, den Admin-Bereich, Übe-Bühne, Hilfezentrum, Bühne und die Konzertkarten. Häkchen zum Abhaken und Auswählen (Aufgaben, Packliste, Empfänger) bleiben Häkchen.
 🇬🇧 **Kopf oben neu** (Wunsch Hansi): die beiden Pfeile (Kopf ein-/ausrollen) **mittig** oben, **ganz oben rechts die Verbindungs-Balken** und daneben **immer nur eine Flagge**: im Deutschen die 🇬🇧-Flagge, ein Tipp stellt auf English um – dann steht dort die 🇩🇪-Flagge, ein Tipp zurück auf Deutsch. Die Statusleiste darunter: Mein Status · die **Status-LEDs** (Daten, Versand, Push · Wetter) · ganz rechts 🌙 ↻ 🎤 dicht beieinander. Die Flagge ist klein (wie ein Symbol).

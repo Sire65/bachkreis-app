@@ -2,7 +2,7 @@
 // Kaution/Gebühr/Versicherung, Leihbedingungen mit Schadensklausel – und drei Unterschriften: Mitglied, Erziehungsberechtigte (bei Minderjährigen),
 // für den Bachkreis. Unterschrieben wird mit dem Finger – vor Ort auf einem Gerät oder jede/r auf dem eigenen Handy. Drucken/PDF und leeres Formular.
 // Der Server prüft: jede/r setzt nur die eigene Unterschrift; was unterschrieben ist, ändert niemand mehr.
-import { S, VIEWS, db, zeige, zeichne, kopf, name, hatRolle } from "./zustand.js"; // eslint-disable-line no-unused-vars
+import { S, VIEWS, db, zeige, zeichne, kopf, name, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, konfig, neueId } from "../kern/daten.js";
 import { LEIH_ZUBEHOER, LV_STATUS, LV_VERWALTER, LV_ROLLEN, LV_KLAUSEL, istMinderjaehrig } from "../kern/schema.js";

@@ -4,7 +4,7 @@
 // „👁️ gelesen x/y“ für den Verfasser, neue Zettel gehen als Post-it-Fenster auf, Erinnerung an eigene alte Zettel.
 // Rechte und Farben erzwingt der Server (supabase/functions/_shared/regeln.js) – hier wird nur angezeigt und vorbereitet.
 import { S, VIEWS, zeige, zeichne, kopf, name, vorname, istLeitung, istVerwalter, einst } from "./zustand.js";
-import { esc, AKTIONEN, toast, uhr, frage, $ } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, uhr, frage } from "../kern/ui.js";
 import { liste, hole, speichere, speichereViele, loesche, konfig, abonnieren, neueId, istEchtbetrieb, jetztAbgleichen } from "../kern/daten.js";
 import { PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson } from "../kern/schema.js";
 import { senden } from "../kern/versand.js";
@@ -296,7 +296,7 @@ const neueFremde = () => pwZettel().filter((z) => z.von !== ich() && !gelesen(z.
 // „Hängen lassen“ fragt für diese Zettel frühestens nach pauseTage wieder (je Gerät gemerkt)
 const erinnertLesen = () => { try { return JSON.parse(localStorage.getItem("bk_pw_erinnert") || "{}"); } catch { return {}; } };
 function pwErinnern() {
-  const { erinnernTage, pauseTage } = fristen(), bis = erinnertLesen(), jetzt = Date.now();
+  const { erinnernTage } = fristen(), bis = erinnertLesen(), jetzt = Date.now();
   const alt = meine().filter((z) => jetzt - new Date(z.zeit).getTime() >= erinnernTage * 86400000 && !(bis[z.id] && new Date(bis[z.id]).getTime() > jetzt))
     .sort((a, b) => String(a.zeit).localeCompare(String(b.zeit)));
   if (!alt.length) return false;

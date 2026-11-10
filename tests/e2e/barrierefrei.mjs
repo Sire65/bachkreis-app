@@ -32,7 +32,7 @@ for (const r of (process.env.NURPC ? [] : rollen)) {
   await p.waitForTimeout(150); await pruefe(r + ":ueben");
   for (const m of ["mitspielen", "griffe", "rhythmus", "stimmen", "gehoer"]) { await p.click(`[data-a="ubModus"][data-x="${m}"]`).catch(() => {}); await p.waitForTimeout(150); await pruefe(r + ":ueben-" + m); await p.click('[data-a="ubZurueck"]').catch(() => {}); }
 }
-await ctx.setDefaultTimeout(3000); const q = await ctx.newPage(); q.on("dialog", (d) => d.dismiss()); await p.close(); const p2 = q;
+await ctx.setDefaultTimeout(3000); const q = await ctx.newPage(); q.on("dialog", (d) => d.dismiss()); await p.close();
 await q.setViewportSize({ width: 1400, height: 900 }); await q.goto(BASIS + "/verwaltung.html"); await q.waitForTimeout(800); await q.click('[data-a="vwAls"][data-x="p-leitung"]'); await q.waitForTimeout(500);
 globalThis.PP = q; 
 await pruefe("pc:start");

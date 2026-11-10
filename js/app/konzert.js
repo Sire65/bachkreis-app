@@ -1,6 +1,6 @@
 // 🎭 Konzert & Reise (0.21.0): Programmfolge mit Werken, Pause, Ansagen, Zugabe und Gesamtdauer · Treffpunkt & Kleiderordnung ·
 // Transportliste aus dem Inventar (zum Abhaken beim Packen) · Reise-/Freizeit-Anmeldung mit Warteliste und „bezahlt“.
-import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, istEltern, hatRolle } from "./zustand.js";
+import { S, db, zeichne, name, vorname, istEltern, hatRolle } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz, geld, frage } from "../kern/ui.js";
 import { liste, hole, speichere, loesche } from "../kern/daten.js";
 import { kinderVon, gruppenMitglieder, tagIso } from "../kern/logik.js";

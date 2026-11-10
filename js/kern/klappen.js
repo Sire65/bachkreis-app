@@ -66,7 +66,7 @@ function knopfZeigen(b) {
   const w = document.getElementById(b.dataset.wurzel); if (!w) return;
   const l = sichtbare(w), auf = l.some((d) => !d.open);
   b.hidden = l.length < 2;
-  b.textContent = auf ? "▾ Alle auf" : "▴ Alle zu"; b.setAttribute("aria-label", auf ? "Alle Bereiche aufklappen" : "Alle Bereiche zuklappen");
+  b.textContent = auf ? "▾ Alle auf" : "▴ Alle zu"; b.setAttribute("aria-label", auf ? "Alle auf – alle Bereiche aufklappen" : "Alle zu – alle Bereiche zuklappen");
 }
 function alleKnoepfeZeigen() { for (const b of document.querySelectorAll(".klappen-alle")) knopfZeigen(b); }
 export function klappenAlle(b) {

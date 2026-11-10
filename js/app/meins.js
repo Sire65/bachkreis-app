@@ -1,20 +1,17 @@
 // Meins (Daten, Änderung melden, Einstellungen, Test an mich), Technik (Sicherheits-Check, Hilfe, Über, Update, Demo)
 // und Admin-Blätter (Leitstand). Vorbild: KC Club „Meins“/„Technik“/„Admin“.
-import { S, VIEWS, db, zeige, zurueck, kopf, name, einst, einstSetzen, istLeitung, istEltern, istVerwalter, fehlerListe } from "./zustand.js";
-import { KACHELN, kachelnFuer, REGISTER_ALLE, adminZustaende } from "./start.js";
-import { esc, AKTIONEN, datumKurz, uhr, vorZeit, toast, blatt, formWerte, herunterladen, frage } from "../kern/ui.js";
+import { S, VIEWS, db, zeige, zurueck, kopf, name, einst, einstSetzen, istEltern, fehlerListe } from "./zustand.js";
+import { kachelnFuer, adminZustaende } from "./start.js";
+import { esc, AKTIONEN, vorZeit, toast, formWerte, herunterladen, frage } from "../kern/ui.js";
 import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb, konfig } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
-import { kinderVon, elternVon, wirksameGruppen, instrumenteVon, tagIso, personenDaten } from "../kern/logik.js";
-import { EREIGNISSE, KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
+import { kinderVon, wirksameGruppen, instrumenteVon, tagIso, personenDaten } from "../kern/logik.js";
+import { KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
-import { JZ_WAHL, jzWahl, jzWahlSetzen, JZ_DEKO_WAHL, jzDekoWahl, jzDekoSetzen, jahreszeitVorschau, jahreszeitKopf } from "./jahreszeiten.js";
-import { REG_EFFEKTE, regEffektWahl, regEffektSetzen, regEffekt } from "./kopf.js";
+import { jzWahlSetzen, jzDekoSetzen, jahreszeitVorschau, jahreszeitKopf } from "./jahreszeiten.js";
+import { regEffektSetzen, regEffekt } from "./kopf.js";
 
 // Vorschauen wie in der KC Club App (Art:Extra)
-const JZ_VORSCHAUEN = [["herbst", "🍂 Herbst"], ["advent", "🕯️ Advent"], ["winter", "⛄ Winter"], ["fruehling", "🌱 Frühling"], ["sommer", "🌻 Sommer"],
-  ["kirmes", "🎡 Kirmes"], ["wiesn", "🥨 Oktoberfest"], ["karibik", "🌴 Karibik"], ["karneval", "🎭 Karneval"], ["halloween", "🎃 Halloween"],
-  ["advent:nikolaus", "🥾 Nikolaus"], [":regen", "☔ Regen"], [":topf", "🎼 Probentag"], ["fruehling:ostern", "🥚 Ostern"], ["herbst:igel", "🦔 Igel"], ["herbst:twinkey", "🧹 Orchesterwart"], ["heute", "📅 Heute (beenden)"]];
 
 // ---------- Meine Daten (Auskunft) ----------
 VIEWS.meinedaten = {

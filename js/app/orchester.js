@@ -3,10 +3,10 @@
 import { programmHtml, programmVon, infoHtml, anmeldungHtml } from "./konzert.js";
 import { KIND_KONTAKT, TABELLEN } from "../kern/schema.js";
 import { gesundheitKurz } from "./schutz.js";
-import { S, VIEWS, db, zeige, zeichne, zurueck, kopf, name, istLehrkraft, istLeitung, istEltern, istVerwalter, hatRolle } from "./zustand.js";
-import { esc, AKTIONEN, datumKurz, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
+import { S, VIEWS, db, zeige, zeichne, zurueck, kopf, name, istLehrkraft, istVerwalter, hatRolle } from "./zustand.js";
+import { esc, AKTIONEN, datumKurz, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
-import { gruppenMitglieder, stammgruppe, wirksameGruppen, temporaereZuordnungen, generellerWechselPlan, instrumenteVon, registerVon, elternVon, kinderVon, tagIso, ausleihenVon, antwortVon, fotoErlaubnis } from "../kern/logik.js";
+import { gruppenMitglieder, stammgruppe, wirksameGruppen, generellerWechselPlan, instrumenteVon, registerVon, elternVon, kinderVon, tagIso, ausleihenVon, antwortVon, fotoErlaubnis } from "../kern/logik.js";
 import { statusZeileHtml } from "./meinstatus.js";
 import { gesicht, gesichtSvg, merkmale, HAUT, HAARFARBE, FRISUREN, AUGEN, MUND, FARBEN } from "./gesichter.js";
 import { onlineIds, onlineSichtbar } from "./online.js";
@@ -106,7 +106,7 @@ VIEWS.meingesicht = {
       ${reihe("haar", "Haarfarbe", HAARFARBE, (i, w) => `<span class="gz-farbe" style="background:${w}"></span>`)}
       ${reihe("augen", "Augen", AUGEN, (i) => mini({ augen: i }))}
       ${reihe("mund", "Mund", MUND, (i) => mini({ mund: i }))}
-      ${reihe("brille", "Brille", ["ohne", "mit"], (i, w) => `${mini({ brille: i })}`)}
+      ${reihe("brille", "Brille", ["ohne", "mit"], (i) => `${mini({ brille: i })}`)}
       ${reihe("farbe", "Hintergrund", FARBEN, (i, w) => `<span class="gz-farbe" style="background:${w}"></span>`)}
       <p class="hinweis">Dein Gesicht sehen andere im Orchester und in der Instrumentenkunde – es ist gezeichnet, kein Foto.</p>`;
   },

@@ -1,9 +1,9 @@
 // Startseite nach Club-Vorbild: Kopf mit Statusleiste/LEDs, Register (Bachkreis · Meins · Technik · Admin), Kacheln.
-import { S, VIEWS, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istVerwalter, istVorstand, istEltern, istSchueler, hatRolle, vorname, ANSICHTEN, fehlerListe } from "./zustand.js";
+import { S, VIEWS, db, einst, zeige, istLeitung, istLehrkraft, istVerwalter, istVorstand, istEltern, istSchueler, hatRolle, vorname, fehlerListe } from "./zustand.js";
 import { esc, AKTIONEN, blatt, datum, uhr } from "../kern/ui.js";
 import { liste, hole, datenInfo, konfig } from "../kern/daten.js";
 import { nsId, nachrichtFrei, MODULE } from "../kern/schema.js";
-import { cockpit, termineFuer, antwortVon, kinderVon, genehmigungStatus, ausleihenVon } from "../kern/logik.js";
+import { cockpit, termineFuer, antwortVon, kinderVon, ausleihenVon } from "../kern/logik.js";
 import { communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 import { kopfEinsetzen, kopfVerbinden, regEffekt } from "./kopf.js";

@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { verarbeiten, sha256 } from "../supabase/functions/_shared/api.js";
 import { demoDatenbank } from "./demo-db.mjs";
 
-let pg, db, d, codes;
+let db, d, codes;
 const rufe = (body, token, ip = "1.2.3.4") => verarbeiten(db, body, { token, ip });
 async function login(personId) {
   const r = await rufe({ aktion: "anmelden", code: codes[personId] });
@@ -14,7 +14,7 @@ async function login(personId) {
 }
 
 before(async () => {
-  ({ pg, db, d, codes } = await demoDatenbank({ jetzt: new Date("2026-10-15T10:00:00"), geaendert: "2026-10-01T00:00:00Z" }));
+  ({ db, d, codes } = await demoDatenbank({ jetzt: new Date("2026-10-15T10:00:00"), geaendert: "2026-10-01T00:00:00Z" }));
 });
 
 test("Anmeldung: falscher Code → 401, richtiger Code → Sitzung; ohne Sitzung kein Zugriff", async () => {

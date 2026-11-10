@@ -7,7 +7,7 @@
 .chat-bild.klein { width: 30px; height: 30px; min-width: 30px; font-size: .75rem; }
 .chat-rechts { text-align: right; display: grid; justify-items: end; gap: 4px; }
 .chat-rechts .hinweis.neu { color: #1e8048; font-weight: 800; }
-.chat-zahl { background: #25a35a; color: #fff; border-radius: 999px; min-width: 22px; padding: 1px 7px; font-size: .78rem; font-weight: 800; text-align: center; }
+.chat-zahl { background: #1b7a43; color: #fff; border-radius: 999px; min-width: 22px; padding: 1px 7px; font-size: .78rem; font-weight: 800; text-align: center; }
 .chat-zahl.express { background: #c0392b; }
 .zeile-unter .haken { vertical-align: -2px; margin: 0 1px 0 0; }
 
@@ -218,7 +218,7 @@ button.tag-trenner { border: none; background: none; font: inherit; cursor: poin
 .fuss-leiste button.alt-rot .zaehler, .kachel.na-rot .zahl, .mini.na-rot b { background: #c62828; }
 .fuss-leiste button[class*="alt-"] .zaehler, .kachel[class*="na-"] .zahl, .mini.mini-neu b { color: #fff; animation: naBlink 1.4s ease-in-out infinite; }
 .mini.mini-neu b { border-radius: 10px; padding: 0 6px; }
-@keyframes naBlink { 50% { opacity: .35; } }
+@keyframes naBlink { 50% { transform: scale(1.18); box-shadow: 0 0 0 3px rgba(255, 255, 255, .7); } } /* ♿ 0.60.0 pulsieren statt verblassen – Zahl bleibt immer gut lesbar */
 :root.ohne-effekt .fuss-leiste button[class*="alt-"] .zaehler, :root.ohne-effekt .kachel[class*="na-"] .zahl, :root.ohne-effekt .mini.mini-neu b { animation: none; }
 @media (prefers-reduced-motion: reduce) { .fuss-leiste button[class*="alt-"] .zaehler, .kachel[class*="na-"] .zahl, .mini.mini-neu b { animation: none; } }
 /* ===== 0.38.0 Nachrichten wie KC 2.882 ===== */

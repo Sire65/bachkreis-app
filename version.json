@@ -1,13 +1,22 @@
 {
-  "version": "0.59.0",
+  "version": "0.60.0",
   "datum": "2026-11-10",
   "stufe": "DEV",
   "neu": [
-    "🔘 Alle Ein/Aus-Schalter wie in der Club App: grün = an, grau = aus",
-    "🇬🇧 Oben rechts: Verbindungs-Balken und eine Flagge – antippen stellt die Sprache um",
-    "⌃ Die Pfeile zum Einrollen des Kopfs sitzen mittig oben"
+    "♿ Besser für Vorlese-Programme und gut lesbare Zahlen (Barrierefreiheit ohne Beanstandung)",
+    "⚡ Schnellerer Start: Einstellungen und Admin-Bereich laden erst, wenn sie gebraucht werden",
+    "🌐 Mehr auf Englisch: alle Kachel-Untertitel und Seitentitel"
   ],
   "verlauf": [
+    {
+      "version": "0.59.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🔘 Alle Ein/Aus-Schalter wie in der Club App: grün = an, grau = aus",
+        "🇬🇧 Oben rechts: Verbindungs-Balken und eine Flagge – antippen stellt die Sprache um",
+        "⌃ Die Pfeile zum Einrollen des Kopfs sitzen mittig oben"
+      ]
+    },
     {
       "version": "0.58.0",
       "datum": "2026-11-10",

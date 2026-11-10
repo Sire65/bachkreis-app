@@ -7,22 +7,22 @@
 //  - Jahreszeiten im Kopf (jahreszeiten.js) und Kuckucksuhr zur vollen Stunde (KC-CLUB-KUCKUCKSUHR)
 // Der Kopf ist EIN dauerhaftes Element: beim Neuzeichnen der Startseite wird er nur umgesetzt – so laufen Bühne und
 // Animationen ungestört weiter.
-import { S, db, einst, einstSetzen, zeige, istLeitung, istLehrkraft, istEltern, istSchueler, istVorstand, vorname, name, ANSICHTEN } from "./zustand.js";
-import { esc, AKTIONEN, toast, datum, uhr, vorZeit, BACHKREIS_LOGO } from "../kern/ui.js";
-import { liste, hole, konfig, datenInfo, jetztAbgleichen } from "../kern/daten.js";
+import { S, db, einst, einstSetzen, istLeitung, istLehrkraft, istEltern, istSchueler, istVorstand, vorname, name, ANSICHTEN } from "./zustand.js";
+import { esc, AKTIONEN, toast, datum, uhr, BACHKREIS_LOGO } from "../kern/ui.js";
+import { liste, hole, konfig, jetztAbgleichen } from "../kern/daten.js";
 import { termineFuer, antwortVon, kinderVon, cockpit, ausleihenVon, teilnahmeVon } from "../kern/logik.js";
 import { onlineSichtbar, onlineZahl, onlineNamen, onlineIds } from "./online.js";
 import { stundenuhrFuer, stundenuhrZeigen } from "./stundenuhren.js";
-import { gbvVerbinden, gbvPruefen } from "./bedienung.js";
+import { gbvVerbinden } from "./bedienung.js";
 import { communicatorZustand, versandStatistik } from "../kern/versand.js";
-import { APP_VERSION, APP_STUFE } from "../kern/version.js";
+import { APP_VERSION } from "../kern/version.js";
 import { WET, WETTER_NEU_MIN, wetterLaden, infoWetter, wetterSzene, wetterTagDetails } from "./wetter.js";
 import { jahreszeitKopf, jzEisLaenge, jzVorschauLeiste, jzPruefen, JZ_KONTEXT, istNacht } from "./jahreszeiten.js";
 import { ESELSOHR } from "./buehne.js";
 import { anwendenDesign } from "./darstellung.js";
 import { spracheMoeglich } from "./sprache.js";
 import { netzQualitaet, netzAbonnieren } from "../kern/netz.js";
-import { statusText, statusArt } from "./meinstatus.js";
+import { statusText, statusKurz, statusArt } from "./meinstatus.js";
 
 const $ = (id) => document.getElementById(id);
 const K = { hero: null, glanzGelaufen: false, infoLetztes: "", adminZustaende: () => ({}), ungelesen: () => 0, meineUnterhaltungen: () => [], offeneGenehmigungen: () => 0 };
@@ -70,7 +70,7 @@ function kopfBauen() {
       ${kopfFlaggeHtml()}
     </div>
     <div class="kopfzeile">
-      <div class="kopflogo"><button class="logo" data-a="webseite" aria-label="Internetseite des Bachkreises öffnen" title="Zur Bachkreis-Internetseite">${BACHKREIS_LOGO}</button><button class="kopf-version" id="kopfVersion" data-a="updatePruefen" title="Update prüfen" aria-label="Version – Update prüfen">v${APP_VERSION}</button></div>
+      <div class="kopflogo"><button class="logo" data-a="webseite" aria-label="Internetseite des Bachkreises öffnen" title="Zur Bachkreis-Internetseite">${BACHKREIS_LOGO}</button><button class="kopf-version" id="kopfVersion" data-a="updatePruefen" title="Update prüfen" aria-label="v${APP_VERSION} – Update prüfen">v${APP_VERSION}</button></div>
       <div class="kopftext"><div class="marke-klein" id="kopfMarke"></div><div class="gruss"><span id="begruessung">Hallo!</span></div></div>
     </div>
     <div class="statusleiste">
@@ -139,8 +139,8 @@ export function kopfAuffrischen() {
   h.querySelector("#begruessung").innerHTML = `${esc(gruss())},<br><span class="gruss-name">${esc(S.ich.vorname)}!</span>`;
   const sp = h.querySelector("#kopfSprache"); if (sp && sp.dataset.sprache !== (englisch() ? "en" : "de")) sp.outerHTML = kopfFlaggeHtml();
   const sc = h.querySelector("#statusChip"); // 🟢 0.58.0 Mein Status oben, die Rolle klein darunter
-  sc.innerHTML = `<span class="sc-status">${esc(statusText(S.ich.id, { hinweis: false }))}</span><small class="sc-rolle">${esc(ANSICHTEN[S.ansicht] || "🎻")}</small>`;
-  sc.className = `statuschip st-${statusArt(S.ich.id)}`; sc.setAttribute("aria-label", `Mein Status: ${statusText(S.ich.id)} – antippen zum Ändern`);
+  sc.innerHTML = `<span class="sc-status">${esc(statusKurz(S.ich.id))}</span><small class="sc-rolle">${esc(ANSICHTEN[S.ansicht] || "🎻")}</small>`;
+  sc.className = `statuschip st-${statusArt(S.ich.id)}`; sc.setAttribute("aria-label", `${statusKurz(S.ich.id)} ${ANSICHTEN[S.ansicht] || ""} – Mein Status ändern`); sc.title = `Mein Status: ${statusText(S.ich.id)} – antippen zum Ändern`;
   anwendenDesign(); // Mond/Sonne mit A/T/N am Knopf
   h.querySelector("#kopfVersion").textContent = `v${APP_VERSION}`;
   const led = (id, [f, t], n) => { const e = h.querySelector("#" + id); e.className = "led " + f; e.title = `${n}: ${t}`; };

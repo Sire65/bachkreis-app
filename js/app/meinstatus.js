@@ -17,6 +17,12 @@ export function statusText(pid, { hinweis = true } = {}) {
   const s = statusVon(pid), [sym, t] = STATUS_ARTEN[s?.status || "verfuegbar"];
   return `${sym} ${t}${s?.bis ? " bis " + tagKurz(s.bis) : ""}${hinweis && s?.hinweis ? " · " + s.hinweis : ""}`;
 }
+// 📱 0.60.0 kurze Form für den Knopf im Kopf (schmale Handys): „🏖️ Urlaub bis 20.11.“, „🔴 nicht da“
+const KURZ = { verfuegbar: "verfügbar", beschaeftigt: "beschäftigt", urlaub: "Urlaub", krank: "krank", abwesend: "nicht da" };
+export function statusKurz(pid) {
+  const s = statusVon(pid), art = s?.status || "verfuegbar", d = s?.bis ? new Date(String(s.bis).slice(0, 10) + "T12:00:00") : null;
+  return `${STATUS_ARTEN[art][0]} ${KURZ[art]}${d ? ` bis ${d.getDate()}.${d.getMonth() + 1}.` : ""}`;
+}
 export const statusZeileHtml = (pid) => (statusVon(pid) ? `<div class="st-zeile st-${esc(statusArt(pid))}">${esc(statusText(pid))}</div>` : "");
 
 const M = { fuer: null, wahl: null };

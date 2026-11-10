@@ -230,7 +230,7 @@ export function erwaehnungenMarkieren(html, n) {
 }
 
 // ---------- 👉 Wischen zum Antworten · ⬇️ nach unten ----------
-export function chatGestenVerdrahten(uid) {
+export function chatGestenVerdrahten(_uid) {
   const v = document.getElementById("chatVerlauf"); if (!v || v.dataset.gesten) return; v.dataset.gesten = "1";
   let st = null;
   v.addEventListener("touchstart", (e) => { const b = e.target.closest(".blase"); if (!b || e.touches.length !== 1) return; st = { b, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0 }; }, { passive: true });

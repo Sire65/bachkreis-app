@@ -1,5 +1,5 @@
 // 🗺️ 0.36.0 Auftrittsorte (Wunsch Frau Jacka): Ortsverzeichnis, Website-Übernahme, Karte, Server speichert Stadt/Land ohne Jahr.
-import { test, before } from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { ORTE, LAENDER, CHRONIK_WEBSITE, stadtFinden, ortVon, orteSammeln, koordinatenLesen, projektion, websiteFehlend, flagge } from "../js/kern/orte.js";

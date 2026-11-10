@@ -1,7 +1,7 @@
 // 🔑 Zugang & Organisation (0.31.0, wie KC 2.859): freundliche Link-Hilfe (KC-CLUB-LINK-HILFE), 📲 Einladung zum Installieren
 // (KC-CLUB-INSTALL-EINLADUNG), 🛡️ Zugang im Blick – Anmeldeversuche/Sperre und „Installiert?“ (KC-CLUB-INSTALL-STAND), 📊 Bachkreis in Zahlen.
 // Gerätedaten: nur die Art (installiert/Browser/PC) – kein Gerätename, keine Kennung.
-import { S, VIEWS, zeige, zeichne, kopf, name, istLeitung, istVerwalter, einst } from "./zustand.js";
+import { S, VIEWS, zeichne, kopf, name, istLeitung, istVerwalter, einst } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, datumKurz, vorZeit } from "../kern/ui.js";
 import { liste, istEchtbetrieb, serverAktion, konfig } from "../kern/daten.js";
 

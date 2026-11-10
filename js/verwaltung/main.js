@@ -2,7 +2,7 @@
 // bequem am PC/Notebook pflegen. Formulare, Listen, CSV-Import/-Export entstehen aus der Tabellen-Registry (schema.js).
 // Zugänge (Codes/QR-Karten, Sperren, Verwaltungsrecht) werden HIER – außerhalb der App – gepflegt.
 import { werkzeugeRegistrieren, WERKZEUG_ANSICHTEN } from "./werkzeuge.js";
-import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo, neueId } from "../kern/daten.js";
+import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo } from "../kern/daten.js";
 import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN, rollenMit } from "../kern/schema.js";
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";

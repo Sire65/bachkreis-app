@@ -5,7 +5,7 @@
 // Weitere Knöpfe: 💬 In einen Chat · 📥 In meinen Eingangskorb · 📤 In den Eingangskorb anderer (Leitung).
 import { S, VIEWS, zeige, zeichne, name, hatRolle } from "./zustand.js"; // eslint-disable-line no-unused-vars
 import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
-import { liste, hole, speichere, konfig } from "../kern/daten.js";
+import { liste, speichere, konfig } from "../kern/daten.js";
 import { hochladen } from "../kern/dateien.js";
 import { pdfAusJpegs, umbrueche } from "../kern/pdf.js";
 import { laden as html2canvasLaden } from "./bildschirmfoto.js";

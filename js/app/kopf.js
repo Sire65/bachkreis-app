@@ -211,6 +211,8 @@ function infoSpringen(d) { if (einst().einfach) return; const ziel = d < 0 ? 0 :
 AKTIONEN.infoBlaettern = (x) => infoBlaettern(+x);
 AKTIONEN.infoSpringen = (x) => infoSpringen(+x);
 AKTIONEN.infoGehe = (x) => infoGehe(+x);
+// ⚡ 0.61.0 „Schnellzugriff“ antippen (wie KC schnellstartOben): oben im Kopf das Schnellstart-Feld zeigen
+export function infoZu(id) { infoFelderAktualisieren(); const i = INFO_FELDER.findIndex((f) => f.id === id); if (i < 0) return false; if (i !== INFO_I) infoGehe(i); else heroZeigen(1); return true; }
 // BK-WEBSEITE (0.6.1, wie KC webseite()): Logo oben links öffnet direkt die Internetseite des Bachkreises.
 // Adresse steht in der Konfiguration (PC-Verwaltung → Einstellungen); nur http(s) wird geöffnet.
 export const WEBSEITE_STANDARD = "https://www.gymnasium-bergkamen.de/bachkreis/";

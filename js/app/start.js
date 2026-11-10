@@ -272,7 +272,9 @@ VIEWS.start = {
     return `<section id="v-start" class="${e.einfach ? "ansicht-einfach" : "ansicht-erweitert"}">
       <div id="kopfPlatz"></div>
       <div id="updateHinweis"></div>
-      <div class="abschnitt"><h3>${e.einfach ? "🟢 Einfache Ansicht" : "Schnellzugriff"}</h3><button type="button" class="knopf klein" data-a="kaAnordnen" title="Kacheln verschieben${e.einfach ? "" : " oder ausblenden"}" ${ANO.an ? "hidden" : ""}>✥ Anordnen</button></div>
+      <div class="abschnitt sz-zeile"><h3><button type="button" class="sz-link" data-a="schnellstartOben" title="Antippen: oben die Schnellstart-Symbole zeigen">Schnellzugriff</button>
+        ${e.einfach ? '<button type="button" class="ansichtname ein" data-a="ansichtWechseln" title="Antippen: zur erweiterten Ansicht wechseln">&gt; Einfache Ansicht &lt;</button>' : '<button type="button" class="ansichtname erw" data-a="ansichtWechseln" title="Antippen: zur einfachen Ansicht wechseln">&lt; Erweiterte Ansicht &gt;</button>'}</h3>
+        <span class="sz-rechts"><button type="button" class="knopf klein sz-anordnen" data-a="kaAnordnen" title="Kacheln verschieben${e.einfach ? "" : " oder ausblenden"}" aria-label="✥ Anordnen – Kacheln verschieben" ${ANO.an ? "hidden" : ""}>✥</button><button type="button" class="ausweis-knopf" data-a="ausweisZeigen" title="Mein Ausweis-QR – zum Vorzeigen" aria-label="QR – mein Ausweis"><svg class="qr-sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h6v6H1zM2.5 2.5v3h3v-3zM9 1h6v6H9zm1.5 1.5v3h3v-3zM1 9h6v6H1zm1.5 1.5v3h3v-3zM9 9h2v2H9zm4 0h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2H9zm4 0h2v2h-2z" fill="currentColor" fill-rule="evenodd"/></svg> QR</button></span></div>
       <div id="rasterBlock">${rasterBlock()}</div>
       ${e.einfach || ANO.an ? "" : `<div class="wischhinweis">‹ wischen für weitere Bereiche · doppelt tippen dreht eine Kachel um · lange drücken ordnet an ›</div>`}
       <div class="karte"><h3>Heute wichtig${istLehrkraft() || istVorstand() ? ' <button type="button" class="knopf klein" data-a="tagesinfo">📋 Übersicht</button>' : ""}</h3>${heuteWichtig()}</div>

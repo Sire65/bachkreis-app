@@ -556,6 +556,23 @@ async function kalenderEpoche(db, pid) {
   return (await db.q(`select epoche from bk_kalender_abos where person_id = $1`, [pid]))[0]?.epoche ?? 0;
 }
 async function kalenderToken(pid, epoche, geheimnis) { return `${pid}.${await hmac(geheimnis, `kalender:${pid}:${epoche}`)}`; }
+// 🪪 0.61.0 Mein Ausweis (wie KC-CLUB-AUSWEIS-QR): QR mit Person + Prüfcode (HMAC mit Server-Geheimnis – nicht fälschbar).
+// Vorzeigen bei Konzert, Fahrt, Instrumenten-Ausgabe; die Leitung prüft mit „ausweis_pruefen“ (Name, Art, Gruppe – keine weiteren Daten).
+const ausweisGeheimnis = (dienste) => dienste.ausweisGeheimnis || dienste.kalenderGeheimnis || "";
+async function ausweisCode(g, pid) { return (await hmac(g, `ausweis:${pid}`)).replace(/[^A-Za-z0-9]/g, "").slice(0, 10).toUpperCase(); }
+async function meinAusweis(db, s, dienste) {
+  const g = ausweisGeheimnis(dienste); if (!g) return fehler(503, "AUSWEIS_NICHT_EINGERICHTET");
+  const code = await ausweisCode(g, s.person.id);
+  return { status: 200, json: { ok: true, inhalt: `BK1:${s.person.id}:${code}`, nummer: code.slice(0, 4) + "-" + code.slice(4, 8) } };
+}
+async function ausweisPruefen(db, s, body, dienste) {
+  if (!rollenMit(s.person.rollen || []).some((r) => ["admin", "leitung", "lehrkraft", "vorstand"].includes(r))) return fehler(403, "NUR_LEITUNG");
+  const g = ausweisGeheimnis(dienste); if (!g) return fehler(503, "AUSWEIS_NICHT_EINGERICHTET");
+  const [kopf, pid, code] = String(body.inhalt || "").split(":");
+  if (kopf !== "BK1" || !pid || !code || !gleich(await ausweisCode(g, pid), code)) return { status: 200, json: { ok: true, gueltig: false } };
+  const p = (await db.q(`select id, vorname, nachname, typ, status from bk_personen where id = $1 and geloescht_am is null`, [pid]))[0];
+  return { status: 200, json: { ok: true, gueltig: !!p && p.status !== "ausgetreten", person: p ? { id: p.id, name: `${p.vorname || ""} ${p.nachname || ""}`.trim(), typ: p.typ, status: p.status } : null } };
+}
 async function kalenderLink(db, s, body, dienste) {
   const g = dienste.kalenderGeheimnis, basis = String(dienste.basisUrl || "");
   if (!g || !/^https:\/\//.test(basis)) return fehler(503, "KALENDER_NICHT_EINGERICHTET");
@@ -703,6 +720,8 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     }
     if (aktion === "passkey_start") return await passkeyStart(db, s); // 🔑 0.56.0
     if (aktion === "passkey_registrieren") return await passkeyRegistrieren(db, s, body);
+    if (aktion === "mein_ausweis") return await meinAusweis(db, s, dienste); // 🪪 0.61.0
+    if (aktion === "ausweis_pruefen") return await ausweisPruefen(db, s, body, dienste);
     if (aktion === "kalender_link") return await kalenderLink(db, s, body, dienste);
     if (aktion === "online") return await online(db, s, body);
     if (aktion === "zugang_lage") return await zugangLage(db, s);

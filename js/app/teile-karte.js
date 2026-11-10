@@ -69,6 +69,7 @@ export const TEILE_KARTE = {
   "aufgabeStatus": "leitung.js",
   "ausgabeForm": "instrumente.js",
   "ausgabeSpeichern": "instrumente.js",
+  "ausweisZeigen": "ausweis.js",
   "baumAlle": "notenarchiv.js",
   "baumAuf": "notenarchiv.js",
   "benachWahl": "meins.js",

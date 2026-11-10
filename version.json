@@ -1,13 +1,22 @@
 {
-  "version": "0.60.0",
+  "version": "0.61.0",
   "datum": "2026-11-10",
   "stufe": "DEV",
   "neu": [
-    "♿ Besser für Vorlese-Programme und gut lesbare Zahlen (Barrierefreiheit ohne Beanstandung)",
-    "⚡ Schnellerer Start: Einstellungen und Admin-Bereich laden erst, wenn sie gebraucht werden",
-    "🌐 Mehr auf Englisch: alle Kachel-Untertitel und Seitentitel"
+    "⚡ „Schnellzugriff“ antippen zeigt oben die Schnellstart-Symbole",
+    "🟢 Einfache / 🔧 Erweiterte Ansicht direkt über den Kacheln umschalten",
+    "🪪 Rechts der QR-Knopf: dein persönlicher Ausweis zum Vorzeigen"
   ],
   "verlauf": [
+    {
+      "version": "0.60.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "♿ Besser für Vorlese-Programme und gut lesbare Zahlen (Barrierefreiheit ohne Beanstandung)",
+        "⚡ Schnellerer Start: Einstellungen und Admin-Bereich laden erst, wenn sie gebraucht werden",
+        "🌐 Mehr auf Englisch: alle Kachel-Untertitel und Seitentitel"
+      ]
+    },
     {
       "version": "0.59.0",
       "datum": "2026-11-10",

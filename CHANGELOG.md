@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.61.0 DEV – 10.11.2026
+⚡🪪 **Zeile über den Kacheln wie in der Club App** (Wunsch Hansi):
+- **„Schnellzugriff“** ist ein Link: antippen springt oben im Kopf zum **⚡ Schnellstart** mit den 8 Symbolen (in der einfachen Ansicht fragt die App, ob sie zur erweiterten wechseln soll; ausgeschalteter Schnellstart wird eingeschaltet)
+- daneben der Umschalter **„> Einfache Ansicht <“** (grün) bzw. **„< Erweiterte Ansicht >“** (rot) – ein Tipp wechselt
+- rechts **✥** (Kacheln anordnen) und der **QR-Knopf**: **🪪 Mein Ausweis** mit QR-Code, Name, Art und Gruppe, Ausweis-Nr. – QR immer schwarz auf weiß, auch im Dunkel-Design; wird auf dem Gerät gemerkt und geht auch ohne Netz. Der QR enthält Person + Prüfcode vom Server (nicht fälschbar); Leitung, Lehrkräfte und Vorstand können ihn prüfen (Server-Aktion `ausweis_pruefen`, zeigt nur Name/Art). Schlüssel: `BK_AUSWEIS_GEHEIMNIS`, sonst der Kalender-Schlüssel
+
 ## 0.60.0 DEV – 10.11.2026
 🧹 **Optimierung** (Liste „Was muss noch optimiert werden?“):
 - **Programm aufgeräumt:** alle 81 Lint-Hinweise behoben – ungenutzte Importe, Variablen und drei nie benutzte Funktionen entfernt (0 Fehler, 0 Hinweise)

@@ -35,6 +35,6 @@ Deno.serve(async (req) => {
     geraet: req.headers.get("user-agent") ?? "",
   };
   const r = await verarbeiten(db, body as Record<string, unknown>, meta, { adapter: KANAELE, umgebung: umgebung(), hintergrund, ablage: ablage(),
-    kalenderGeheimnis: Deno.env.get("BK_KALENDER_GEHEIMNIS") ?? "", basisUrl: `https://${new URL(req.url).host}/functions/v1/bk-api` });
+    kalenderGeheimnis: Deno.env.get("BK_KALENDER_GEHEIMNIS") ?? "", ausweisGeheimnis: Deno.env.get("BK_AUSWEIS_GEHEIMNIS") ?? "", basisUrl: `https://${new URL(req.url).host}/functions/v1/bk-api` });
   return new Response(JSON.stringify(r.json), { status: r.status, headers: { ...h, "Content-Type": "application/json", "Cache-Control": "no-store" } });
 });

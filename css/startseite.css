@@ -109,3 +109,28 @@
 .kacheln3 .mini .fb-z { display: inline-grid; font-size: inherit; margin: 0; opacity: 1; }
 .kacheln3 .mini .fb-z span { display: inline-block; font-size: inherit; margin: 0; opacity: 1; line-height: 1; }
 #v-start:has(.raster.anordnen) .wischhinweis { display: none; }
+/* ⚡🪪 0.61.0 Zeile über den Kacheln wie in der Club App: Schnellzugriff (Link) · > Einfache < / < Erweiterte > Ansicht · rechts ✥ und QR-Ausweis */
+.sz-zeile h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; min-width: 0; }
+.sz-link { border: none; background: none; padding: 4px 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 4px; position: relative; }
+.sz-link::after { content: ""; position: absolute; inset: -8px 0; }
+.ansichtname { font-size: .8rem; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; border: none; background: none; padding: 6px 2px; font-family: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; position: relative; }
+.ansichtname::after { content: ""; position: absolute; inset: -8px 0; }
+.ansichtname.ein { color: #1b7a43; } .ansichtname.erw { color: #b3261e; }
+:root.dunkel .ansichtname.ein, :root[data-modus="nacht"] .ansichtname.ein { color: #5fd38d; } :root.dunkel .ansichtname.erw, :root[data-modus="nacht"] .ansichtname.erw { color: #ff8a80; }
+.sz-rechts { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-top: 8px; }
+.sz-rechts .knopf { margin-top: 0; }
+.sz-anordnen { min-width: 40px; font-size: 1.05rem; }
+.ausweis-knopf { display: inline-flex; align-items: center; gap: 5px; border: 2px solid #1a1500; border-radius: 10px; background: #f2b705; color: #1a1500; font: 800 .85rem/1 system-ui, sans-serif; padding: 7px 10px; cursor: pointer; white-space: nowrap; }
+.ausweis-knopf .qr-sym { width: 17px; height: 17px; display: block; }
+.ausweis-knopf:active { transform: scale(.95); }
+/* Ausweis-Karte: QR immer schwarz auf weiß – auch im Dunkel-Design, damit jeder Scanner ihn liest */
+.ausweis-karte { background: #fff; color: #1a1500; border: 3px solid #f2b705; border-radius: 16px; padding: 14px; max-width: 340px; margin: 0 auto 10px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.ausweis-kopf { display: flex; align-items: center; justify-content: center; gap: 8px; color: #8a6400; font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; }
+.ausweis-kopf img { border-radius: 50%; }
+.ausweis-qr svg { width: 100%; max-width: 280px; height: auto; display: block; margin: 0 auto; background: #fff; }
+.ausweis-name { font-weight: 800; font-size: 1.2rem; margin-top: 8px; } .ausweis-art { color: #555; font-size: .92rem; }
+.ausweis-nr { font-family: ui-monospace, monospace; font-size: 1.15rem; letter-spacing: 2px; color: #8a6400; margin-top: 4px; }
+.ausweis-demo { margin-top: 6px; font-size: .85rem; color: #b3261e; font-weight: 700; } .ausweis-hinweis { text-align: center; }
+.abschnitt.sz-zeile { flex-wrap: nowrap; align-items: center; }
+.sz-zeile h3 { flex: 1 1 auto; min-width: 0; margin-top: 12px; margin-bottom: 8px; }
+.sz-zeile .sz-rechts { margin-top: 4px; }

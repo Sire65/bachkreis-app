@@ -334,6 +334,16 @@ export function schnellstartHtml() {
   return `<div class="schnell-kopf"><h2>⚡ Schnellstart</h2><button type="button" class="schnell-wahl-knopf" data-a="schnellWahl" aria-label="Symbole auswählen" title="Symbole auswählen">✏️</button></div>
     <div class="schnell-raster">${schnellAuswahl().map((x) => `<button type="button" class="mini" data-a="schnellLos" data-x="${x.id}"><b>${x.sym}</b><span>${esc(x.t)}</span></button>`).join("")}</div>`;
 }
+AKTIONEN.schnellstartOben = async () => {
+  if (einst().einfach) {
+    if (!(await frage("⚡ Die Schnellstart-Symbole oben gibt es in der erweiterten Ansicht.\nJetzt zur erweiterten Ansicht wechseln?"))) return;
+    await AKTIONEN.ansichtSetzen("erweitert");
+  }
+  if (einst().schnellstart === false) { einstSetzen("schnellstart", true); toast("⚡ Schnellstart ist jetzt eingeschaltet"); }
+  const { infoZu } = await import("./kopf.js");
+  if (!infoZu("schnell")) return;
+  document.getElementById("bkHero")?.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 AKTIONEN.schnellLos = (id) => { const x = SCHNELL.find((y) => y.id === id); try { x?.los(); } catch (e) { toast("⚠️ " + e.message); } };
 function schnellWahlHtml() {
   const ids = einst().schnellIds || schnellAuswahl().map((x) => x.id);

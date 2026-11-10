@@ -159,7 +159,7 @@ export function buehneHtml(kompakt = false) {
       <div class="bw-stuecke">${STUECKE.map((x) => `<button class="${x.id === B.stueck ? "an" : ""}" data-a="bwStueck" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.komponist)}</small></button>`).join("")}</div>
       <div class="knopfreihe"><button class="knopf haupt" data-a="bwSpielen">▶ Vorhang auf</button><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div>
       <div class="bw-regler"><label>🥁 Tempo <input type="range" min="0.7" max="1.3" step="0.05" value="${B.tempo}" data-c="bwTempo"></label><label>🔊 Lautstärke <input type="range" min="0" max="1" step="0.05" value="${B.laut}" data-c="bwLaut"></label>
-      <label class="bw-haken"><input type="checkbox" data-c="bwApplaus" ${B.applaus ? "checked" : ""}> 👏 Applaus am Ende</label></div>
+      <label class="bw-haken"><input type="checkbox" class="schalter-cb" data-c="bwApplaus" ${B.applaus ? "checked" : ""}> 👏 Applaus am Ende</label></div>
       <p class="hinweis">Gemeinfreie Melodien, im Gerät erzeugt – ohne Internet. Die Musiker spielen mit, sobald ihr Register dran ist.</p>`
     : `
       <ul class="liste">${aufnahmen.map((a) => `<li><div class="fl"><div class="zeile-titel">${esc(a.titel)}</div><div class="zeile-unter">${datumKurz(a.datum)}${a.projekt_id ? " · " + esc(hole("projekte", a.projekt_id)?.titel || "") : ""} · ${esc({ intern: "nur Leitung", mitglieder: "für Mitglieder", oeffentlich: "öffentlich" }[a.freigabe] || "")}</div></div>

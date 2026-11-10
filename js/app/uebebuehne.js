@@ -180,7 +180,7 @@ function mitspielenHtml() {
     <div class="ub-feld"><span>Takte</span><div class="ub-zwei"><select data-c="ubVon" aria-label="Takt von">${takte.map((t) => `<option ${t === UB.von ? "selected" : ""}>${t}</option>`).join("")}</select><span>bis</span><select data-c="ubBis" aria-label="Takt bis">${takte.map((t) => `<option ${t === UB.bis ? "selected" : ""}>${t}</option>`).join("")}</select></div></div>
     <div class="ub-feld"><span>Tempo</span><div class="ub-chips">${TEMPI.map((f) => `<button type="button" class="${Math.abs(f - UB.faktor) < 0.01 ? "an" : ""}" data-a="ubTempo" data-x="${f}">${f === 1 ? "🐇" : f <= 0.6 ? "🐢" : ""} ${Math.round(d.st.tempo * f)}</button>`).join("")}</div></div>
     <div class="ub-feld"><span>Meine Stimme</span><div class="ub-chips">${[["an", "🔊 laut"], ["leise", "🔉 leise"], ["aus", "🔇 aus"]].map(([k, t]) => `<button type="button" class="${UB.eigene === k ? "an" : ""}" data-a="ubEigene" data-x="${k}">${t}</button>`).join("")}</div></div>
-    <div class="ub-schalter">${[["einzaehlen", "🥁 Einzählen"], ["schleife", "🔁 Wiederholen"], ["steigern", "🪜 Tempo steigern"]].map(([k, t]) => `<label><input type="checkbox" data-c="ubSchalter" data-x="${k}" ${UB[k] ? "checked" : ""}> ${t}</label>`).join("")}</div>
+    <div class="ub-schalter">${[["einzaehlen", "🥁 Einzählen"], ["schleife", "🔁 Wiederholen"], ["steigern", "🪜 Tempo steigern"]].map(([k, t]) => `<label><input type="checkbox" class="schalter-cb" data-c="ubSchalter" data-x="${k}" ${UB[k] ? "checked" : ""}> ${t}</label>`).join("")}</div>
     <div class="ub-anzeige" id="ubAnzeige" aria-live="polite">${UB.laeuft ? "" : `♩ = ${d.bpm} · Takt ${UB.von}–${UB.bis}${UB.runden ? ` · ${UB.runden}× gespielt` : ""}${a?.tempo_ziel ? ` · Ziel ♩ = ${a.tempo_ziel}` : ""}`}</div>
     <div class="ub-knoepfe"><button type="button" class="knopf haupt gross" data-a="ubLos">${UB.laeuft ? "⏹ Stopp" : "▶ Los"}</button></div>
     <div class="ub-noten" id="ubNoten">${notenSvg(d.teil, { takteJeZeile: innerWidth < 560 ? 2 : 4, titel: `${d.st.stueck.titel} – ${INSTRUMENTE[inst()].name}` })}</div>
@@ -320,7 +320,7 @@ function rhythmusHtml() {
     <div class="ub-noten" id="ubNoten">${notenSvg(rhythmusSt(d.m, d.takt, UB.rbpm, d.titel), { takteJeZeile: innerWidth < 560 ? 2 : 4, titel: d.titel })}</div>
     <div class="ub-anzeige" id="ubAnzeige" aria-live="polite">${UB.phase === "bereit" ? "Erst 👂 anhören, dann ▶ mittippen" : ""}</div>
     <div class="ub-knoepfe"><button type="button" class="knopf" data-a="ubRHoeren">👂 Anhören</button><button type="button" class="knopf haupt" data-a="ubRTippen">▶ Mittippen</button>
-      <label class="ub-klein"><input type="checkbox" data-c="ubRHilfe" ${UB.rHilfe ? "checked" : ""}> leise mitspielen</label></div>
+      <label class="ub-klein"><input type="checkbox" class="schalter-cb" data-c="ubRHilfe" ${UB.rHilfe ? "checked" : ""}> leise mitspielen</label></div>
     <button type="button" class="ub-tipp" id="ubTipp" aria-label="Tippen">TIPP</button>${ergebnisHtml}
     <p class="hinweis">Tippe auf die große Fläche (am Computer: Leertaste) – genau dann, wenn eine Note beginnt. Vorher zählt das Metronom einen Takt ein.</p>`);
 }
@@ -564,7 +564,7 @@ function formHtml() {
     const takt = Number(w.taktart) || 4, p = musterPruefen(F.rm, takt);
     spez = `<div class="ub-raster3">${feld("Taktart", `<select name="taktart" data-c="ubFormNeu">${[2, 3, 4].map((t) => `<option value="${t}" ${t === takt ? "selected" : ""}>${t}/4</option>`).join("")}</select>`)}</div>
       <div class="ub-baukasten"><div class="ub-chips">${NOTENWERTE.map((n) => `<button type="button" data-a="ubRmPlus" data-x="${n.w}" title="${esc(n.t)}">${F.pause ? "𝄽 " : ""}${esc(n.t)}</button>`).join("")}</div>
-        <div class="ub-knoepfe"><label class="ub-klein"><input type="checkbox" data-c="ubRmPause" ${F.pause ? "checked" : ""}> als Pause</label><button type="button" class="knopf klein" data-a="ubRmWeg">⌫ letzte weg</button><button type="button" class="knopf klein" data-a="ubRmLeer">🗑 leeren</button><button type="button" class="knopf klein" data-a="ubRmHoeren" ${p.ok ? "" : "disabled"}>🔊 anhören</button></div>
+        <div class="ub-knoepfe"><label class="ub-klein"><input type="checkbox" class="schalter-cb" data-c="ubRmPause" ${F.pause ? "checked" : ""}> als Pause</label><button type="button" class="knopf klein" data-a="ubRmWeg">⌫ letzte weg</button><button type="button" class="knopf klein" data-a="ubRmLeer">🗑 leeren</button><button type="button" class="knopf klein" data-a="ubRmHoeren" ${p.ok ? "" : "disabled"}>🔊 anhören</button></div>
         <div class="ub-noten klein" id="ubRmVorschau">${F.rm.length ? notenSvg(rhythmusSt(F.rm, takt, 80), { takteJeZeile: 4 }) : '<p class="hinweis">Tippe oben auf Notenwerte – so entsteht der Rhythmus.</p>'}</div>
         <p class="hinweis ${p.ok ? "" : "ub-warn"}">${esc(p.text)}</p></div>`;
   }

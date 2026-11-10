@@ -45,6 +45,17 @@ const gruss = () => { const h = new Date().getHours(), i = h < 11 ? 0 : h < 18 ?
 // 🇩🇪/🇬🇧 0.57.0 Flaggen für den Sprach-Schalter im Kopf (eigene kleine Bilder, keine Datei nötig)
 const FLAGGE_DE = '<svg viewBox="0 0 5 3" aria-hidden="true"><rect width="5" height="1" fill="#000"/><rect y="1" width="5" height="1" fill="#dd0000"/><rect y="2" width="5" height="1" fill="#ffce00"/></svg>';
 const FLAGGE_GB = '<svg viewBox="0 0 60 30" aria-hidden="true"><rect width="60" height="30" fill="#012169"/><path d="M0 0L60 30M60 0L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0L60 30M60 0L0 30" stroke="#C8102E" stroke-width="2.5"/><path d="M30 0V30M0 15H60" stroke="#fff" stroke-width="10"/><path d="M30 0V30M0 15H60" stroke="#C8102E" stroke-width="6"/></svg>';
+// 🇩🇪/🇬🇧 0.59.0 Sprach-Schalter wie die Schalter der Club App: EINE Flagge auf dem runden Knopf zeigt die aktuelle Sprache;
+// links = Deutsch, rechts = English. Ein Tipp schaltet um (Kopf und ⚙️ Einstellungen).
+// 🇬🇧/🇩🇪 0.59.0 Kopf oben rechts: immer nur EINE Flagge – die der anderen Sprache. Antippen stellt um, dann erscheint die andere Flagge.
+export function kopfFlaggeHtml() {
+  const en = englisch();
+  return `<button type="button" class="kopf-flagge" id="kopfSprache" data-a="spracheToggle" data-sprache="${en ? "en" : "de"}" translate="no" title="${en ? "Auf Deutsch umstellen" : "Switch to English"}" aria-label="${en ? "Auf Deutsch umstellen" : "Switch to English"}">${en ? FLAGGE_DE : FLAGGE_GB}</button>`;
+}
+export function spracheSchalterHtml(id = "") {
+  const en = englisch();
+  return `<button type="button" class="sprach-schalter${en ? " en" : ""}"${id ? ` id="${id}"` : ""} data-a="spracheToggle" role="switch" aria-checked="${en}" translate="no" title="${en ? "Language: English – tap for Deutsch" : "Sprache: Deutsch – tap for English"}" aria-label="${en ? "Language: English" : "Sprache: Deutsch"}"><span class="ss-knopf">${en ? FLAGGE_GB : FLAGGE_DE}</span></button>`;
+}
 
 // ---------- Aufbau (einmal) ----------
 function kopfBauen() {
@@ -54,6 +65,10 @@ function kopfBauen() {
     <button type="button" class="kopf-pfeil kp-halb" id="kopfPfeilHalb" data-a="kopfRollo" data-x="halb" title="Kopf halb einrollen – Statusleiste mit LEDs bleibt" aria-label="Kopf halb einrollen" aria-expanded="true"><span>⌃</span></button>
     <button type="button" class="kopf-pfeil kp-ganz" id="kopfPfeil" data-a="kopfRollo" data-x="ganz" title="Kopf ganz einrollen – nur die Kopfzeile bleibt" aria-label="Kopf ganz einrollen" aria-expanded="true"><span class="kp-doppel">⌃<b>⌃</b></span></button>
     <div class="kopf-glanz" id="kopfGlanz" aria-hidden="true"><b></b><u></u></div>
+    <div class="kopf-oben-rechts">
+  <button type="button" class="kopf-netz" id="kopfNetz" data-a="ledBlatt" title="Verbindung & Status – antippen für Messwerte" aria-label="Verbindung und Status"><span class="kb-balken" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b class="kn-warn" hidden aria-hidden="true">!</b></button>
+      ${kopfFlaggeHtml()}
+    </div>
     <div class="kopfzeile">
       <div class="kopflogo"><button class="logo" data-a="webseite" aria-label="Internetseite des Bachkreises öffnen" title="Zur Bachkreis-Internetseite">${BACHKREIS_LOGO}</button><button class="kopf-version" id="kopfVersion" data-a="updatePruefen" title="Update prüfen" aria-label="Version – Update prüfen">v${APP_VERSION}</button></div>
       <div class="kopftext"><div class="marke-klein" id="kopfMarke"></div><div class="gruss"><span id="begruessung">Hallo!</span></div></div>
@@ -61,12 +76,10 @@ function kopfBauen() {
     <div class="statusleiste">
       <button class="statuschip" id="statusChip" data-a="statusOeffnen" title="Mein Status – antippen zum Ändern"></button>
       <span class="sl-luecke"></span>
-      <button type="button" class="kopf-netz" id="kopfNetz" data-a="ledBlatt" title="Verbindung & Status – antippen für Messwerte" aria-label="Verbindung und Status"><span class="kb-balken" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b class="kn-warn" hidden aria-hidden="true">!</b></button>
-      <button type="button" class="kopf-sprache" id="kopfSprache" data-a="spracheToggle" role="switch" translate="no" aria-label="Sprache: Deutsch / English"><span class="ks-de">${FLAGGE_DE}</span><span class="ks-en">${FLAGGE_GB}</span></button>
-      <button class="rund klein" id="modusKnopf" data-a="themaUmschalten" title="Tag/Nacht umschalten" aria-label="Tag/Nacht umschalten">🌙</button>
+      <span class="kopf-knoepfe"><button class="rund klein" id="modusKnopf" data-a="themaUmschalten" title="Tag/Nacht umschalten" aria-label="Tag/Nacht umschalten">🌙</button>
       <button class="rund klein" id="aktualisierenKnopf" data-a="kopfAktualisieren" title="Aktualisieren" aria-label="Aktualisieren">↻</button>
-      <button class="rund klein" id="spracheKnopf" data-a="sprachsteuerung" title="Sprachsteuerung – sag, was passieren soll" aria-label="Sprachsteuerung" hidden>🎤</button>
-      <span class="leds" id="leds" hidden><i class="led grau" id="ledDaten"></i><i class="led grau" id="ledComm"></i><i class="led grau" id="ledPush"></i><i class="led grau" id="ledWetter"></i></span>
+      <button class="rund klein" id="spracheKnopf" data-a="sprachsteuerung" title="Sprachsteuerung – sag, was passieren soll" aria-label="Sprachsteuerung" hidden>🎤</button></span>
+      <button type="button" class="leds" id="leds" data-a="ledBlatt" title="Verbindung & Status" aria-label="Verbindung und Status"><i class="led grau" id="ledDaten"></i><i class="led grau" id="ledComm"></i><i class="led grau" id="ledPush"></i><i class="led-trenner" aria-hidden="true"></i><i class="led grau" id="ledWetter"></i></button>
     </div>
     <div class="info" id="heroInfo"><h2>Einen Moment …</h2><div class="unter">Daten werden geladen.</div></div>
     <div class="ipunkte" id="infoPunkte"></div>
@@ -124,9 +137,9 @@ export function kopfAuffrischen() {
   const az = K.adminZustaende();
   h.querySelector("#kopfMarke").textContent = (konfig().name || "Bachkreis Bergkamen").toUpperCase();
   h.querySelector("#begruessung").innerHTML = `${esc(gruss())},<br><span class="gruss-name">${esc(S.ich.vorname)}!</span>`;
-  const sp = h.querySelector("#kopfSprache"); if (sp) { const en = englisch(); sp.classList.toggle("en", en); sp.setAttribute("aria-checked", String(en)); sp.title = en ? "Sprache: English – antippen für Deutsch" : "Sprache: Deutsch – tap for English"; }
+  const sp = h.querySelector("#kopfSprache"); if (sp && sp.dataset.sprache !== (englisch() ? "en" : "de")) sp.outerHTML = kopfFlaggeHtml();
   const sc = h.querySelector("#statusChip"); // 🟢 0.58.0 Mein Status oben, die Rolle klein darunter
-  sc.innerHTML = `<span class="sc-status">${esc(statusText(S.ich.id, { hinweis: false }))} ▾</span><small class="sc-rolle">${esc(ANSICHTEN[S.ansicht] || "🎻")}</small>`;
+  sc.innerHTML = `<span class="sc-status">${esc(statusText(S.ich.id, { hinweis: false }))}</span><small class="sc-rolle">${esc(ANSICHTEN[S.ansicht] || "🎻")}</small>`;
   sc.className = `statuschip st-${statusArt(S.ich.id)}`; sc.setAttribute("aria-label", `Mein Status: ${statusText(S.ich.id)} – antippen zum Ändern`);
   anwendenDesign(); // Mond/Sonne mit A/T/N am Knopf
   h.querySelector("#kopfVersion").textContent = `v${APP_VERSION}`;

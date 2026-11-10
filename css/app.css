@@ -131,7 +131,6 @@ a { color: var(--akzent); }
 .feld .wahlen { display: flex; flex-wrap: wrap; gap: 6px; }
 .feld .wahlen label { display: inline-flex; gap: 6px; align-items: center; font-weight: 700; background: var(--karte2); border-radius: 10px; padding: 6px 10px; margin: 0; }
 .schalter { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--linie); }
-.schalter input[type=checkbox] { width: 22px; height: 22px; }
 
 /* Blatt (Bottom-Sheet) & Hinweis */
 .blatt-hg { position: fixed; inset: 0; background: rgba(0, 0, 0, .45); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
@@ -478,3 +477,20 @@ body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau lieg
 .statuschip .sc-status { max-width: 100%; overflow: hidden; text-overflow: ellipsis; } .statuschip .sc-rolle { font-size: .68rem; font-weight: 600; opacity: .75; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .statuschip.st-verfuegbar { box-shadow: inset 0 0 0 1.5px #3ddc6f; } .statuschip.st-beschaeftigt { box-shadow: inset 0 0 0 1.5px #ffb020; }
 .statuschip.st-urlaub { box-shadow: inset 0 0 0 1.5px #4fc3f7; } .statuschip.st-krank { box-shadow: inset 0 0 0 1.5px #ff7a7a; } .statuschip.st-abwesend { box-shadow: inset 0 0 0 1.5px #ff4545; }
+/* 0.59.0 Schalter wie in der Club App (wie beim Handy): grün = an, grau = aus – für alle Ein/Aus-Schalter */
+.schalter input[type="checkbox"], input[type="checkbox"].schalter-cb { appearance: none; -webkit-appearance: none; width: 52px; height: 30px; min-width: 52px; border-radius: 15px; background: #b9aea4; position: relative; cursor: pointer; transition: background .2s; margin: 0; flex: none; vertical-align: middle; }
+.schalter input[type="checkbox"]::before, input[type="checkbox"].schalter-cb::before { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); transition: left .2s; }
+.schalter input[type="checkbox"]:checked, input[type="checkbox"].schalter-cb:checked { background: #2e7d32; }
+.schalter input[type="checkbox"]:checked::before, input[type="checkbox"].schalter-cb:checked::before { left: 25px; }
+.schalter input[type="checkbox"]:focus-visible, input[type="checkbox"].schalter-cb:focus-visible { outline: 3px solid #f2b705; outline-offset: 2px; }
+.schalter input[type="checkbox"]:disabled, input[type="checkbox"].schalter-cb:disabled { opacity: .45; cursor: default; }
+@media (prefers-reduced-motion: reduce) { .schalter input[type="checkbox"], .schalter input[type="checkbox"]::before, input.schalter-cb, input.schalter-cb::before, .sprach-schalter, .ss-knopf { transition: none; } }
+/* 🇩🇪/🇬🇧 Sprach-Schalter: gleiche Form, EINE Flagge auf dem Knopf (links Deutsch, rechts English) */
+.sprach-schalter { width: 52px; height: 30px; min-width: 52px; border-radius: 15px; border: none; padding: 0; background: #b9aea4; position: relative; cursor: pointer; flex: none; transition: background .2s; }
+.sprach-schalter.en { background: #2e7d32; }
+.sprach-schalter .ss-knopf { position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .35); transition: left .2s; display: block; }
+.sprach-schalter.en .ss-knopf { left: 25px; }
+.sprach-schalter .ss-knopf svg { position: absolute; top: 0; left: 50%; height: 100%; width: auto; transform: translateX(-50%); display: block; }
+.sprach-schalter:focus-visible { outline: 3px solid #f2b705; outline-offset: 2px; }
+.statusleiste .sprach-schalter { width: 46px; min-width: 46px; height: 26px; } .statusleiste .sprach-schalter .ss-knopf { width: 20px; height: 20px; } .statusleiste .sprach-schalter.en .ss-knopf { left: 23px; }
+.statusleiste .sprach-schalter:not(.en) { background: rgba(255, 255, 255, .28); }

@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.59.0 DEV – 10.11.2026
+🔘 **Schalter wie in der Club App** (Wunsch Hansi): Alle Ein/Aus-Schalter sind jetzt Handy-Schalter – **grün = an, grau = aus**, mit weißem Knopf (52 × 30, wie KC). Gilt für alle Einstellungen, den Admin-Bereich, Übe-Bühne, Hilfezentrum, Bühne und die Konzertkarten. Häkchen zum Abhaken und Auswählen (Aufgaben, Packliste, Empfänger) bleiben Häkchen.
+🇬🇧 **Kopf oben neu** (Wunsch Hansi): die beiden Pfeile (Kopf ein-/ausrollen) **mittig** oben, **ganz oben rechts die Verbindungs-Balken** und daneben **immer nur eine Flagge**: im Deutschen die 🇬🇧-Flagge, ein Tipp stellt auf English um – dann steht dort die 🇩🇪-Flagge, ein Tipp zurück auf Deutsch. Die Statusleiste darunter: Mein Status · 🌙 ↻ 🎤 dicht beieinander · rechts wieder die **Status-LEDs** (Daten, Versand, Push · Wetter). Die Flagge ist klein (wie ein Symbol).
+- Unter ⚙️ › Schrift & Größe ist die Sprache ein Schalter wie alle anderen (Knopf mit der Flagge der aktuellen Sprache, grün = English)
+
 ## 0.58.0 DEV – 10.11.2026
 🟢 **Mein Status** (wie KC „Mein Status“, Wunsch Hansi – „ordentlich untereinander und aufgeräumt“):
 - Oben links in der Statusleiste steht jetzt **dein Status** (z. B. „🟢 verfügbar ▾“, Rand in der Statusfarbe), die Rolle klein darunter. Antippen öffnet „🟢 Mein Status“ – auch als Kachel unter Meins und für Eltern als „🤒 Krank / Status“ auf der Eltern-Startseite

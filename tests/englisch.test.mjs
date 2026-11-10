@@ -21,7 +21,13 @@ test("🌐 Alle Kachel-Titel haben eine Übersetzung; kein Ziel ist wieder ein d
 });
 test("🇩🇪/🇬🇧 📶 0.57.0 Kopf: Sprach-Schalter und Verbindungs-Balken in der Statusleiste, Gruß zweizeilig (nie abgeschnitten)", () => {
   const k = readFileSync(new URL("../js/app/kopf.js", import.meta.url), "utf8"), css = readFileSync(new URL("../css/kopf.css", import.meta.url), "utf8");
-  assert.match(k, /id="kopfSprache" data-a="spracheToggle" role="switch"/); assert.match(k, /AKTIONEN\.spracheToggle/);
+  assert.match(k, /<div class="kopf-oben-rechts">[\s\S]*id="kopfNetz"[\s\S]*\$\{kopfFlaggeHtml\(\)\}/); assert.match(k, /\$\{en \? FLAGGE_DE : FLAGGE_GB\}<\/button>/, "Kopf: eine Flagge, die der anderen Sprache"); assert.match(k, /class="sprach-schalter[^"]*"[^>]*data-a="spracheToggle" role="switch" aria-checked/); assert.match(k, /AKTIONEN\.spracheToggle/);
   assert.match(k, /id="kopfNetz" data-a="ledBlatt"/); assert.match(k, /netzAbonnieren\(/);
   assert.match(k, /Good evening/); assert.ok(!/\.kopftext \.gruss \{[^}]*text-overflow: ellipsis/.test(css), "Gruß nicht mehr abgeschnitten");
+});
+test("🔘 0.59.0 Schalter wie in der Club App: grün/grau mit Knopf, Sprach-Schalter mit EINER Flagge", () => {
+  const css = readFileSync(new URL("../css/app.css", import.meta.url), "utf8"), k = readFileSync(new URL("../js/app/kopf.js", import.meta.url), "utf8");
+  assert.match(css, /\.schalter input\[type="checkbox"\], input\[type="checkbox"\]\.schalter-cb \{ appearance: none;[^}]*width: 52px; height: 30px/);
+  assert.match(css, /:checked, input\[type="checkbox"\]\.schalter-cb:checked \{ background: #2e7d32; \}/);
+  assert.match(k, /<span class="ss-knopf">\$\{en \? FLAGGE_GB : FLAGGE_DE\}<\/span>/, "nur eine Flagge");
 });

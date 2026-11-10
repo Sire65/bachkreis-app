@@ -158,6 +158,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F148 | 🌐 English (Bedienelemente, Wörterbuch bei Bedarf geladen) | ✅ | tests/englisch.test.mjs |
 | BK-F149 | 👋 Kopf: Gruß zweizeilig, Statusleiste mit 📶 Verbindungs-Balken und 🇩🇪/🇬🇧-Sprach-Schalter | ✅ | tests/englisch.test.mjs |
 | BK-F150 | 🟢 Mein Status (verfügbar/beschäftigt/Urlaub/krank/nicht erreichbar, bis, Hinweis) · 🤒 Termine bei Krankheit absagen · Zeichen am Gesicht | ✅ | tests/meinstatus.test.mjs |
+| BK-F151 | 🔘 Schalter wie in der Club App (grün/grau) · 🇩🇪/🇬🇧 Sprach-Schalter mit einer Flagge | ✅ | tests/englisch.test.mjs |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

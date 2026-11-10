@@ -11,8 +11,8 @@
 .ecken-muster { display: flex; gap: 8px; margin: 6px 0; } .ecken-muster i { width: 46px; height: 34px; background: var(--haupt); border-radius: var(--radius); box-shadow: var(--schatten); }
 
 /* 👆 Größere Tippflächen (KC-CLUB-TIPPFLAECHEN): kleine Knöpfe mindestens 44 px hoch */
-:root.tipp-gross .knopf.klein, :root.tipp-gross .chip-wahl, :root.tipp-gross .zchip, :root.tipp-gross .ifz, :root.tipp-gross .schalter input[type="checkbox"] + *, :root.tipp-gross select { min-height: 44px; }
-:root.tipp-gross .schalter input[type="checkbox"] { min-width: 26px; min-height: 26px; }
+:root.tipp-gross .knopf.klein, :root.tipp-gross .chip-wahl, :root.tipp-gross .zchip, :root.tipp-gross .ifz, :root.tipp-gross select { min-height: 44px; }
+:root.tipp-gross .schalter input[type="checkbox"] { min-width: 52px; min-height: 30px; }
 :root.tipp-gross .hinweis { font-size: max(.82rem, 13px); }
 
 /* 🔄 Drehzeichen (KC-CLUB-KACHEL-DREHZEICHEN) – überdeckt weder Zahl noch Text */

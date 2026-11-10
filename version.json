@@ -1,13 +1,22 @@
 {
-  "version": "0.58.0",
+  "version": "0.59.0",
   "datum": "2026-11-10",
   "stufe": "DEV",
   "neu": [
-    "🟢 Mein Status: verfügbar, beschäftigt, Urlaub, krank oder nicht erreichbar – oben im Kopf antippen",
-    "🤒 Krank? Termine bis zum Gesundwerden mit einem Tipp absagen",
-    "👀 Die anderen sehen deinen Status am Gesicht im Chat und in der Mitgliederliste"
+    "🔘 Alle Ein/Aus-Schalter wie in der Club App: grün = an, grau = aus",
+    "🇬🇧 Oben rechts: Verbindungs-Balken und eine Flagge – antippen stellt die Sprache um",
+    "⌃ Die Pfeile zum Einrollen des Kopfs sitzen mittig oben"
   ],
   "verlauf": [
+    {
+      "version": "0.58.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🟢 Mein Status: verfügbar, beschäftigt, Urlaub, krank oder nicht erreichbar – oben im Kopf antippen",
+        "🤒 Krank? Termine bis zum Gesundwerden mit einem Tipp absagen",
+        "👀 Die anderen sehen deinen Status am Gesicht im Chat und in der Mitgliederliste"
+      ]
+    },
     {
       "version": "0.57.0",
       "datum": "2026-11-10",

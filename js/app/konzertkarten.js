@@ -36,7 +36,7 @@ function detail(t) {
   const l = s.liste.filter((r) => !q || String(r.name).toLowerCase().includes(q) || String(r.code || "").toLowerCase().includes(q)).sort((a, b) => String(a.name).localeCompare(String(b.name), "de"));
   return kopf("🎟️ " + t.titel) + `<div class="karte"><p>${esc(wann(t.beginn))}${t.ort ? " · " + esc(t.ort) : ""}</p>
     ${einstellen() ? "" : '<p class="hinweis">Ein- und ausschalten, Plätze und Hinweis stellt die Leitung ein.</p>'}
-    <label class="zs-haken"><input type="checkbox" data-c="kkAktiv" ${einstellen() ? "" : "disabled"} ${t.karten_aktiv ? "checked" : ""}><span><b>Online-Reservierung</b> eingeschaltet</span></label>
+    <label class="zs-haken"><input type="checkbox" class="schalter-cb" data-c="kkAktiv" ${einstellen() ? "" : "disabled"} ${t.karten_aktiv ? "checked" : ""}><span><b>Online-Reservierung</b> eingeschaltet</span></label>
     ${t.karten_aktiv ? `<div class="kk-zahlen"><label>Plätze <input type="number" min="1" max="5000" value="${esc(t.karten_plaetze ?? "")}" data-c="kkPlaetze" ${einstellen() ? "" : "disabled"} aria-label="Plätze insgesamt" style="width:90px"></label>
       <label>je Reservierung höchstens <input type="number" min="1" max="20" value="${esc(t.karten_je ?? KARTEN_JE_STANDARD)}" data-c="kkJe" ${einstellen() ? "" : "disabled"} aria-label="Höchstzahl je Reservierung" style="width:70px"></label></div>
       <label>Hinweis für Besucher <input value="${esc(t.karten_hinweis || "")}" data-c="kkHinweis" ${einstellen() ? "" : "disabled"} maxlength="200" placeholder="z. B. Eintritt frei – Spende erbeten" style="width:100%"></label>

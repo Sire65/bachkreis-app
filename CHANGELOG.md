@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.58.0 DEV – 10.11.2026
+🟢 **Mein Status** (wie KC „Mein Status“, Wunsch Hansi – „ordentlich untereinander und aufgeräumt“):
+- Oben links in der Statusleiste steht jetzt **dein Status** (z. B. „🟢 verfügbar ▾“, Rand in der Statusfarbe), die Rolle klein darunter. Antippen öffnet „🟢 Mein Status“ – auch als Kachel unter Meins und für Eltern als „🤒 Krank / Status“ auf der Eltern-Startseite
+- Seite untereinander: (Eltern) **Für wen?** – Ich und die Kinder; **Wie geht es dir?** – 🟢 verfügbar · 🟠 beschäftigt · 🏖️ im Urlaub · 🤒 krank · 🔴 nicht erreichbar; darunter **bis** (danach wieder verfügbar) und ein freiwilliger **Hinweis**
+- 🤒 **krank mit „bis“**: „Gute Besserung!“ listet die Termine bis dahin – offene und unsichere sind vorausgewählt, schon zugesagte markiert – und sagt sie mit einem Tipp ab (Grund „krank“, die Leitung sieht es wie gewohnt)
+- **Die anderen sehen** das Zeichen (🤒 🏖️ 🟠 🔴) am Gesicht – im Chat, in der Mitgliederliste, bei Ansprechpartnern – und den Text mit „bis“ und Hinweis auf der Personenseite und im Chat-Kopf. Den Status von Kindern sehen nur Eltern, Leitung, Lehrkräfte und Vorstand
+- Neue Tabelle `personenstatus` (eine Zeile je Person; setzen nur für sich und die eigenen Kinder – prüft der Server)
+
 ## 0.57.0 DEV – 10.11.2026
 👋 **Kopf neu angeordnet** (Wunsch Hansi, Vorschlag A): Oben stehen nur noch Logo und der Gruß – zweizeilig („Guten Abend, / Bettina!“), nichts wird mehr abgeschnitten. Alle kleinen Knöpfe sitzen jetzt in der Statusleiste darunter:
 - **📶 Verbindungs-Balken** wie beim Handy-Empfang (4 grün = sehr gut, gelb = mäßig, 1 rot = schwach, grau = unbekannt, ✕ = offline). Antippen öffnet „Verbindung & Status“ mit Messwerten, „📏 Jetzt messen“ und den Status von Daten, Versand, Push und Wetter. Steht dort etwas auf Rot, zeigt ein kleines rotes „!“ am Balken (die vier Status-Punkte entfallen dafür)

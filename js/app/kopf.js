@@ -22,6 +22,7 @@ import { ESELSOHR } from "./buehne.js";
 import { anwendenDesign } from "./darstellung.js";
 import { spracheMoeglich } from "./sprache.js";
 import { netzQualitaet, netzAbonnieren } from "../kern/netz.js";
+import { statusText, statusArt } from "./meinstatus.js";
 
 const $ = (id) => document.getElementById(id);
 const K = { hero: null, glanzGelaufen: false, infoLetztes: "", adminZustaende: () => ({}), ungelesen: () => 0, meineUnterhaltungen: () => [], offeneGenehmigungen: () => 0 };
@@ -58,7 +59,7 @@ function kopfBauen() {
       <div class="kopftext"><div class="marke-klein" id="kopfMarke"></div><div class="gruss"><span id="begruessung">Hallo!</span></div></div>
     </div>
     <div class="statusleiste">
-      <button class="statuschip" id="statusChip" data-a="kachel" data-x="meinedaten"></button>
+      <button class="statuschip" id="statusChip" data-a="statusOeffnen" title="Mein Status – antippen zum Ändern"></button>
       <span class="sl-luecke"></span>
       <button type="button" class="kopf-netz" id="kopfNetz" data-a="ledBlatt" title="Verbindung & Status – antippen für Messwerte" aria-label="Verbindung und Status"><span class="kb-balken" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b class="kn-warn" hidden aria-hidden="true">!</b></button>
       <button type="button" class="kopf-sprache" id="kopfSprache" data-a="spracheToggle" role="switch" translate="no" aria-label="Sprache: Deutsch / English"><span class="ks-de">${FLAGGE_DE}</span><span class="ks-en">${FLAGGE_GB}</span></button>
@@ -124,7 +125,9 @@ export function kopfAuffrischen() {
   h.querySelector("#kopfMarke").textContent = (konfig().name || "Bachkreis Bergkamen").toUpperCase();
   h.querySelector("#begruessung").innerHTML = `${esc(gruss())},<br><span class="gruss-name">${esc(S.ich.vorname)}!</span>`;
   const sp = h.querySelector("#kopfSprache"); if (sp) { const en = englisch(); sp.classList.toggle("en", en); sp.setAttribute("aria-checked", String(en)); sp.title = en ? "Sprache: English – antippen für Deutsch" : "Sprache: Deutsch – tap for English"; }
-  h.querySelector("#statusChip").textContent = `${ANSICHTEN[S.ansicht] || "🎻"} ▾`;
+  const sc = h.querySelector("#statusChip"); // 🟢 0.58.0 Mein Status oben, die Rolle klein darunter
+  sc.innerHTML = `<span class="sc-status">${esc(statusText(S.ich.id, { hinweis: false }))} ▾</span><small class="sc-rolle">${esc(ANSICHTEN[S.ansicht] || "🎻")}</small>`;
+  sc.className = `statuschip st-${statusArt(S.ich.id)}`; sc.setAttribute("aria-label", `Mein Status: ${statusText(S.ich.id)} – antippen zum Ändern`);
   anwendenDesign(); // Mond/Sonne mit A/T/N am Knopf
   h.querySelector("#kopfVersion").textContent = `v${APP_VERSION}`;
   const led = (id, [f, t], n) => { const e = h.querySelector("#" + id); e.className = "led " + f; e.title = `${n}: ${t}`; };

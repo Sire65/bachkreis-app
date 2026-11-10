@@ -22,7 +22,7 @@ export const EN = {
   "Quiz": "Quiz", "Runder Tisch": "Round table", "Rundschreiben": "Circular", "SOS – Notfall": "SOS – emergency", "Schilder-Druckerei": "Sign printer",
   "Schlüsselbund": "Key ring", "Sicherheits-Check": "Security check", "Sitzungen": "Meetings", "So nutzen wir die App": "How we use the app", "Standorte": "Locations",
   "Startnachricht": "Welcome message", "Test an mich": "Test to me", "Uhr & Takt": "Clock & metronome", "Ungelesen seit mehr als 4 Tagen": "Unread for more than 4 days",
-  "Update prüfen": "Check for update", "Vorschläge & Abstimmungen": "Suggestions & votes", "Zugang im Blick": "Access overview", "Zustimmungen": "Consents",
+  "Update prüfen": "Check for update", "Vorschläge & Abstimmungen": "Suggestions & votes", "Zugang im Blick": "Access overview", "Zustimmungen": "Consents", "Mein Status": "My status", "Krank / Status": "Ill / status", "verfügbar": "available", "beschäftigt": "busy", "im Urlaub": "on holiday", "krank": "ill", "nicht erreichbar": "not reachable", "Gute Besserung!": "Get well soon!", "Für wen?": "For whom?", "Wie geht es dir gerade?": "How are you right now?", "Ausgewählte absagen": "Cancel selected", "Nein, nur Status setzen": "No, just set the status",
   "Änderung melden": "Report a change", "Übe-Bühne": "Practice stage", "Übe-Übersicht": "Practice overview", "Über die App": "About the app", "Nutzungsregeln": "Rules of use",
   // Knöpfe
   "Speichern": "Save", "Drucken": "Print", "Neu": "New", "Nochmal": "Again", "Löschen": "Delete", "Kopieren": "Copy", "Erinnern": "Remind", "Übersicht": "Overview",

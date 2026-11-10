@@ -2,6 +2,7 @@
 // Ohne eigene Wahl entsteht das Gesicht immer gleich aus der Personen-ID; unter „🙂 Mein Gesicht“ gestaltet man es selbst
 // (personen.avatar – nur Zahlen je Merkmal). Dieselben Gesichter tragen auch die Figuren in der Instrumentenkunde.
 import { hole } from "../kern/daten.js";
+import { STATUS_ARTEN, statusId, statusWirksam } from "../kern/schema.js";
 
 export const HAUT = ["#f9dcc4", "#f1c27d", "#e0ac69", "#c68642", "#8d5524", "#5c3a1e"];
 export const HAARFARBE = ["#2b1b0e", "#4a2c17", "#7a4a24", "#b5651d", "#d9a441", "#f0d58c", "#9a9a9a", "#c0392b", "#6c3483"];
@@ -50,4 +51,9 @@ export function gesichtSvg(m, { rund = true, titel = "" } = {}) {
   return `<svg viewBox="0 0 64 64" class="gesicht" ${titel ? `role="img" aria-label="${String(titel).replace(/"/g, "&quot;")}"` : 'aria-hidden="true"'}><defs><clipPath id="gk"><circle cx="32" cy="32" r="32"/></clipPath></defs>
     <g clip-path="url(#gk)"><rect width="64" height="64" fill="${FARBEN[m.farbe % FARBEN.length]}"/><path d="M8 66 Q10 52 32 51 Q54 52 56 66 Z" fill="rgba(0,0,0,.18)"/><g transform="translate(0 2)">${kopf}</g></g></svg>`;
 }
-export const gesicht = (pOderId, titel = "") => gesichtSvg(merkmale(pOderId), { titel });
+// 🟢 0.58.0 Mein Status: ist jemand nicht „verfügbar“, trägt das Gesicht unten rechts das Zeichen (🤒 🏖️ 🟠 🔴)
+export function gesicht(pOderId, titel = "") {
+  const svg = gesichtSvg(merkmale(pOderId), { titel }), pid = typeof pOderId === "object" ? pOderId?.id : pOderId;
+  const st = pid ? statusWirksam(hole("personenstatus", statusId(pid))) : null;
+  return st ? `<span class="st-huelle">${svg}<b class="st-zeichen" aria-label="${STATUS_ARTEN[st.status][1]}">${STATUS_ARTEN[st.status][0]}</b></span>` : svg;
+}

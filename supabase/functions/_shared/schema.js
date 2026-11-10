@@ -96,6 +96,14 @@ export const FOTO_ZWECKE = ["foto_intern", "foto_website", "foto_presse", "foto_
 export const MITFAHRT_ARTEN = { angebot: "🚗 biete Plätze", gesuch: "🙋 suche Mitfahrt" };
 export const PROGRAMM_ARTEN = { werk: "🎼 Werk", pause: "☕ Pause", ansage: "🎤 Ansage / Moderation", zugabe: "🔁 Zugabe", sonstiges: "Sonstiges" };
 // ⚖️ 0.55.0 Datenschutz & Nutzungsregeln: Stand der Texte – ändert er sich, fragt die App beim nächsten Start erneut
+// 🟢 0.58.0 Mein Status (wie KC „Mein Status“): verfügbar, beschäftigt, Urlaub, krank, nicht erreichbar – mit „bis“ und Hinweis
+export const STATUS_ARTEN = { verfuegbar: ["🟢", "verfügbar"], beschaeftigt: ["🟠", "beschäftigt"], urlaub: ["🏖️", "im Urlaub"], krank: ["🤒", "krank"], abwesend: ["🔴", "nicht erreichbar"] };
+export const statusId = (pid) => "st-" + pid;
+// gilt der Status noch? Nach dem „bis“-Tag (oder bei „verfügbar“) → null = verfügbar
+export function statusWirksam(s, heute = new Date().toISOString().slice(0, 10)) {
+  if (!s || s.geloescht_am || !STATUS_ARTEN[s.status] || s.status === "verfuegbar") return null;
+  return s.bis && String(s.bis).slice(0, 10) < heute ? null : s;
+}
 // 🎟️ 0.56.0 Konzertkarten
 export const KARTEN_STATUS = { reserviert: "reserviert", abgeholt: "abgeholt", storniert: "storniert" };
 export const KARTEN_ROLLEN = ["admin", "leitung", "vorstand"];
@@ -802,6 +810,18 @@ export const TABELLEN = {
     liste: ["inventar_id", "person_id", "von", "bis", "status", "kaution_status"],
   },
   // ⚖️ 0.55.0 Zustimmungen: wer hat wann welcher Fassung zugestimmt (Eltern auch für ihre Kinder unter 16) – Nachweis für den Vorstand
+  // 🟢 0.58.0 Mein Status – eine Zeile je Person (id „st-<person>“); setzen darf die Person selbst bzw. die Eltern für ihre Kinder
+  personenstatus: {
+    titel: "Mein Status", sym: "🟢", gruppe: "Verwaltung", lesen: [], schreiben: [],
+    felder: [
+      { k: "person_id", t: "Person", typ: "ref", ref: "personen", pflicht: true },
+      { k: "status", t: "Status", typ: "wahl", werte: Object.fromEntries(Object.entries(STATUS_ARTEN).map(([k, [, t]]) => [k, t])), pflicht: true },
+      { k: "bis", t: "bis", typ: "datum" },
+      { k: "hinweis", t: "Hinweis", typ: "text" },
+      { k: "gesetzt_von", t: "gesetzt von", typ: "ref", ref: "personen" },
+    ],
+    liste: ["person_id", "status", "bis", "hinweis"],
+  },
   // 🔑 0.56.0 Passkeys: Anmelden mit Fingerabdruck/Gesicht/Geräte-PIN. Öffentlicher Schlüssel bleibt auf dem Server (intern),
   // die Person sieht ihre Geräte und kann sie entfernen. Angelegt wird nur über die Server-Aktion passkey_registrieren.
   passkeys: {

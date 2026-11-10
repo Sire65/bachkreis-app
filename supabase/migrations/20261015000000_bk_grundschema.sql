@@ -681,6 +681,27 @@ grant select, insert, update, delete on bk_ausleihen to service_role;
 drop trigger if exists bk_ausleihen_stempel on bk_ausleihen;
 create trigger bk_ausleihen_stempel before update on bk_ausleihen for each row execute function bk_abgleich_stempel();
 
+-- Mein Status
+create table if not exists bk_personenstatus (
+  id text primary key default gen_random_uuid()::text,
+  person_id text not null,
+  status text not null check (status is null or status in ('verfuegbar', 'beschaeftigt', 'urlaub', 'krank', 'abwesend')),
+  bis date,
+  hinweis text,
+  gesetzt_von text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_personenstatus_geaendert on bk_personenstatus (geaendert_am);
+alter table bk_personenstatus enable row level security;
+revoke all on bk_personenstatus from public, anon, authenticated;
+grant select, insert, update, delete on bk_personenstatus to service_role;
+drop trigger if exists bk_personenstatus_stempel on bk_personenstatus;
+create trigger bk_personenstatus_stempel before update on bk_personenstatus for each row execute function bk_abgleich_stempel();
+
 -- Passkeys
 create table if not exists bk_passkeys (
   id text primary key default gen_random_uuid()::text,
@@ -2289,6 +2310,8 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausle
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_person_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_vertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_vertrag_id_fk foreign key (vertrag_id) references bk_genehmigungen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_leihvertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_leihvertrag_id_fk foreign key (leihvertrag_id) references bk_leihvertraege(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_personenstatus_person_id_fk') then alter table bk_personenstatus add constraint bk_personenstatus_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_personenstatus_gesetzt_von_fk') then alter table bk_personenstatus add constraint bk_personenstatus_gesetzt_von_fk foreign key (gesetzt_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_passkeys_person_id_fk') then alter table bk_passkeys add constraint bk_passkeys_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kartenreservierungen_termin_id_fk') then alter table bk_kartenreservierungen add constraint bk_kartenreservierungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_zustimmungen_person_id_fk') then alter table bk_zustimmungen add constraint bk_zustimmungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;

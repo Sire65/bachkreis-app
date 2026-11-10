@@ -145,6 +145,7 @@ export const KACHELN = {
     { id: "wechselwunsch", sym: "🔀", t: "Gruppenwechsel", u: "Wunsch an die Leitung", v: "wechselwunsch", nur: () => istSchueler() },
     { id: "meingesicht", sym: "🙂", t: "Mein Gesicht", u: "Frisur, Brille, Farben – fürs Orchester", aktion: "meinGesicht" },
     { id: "unterlagen", sym: "📁", t: "Meine Unterlagen", u: "Bescheinigungen · Verträge · Atteste", v: "unterlagen", nur: () => !istSchueler() || hatRolle("admin", "leitung") },
+    { id: "meinstatus", sym: "🟢", t: "Mein Status", u: "Verfügbar, Urlaub, krank – mit Hinweis", v: "meinstatus", aktion: "statusOeffnen" },
     { id: "meinedaten", sym: "🔐", t: "Meine Daten", u: "Was ist über mich gespeichert?", v: "meinedaten" },
     { id: "aenderung", sym: "✏️", t: "Änderung melden", u: "Neue Anschrift, Telefon …", v: "aenderung" },
     { id: "einstellungen", sym: "⚙️", t: "Meine Einstellungen", u: "Benachrichtigung · Schrift · Ansicht", v: "einstellungen" },

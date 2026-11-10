@@ -20,6 +20,7 @@ import { senden, whatsapp } from "../kern/versand.js";
 import { papierflieger } from "./effekte.js";
 import { cfAnwenden } from "./darstellung.js";
 import { gesicht } from "./gesichter.js";
+import { statusZeileHtml } from "./meinstatus.js";
 import { netzSymbolHtml } from "./netzsymbol.js";
 import { onlineLeisteHtml } from "./online.js";
 import { textHtml, erkennen, terminErkennen, NA_FARBEN } from "../kern/chattext.js";
@@ -464,7 +465,7 @@ VIEWS.unterhaltung = {
     if (!u || !meineUnterhaltungen().some((x) => x.id === id)) return kopf("Nachrichten") + '<div class="leer">Nicht gefunden.</div>';
     const l = empfaengerVon(db, u), p = chatPartnerVon(u);
     const unter = p ? ({ schueler: "Schüler/in", eltern: "Eltern", lehrkraft: "Lehrkraft", leitung: "Leitung" }[hole("personen", p)?.typ] || "Bachkreis") : u.art === "verteiler" ? `📣 Rundschreiben · ${l.length} Empfänger` : `${u.art === "runde" ? "Runde" : "Gruppe"} · ${l.length} Mitglieder`;
-    return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${stummAn(id) ? '<span title="stumm" aria-label="stumm">🔕</span> ' : ""}${esc(chatTitel(u))}</h2><div class="hinweis kk-zeile" id="kkZeile">${esc(unter)}${!p && l.length ? ` · Mit: ${esc(l.filter((x) => x !== ich()).map((x) => vorn(x)).join(", "))}` : ""}</div></div><button type="button" class="kk-pfeil" data-a="chatKopfKlappe" aria-label="Alle Namen zeigen" aria-expanded="false" hidden><span class="kl-pfeil zu" aria-hidden="true">▾</span></button>
+    return `<div class="chat-kopf"><button class="zurueck" data-a="zurueck" aria-label="Zurück">‹</button>${chatBild(u, true)}<div class="chat-kopf-text" data-a="chatMitglieder" data-x="${esc(id)}"><h2>${stummAn(id) ? '<span title="stumm" aria-label="stumm">🔕</span> ' : ""}${esc(chatTitel(u))}</h2>${chatPartnerVon(u) ? statusZeileHtml(chatPartnerVon(u)) : ""}<div class="hinweis kk-zeile" id="kkZeile">${esc(unter)}${!p && l.length ? ` · Mit: ${esc(l.filter((x) => x !== ich()).map((x) => vorn(x)).join(", "))}` : ""}</div></div><button type="button" class="kk-pfeil" data-a="chatKopfKlappe" aria-label="Alle Namen zeigen" aria-expanded="false" hidden><span class="kl-pfeil zu" aria-hidden="true">▾</span></button>
       ${p ? anrufKnoepfe(p) : konferenzKnopf(u)}<button type="button" class="chat-kopf-knopf" data-a="chatSucheAuf" data-x="${esc(id)}" aria-label="Im Chat suchen">🔍</button><button type="button" class="chat-kopf-knopf" data-a="chatMenue" data-x="${esc(id)}" aria-label="Mehr zum Chat">⋮</button></div>
       ${angeheftetHtml(u)}<div id="chatHg" class="chat-hg" aria-hidden="true"></div><div class="chat" id="chatVerlauf">${verlaufHtml(u)}</div>${schlangeHtml(u)}${eingabeHtml(u)}`;
   },

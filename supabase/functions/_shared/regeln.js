@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -40,7 +40,7 @@ export function kontext(person, alle) {
   const registerLeute = rollen.includes("registerfuehrer") ? new Set((alle.person_instrument || []).filter((x) => !x.geloescht_am && eigeneRegister.has(x.register_id)).map((x) => x.person_id)) : new Set();
   // 🌍 Termine „für alle“ sieht jeder, der (bzw. dessen Kind) in einem Orchester ist – und wer Termine plant
   const termine = new Set((alle.termine || []).filter((t) => (t.gruppen || []).some((g) => gruppen.has(g)) || (t.fuer_alle && (gruppen.size > 0 || istVerwalter || rollen.includes("terminplaner")))).map((t) => t.id));
-  const ctx = { person, ich, rollen, kinder: new Set(kinder), meine, eltern, gruppen, register, inventar, termine, istVerwalter, registerLeute, tMap: new Map((alle.termine || []).map((t) => [t.id, t])), terminarten: alle.terminarten || [] };
+  const ctx = { person, ich, rollen, pMap, kinder: new Set(kinder), meine, eltern, gruppen, register, inventar, termine, istVerwalter, registerLeute, tMap: new Map((alle.termine || []).map((t) => [t.id, t])), terminarten: alle.terminarten || [] };
   const unterhaltungen = new Set((alle.unterhaltungen || []).filter((u) => unterhaltungSichtbar(u, ctx, alle)).map((u) => u.id));
   ctx.unterhaltungen = unterhaltungen;
   ctx.uMap = new Map((alle.unterhaltungen || []).map((u) => [u.id, u]));
@@ -117,6 +117,10 @@ function zeileSichtbar(tab, z, ctx) {
     case "klopfen": return z.von === ctx.ich || z.an === ctx.ich;
     case "uebungen": return ctx.meine.has(z.person_id) || (z.geteilt === true && hatRolle(ctx, ["admin", "leitung", "lehrkraft"]));
     case "ausleihen": return ctx.meine.has(z.person_id);
+    case "personenstatus": { // 🟢 0.58.0 Erwachsene: alle Angemeldeten · Kinder: sie selbst, Eltern, Leitung, Lehrkräfte, Vorstand
+      const p = ctx.pMap?.get(z.person_id);
+      return !p || !istMinderjaehrig(p) || ctx.meine.has(z.person_id) || ctx.eltern.has(z.person_id) || hatRolle(ctx, ["admin", "leitung", "lehrkraft", "vorstand"]);
+    }
     case "passkeys": return z.person_id === ctx.ich; // 🔑 0.56.0 nur die eigenen Geräte
     case "kartenreservierungen": return hatRolle(ctx, KARTEN_ROLLEN); // 🎟️ 0.56.0 Besucherdaten nur für Leitung/Vorstand
     case "zustimmungen": return ctx.meine.has(z.fuer_id) || z.person_id === ctx.ich || hatRolle(ctx, ZUSTIMMUNG_NACHWEIS); // ⚖️ 0.55.0
@@ -594,6 +598,14 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_ZETTEL" };
       return { ok: true, zeile: { ...alt, wichtig: !!neu.wichtig } }; // nachträglich ❗ wichtig (Text bleibt wie angeheftet)
+    }
+    case "personenstatus": {
+      // 🟢 0.58.0 nur für sich selbst oder die eigenen Kinder; id fest je Person; „bis“ als Datum, Hinweis kurz
+      const pid = String(neu.person_id || alt?.person_id || "");
+      if (!ctx.meine.has(pid) || (alt && alt.person_id !== pid)) return { ok: false, grund: "NUR_EIGENER_STATUS" };
+      if (!STATUS_ARTEN[neu.status]) return { ok: false, grund: "STATUS_UNGUELTIG" };
+      const bis = /^\d{4}-\d{2}-\d{2}/.test(String(neu.bis || "")) && neu.status !== "verfuegbar" ? String(neu.bis).slice(0, 10) : null;
+      return { ok: true, zeile: { id: statusId(pid), person_id: pid, status: neu.status, bis, hinweis: neu.status === "verfuegbar" ? null : String(neu.hinweis || "").trim().slice(0, 120) || null, gesetzt_von: ctx.ich, geloescht_am: null } };
     }
     case "passkeys": {
       // 🔑 0.56.0 angelegt wird nur über die Anmelde-Prüfung; selbst umbenennen oder entfernen

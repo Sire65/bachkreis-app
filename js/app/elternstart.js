@@ -30,7 +30,7 @@ export function elternErledigen(ks = gewaehlt(), heute = new Date()) {
   if (zettel) z.push({ sym: "📌", text: `<b>${zettel}</b> wichtige${zettel > 1 ? "" : "r"} Zettel an der Pinnwand`, a: "kachel", x: "pinnwand" });
   return z;
 }
-export const ELTERN_KACHELN = [["meinetermine", "📅", "Termine"], ["nachrichten", "💬", "Nachrichten"], ["meinegenehmigungen", "✍️", "Genehmigungen"], ["mitfahrboerse", "🚗", "Mitfahrbörse"],
+export const ELTERN_KACHELN = [["meinetermine", "📅", "Termine"], ["meinstatus", "🤒", "Krank / Status"], ["nachrichten", "💬", "Nachrichten"], ["meinegenehmigungen", "✍️", "Genehmigungen"], ["mitfahrboerse", "🚗", "Mitfahrbörse"],
   ["ueben", "🎻", "Üben"], ["gesundheit", "🩺", "Notfall"], ["meininstrument", "🎻", "Leihinstrument"], ["pinnwand", "📌", "Pinnwand"], ["dokumente", "📂", "Elternbereich"], ["kinder", "👪", "Meine Kinder"]];
 
 export function elternStartHtml() {

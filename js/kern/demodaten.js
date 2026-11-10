@@ -305,6 +305,10 @@ export function erzeugeDemodaten(heute = new Date()) {
   // ⚖️ 0.55.0 Zustimmungen: in der Vorführung haben alle zugestimmt – außer den Ehemaligen (damit „Fehlt noch“ etwas zeigt)
   d.zustimmungen = d.personen.filter((p) => p.typ !== "ehemalig" && p.status !== "ausgetreten").flatMap((p, i) => ["datenschutz", "regeln"].map((art) => ({ id: `zs-${i}-${art}`, person_id: p.id, fuer_id: p.id, art, fassung: "2026-11-09", zeit: iso(tag(jetzt, -3, 18, i % 60)) })));
   // 🔑 0.56.0 ein eingerichtetes Gerät der Leitung (nur Anzeige – Passkeys gehen nur im Echtbetrieb)
+  // 🟢 0.58.0 Mein Status: eine Lehrkraft im Urlaub, ein Kind krank, die Vorsitzende beschäftigt (ausgedacht)
+  { const lk = d.personen.find((p) => p.typ === "lehrkraft" && p.id !== "p-leitung"), ki = d.personen.find((p) => p.typ === "schueler"), vs = d.personen.find((p) => (p.rollen || []).includes("vorstand"));
+    d.personenstatus = [[lk, "urlaub", 6, "Vertretung: Leitung"], [ki, "krank", 3, ""], [vs, "beschaeftigt", 0, "Bis zur Versammlung viel los"]].filter(([p]) => p)
+      .map(([p, status, tage, hinweis]) => ({ id: "st-" + p.id, person_id: p.id, status, bis: isoTag(tag(jetzt, tage)), hinweis: hinweis || null, gesetzt_von: p.id })); }
   d.passkeys = [{ id: "pk-1", person_id: "p-leitung", name: "iPhone · Beispiel", cred_id: "demo-geraet", zuletzt: iso(tag(jetzt, -1, 7, 40)) }];
   // 🎟️ 0.56.0 ein paar Kartenreservierungen fürs Herbstkonzert (ausgedachte Namen)
   const hk = d.termine.find((t) => t.karten_token === "demo-herbstkonzert-2026");

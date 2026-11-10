@@ -456,3 +456,25 @@ body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau lieg
 .kk-liste li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; } .kk-liste li.abgeholt { opacity: .6; } .kk-liste li.storniert { text-decoration: line-through; opacity: .5; }
 .kk-zahlen { display: flex; gap: 8px; flex-wrap: wrap; } .kk-link { word-break: break-all; font-size: .85rem; background: rgba(127,127,127,.1); padding: 6px 8px; border-radius: 8px; }
 .jb-rolle { overflow-x: auto; max-width: 100%; } .jb-tabelle td, .jb-tabelle th { overflow-wrap: anywhere; }
+/* 🟢 0.58.0 Mein Status – ordentlich untereinander */
+.st-liste, .st-fuer { display: flex; flex-direction: column; gap: 8px; }
+.st-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 10px 14px; border: 2px solid transparent; border-radius: 14px; background: var(--karte2, rgba(127,127,127,.12)); color: inherit; font: inherit; font-weight: 700; font-size: 1.05rem; text-align: left; cursor: pointer; }
+.st-option .st-sym { font-size: 1.4rem; width: 32px; text-align: center; flex: none; } .st-option .st-t { flex: 1; } .st-option small { font-weight: 500; opacity: .75; font-size: .85rem; }
+.st-option.an { border-color: #f2b705; background: rgba(242, 183, 5, .16); } .st-haken { font-weight: 900; color: #f2b705; font-size: 1.2rem; }
+.st-fuer h3 { margin: 0 0 2px; }
+.st-extra { display: flex; flex-direction: column; gap: 12px; } .st-extra[hidden] { display: none; }
+.st-feld { display: flex; flex-direction: column; gap: 6px; font-weight: 700; } .st-feld small { font-weight: 500; opacity: .75; }
+.st-feld input { font-size: 1.05rem; padding: 11px 12px; border-radius: 12px; border: 1px solid rgba(127,127,127,.45); background: var(--feld, #fff); color: inherit; width: 100%; box-sizing: border-box; }
+.st-wer { text-align: center; }
+.st-termine { display: flex; flex-direction: column; gap: 0; margin: 8px 0 12px; }
+.st-termin { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid rgba(127,127,127,.25); cursor: pointer; } .st-termin:last-child { border-bottom: 0; }
+.st-termin input { width: 22px; height: 22px; flex: none; } .st-tt { display: flex; flex-direction: column; } .st-tt small { opacity: .8; } .st-zugesagt { color: #c62828; font-style: normal; font-weight: 700; }
+.st-zeile { font-size: .88rem; font-weight: 600; opacity: .9; margin-top: 2px; }
+/* Zeichen am Gesicht */
+.st-huelle { position: relative; display: block; width: 100%; height: 100%; } .st-huelle > svg { width: 100%; height: 100%; display: block; }
+.st-zeichen { position: absolute; right: -8%; bottom: -8%; font-size: 11px; line-height: 1; width: 46%; height: 46%; max-width: 22px; max-height: 22px; min-width: 14px; min-height: 14px; border-radius: 50%; background: var(--karte, #fff); display: grid; place-items: center; box-shadow: 0 1px 3px rgba(0,0,0,.35); }
+/* Status-Knopf im Kopf: Status oben, Rolle klein darunter, Rand in der Statusfarbe */
+.statuschip { display: inline-flex; flex-direction: column; align-items: flex-start; line-height: 1.1; padding-top: 4px; padding-bottom: 4px; }
+.statuschip .sc-status { max-width: 100%; overflow: hidden; text-overflow: ellipsis; } .statuschip .sc-rolle { font-size: .68rem; font-weight: 600; opacity: .75; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.statuschip.st-verfuegbar { box-shadow: inset 0 0 0 1.5px #3ddc6f; } .statuschip.st-beschaeftigt { box-shadow: inset 0 0 0 1.5px #ffb020; }
+.statuschip.st-urlaub { box-shadow: inset 0 0 0 1.5px #4fc3f7; } .statuschip.st-krank { box-shadow: inset 0 0 0 1.5px #ff7a7a; } .statuschip.st-abwesend { box-shadow: inset 0 0 0 1.5px #ff4545; }

@@ -1,13 +1,22 @@
 {
-  "version": "0.57.0",
+  "version": "0.58.0",
   "datum": "2026-11-10",
   "stufe": "DEV",
   "neu": [
-    "🇩🇪/🇬🇧 Sprache oben im Kopf mit einem Tipp umschalten",
-    "📶 Balken oben zeigen, wie gut die Verbindung ist – antippen für Messwerte",
-    "👋 Kopf neu angeordnet: „Guten Abend, Bettina!“ wird nicht mehr abgeschnitten"
+    "🟢 Mein Status: verfügbar, beschäftigt, Urlaub, krank oder nicht erreichbar – oben im Kopf antippen",
+    "🤒 Krank? Termine bis zum Gesundwerden mit einem Tipp absagen",
+    "👀 Die anderen sehen deinen Status am Gesicht im Chat und in der Mitgliederliste"
   ],
   "verlauf": [
+    {
+      "version": "0.57.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🇩🇪/🇬🇧 Sprache oben im Kopf mit einem Tipp umschalten",
+        "📶 Balken oben zeigen, wie gut die Verbindung ist – antippen für Messwerte",
+        "👋 Kopf neu angeordnet: „Guten Abend, Bettina!“ wird nicht mehr abgeschnitten"
+      ]
+    },
     {
       "version": "0.56.0",
       "datum": "2026-11-09",

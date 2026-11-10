@@ -271,3 +271,6 @@ body.einfach .statusleiste, :root.einfach .statusleiste { background: none; }
 #v-start .marke-klein { padding-right: 72px; }
 @media (max-width: 380px) { .kopf-flagge { width: 25px; height: 17px; } .statusleiste .leds { padding: 0 6px; gap: 4px; } .statusleiste .led { width: 9px; height: 9px; } }
 @media (max-width: 380px) { #v-start .marke-klein { padding-right: 58px; font-size: .78rem; } }
+/* 0.59.0 Reihenfolge: Status · LEDs · Knöpfe ganz rechts */
+.statusleiste .leds { margin-left: auto; margin-right: 6px; }
+.statusleiste { justify-content: flex-start; }

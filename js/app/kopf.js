@@ -76,10 +76,10 @@ function kopfBauen() {
     <div class="statusleiste">
       <button class="statuschip" id="statusChip" data-a="statusOeffnen" title="Mein Status – antippen zum Ändern"></button>
       <span class="sl-luecke"></span>
+      <button type="button" class="leds" id="leds" data-a="ledBlatt" title="Verbindung & Status" aria-label="Verbindung und Status"><i class="led grau" id="ledDaten"></i><i class="led grau" id="ledComm"></i><i class="led grau" id="ledPush"></i><i class="led-trenner" aria-hidden="true"></i><i class="led grau" id="ledWetter"></i></button>
       <span class="kopf-knoepfe"><button class="rund klein" id="modusKnopf" data-a="themaUmschalten" title="Tag/Nacht umschalten" aria-label="Tag/Nacht umschalten">🌙</button>
       <button class="rund klein" id="aktualisierenKnopf" data-a="kopfAktualisieren" title="Aktualisieren" aria-label="Aktualisieren">↻</button>
       <button class="rund klein" id="spracheKnopf" data-a="sprachsteuerung" title="Sprachsteuerung – sag, was passieren soll" aria-label="Sprachsteuerung" hidden>🎤</button></span>
-      <button type="button" class="leds" id="leds" data-a="ledBlatt" title="Verbindung & Status" aria-label="Verbindung und Status"><i class="led grau" id="ledDaten"></i><i class="led grau" id="ledComm"></i><i class="led grau" id="ledPush"></i><i class="led-trenner" aria-hidden="true"></i><i class="led grau" id="ledWetter"></i></button>
     </div>
     <div class="info" id="heroInfo"><h2>Einen Moment …</h2><div class="unter">Daten werden geladen.</div></div>
     <div class="ipunkte" id="infoPunkte"></div>

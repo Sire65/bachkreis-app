@@ -163,6 +163,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F153 | ⚡ Schnellzugriff-Link zum Schnellstart · 🟢/🔧 Ansicht-Umschalter · 🪪 Ausweis-QR (HMAC, prüfbar) | ✅ | tests/ausweis.test.mjs |
 | BK-F154 | 🔍 Ausweis prüfen (Kamera, BarcodeDetector/jsQR, Server-Prüfcode) · 👪 Eltern-Start 8 Kacheln + QR · ⌃⌃ Statusleiste bleibt | ✅ | tests/ausweis.test.mjs |
 | BK-F155 | 🎼 Register nach Zweck: Bachkreis · Leitung (Abschnitte) · Entdecken · Meins · Technik · Admin | ✅ | inventur.test |
+| BK-F156 | ⌃ Kopf: ein Knopf, vier Stufen (wie KC-CLUB-KOPF-4-STUFEN), lange drücken = ganz auf | ✅ | Rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

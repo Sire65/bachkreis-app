@@ -276,3 +276,11 @@ body.einfach .statusleiste, :root.einfach .statusleiste { background: none; }
 .statusleiste .leds { margin-left: auto; margin-right: 6px; }
 .statusleiste { justify-content: flex-start; }
 .kopf-pfeil.dreh { position: absolute; } /* 0.62.0 Namensgleichheit mit .dreh (Instrumenten-Karussell) – Pfeile bleiben oben */
+/* ⌃ 0.64.0 Ein Knopf, vier Stufen (wie KC-CLUB-KOPF-EIN-KNOPF / -4-STUFEN): offen ●●●● → drei Felder weg ●●●○ → Infofeld weg ●●○○ → Logo/Gruß weg ●○○○ */
+#v-start .hero.felder-eingerollt #heroInfo .kacheln3 { display: none; }
+.kopf-pfeil.kp-eins { left: calc(50% - 16px); width: auto; min-width: 62px; height: 24px; padding: 0 10px 3px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.kp-eins .kp-p { display: block; font-size: 17px; line-height: 1; margin-top: 3px; transition: transform .8s ease; }
+.kp-eins.dreh .kp-p { transform: rotate(180deg); margin-top: 0; }
+.kp-eins.dreh span.kp-dots { transform: none; }
+.kp-eins .kp-dots { display: flex; gap: 3px; margin: 0; } .kp-eins .kp-dots i { display: block; width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .35); transition: background .3s; } .kp-eins .kp-dots i.an { background: #fff; }
+.kp-eins.kp-neu .kp-dots i { background: rgba(58, 29, 0, .3); } .kp-eins.kp-neu .kp-dots i.an { background: #3a1d00; }

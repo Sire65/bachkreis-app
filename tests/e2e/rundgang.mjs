@@ -215,11 +215,17 @@ await p.waitForSelector(".kachel");
 const karten = await p.$$eval("#infoPunkte .ipunkt", (l) => l.length);
 for (let i = 0; i < karten; i++) { await p.click(`#infoPunkte .ipunkt[data-x="${i}"]`); await p.waitForTimeout(150); }
 await p.click('#infoPunkte .ipunkt[title="Wetter"]'); await p.waitForSelector(".wtag", { timeout: 8000 }); await p.click('.wtag[data-wtag="2"]');
-for (const art of ["halb", "ganz", "ganz"]) { await p.click(`[data-a="kopfRollo"][data-x="${art}"]`); await p.waitForTimeout(2300); }
-// 0.62.0: „ganz eingerollt“ zeigt nur noch die Statusleiste (Logo/Gruß weg) – für die nächsten Schritte wieder ganz ausrollen
-if (await p.$("#bkHero.eingerollt")) { await p.click('[data-a="kopfRollo"][data-x="ganz"]'); await p.waitForTimeout(2300); }
-if (await p.$("#bkHero.halb-eingerollt")) { await p.click('[data-a="kopfRollo"][data-x="halb"]'); await p.waitForTimeout(2300); }
-if (await p.$("#bkHero.eingerollt, #bkHero.halb-eingerollt")) fehler.push("Kopf lässt sich nicht wieder ausrollen");
+// ⌃ 0.64.0 ein Knopf, vier Stufen (wie KC): felder → halb → ganz → offen; Punkte zeigen die Stufe
+{ const stufe = () => p.$eval("#bkHero", (h) => (h.classList.contains("eingerollt") ? "ganz" : h.classList.contains("halb-eingerollt") ? "halb" : h.classList.contains("felder-eingerollt") ? "felder" : "offen"));
+  const punkte = () => p.$$eval("#kopfPfeil .kp-dots i.an", (l) => l.length);
+  const erwartet = [["felder", 3], ["halb", 2], ["ganz", 1], ["offen", 4]], gesehen = [];
+  if (!(await p.$("#bkHero #heroInfo .kacheln3"))) erwartet.shift(); // ohne drei Felder wird Stufe 1 übersprungen
+  const ruhig = () => p.waitForFunction(() => !document.getElementById("bkHero")?.dataset.rollt, null, { timeout: 8000 }).catch(() => {});
+  for (const [st, n] of erwartet) { await ruhig(); await p.click("#kopfPfeil"); await p.waitForTimeout(600); await ruhig(); await p.waitForTimeout(200); const ist = await stufe(), pk = await punkte(); gesehen.push(`${ist}:${pk}`); if (ist !== st || pk !== n) fehler.push(`Kopf-Knopf: erwartet ${st}/${n}, ist ${ist}/${pk}`); }
+  // lange drücken klappt sofort auf
+  await ruhig(); await p.click("#kopfPfeil"); await p.waitForTimeout(600); await ruhig();
+  const kb = await (await p.$("#kopfPfeil")).boundingBox(); await p.mouse.move(kb.x + kb.width / 2, kb.y + kb.height / 2); await p.mouse.down(); await p.waitForTimeout(800); await p.mouse.up(); await p.waitForTimeout(600); await ruhig(); await p.waitForTimeout(200);
+  if ((await stufe()) !== "offen") fehler.push("Kopf-Knopf: lange drücken klappt nicht auf (" + (await stufe()) + ")"); }
 for (const x of ["herbst", "advent", "winter", "fruehling", "sommer", "kirmes", "wiesn", "karibik", "karneval", "halloween"]) {
   await p.evaluate(async (x) => (await import("/js/app/jahreszeiten.js")).jahreszeitVorschau(x), x); await p.waitForTimeout(700);
 }

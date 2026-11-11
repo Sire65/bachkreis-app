@@ -62,8 +62,7 @@ function kopfBauen() {
   const h = document.createElement("div");
   h.className = "hero"; h.id = "bkHero";
   h.innerHTML = `
-    <button type="button" class="kopf-pfeil kp-halb" id="kopfPfeilHalb" data-a="kopfRollo" data-x="halb" title="Kopf halb einrollen – Statusleiste mit LEDs bleibt" aria-label="Kopf halb einrollen" aria-expanded="true"><span>⌃</span></button>
-    <button type="button" class="kopf-pfeil kp-ganz" id="kopfPfeil" data-a="kopfRollo" data-x="ganz" title="Kopf ganz einrollen – nur die Statusleiste bleibt" aria-label="Kopf ganz einrollen" aria-expanded="true"><span class="kp-doppel">⌃<b>⌃</b></span></button>
+    <button type="button" class="kopf-pfeil kp-eins" id="kopfPfeil" data-a="kopfRollo" data-x="weiter" title="Kopf einrollen – zuerst die drei Felder" aria-label="Kopf einrollen" aria-expanded="true"><span class="kp-p" aria-hidden="true">⌃</span><span class="kp-dots" aria-hidden="true"><i class="an"></i><i class="an"></i><i class="an"></i><i class="an"></i></span></button>
     <div class="kopf-glanz" id="kopfGlanz" aria-hidden="true"><b></b><u></u></div>
     <div class="kopf-oben-rechts">
   <button type="button" class="kopf-netz" id="kopfNetz" data-a="ledBlatt" title="Verbindung & Status – antippen für Messwerte" aria-label="Verbindung und Status"><span class="kb-balken" aria-hidden="true"><i></i><i></i><i></i><i></i></span><b class="kn-warn" hidden aria-hidden="true">!</b></button>
@@ -123,7 +122,7 @@ export function kopfEinsetzen(platz) {
   platz.replaceWith(K.hero);
   kopfAuffrischen();
   if (neu) {
-    try { const w = localStorage.getItem(KOPF_ROLLO); kopfRolloSetzen(w === "1" ? "ganz" : w === "halb" ? "halb" : "offen"); } catch {}
+    try { const w = localStorage.getItem(KOPF_ROLLO); kopfRolloSetzen(w === "1" ? "ganz" : w === "halb" || w === "felder" ? w : "offen"); } catch {}
     requestAnimationFrame(() => { jzEisLaenge(); });
   }
   if (!K.hero.querySelector(".jz-schicht")) jahreszeitKopf(); else jzPruefen();
@@ -326,9 +325,11 @@ function infoLeitung() {
 
 // ---------- Jalousie (KC-CLUB-KOPF-ROLLO, -ROLLO-2) ----------
 const KOPF_ROLLO = "bk_kopf_eingerollt", ROLLO_FAHRT_MS = 1400, ROLLO_KLAPP_MS = 320, ROLLO_VERSATZ_MS = 22;
-const ROLLO_RANG = { offen: 0, halb: 1, ganz: 2 };
-const kopfRolloStand = () => { const h = K.hero; return h?.classList.contains("eingerollt") ? "ganz" : h?.classList.contains("halb-eingerollt") ? "halb" : "offen"; };
-function kopfRolloKlassen(h, stand) { h.classList.toggle("eingerollt", stand === "ganz"); h.classList.toggle("halb-eingerollt", stand === "halb"); requestAnimationFrame(jzEisLaenge); }
+const ROLLO_RANG = { offen: 0, felder: 1, halb: 2, ganz: 3 }; // 0.64.0 wie KC-CLUB-KOPF-4-STUFEN: „felder“ = nur die drei Felder weg
+const kopfRolloStand = () => { const h = K.hero; return h?.classList.contains("eingerollt") ? "ganz" : h?.classList.contains("halb-eingerollt") ? "halb" : h?.classList.contains("felder-eingerollt") ? "felder" : "offen"; };
+// gibt es gerade die drei Felder? (einfache Ansicht / andere Infokarte: nein → Stufe 1 wird übersprungen)
+const kopfFelderDa = () => !!K.hero?.querySelector("#heroInfo .kacheln3");
+function kopfRolloKlassen(h, stand) { h.classList.toggle("eingerollt", stand === "ganz"); h.classList.toggle("halb-eingerollt", stand === "halb"); h.classList.toggle("felder-eingerollt", stand === "felder"); requestAnimationFrame(jzEisLaenge); }
 function kopfRolloSetzen(stand) { const h = K.hero; if (!h) return; kopfRolloKlassen(h, stand); kopfPfeileZeigen(stand); }
 // 0.30.0 KC-CLUB-KOPF-PFEIL-NEU / -GRUND: Ist der Kopf eingerollt, blinkt der Pfeil, solange es einen Grund gibt – neue Nachricht (bis gelesen
 // oder ausgerollt), neues Mitglied, jemand neu online (nur solange er online ist). Ohne Effekte leuchtet er fest. Keine zusätzlichen Abfragen.
@@ -352,17 +353,22 @@ export function kopfNeuPruefen() {
 function kopfPfeilNeuZeigen(stand = kopfRolloStand()) {
   const fest = einst().effekte === false || matchMedia("(prefers-reduced-motion: reduce)").matches;
   const grund = KPN.nachricht ? "neue Nachricht" : KPN.mitglied ? "neues Mitglied" : KPN.neuOnline.size ? "jemand ist neu online" : "";
-  [["kopfPfeil", "ganz"], ["kopfPfeilHalb", "halb"]].forEach(([id, s]) => { const p = $(id); if (!p) return;
-    const an = KPN.an && stand === s; p.classList.toggle("kp-neu", an); p.classList.toggle("still", an && fest);
+  [["kopfPfeil"]].forEach(([id]) => { const p = $(id); if (!p) return; // 0.64.0 ein Knopf – leuchtet in jeder eingefahrenen Stufe
+    const an = KPN.an && stand !== "offen"; p.classList.toggle("kp-neu", an); p.classList.toggle("still", an && fest);
     if (an) p.title = `Neues im Kopf (${grund}) – antippen zum Ausrollen`; });
 }
 setInterval(() => { if (!document.hidden && S.view === "start") kopfNeuPruefen(); }, 4000);
 document.addEventListener("bk-kopf-neu", () => setTimeout(kopfNeuPruefen, 50));
 function kopfPfeileZeigen(stand) {
   if (stand === "offen") { KPN.an = KPN.nachricht = KPN.mitglied = false; KPN.neuOnline.clear(); }
-  const g = $("kopfPfeil"), hb = $("kopfPfeilHalb");
-  if (g) { const zu = stand === "ganz"; g.classList.toggle("dreh", zu); g.setAttribute("aria-expanded", zu ? "false" : "true"); g.title = zu ? "Kopf ausrollen – alles zeigen" : "Kopf ganz einrollen – nur die Statusleiste bleibt"; g.setAttribute("aria-label", g.title.split(" – ")[0]); }
-  if (hb) { const zu = stand !== "offen"; hb.classList.toggle("dreh", zu); hb.setAttribute("aria-expanded", zu ? "false" : "true"); hb.title = stand === "halb" ? "Kopf ausrollen – alles zeigen" : stand === "ganz" ? "Kopf halb ausrollen – Statusleiste mit LEDs zeigen" : "Kopf halb einrollen – Statusleiste mit LEDs bleibt"; hb.setAttribute("aria-label", hb.title.split(" – ")[0]); }
+  // 0.64.0 wie KC-CLUB-KOPF-EIN-KNOPF / -4-STUFEN: ein Knopf, vier Punkte zeigen die Stufe, auf der letzten Stufe zeigt der Pfeil nach unten
+  const g = $("kopfPfeil");
+  if (g) { const k = { offen: 4, felder: 3, halb: 2, ganz: 1 }[stand] || 4; g.classList.toggle("dreh", stand === "ganz"); g.setAttribute("aria-expanded", stand === "offen" ? "true" : "false");
+    g.querySelectorAll(".kp-dots i").forEach((d, i) => d.classList.toggle("an", i < k));
+    g.title = stand === "offen" ? (kopfFelderDa() ? "Kopf einrollen – zuerst die drei Felder" : "Kopf einrollen – Infofeld weg, Statusleiste bleibt") : stand === "felder" ? "Kopf weiter einrollen – Infofeld weg (lange drücken: ganz aufklappen)"
+      : stand === "halb" ? "Kopf weiter einrollen – Logo und Gruß weg, Statusleiste bleibt (lange drücken: ganz aufklappen)" : "Kopf ausrollen – alles zeigen";
+    g.setAttribute("aria-label", g.title.split(" – ")[0]); }
+  kopfPfeilNeuZeigen(stand);
 }
 async function kopfRolloFahren(ziel) {
   const h = K.hero, kz = h?.querySelector(".kopfzeile"), sl = h?.querySelector(".statusleiste");
@@ -373,7 +379,9 @@ async function kopfRolloFahren(ziel) {
   const zu = ROLLO_RANG[ziel] > ROLLO_RANG[von];
   const hoehe = (s) => { kopfRolloKlassen(h, s); return h.offsetHeight; };
   // Die Jalousie deckt den Teil unter der Statusleiste ab (halb und ganz – bei „ganz“ gehen zusätzlich Logo und Gruß)
-  const kante = () => sl.offsetTop + sl.offsetHeight + 6; // 0.62.0 auch „ganz“ behält die Statusleiste
+  const kante = (s) => { // 0.62.0 auch „ganz“ behält die Statusleiste · 0.64.0 „felder“: ab Oberkante der drei Felder
+    if (s === "felder") { const f = h.querySelector("#heroInfo .kacheln3"); if (f) return f.getBoundingClientRect().top - h.getBoundingClientRect().top - 4; }
+    return sl.offsetTop + sl.offsetHeight + 6; };
   const offenerStand = zu ? von : ziel, engerStand = zu ? ziel : von;
   const klein = hoehe(engerStand), gross = hoehe(offenerStand), oben = kante(engerStand);
   const vorhang = document.createElement("div"); vorhang.className = "rollo-lamellen"; vorhang.style.top = oben + "px"; vorhang.style.height = Math.max(0, gross - oben) + "px";
@@ -393,13 +401,25 @@ async function kopfRolloFahren(ziel) {
   }
 }
 // rechts ⌃⌃: offen/halb → ganz, ganz → offen · links ⌃: offen → halb, halb → offen, ganz → halb
-AKTIONEN.kopfRollo = (art = "ganz") => {
+// 0.64.0 wie KC-CLUB-KOPF-EIN-KNOPF / -4-STUFEN: „weiter“ = ein Knopf, offen → felder → halb → ganz → offen; „auf“ = lange drücken, sofort ganz auf
+const KOPF_LANG = { t: 0, lang: false };
+function kopfKnopfLang(e) {
+  clearTimeout(KOPF_LANG.t); if (e.type !== "pointerdown") return; KOPF_LANG.lang = false;
+  KOPF_LANG.t = setTimeout(() => { if (kopfRolloStand() === "offen") return; KOPF_LANG.lang = true; try { navigator.vibrate?.(25); } catch {} AKTIONEN.kopfRollo("auf"); }, 600);
+}
+try { addEventListener("pointerdown", (e) => { if (e.target?.closest?.("#kopfPfeil")) kopfKnopfLang(e); }, true);
+  for (const t of ["pointerup", "pointercancel", "pointerleave"]) addEventListener(t, (e) => { if (e.target?.closest?.("#kopfPfeil")) kopfKnopfLang(e); }, true); } catch {}
+AKTIONEN.kopfRollo = (art = "weiter") => {
+  if (art === "weiter" && KOPF_LANG.lang) { KOPF_LANG.lang = false; return; } // war lange gedrückt – der Klick danach zählt nicht
   if (K.hero?.dataset.rollt) return;
   const von = kopfRolloStand();
-  const ziel = art === "halb" ? (von === "offen" ? "halb" : von === "halb" ? "offen" : "halb") : (von === "ganz" ? "offen" : "ganz");
+  const ziel = art === "auf" ? "offen" : art === "weiter" ? ({ offen: kopfFelderDa() ? "felder" : "halb", felder: "halb", halb: "ganz", ganz: "offen" }[von] || "halb")
+    : art === "halb" ? (von === "halb" ? "offen" : "halb") : (von === "ganz" ? "offen" : "ganz"); // „halb“/„ganz“ wie früher (Rundgang, Hilfe)
+  if (ziel === von) return;
   kopfRolloFahren(ziel);
-  try { ziel === "offen" ? localStorage.removeItem(KOPF_ROLLO) : localStorage.setItem(KOPF_ROLLO, ziel === "ganz" ? "1" : "halb"); } catch {}
+  try { ziel === "offen" ? localStorage.removeItem(KOPF_ROLLO) : localStorage.setItem(KOPF_ROLLO, ziel === "ganz" ? "1" : ziel); } catch {}
 };
+
 
 // ---------- Lichtschein beim Öffnen (KC-CLUB-KOPF-GLANZ, -AUFBLITZEN) ----------
 function kopfGlanzStarten(seit = Date.now()) {

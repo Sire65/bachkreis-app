@@ -1,13 +1,21 @@
 {
-  "version": "0.63.0",
+  "version": "0.64.0",
   "datum": "2026-11-11",
   "stufe": "DEV",
   "neu": [
-    "🎼 Aufgeräumt: neues Register „Leitung“ mit Abschnitten und „Entdecken“ für Spiele und Erinnerungen – kein Register mehr überfüllt",
-    "📦 Inventur per Regal-Schild: Schild scannen, da/fehlt antippen, Bericht als PDF – ohne Aufkleber auf den Instrumenten",
-    "🪧 Regal-Schilder mit QR-Code drucken"
+    "⌃ Ein Knopf für den Kopf statt zwei Pfeile: in vier Stufen einfahren, die Punkte zeigen die Stufe – wie in der Club App",
+    "Lange drücken klappt den Kopf sofort ganz auf"
   ],
   "verlauf": [
+    {
+      "version": "0.63.0",
+      "datum": "2026-11-11",
+      "neu": [
+        "🎼 Aufgeräumt: neues Register „Leitung“ mit Abschnitten und „Entdecken“ für Spiele und Erinnerungen – kein Register mehr überfüllt",
+        "📦 Inventur per Regal-Schild: Schild scannen, da/fehlt antippen, Bericht als PDF – ohne Aufkleber auf den Instrumenten",
+        "🪧 Regal-Schilder mit QR-Code drucken"
+      ]
+    },
     {
       "version": "0.62.0",
       "datum": "2026-11-10",

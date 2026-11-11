@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.64.0 DEV – 11.11.2026
+⌃ **Ein Knopf, vier Stufen** – die neue Kopfsteuerung der Club App (KC-CLUB-KOPF-EIN-KNOPF 2.915.0 / KC-CLUB-KOPF-4-STUFEN 2.916.0), Wunsch Hansi:
+- Statt der beiden Pfeile ⌃ und ⌃⌃ gibt es **einen Knopf** oben: 1× tippen → die **drei Felder** (neue Nachrichten, online, nächster Termin) weg · 2× → auch das **Infofeld** weg · 3× → auch **Logo und Gruß** weg (die **Statusleiste bleibt** – Bachkreis-Entscheidung vom 10.11.; Pfeil zeigt nach unten) · 4× → **alles wieder da**
+- **Vier Punkte** im Knopf zeigen die Stufe (●●●● ●●●○ ●●○○ ●○○○); **lange drücken** klappt sofort ganz auf; bei Neuem (Nachricht, neues Mitglied, jemand neu online) leuchtet der Knopf in jeder eingefahrenen Stufe; Stufe je Gerät gemerkt
+- Ohne die drei Felder (z. B. eine andere Infokarte) wird der erste Schritt übersprungen
+
 ## 0.63.0 DEV – 11.11.2026
 🎼 **Register nach Zweck** (Wunsch Hansi „nicht zu voll und unübersichtlich“ – Konzept mit Beispielbild abgestimmt):
 - **🏠 Bachkreis** = Alltag für alle (11): Termine, Nachrichten, Pinnwand, Orchester, Konzerte, Notenarchiv, Fotoalbum, Abstimmungen, Austausch, SOS, Hilfe

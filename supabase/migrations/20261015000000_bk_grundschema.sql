@@ -209,6 +209,7 @@ create table if not exists bk_inventar (
   afa_jahre integer,
   verantwortlich_id text,
   inventur_am date,
+  lagerort_id text,
   ausgeschieden_am date,
   ausgeschieden_grund text,
   notiz text,
@@ -249,6 +250,7 @@ create table if not exists bk_ausstattung (
   afa_jahre integer,
   verantwortlich_id text,
   inventur_am date,
+  lagerort_id text,
   ausgeschieden_am date,
   ausgeschieden_grund text,
   notiz text,
@@ -701,6 +703,47 @@ revoke all on bk_personenstatus from public, anon, authenticated;
 grant select, insert, update, delete on bk_personenstatus to service_role;
 drop trigger if exists bk_personenstatus_stempel on bk_personenstatus;
 create trigger bk_personenstatus_stempel before update on bk_personenstatus for each row execute function bk_abgleich_stempel();
+
+-- Lagerorte (Regal · Fach · Schrank)
+create table if not exists bk_lagerorte (
+  id text primary key default gen_random_uuid()::text,
+  name text not null,
+  raum text,
+  hinweis text,
+  sort integer,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_lagerorte_geaendert on bk_lagerorte (geaendert_am);
+alter table bk_lagerorte enable row level security;
+revoke all on bk_lagerorte from public, anon, authenticated;
+grant select, insert, update, delete on bk_lagerorte to service_role;
+drop trigger if exists bk_lagerorte_stempel on bk_lagerorte;
+create trigger bk_lagerorte_stempel before update on bk_lagerorte for each row execute function bk_abgleich_stempel();
+
+-- Inventuren
+create table if not exists bk_inventuren (
+  id text primary key default gen_random_uuid()::text,
+  titel text not null,
+  beginn timestamptz,
+  abgeschlossen timestamptz,
+  ergebnis jsonb,
+  von text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_inventuren_geaendert on bk_inventuren (geaendert_am);
+alter table bk_inventuren enable row level security;
+revoke all on bk_inventuren from public, anon, authenticated;
+grant select, insert, update, delete on bk_inventuren to service_role;
+drop trigger if exists bk_inventuren_stempel on bk_inventuren;
+create trigger bk_inventuren_stempel before update on bk_inventuren for each row execute function bk_abgleich_stempel();
 
 -- Passkeys
 create table if not exists bk_passkeys (
@@ -2274,8 +2317,10 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_perso
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_person_instrument_register_id_fk') then alter table bk_person_instrument add constraint bk_person_instrument_register_id_fk foreign key (register_id) references bk_register(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_inventar_typ_id_fk') then alter table bk_inventar add constraint bk_inventar_typ_id_fk foreign key (typ_id) references bk_instrument_typen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_inventar_verantwortlich_id_fk') then alter table bk_inventar add constraint bk_inventar_verantwortlich_id_fk foreign key (verantwortlich_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_inventar_lagerort_id_fk') then alter table bk_inventar add constraint bk_inventar_lagerort_id_fk foreign key (lagerort_id) references bk_lagerorte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausstattung_einkauf_id_fk') then alter table bk_ausstattung add constraint bk_ausstattung_einkauf_id_fk foreign key (einkauf_id) references bk_einkaeufe(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausstattung_verantwortlich_id_fk') then alter table bk_ausstattung add constraint bk_ausstattung_verantwortlich_id_fk foreign key (verantwortlich_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausstattung_lagerort_id_fk') then alter table bk_ausstattung add constraint bk_ausstattung_lagerort_id_fk foreign key (lagerort_id) references bk_lagerorte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_interessenten_instrument_id_fk') then alter table bk_interessenten add constraint bk_interessenten_instrument_id_fk foreign key (instrument_id) references bk_instrument_typen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_interessenten_gruppe_id_fk') then alter table bk_interessenten add constraint bk_interessenten_gruppe_id_fk foreign key (gruppe_id) references bk_gruppen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_dienste_projekt_id_fk') then alter table bk_dienste add constraint bk_dienste_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;
@@ -2312,6 +2357,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausle
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausleihen_leihvertrag_id_fk') then alter table bk_ausleihen add constraint bk_ausleihen_leihvertrag_id_fk foreign key (leihvertrag_id) references bk_leihvertraege(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_personenstatus_person_id_fk') then alter table bk_personenstatus add constraint bk_personenstatus_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_personenstatus_gesetzt_von_fk') then alter table bk_personenstatus add constraint bk_personenstatus_gesetzt_von_fk foreign key (gesetzt_von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_inventuren_von_fk') then alter table bk_inventuren add constraint bk_inventuren_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_passkeys_person_id_fk') then alter table bk_passkeys add constraint bk_passkeys_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kartenreservierungen_termin_id_fk') then alter table bk_kartenreservierungen add constraint bk_kartenreservierungen_termin_id_fk foreign key (termin_id) references bk_termine(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_zustimmungen_person_id_fk') then alter table bk_zustimmungen add constraint bk_zustimmungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;

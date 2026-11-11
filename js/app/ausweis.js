@@ -8,16 +8,10 @@ import { esc, AKTIONEN, blatt } from "../kern/ui.js";
 import { hole, serverAktionStill, istEchtbetrieb, konfig } from "../kern/daten.js";
 import { PERSONEN_TYPEN } from "../kern/schema.js";
 import { wirksameGruppen } from "../kern/logik.js";
+import { qrLeserStart, qrLeserStopp, qrLeserLaeuft, qrLeserVergessen, qrcodeLaden, qrSvg } from "../kern/qrleser.js";
 
 const SPEICHER = () => "bk_ausweis_" + (S.ich?.id || "");
-function qrLaden() {
-  if (typeof globalThis.qrcode === "function") return Promise.resolve();
-  return new Promise((ok, nein) => { const s = document.createElement("script"); s.src = "lib/qrcode/qrcode.js"; s.onload = ok; s.onerror = () => nein(new Error("QR-Programm fehlt")); document.head.appendChild(s); });
-}
-function qrSvg(text) {
-  const q = globalThis.qrcode(0, "M"); q.addData(text); q.make();
-  return q.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
-}
+const qrLaden = qrcodeLaden;
 function ausweisHtml(a, frisch) {
   const p = S.ich, gruppen = wirksameGruppen(db, p.id).map((g) => hole("gruppen", g)).filter(Boolean).map((g) => g.name).join(", ");
   return `<div class="ausweis-karte">
@@ -54,12 +48,7 @@ AKTIONEN.ausweisZeigen = async () => {
 // Liest den QR mit dem eingebauten Leser des Browsers (Android/Chrome) oder mit jsQR (iPhone u. a., lib/jsqr, nur hier geladen).
 // Prüft beim Server (Prüfcode) und zeigt groß ✅ mit Name, Art und Gesicht – oder ❌. Das Kamerabild verlässt das Gerät nie.
 export const AUSWEIS_PRUEFER = ["admin", "leitung", "lehrkraft", "vorstand"];
-const SC = { strom: null, lauf: false, letzter: "", ergebnis: null };
-function jsqrLaden() {
-  if (typeof globalThis.jsQR === "function") return Promise.resolve();
-  return new Promise((ok, nein) => { const s = document.createElement("script"); s.src = "lib/jsqr/jsQR.js"; s.onload = ok; s.onerror = () => nein(new Error("QR-Leser fehlt")); document.head.appendChild(s); });
-}
-function scanStopp() { SC.lauf = false; SC.strom?.getTracks().forEach((t) => t.stop()); SC.strom = null; }
+const SC = { ergebnis: null };
 async function pruefen(inhalt) {
   const [kopf, pid, code] = String(inhalt).split(":");
   if (kopf !== "BK1") return { gueltig: false, grund: "Das ist kein Bachkreis-Ausweis." };
@@ -82,34 +71,13 @@ VIEWS.ausweispruefen = {
     <p class="hinweis">Für Abendkasse, Abfahrt einer Fahrt oder Instrumenten-Ausgabe. Das Kamerabild bleibt auf diesem Gerät.</p></div>`),
   nach: () => { if (hatRolle(...AUSWEIS_PRUEFER)) AKTIONEN.apStart(); },
 };
-document.addEventListener("bk-ansicht", () => { if (S.view !== "ausweispruefen") scanStopp(); });
-AKTIONEN.apWeiter = () => { SC.ergebnis = null; SC.letzter = ""; const e = document.getElementById("apErgebnis"); if (e) e.innerHTML = ergebnisHtml(null); if (!SC.lauf) AKTIONEN.apStart(); };
+document.addEventListener("bk-ansicht", () => { if (S.view !== "ausweispruefen" && S.view !== "inventur") qrLeserStopp(); });
+AKTIONEN.apWeiter = () => { SC.ergebnis = null; qrLeserVergessen(); const e = document.getElementById("apErgebnis"); if (e) e.innerHTML = ergebnisHtml(null); if (!qrLeserLaeuft()) AKTIONEN.apStart(); };
 AKTIONEN.apStart = async () => {
-  const v = document.getElementById("apVideo"); if (!v || SC.lauf) return;
-  if (!navigator.mediaDevices?.getUserMedia) return (document.getElementById("apErgebnis").innerHTML = ergebnisHtml({ gueltig: false, grund: "Dieses Gerät erlaubt keinen Kamera-Zugriff." }));
-  try { SC.strom = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }); }
-  catch { document.getElementById("apErgebnis").innerHTML = ergebnisHtml({ gueltig: false, grund: "Kamera nicht erlaubt – bitte in den Browser-Einstellungen freigeben." }); return; }
-  v.srcObject = SC.strom; await v.play().catch(() => {});
-  let leser = null; // eingebauter Leser nur, wenn er QR wirklich kann (sonst jsQR)
-  try { if ("BarcodeDetector" in window && (await window.BarcodeDetector.getSupportedFormats()).includes("qr_code")) leser = new window.BarcodeDetector({ formats: ["qr_code"] }); } catch {}
-  if (!leser) await jsqrLaden().catch(() => {});
-  const c = document.createElement("canvas"), cx = c.getContext("2d", { willReadFrequently: true });
-  SC.lauf = true;
-  const runde = async () => {
-    if (!SC.lauf || !document.body.contains(v)) return scanStopp();
-    let text = null;
-    try {
-      if (v.readyState >= 2) {
-        if (leser) text = (await leser.detect(v))[0]?.rawValue || null;
-        else if (globalThis.jsQR) { c.width = v.videoWidth; c.height = v.videoHeight; cx.drawImage(v, 0, 0); const b = cx.getImageData(0, 0, c.width, c.height); text = globalThis.jsQR(b.data, b.width, b.height)?.data || null; }
-      }
-    } catch {}
-    if (text && text !== SC.letzter) {
-      SC.letzter = text; SC.ergebnis = await pruefen(text);
-      const e = document.getElementById("apErgebnis"); if (e) e.innerHTML = ergebnisHtml(SC.ergebnis);
-      try { navigator.vibrate?.(SC.ergebnis.gueltig ? 60 : [80, 60, 80]); } catch {}
-    }
-    setTimeout(runde, 250);
-  };
-  runde();
+  const fehler = await qrLeserStart(document.getElementById("apVideo"), async (text) => {
+    SC.ergebnis = await pruefen(text);
+    const e = document.getElementById("apErgebnis"); if (e) e.innerHTML = ergebnisHtml(SC.ergebnis);
+    try { navigator.vibrate?.(SC.ergebnis.gueltig ? 60 : [80, 60, 80]); } catch {}
+  });
+  if (fehler) { const e = document.getElementById("apErgebnis"); if (e) e.innerHTML = ergebnisHtml({ gueltig: false, grund: fehler }); }
 };

@@ -186,6 +186,7 @@ const INV_FELDER = [
   { k: "afa_jahre", t: "Nutzungsdauer (Jahre, leer = Richtwert)", typ: "zahl" },
   { k: "verantwortlich_id", t: "verantwortlich", typ: "ref", ref: "personen", filter: (p) => ["leitung", "lehrkraft", "foerderverein"].includes(p.typ) },
   { k: "inventur_am", t: "zuletzt gesehen (Inventur)", typ: "datum" },
+  { k: "lagerort_id", t: "📦 Lagerort (Regal · Fach · Schrank)", typ: "ref", ref: "lagerorte" }, // 0.63.0 Inventur per Regal-Schild
   { k: "ausgeschieden_am", t: "ausgeschieden am (verkauft, gestohlen …)", typ: "datum" },
   { k: "ausgeschieden_grund", t: "Grund / Verbleib (z. B. Anzeige-Nr., Käufer)", typ: "text" },
 ];
@@ -820,6 +821,29 @@ export const TABELLEN = {
       { k: "gesetzt_von", t: "gesetzt von", typ: "ref", ref: "personen" },
     ],
     liste: ["person_id", "status", "bis", "hinweis"],
+  },
+  // 📦 0.63.0 Inventur per QR (Wunsch Hansi: keine Aufkleber auf den Instrumenten – Schilder ans Regal)
+  lagerorte: {
+    titel: "Lagerorte (Regal · Fach · Schrank)", sym: "📦", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
+    felder: [
+      { k: "name", t: "Name (z. B. Regal A · Fach 2)", typ: "text", pflicht: true },
+      { k: "raum", t: "Raum / Stelle (z. B. Musiksaal, linke Wand)", typ: "text" },
+      { k: "hinweis", t: "Hinweis", typ: "text" },
+      { k: "sort", t: "Reihenfolge", typ: "zahl" },
+    ],
+    liste: ["name", "raum"],
+    anzeige: (z) => z.name,
+  },
+  inventuren: {
+    titel: "Inventuren", sym: "✅", gruppe: "Instrumente", lesen: ALLE_VERWALTER, schreiben: [...L, "vorstand", "instrumentenwart"],
+    felder: [
+      { k: "titel", t: "Titel", typ: "text", pflicht: true },
+      { k: "beginn", t: "begonnen", typ: "zeit" },
+      { k: "abgeschlossen", t: "abgeschlossen", typ: "zeit" },
+      { k: "ergebnis", t: "Ergebnis je Gegenstand", typ: "json" },
+      { k: "von", t: "durchgeführt von", typ: "ref", ref: "personen" },
+    ],
+    liste: ["titel", "beginn", "abgeschlossen"],
   },
   // 🔑 0.56.0 Passkeys: Anmelden mit Fingerabdruck/Gesicht/Geräte-PIN. Öffentlicher Schlüssel bleibt auf dem Server (intern),
   // die Person sieht ihre Geräte und kann sie entfernen. Angelegt wird nur über die Server-Aktion passkey_registrieren.

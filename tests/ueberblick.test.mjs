@@ -25,7 +25,7 @@ test("🗺️ Übersicht, 🙋 Einstieg, 🗂️ Kartei und ✨ Blinken sind ein
   const lies = (f) => readFileSync(new URL("../" + f, import.meta.url), "utf8");
   const u = lies("js/app/ueberblick.js"), e = lies("js/app/einstellungen.js"), st = lies("js/app/start.js");
   assert.ok(u.includes("VIEWS.ueberblick") && u.includes("einstiegPruefen") && u.includes('"viel"') && u.includes('"keine"'));
-  assert.ok(st.includes('id: "ueberblick"'));
+  assert.ok(lies("js/app/hilfezentrum.js").includes('data-x="ueberblick"') && st.includes("Alles auf einen Blick"), "0.63.0: Übersicht über „Hilfe & Tipps“ erreichbar");
   assert.ok(e.includes("einstiegPruefen(n)") && e.includes("karteiReiter") && e.includes('"zahlBlinken"') && e.includes("landWahl"));
   assert.ok(lies("sw.js").includes('"js/app/ueberblick.js"'));
 });

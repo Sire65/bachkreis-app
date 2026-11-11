@@ -1,5 +1,20 @@
 # Änderungen
 
+## 0.63.0 DEV – 11.11.2026
+🎼 **Register nach Zweck** (Wunsch Hansi „nicht zu voll und unübersichtlich“ – Konzept mit Beispielbild abgestimmt):
+- **🏠 Bachkreis** = Alltag für alle (11): Termine, Nachrichten, Pinnwand, Orchester, Konzerte, Notenarchiv, Fotoalbum, Abstimmungen, Austausch, SOS, Hilfe
+- **🎼 Leitung** *(neu, nur Leitung/Lehrkräfte/Vorstand/Verwalter)* in Abschnitten **📋 Planen · 👥 Mitglieder · 🎻 Instrumente · 💛 Verein** – Konzertkarten, Jahresbericht, Ausweis prüfen, Zustimmungen und Zugang im Blick kommen aus „Technik“ hierher. Wer das Register nicht hat, findet erlaubte Kacheln (z. B. Protokolle, Sitzungen) weiter unter „Bachkreis“
+- **🎈 Entdecken** *(neu, für alle)*: Quiz, Musik-Spiele, Instrumentenkunde, Bühne, Jahrbuch, Chronik, Adventskalender, Uhr & Takt, Börse, Standorte, Dokumente
+- **🙂 Meins** nur Eigenes (Erstattung jetzt hier; eigene Leihverträge als eigene Kachel) · **⚙️ Technik** nur Technik („Test an mich“ jetzt hier; „Alles auf einen Blick“ steckt in „Hilfe & Tipps“)
+- Größtes Register: Leitung **25 statt 39**, Lehrkraft **15 statt 34**, Vorstand **18 statt 33**. Bei mehr als 4 Registern zwei Reihen – alle Namen ganz lesbar
+- Schilder-Druckerei und „So nutzen wir die App“ nur noch für Leitung/Vorstand. Eigene Reihenfolge und ausgeblendete Kacheln bleiben erhalten
+📦 **Inventur per Regal-Schild** (Wunsch Hansi: keine QR-Codes auf die Instrumente):
+- **Lagerorte** (Regalfach, Schrank, Kasten) anlegen; jedes Instrument und jede Ausstattung bekommt einen Lagerort
+- **🪧 Regal-Schilder drucken**: QR-Code, Name, Raum und „Soll hier stehen“ – im Bachkreis-Design, Druck/PDF
+- **Inventur starten → Regal-Schild scannen** (Kamera wie bei „Ausweis prüfen“) → Liste des Fachs: **da** / **fehlt** antippen; Verliehenes erkennt die App selbst („an … verliehen bis …“); **➕ Hier gefunden** ordnet ein Instrument dem Fach zu (Suche nach Inventar-Nr., Instrument, Bezeichnung)
+- **📄 Inventurbericht** (fehlt, umgeräumt, noch nicht geprüft, ohne Lagerort, Wartung fällig) als PDF; **Abschließen** meldet Fehlendes als „vermisst“
+- Gemeinsamer QR-Leser für Ausweis und Inventur (`js/kern/qrleser.js`). Neue Tabellen `lagerorte`, `inventuren`, neues Feld `lagerort_id`
+
 ## 0.62.0 DEV – 10.11.2026
 - 🔍 **Ausweis prüfen** (Kachel für Leitung, Lehrkräfte, Vorstand; auch aus „🪪 Mein Ausweis“): Kamera auf den QR-Code – die App zeigt groß **✅ gültig** mit Gesicht, Name und Art oder **❌ nicht gültig** (gefälscht, fremd, kein Bachkreis-Ausweis); kurzes Vibrieren. „🔄 Nächsten prüfen“ für die Schlange an der Abendkasse oder bei der Abfahrt. Liest mit dem eingebauten QR-Leser des Browsers (Android) oder mit **jsQR** (iPhone u. a., `lib/jsqr`, Apache-2.0, nur beim Prüfen geladen). Das Kamerabild bleibt auf dem Gerät
 - 👪 **Eltern-Startseite**: die **8 wichtigsten Kacheln** (Termine, Krank/Status, Nachrichten, Genehmigungen, Pinnwand, Notfall, Leihinstrument, Meine Kinder) – Mitfahrbörse, Üben und Elternbereich unter „Alle Bereiche“. Darüber die Zeile **„Für Sie · < Alle Bereiche >“** und rechts der **QR-Ausweis**

@@ -13,7 +13,7 @@ import { kinderVon } from "../kern/logik.js";
 import { kindAnsicht } from "./kinderstart.js";
 import { EREIGNISSE, KANAELE, wahlVon } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
-import { KACHELN, REGISTER_ALLE } from "./start.js";
+import { KACHELN, REGISTER_ALLE, leitungRegister } from "./start.js";
 import { REG_EFFEKTE, regEffektWahl, infoKarten, spracheSchalterHtml } from "./kopf.js";
 import { JZ_WAHL, jzWahl, JZ_DEKO_WAHL, jzDekoWahl } from "./jahreszeiten.js";
 import * as D from "./darstellung.js";
@@ -204,7 +204,7 @@ VIEWS.einstellungen = {
       + unter("anordnen", "✥ Kacheln anordnen & auswählen", `<p class="hinweis">Auf der Startseite lange auf eine Kachel drücken – dann ziehen, mit den Pfeilen verschieben oder mit ✕ ausblenden. Register lassen sich genauso festhalten und verschieben.</p>
       <div class="knopfreihe"><button type="button" class="knopf" data-a="kaAnordnen">✥ Jetzt anordnen</button><button class="knopf" data-a="kachelnStandard">↺ Alles auf Standard</button></div>
       <h4>☑️ Welche Kacheln möchtest du sehen?</h4>${e.einfach ? '<p class="hinweis">🟢 Du nutzt gerade die einfache Ansicht – die Auswahl gilt für die erweiterte Ansicht.</p>' : ""}
-      ${["bachkreis", "meins", "technik"].map((r) => { const l = KACHELN[r].filter((k) => !k.nur || k.nur()), an = l.filter((k) => !e.kachelnAus.includes(k.id)).length;
+      ${["bachkreis", "leitung", "entdecken", "meins", "technik"].filter((r) => r !== "leitung" || leitungRegister()).map((r) => { const l = (KACHELN[r] || []).filter((k) => !k.nur || k.nur()), an = l.filter((k) => !e.kachelnAus.includes(k.id)).length;
         return `<details class="ka-wahl" data-klappe="ka_${r}" data-ohne-unten><summary>${REGISTER_ALLE.find(([x]) => x === r)[1]} <span class="ka-wahl-zahl">${an} von ${l.length}</span></summary><div class="ka-wahl-raster">${l.map((k) => `<label><input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span></label>`).join("")}</div>
           <button type="button" class="knopf klein" data-a="kachelnAlleAn" data-x="${r}">✅ Alle anzeigen</button></details>`; }).join("")}`);
     const install = `<p>Die Bachkreis-App läuft im Browser und lässt sich wie eine App auf den Startbildschirm legen – kostenlos, ohne App-Store.</p>

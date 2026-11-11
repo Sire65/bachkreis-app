@@ -40,10 +40,13 @@ import { onlineZahl, onlineSichtbar } from "./online.js";
 import { offeneUebeAufgaben } from "./uebebuehne.js";
 import { austauschProjekte, anfragenOffen } from "./vereinsleben.js";
 
-export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
+export const REGISTER_ALLE = [["bachkreis", "Bachkreis"], ["leitung", "Leitung"], ["entdecken", "Entdecken"], ["meins", "Meins"], ["technik", "Technik"], ["admin", "Admin"]];
+// 🎼 0.63.0 Register „Leitung“ nur für Leitung, Lehrkräfte, Vorstand, Verwalter und Terminplaner
+export const leitungRegister = () => istVerwalter() || hatRolle("terminplaner");
+export const LEITUNG_ABSCHNITTE = [["planen", "📋 Planen"], ["mitglieder", "👥 Mitglieder"], ["instrumente", "🎻 Instrumente"], ["verein", "💛 Verein"]];
 // eigene Reihenfolge der Register (festhalten und ziehen, KC-CLUB-REGISTER-ZIEHEN)
 const registerSichtbar = () => { const o = einst().registerReihe || [], pos = (r) => { const i = o.indexOf(r[0]); return i < 0 ? 100 + REGISTER_ALLE.indexOf(r) : i; };
-  return REGISTER_ALLE.filter(([r]) => r !== "admin" || hatRolle("admin")).sort((a, b) => pos(a) - pos(b)); };
+  return REGISTER_ALLE.filter(([r]) => (r !== "admin" || hatRolle("admin")) && (r !== "leitung" || leitungRegister())).sort((a, b) => pos(a) - pos(b)); };
 
 // Zahlen für Kacheln
 function offeneAntworten() {
@@ -86,46 +89,62 @@ const offeneGenehmigungen = () => istEltern() ? liste("genehmigungen", (g) => ki
 // 🚗 Wie viele Kinder suchen in den nächsten 2 Wochen noch eine Mitfahrt (zu Terminen, die mich betreffen)?
 const mitfahrSuchende = () => { const bis = Date.now() + 14 * 86400000; return liste("termine", (t) => new Date(t.beginn) > new Date() && new Date(t.beginn) < bis).reduce((s, t) => s + mitfahrtZahlen(t).suchen, 0); };
 export const KACHELN = {
+  // 🏠 Bachkreis: der Alltag für alle (0.63.0 – Register nach Zweck, Wunsch Hansi)
   bachkreis: [
-    { id: "buero", sym: "🏢", t: "Büro", u: "Ordner · Vorlagen · Briefe · Protokolle", v: "buero", nur: () => bueroDa() },
-    { id: "cockpit", sym: "🧭", t: "Cockpit", u: "Was braucht meine Aufmerksamkeit?", v: "cockpit", nur: () => istLehrkraft() || istVorstand(), zahl: () => cockpit(db, S.ich.id).filter((c) => c.dring >= 2).length },
     { id: "termine", sym: "📅", t: "Termine", u: "Proben · Konzerte · Zu- & Absagen", v: "termine", zahl: () => offeneAntworten() },
-    { id: "sos", sym: "🆘", t: "SOS – Notfall", u: "Notruf · Kontakte im Notfall", v: "sos", klasse: "sos" },
     { id: "nachrichten", sym: "💬", t: "Nachrichten", u: "Gruppen · Rundschreiben", v: "nachrichten", zahl: () => ungelesen() },
-    { id: "orchester", sym: "🎼", t: "Orchester", u: "Sitzplan · Gesichter · Besetzung", v: "orchester", nur: () => !istEltern() },
-    { id: "quiz", sym: "🧠", t: "Quiz", u: "Instrumente · Noten · Rhythmus · Hören", v: "quiz" },
-    { id: "instrumentenkunde", sym: "🎺", t: "Instrumentenkunde", u: "Halten · Hören · Worauf achten", v: "instrumentenkunde" },
-    { id: "buehne", sym: "🎭", t: "Bühne", u: "Das Orchester spielt · Konzertaufnahmen · Üben", v: "buehne" },
     { id: "pinnwand", sym: "📌", t: "Pinnwand", u: "Post-its · wichtig · für alle oder privat", v: "pinnwand", zahl: () => pwOffenZahl() },
+    { id: "orchester", sym: "🎼", t: "Orchester", u: "Sitzplan · Gesichter · Besetzung", v: "orchester", nur: () => !istEltern() },
     { id: "projekte", sym: "🎭", t: "Konzerte & Projekte", u: "Programm · Ablauf · Checkliste", v: "projekte" },
     { id: "noten", sym: "📚", t: "Notenarchiv", u: "Orchester › Stücke › Noten je Instrument", v: "noten", nur: () => istVerwalter() },
-    { id: "leihvertraege", sym: "📝", t: "Leihverträge", u: "Instrumente leihen · unterschreiben · drucken", v: "leihvertraege", nur: () => lvChef() || liste("leihvertraege", (v) => v.person_id === S.ich?.id || liste("eltern_kind", (e) => e.eltern_id === S.ich?.id && e.kind_id === v.person_id).length).length > 0, zahl: () => meineOffenenUnterschriften() || (lvChef() ? liste("leihvertraege", (v) => v.status === "wartet").length : 0) },
-    { id: "instrumente", sym: "🎻", t: "Instrumente", u: "Inventar · Verleih · Reparatur", v: "instrumente", nur: () => istVerwalter(), zahl: () => liste("reparaturen", (r) => r.status === "gemeldet" || r.status === "angebot").length },
-    { id: "genehmigungen", sym: "✍️", t: "Genehmigungen", u: "Einverständnis der Eltern", v: "genehmigungen", nur: () => istLehrkraft() },
-    { id: "anwesenheit", sym: "📋", t: "Anwesenheit", u: "Fehlzeiten je Kind · Orchester", v: "anwesenheit", nur: () => hatRolle("admin", "leitung", "lehrkraft", "terminplaner") },
-    { id: "fotoliste", sym: "📷", t: "Foto-Liste", u: "Wer darf aufs Foto – App, Website, Presse, Social", v: "fotoliste", nur: () => istLehrkraft() },
-    { id: "rundschreiben", sym: "📣", t: "Rundschreiben", u: "An Eltern, Schüler, Spender …", v: "rundschreiben", nur: () => istVerwalter() },
     { id: "fotoalbum", sym: "📷", t: "Fotoalbum", u: "Konzerte · Fahrten · Proben", v: "fotoalbum" },
-    { id: "advent", sym: "🎄", t: "Adventskalender", u: "Jeden Tag ein Türchen", v: "advent", nur: () => adventDa(), zahl: () => (adventHinweis() ? 1 : 0) },
     { id: "vorschlaege", sym: "💡", t: "Vorschläge & Abstimmungen", u: "Ideen · abstimmen · Ergebnisse", v: "vorschlaege", zahl: () => offeneAbstimmungen().length },
-    { id: "erstattung", sym: "💶", t: "Erstattung", u: "Fahrtkosten · Auslagen mit Beleg", v: "erstattung", nur: () => darfErstattung(), zahl: () => erOffen() },
-    { id: "rueckmeldungen", sym: "🆘", t: "Hilfe & Rückmeldung", u: "Klappt etwas nicht? · Idee · Lob", v: "rueckmeldungen", zahl: () => rmNeu() },
-    { id: "protokolle", sym: "🗒️", t: "Protokolle", u: "Elternabende · Besprechungen · meine Aufgaben", v: "protokolle", zahl: () => neueProtokolle() },
-    { id: "sitzungen", sym: "🎬", t: "Sitzungen", u: () => { const s = naechsteSitzung(); return s ? `${new Date(s.beginn).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} · ${s.titel}` : "Vorbereiten · Einladen · Leiten"; }, v: "sitzungen", nur: () => sitzungenFuerMich().length > 0 || hatRolle("admin", "leitung", "vorstand"), zahl: () => pruefenFuerMich() },
-    { id: "schilder", sym: "🪧", t: "Schilder-Druckerei", u: "Wegweiser · Reserviert · Buffet · Pultkarten", v: "schilder", nur: () => istVerwalter() || istEltern() },
-    { id: "boerse", sym: "🛍️", t: "Börse & Helfer", u: "Biete · Suche · Helfer gesucht", v: "boerse", nur: () => boerseFuerMich(), zahl: () => helferOffen() },
-    { id: "jahrbuch", sym: "📖", t: "Jahrbuch", u: "Unser Bachkreis-Jahr zum Blättern", v: "jahrbuch", zahl: () => momenteOffen() },
-    { id: "spiele", sym: "🎲", t: "Musik-Spiele", u: "Memory · Noten-Raten · Quiz", v: "spiele" },
-    { id: "standorte", sym: "📍", t: "Standorte", u: "Probenorte · Anfahrt · Entfernung", v: "standorte" },
-    { id: "chronik", sym: "📜", t: "Chronik & Repertoire", u: "Seit 1969 · Was haben wir gespielt?", v: "chronik" },
-    { id: "dokumente", sym: "📂", t: "Dokumente", u: "Satzung · Flyer · Vorlagen", v: "dokumente" },
     { id: "austausch", sym: "🏠", t: "Austausch & Gastfamilien", u: "Gäste aufnehmen · Zuordnung", v: "austausch", nur: () => austauschProjekte().length > 0 && (istEltern() || istLehrkraft()), zahl: () => (istLehrkraft() ? austauschProjekte().reduce((s, p) => s + liste("gaeste", (g) => g.projekt_id === p.id && !g.gastgeber_id).length, 0) : 0) },
-    { id: "anfragen", sym: "📨", t: "Auftrittsanfragen", u: "Gemeinden, Kirchen, Feste – zusagen", v: "anfragen", nur: () => istLehrkraft() || istVorstand(), zahl: () => anfragenOffen() },
-    { id: "partner", sym: "🤝", t: "Partner & Kontakte", u: "Musikschule · Partnerorchester · Austausch", v: "partner", nur: () => istLehrkraft() || istVorstand() },
-    { id: "startnachricht", sym: "📣", t: "Startnachricht", u: "Fenster beim nächsten Öffnen · Ja/Später/Nein", v: "startnachricht", nur: () => istLeitung() },
-    { id: "zahlen", sym: "📊", t: "Bachkreis in Zahlen", u: "Mitglieder · Termine · Zusagen · Übezeit", v: "zahlen", nur: () => istVerwalter() },
+    { id: "sos", sym: "🆘", t: "SOS – Notfall", u: "Notruf · Kontakte im Notfall", v: "sos", klasse: "sos" },
+    { id: "rueckmeldungen", sym: "🆘", t: "Hilfe & Rückmeldung", u: "Klappt etwas nicht? · Idee · Lob", v: "rueckmeldungen", zahl: () => rmNeu() },
+  ],
+  // 🎼 Leitung (0.63.0): nur Leitung, Lehrkräfte, Vorstand und Verwalter – in Abschnitten (abs). Wer das Register nicht hat,
+  // findet hier erlaubte Kacheln (z. B. Protokolle, Sitzungen) unter 🏠 Bachkreis.
+  leitung: [
+    { id: "cockpit", sym: "🧭", t: "Cockpit", u: "Was braucht meine Aufmerksamkeit?", v: "cockpit", nur: () => istLehrkraft() || istVorstand(), zahl: () => cockpit(db, S.ich.id).filter((c) => c.dring >= 2).length, abs: "planen" },
+    { id: "buero", sym: "🏢", t: "Büro", u: "Ordner · Vorlagen · Briefe · Protokolle", v: "buero", nur: () => bueroDa(), abs: "planen" },
+    { id: "rundschreiben", sym: "📣", t: "Rundschreiben", u: "An Eltern, Schüler, Spender …", v: "rundschreiben", nur: () => istVerwalter(), abs: "planen" },
+    { id: "startnachricht", sym: "📣", t: "Startnachricht", u: "Fenster beim nächsten Öffnen · Ja/Später/Nein", v: "startnachricht", nur: () => istLeitung(), abs: "planen" },
+    { id: "sitzungen", sym: "🎬", t: "Sitzungen", u: () => { const s = naechsteSitzung(); return s ? `${new Date(s.beginn).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} · ${s.titel}` : "Vorbereiten · Einladen · Leiten"; }, v: "sitzungen", nur: () => sitzungenFuerMich().length > 0 || hatRolle("admin", "leitung", "vorstand"), zahl: () => pruefenFuerMich(), abs: "planen" },
+    { id: "protokolle", sym: "🗒️", t: "Protokolle", u: "Elternabende · Besprechungen · meine Aufgaben", v: "protokolle", zahl: () => neueProtokolle(), abs: "planen" },
+    { id: "anfragen", sym: "📨", t: "Auftrittsanfragen", u: "Gemeinden, Kirchen, Feste – zusagen", v: "anfragen", nur: () => istLehrkraft() || istVorstand(), zahl: () => anfragenOffen(), abs: "planen" },
+    { id: "genehmigungen", sym: "✍️", t: "Genehmigungen", u: "Einverständnis der Eltern", v: "genehmigungen", nur: () => istLehrkraft(), abs: "mitglieder" },
+    { id: "anwesenheit", sym: "📋", t: "Anwesenheit", u: "Fehlzeiten je Kind · Orchester", v: "anwesenheit", nur: () => hatRolle("admin", "leitung", "lehrkraft", "terminplaner"), abs: "mitglieder" },
+    { id: "fotoliste", sym: "📷", t: "Foto-Liste", u: "Wer darf aufs Foto – App, Website, Presse, Social", v: "fotoliste", nur: () => istLehrkraft(), abs: "mitglieder" },
+    { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin"), abs: "mitglieder" },
+    { id: "zustimmungen", sym: "✅", t: "Zustimmungen", u: "Wer hat Datenschutz & Regeln bestätigt?", v: "zustimmungen", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "mitglieder" },
+    { id: "ausweispruefen", sym: "🔍", t: "Ausweis prüfen", u: "QR scannen · Abendkasse, Abfahrt, Ausgabe", v: "ausweispruefen", nur: () => hatRolle("admin", "leitung", "lehrkraft", "vorstand"), abs: "mitglieder" },
+    { id: "zugang", sym: "🛡️", t: "Zugang im Blick", u: "💾 Speicher · Anmeldeversuche · 📲 Installiert?", v: "zugang", nur: () => istLeitung(), abs: "mitglieder" },
+    { id: "instrumente", sym: "🎻", t: "Instrumente", u: "Inventar · Verleih · Reparatur", v: "instrumente", nur: () => istVerwalter(), zahl: () => liste("reparaturen", (r) => r.status === "gemeldet" || r.status === "angebot").length, abs: "instrumente" },
+    { id: "leihvertraege", sym: "📝", t: "Leihverträge", u: "Instrumente leihen · unterschreiben · drucken", v: "leihvertraege", nur: () => lvChef(), zahl: () => meineOffenenUnterschriften() || liste("leihvertraege", (v) => v.status === "wartet").length, abs: "instrumente" },
+    { id: "inventur", sym: "📦", t: "Inventur", u: "Regal-Schild scannen · da / fehlt · Bericht", v: "inventur", nur: () => hatRolle("admin", "leitung", "vorstand", "instrumentenwart"), abs: "instrumente" },
+    { id: "schilder", sym: "🪧", t: "Schilder-Druckerei", u: "Wegweiser · Reserviert · Buffet · Pultkarten", v: "schilder", nur: () => istVerwalter(), abs: "instrumente" },
+    { id: "foerderverein", sym: "💛", t: "Förderverein", u: "Einkauf · Spenden · Freigaben", v: "foerderverein", nur: () => istVorstand() || istLeitung(), abs: "verein" },
+    { id: "konzertkarten", sym: "🎟️", t: "Konzertkarten", u: "Online reservieren · Abendkasse", v: "konzertkarten", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "verein" },
+    { id: "partner", sym: "🤝", t: "Partner & Kontakte", u: "Musikschule · Partnerorchester · Austausch", v: "partner", nur: () => istLehrkraft() || istVorstand(), abs: "verein" },
+    { id: "jahresbericht", sym: "📊", t: "Jahresbericht", u: "Das Jahr in Zahlen · für Vorstand & Versammlung", v: "jahresbericht", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "verein" },
+    { id: "zahlen", sym: "📊", t: "Bachkreis in Zahlen", u: "Mitglieder · Termine · Zusagen · Übezeit", v: "zahlen", nur: () => istVerwalter(), abs: "verein" },
+    { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "verein" },
+    { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter(), abs: "verein" },
+  ],
+  // 🎈 Entdecken (0.63.0): Freizeit, Spiele, Erinnerungen – für alle
+  entdecken: [
+    { id: "quiz", sym: "🧠", t: "Quiz", u: "Instrumente · Noten · Rhythmus · Hören", v: "quiz" },
+    { id: "spiele", sym: "🎲", t: "Musik-Spiele", u: "Memory · Noten-Raten · Quiz", v: "spiele" },
+    { id: "instrumentenkunde", sym: "🎺", t: "Instrumentenkunde", u: "Halten · Hören · Worauf achten", v: "instrumentenkunde" },
+    { id: "buehne", sym: "🎭", t: "Bühne", u: "Das Orchester spielt · Konzertaufnahmen · Üben", v: "buehne" },
+    { id: "jahrbuch", sym: "📖", t: "Jahrbuch", u: "Unser Bachkreis-Jahr zum Blättern", v: "jahrbuch", zahl: () => momenteOffen() },
+    { id: "chronik", sym: "📜", t: "Chronik & Repertoire", u: "Seit 1969 · Was haben wir gespielt?", v: "chronik" },
+    { id: "advent", sym: "🎄", t: "Adventskalender", u: "Jeden Tag ein Türchen", v: "advent", nur: () => adventDa(), zahl: () => (adventHinweis() ? 1 : 0) },
     { id: "uhrtakt", sym: "⏱️", t: "Uhr & Takt", u: "Metronom · Timer · Stoppuhr", aktion: "uhrWerkzeug" },
-    { id: "foerderverein", sym: "💛", t: "Förderverein", u: "Einkauf · Spenden · Freigaben", v: "foerderverein", nur: () => istVorstand() || istLeitung() },
+    { id: "boerse", sym: "🛍️", t: "Börse & Helfer", u: "Biete · Suche · Helfer gesucht", v: "boerse", nur: () => boerseFuerMich(), zahl: () => helferOffen() },
+    { id: "standorte", sym: "📍", t: "Standorte", u: "Probenorte · Anfahrt · Entfernung", v: "standorte" },
+    { id: "dokumente", sym: "📂", t: "Dokumente", u: "Satzung · Flyer · Vorlagen", v: "dokumente" },
   ],
   meins: [
     { id: "eingangskorb", sym: "📥", t: "Eingangskorb", u: "Geteiltes · Abgelegtes · von der Leitung", v: "eingangskorb", zahl: () => korbNeu() },
@@ -136,11 +155,12 @@ export const KACHELN = {
     { id: "notfallpass", sym: "🪪", t: "Notfallpass", u: "Allergien · Medikamente · Notfallnummern", v: "notfallpass", nur: () => passFuer().length > 0 || meineFahrten().length > 0 },
     { id: "ueben", sym: "🎻", t: "Üben", u: () => uebenUntertitel(), v: "ueben", nur: () => istSchueler() || istEltern() },
     { id: "uebebuehne", sym: "🎻", t: "Übe-Bühne", u: "Mitspielen · Griffe · Rhythmus · Stimmgerät", v: "buehne", p: { modus: "ueben" }, nur: () => istSchueler() || istEltern() || hatRolle("leitung", "lehrkraft", "admin"), zahl: () => (istSchueler() ? offeneUebeAufgaben(S.ich.id) : istEltern() ? kinderVon(db, S.ich.id).reduce((s, k) => s + offeneUebeAufgaben(k), 0) : 0) },
-    { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin") },
     { id: "meinenoten", sym: "🎼", t: "Meine Noten", u: "Stimmen für mein Instrument", v: "meinenoten", nur: () => istSchueler() || istEltern() },
     { id: "meininstrument", sym: "🎻", t: () => (istEltern() ? "Leihinstrumente" : "Mein Leihinstrument"), u: "Rückgabe · Schaden melden", v: "meininstrument", nur: () => istSchueler() || istEltern() },
+    { id: "meineleihvertraege", sym: "📝", t: "Leihverträge", u: "Meine Verträge · unterschreiben", v: "leihvertraege", nur: () => !lvChef() && liste("leihvertraege", (v) => v.person_id === S.ich?.id || liste("eltern_kind", (e) => e.eltern_id === S.ich?.id && e.kind_id === v.person_id).length).length > 0, zahl: () => meineOffenenUnterschriften() },
     { id: "abwesenheit", sym: "🏖️", t: "Abwesenheit", u: "Zeitraum auf einmal absagen", v: "abwesenheit", nur: () => istSchueler() || istEltern() },
     { id: "mitfahrboerse", sym: "🚗", t: "Mitfahrbörse", u: "Plätze anbieten · suchen · buchen", v: "mitfahrboerse", nur: () => istEltern() || istLehrkraft(), zahl: () => mitfahrSuchende() },
+    { id: "erstattung", sym: "💶", t: "Erstattung", u: "Fahrtkosten · Auslagen mit Beleg", v: "erstattung", nur: () => darfErstattung(), zahl: () => erOffen() },
     { id: "meinregister", sym: "🎼", t: "Mein Register", u: "Wer kommt? Erinnern", v: "meinregister", nur: () => hatRolle("registerfuehrer") },
     { id: "wechselwunsch", sym: "🔀", t: "Gruppenwechsel", u: "Wunsch an die Leitung", v: "wechselwunsch", nur: () => istSchueler() },
     { id: "meingesicht", sym: "🙂", t: "Mein Gesicht", u: "Frisur, Brille, Farben – fürs Orchester", aktion: "meinGesicht" },
@@ -149,29 +169,22 @@ export const KACHELN = {
     { id: "meinedaten", sym: "🔐", t: "Meine Daten", u: "Was ist über mich gespeichert?", v: "meinedaten" },
     { id: "aenderung", sym: "✏️", t: "Änderung melden", u: "Neue Anschrift, Telefon …", v: "aenderung" },
     { id: "einstellungen", sym: "⚙️", t: "Meine Einstellungen", u: "Benachrichtigung · Schrift · Ansicht", v: "einstellungen" },
-    { id: "test", sym: "🧪", t: "Test an mich", u: "Push & Mail ausprobieren", v: "test" },
   ],
+  // ⚙️ Technik (0.63.0): nur Technik – „Alles auf einen Blick“ steckt in „Hilfe & Tipps“
   technik: [
     { id: "update", sym: "🔄", t: "Update prüfen", u: () => `Installiert: v${APP_VERSION} ${APP_STUFE}`, aktion: "updatePruefen" },
-    { id: "zugang", sym: "🛡️", t: "Zugang im Blick", u: "💾 Speicher · Anmeldeversuche · 📲 Installiert?", v: "zugang", nur: () => istLeitung() },
     { id: "installieren", sym: "📲", t: "App installieren", u: "Auf den Startbildschirm – startet schneller", aktion: "installieren" },
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
     { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },
     { id: "anrufe", sym: "📞", t: "Anrufe", u: "📞 Anruf · 🎥 Video – im Einzelchat", v: "anrufe", nur: () => anrufAn(), zahl: () => verpassteAnrufe() },
     { id: "tisch", sym: "🪑", t: "Runder Tisch", u: "Online-Treffen mit Bild und Ton", v: "tisch", nur: () => tischDa() },
-    { id: "datenschutz", sym: "⚖️", t: "Datenschutz", u: "Was mit deinen Daten passiert · Regeln", v: "datenschutz" },
-    { id: "zustimmungen", sym: "✅", t: "Zustimmungen", u: "Wer hat Datenschutz & Regeln bestätigt?", v: "zustimmungen", nur: () => hatRolle("admin", "leitung", "vorstand") },
     { id: "passkeys", sym: "👆", t: "Anmelden ohne Code", u: "Fingerabdruck / Gesicht (Passkey)", v: "passkeys" },
     { id: "schluesselbund", sym: "🔑", t: "Schlüsselbund", u: "🔒 Geheime Nachrichten auf jedem Gerät lesen", v: "schluesselbund", nur: () => geheimTechnik() && erwachsenIch() },
     { id: "fernhilfe", sym: "🛟", t: "Fernhilfe", u: "Jemand schaut mit auf deinen Bildschirm", v: "fernhilfe", nur: () => fernhilfeKachelDa() },
-    { id: "ausweispruefen", sym: "🔍", t: "Ausweis prüfen", u: "QR scannen · Abendkasse, Abfahrt, Ausgabe", v: "ausweispruefen", nur: () => hatRolle("admin", "leitung", "lehrkraft", "vorstand") },
-    { id: "konzertkarten", sym: "🎟️", t: "Konzertkarten", u: "Online reservieren · Abendkasse", v: "konzertkarten", nur: () => hatRolle("admin", "leitung", "vorstand") },
-    { id: "jahresbericht", sym: "📊", t: "Jahresbericht", u: "Das Jahr in Zahlen · für Vorstand & Versammlung", v: "jahresbericht", nur: () => hatRolle("admin", "leitung", "vorstand") },
-    { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung" },
-    { id: "ueberblick", sym: "🗺️", t: "Alles auf einen Blick", u: "Jeder Bereich der App", v: "ueberblick" },
-    { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt", v: "hilfe" },
-    { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter() },
+    { id: "datenschutz", sym: "⚖️", t: "Datenschutz", u: "Was mit deinen Daten passiert · Regeln", v: "datenschutz" },
+    { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt · 🗺️ Alles auf einen Blick", v: "hilfe" },
+    { id: "test", sym: "🧪", t: "Test an mich", u: "Push & Mail ausprobieren", v: "test" },
     { id: "ueber", sym: "ℹ️", t: "Über die App", u: "Version · Datenquelle · Lizenzen", v: "ueber" },
     { id: "abmelden", sym: "🚪", t: "Abmelden", u: "Von diesem Gerät abmelden", aktion: "abmeldenApp", nur: () => datenInfo().server === true },
     { id: "demo", sym: "♻️", t: "Demo zurücksetzen", u: "Alle Demodaten neu erzeugen", aktion: "demoReset", nur: () => datenInfo().art === "lokal-demo" },
@@ -220,10 +233,12 @@ const sortiert = (k, reihe) => (reihe ? [...k].sort((a, b) => (reihe.indexOf(a.i
 // 🧩 0.43.0 Module, die der Admin abgeschaltet hat (konfig module_aus), sieht nur noch Admin/Entwickler – zum Prüfen, mit 🚫 am Rand
 export const modulAus = (id) => MODULE[id] !== undefined && (konfig().module_aus || []).includes(id);
 const modulFrei = (x) => !modulAus(x.id) || hatRolle("admin");
-export const kachelnAlle = (reg) => sortiert(KACHELN[reg].filter((x) => (!x.nur || x.nur()) && modulFrei(x)), einst().reihenfolge[reg]);
+// Wer kein Register „Leitung“ hat, sieht dort erlaubte Kacheln (Protokolle, Sitzungen …) unter „Bachkreis“
+const roh = (reg) => (reg === "bachkreis" && !leitungRegister() ? [...KACHELN.bachkreis, ...KACHELN.leitung] : reg === "leitung" && !leitungRegister() ? [] : KACHELN[reg] || []);
+export const kachelnAlle = (reg) => sortiert(roh(reg).filter((x) => (!x.nur || x.nur()) && modulFrei(x)), (einst().reihenfolge || {})[reg]);
 export const kachelnFuer = (reg) => kachelnAlle(reg).filter((x) => !einst().kachelnAus.includes(x.id));
 export function einfachKacheln() {
-  const alle = [...KACHELN.bachkreis, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()) && modulFrei(x));
+  const alle = [...KACHELN.bachkreis, ...KACHELN.leitung, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()) && modulFrei(x));
   const l = EINFACH.map((id) => alle.find((x) => x.id === id)).filter(Boolean).filter((x) => !(x.id === "termine" && alle.some((y) => y.id === "meinetermine") && !istLehrkraft()));
   return sortiert(l, einst().reihenfolge.einfach);
 }
@@ -261,7 +276,7 @@ function rasterBlock() {
   const inhalt = ANO.an ? anordnenHtml(kachelnAlle(S.register)) : ANO.nurAus ? kachelnAlle(S.register).filter((k) => e.kachelnAus.includes(k.id)).map(kachelHtml).join("") : rasterHtml();
   const hinweis = ANO.an ? "" : ANO.nurAus ? `<p class="hinweis ka-nuraus-text">🙈 Du siehst gerade nur die <b>ausgeblendeten</b> Kacheln.</p><button type="button" class="knopf breit" data-a="kaNurAus" data-x="0">🙈 Ausgeblendete wieder verbergen</button>`
     : ausN ? `<div class="ka-aus-zeile"><button type="button" class="ka-ausgeblendet" data-a="kaNurAus" data-x="1">👀 ${ausN} ausgeblendete Kachel${ausN > 1 ? "n" : ""} zeigen</button></div>` : "";
-  return `<div class="register" id="register">${registerHtml()}</div>${ANO.an ? anordnenLeiste() : ""}<div class="raster${groesse()}${ANO.an ? " anordnen" : ""}${ANO.nurAus ? " nur-aus" : ""}" id="raster">${inhalt}</div>${hinweis}`;
+  return `<div class="register${registerSichtbar().length > 4 ? " viele" : ""}" id="register">${registerHtml()}</div>${ANO.an ? anordnenLeiste() : ""}<div class="raster${groesse()}${ANO.an ? " anordnen" : ""}${ANO.nurAus ? " nur-aus" : ""}" id="raster">${inhalt}</div>${hinweis}`;
 }
 VIEWS.start = {
   render() {
@@ -316,7 +331,12 @@ function startNeu() {
 startseiteVerbinden({ KACHELN, kachelnFuer, kachelnAlle, neuZeichnen: startNeu, ungelesen: () => ungelesen(), offeneAntworten: () => offeneAntworten(), offeneGenehmigungen: () => offeneGenehmigungen(),
   onlineZahl: () => (onlineSichtbar() ? onlineZahl() : 0), pwOffen: () => pwOffenZahl(), kopfNeu: () => document.dispatchEvent(new CustomEvent("bk-kopf-neu")) });
 const registerHtml = () => registerSichtbar().map(([r, n]) => `<button class="${r === S.register ? "an reg-lauf" : ""}" data-a="register" data-x="${r}" data-r="${r}">${n}<span class="anz">${kachelnFuer(r).length}</span></button>`).join("");
-const rasterHtml = () => kachelnFuer(S.register).map(kachelHtml).join("");
+// 🎼 0.63.0 im Register „Leitung“ mit Abschnitts-Überschriften (Planen · Mitglieder · Instrumente · Verein)
+const rasterHtml = () => {
+  const l = kachelnFuer(S.register);
+  if (S.register !== "leitung") return l.map(kachelHtml).join("");
+  return LEITUNG_ABSCHNITTE.map(([a, t]) => { const k = l.filter((x) => (x.abs || "planen") === a); return k.length ? `<h4 class="reg-abschnitt">${t}</h4>${k.map(kachelHtml).join("")}` : ""; }).join("");
+};
 function registerWechseln(r, richtung) {
   const neu = r !== S.register; S.register = r;
   const b = document.getElementById("rasterBlock");

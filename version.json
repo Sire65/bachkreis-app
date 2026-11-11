@@ -1,13 +1,22 @@
 {
-  "version": "0.62.0",
-  "datum": "2026-11-10",
+  "version": "0.63.0",
+  "datum": "2026-11-11",
   "stufe": "DEV",
   "neu": [
-    "🔍 Ausweis prüfen: Leitung hält die Kamera auf den QR-Code – ✅ gültig mit Name oder ❌",
-    "👪 Eltern-Startseite aufgeräumt: die 8 wichtigsten Kacheln, dazu QR-Ausweis",
-    "⌃⌃ Kopf ganz eingerollt: die Statusleiste mit Status und Knöpfen bleibt sichtbar"
+    "🎼 Aufgeräumt: neues Register „Leitung“ mit Abschnitten und „Entdecken“ für Spiele und Erinnerungen – kein Register mehr überfüllt",
+    "📦 Inventur per Regal-Schild: Schild scannen, da/fehlt antippen, Bericht als PDF – ohne Aufkleber auf den Instrumenten",
+    "🪧 Regal-Schilder mit QR-Code drucken"
   ],
   "verlauf": [
+    {
+      "version": "0.62.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🔍 Ausweis prüfen: Leitung hält die Kamera auf den QR-Code – ✅ gültig mit Name oder ❌",
+        "👪 Eltern-Startseite aufgeräumt: die 8 wichtigsten Kacheln, dazu QR-Ausweis",
+        "⌃⌃ Kopf ganz eingerollt: die Statusleiste mit Status und Knöpfen bleibt sichtbar"
+      ]
+    },
     {
       "version": "0.61.0",
       "datum": "2026-11-10",

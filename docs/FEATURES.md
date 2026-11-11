@@ -39,7 +39,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F29 | Reparatur mit Freigabegrenze | ✅ | Rundgang |
 | BK-F30 | Einkauf / Beschaffung | ✅ | Rundgang |
 | BK-F31 | Spender & Dank | ✅ | Rundgang |
-| BK-F32 | Inventur per QR | ✅ Inventur + QR-Etiketten in der PC-Verwaltung · ⏳ Etikett mit der Handy-Kamera scannen (Scanner aus 🔍 Ausweis prüfen wiederverwenden) | – |
+| BK-F32 | Inventur per QR | ✅ 📦 Inventur per Regal-Schild (0.63.0): Lagerorte, Schilder drucken, Scan, da/fehlt, Bericht – ohne Aufkleber auf Instrumenten | inventur.test |
 | BK-F33 | Schuljahreswechsel | ✅ (Verwaltung) | – |
 | BK-F34 | Datenschutz: Auskunft, Export, Audit | ✅ Auskunft/Export/Protokoll · ✅ Löschfristen (Server-Wartung) · ✅ ⚖️ Datenschutzerklärung & Zustimmung (0.55.0) | rechtliches.test |
 | BK-F35 | PC-Verwaltung inkl. Zugänge, Import/Export, Abgleich | ✅ | Rundgang |
@@ -162,6 +162,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F152 | 🧹 Lint sauber · ♿ axe 0 Verstöße · ⚡ Einstellungen/Admin nachladbar · 🌐 English erweitert | ✅ | tests/teile.test.mjs, tests/englisch.test.mjs, tests/e2e/barrierefrei.mjs |
 | BK-F153 | ⚡ Schnellzugriff-Link zum Schnellstart · 🟢/🔧 Ansicht-Umschalter · 🪪 Ausweis-QR (HMAC, prüfbar) | ✅ | tests/ausweis.test.mjs |
 | BK-F154 | 🔍 Ausweis prüfen (Kamera, BarcodeDetector/jsQR, Server-Prüfcode) · 👪 Eltern-Start 8 Kacheln + QR · ⌃⌃ Statusleiste bleibt | ✅ | tests/ausweis.test.mjs |
+| BK-F155 | 🎼 Register nach Zweck: Bachkreis · Leitung (Abschnitte) · Entdecken · Meins · Technik · Admin | ✅ | inventur.test |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

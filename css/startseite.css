@@ -142,3 +142,23 @@
 .ap-ergebnis.ok { background: #e3f5e9; color: #0f3d22; border: 3px solid #1b7a43; } .ap-ergebnis.nein { background: #fde8e7; color: #5c0f0b; border: 3px solid #b3261e; }
 .ap-zeichen { font-size: 2.6rem; line-height: 1; } .ap-ergebnis b { font-size: 1.3rem; } .ap-gesicht { width: 72px; height: 72px; display: block; } .ap-gesicht svg { width: 100%; height: 100%; }
 .ap-tipp { text-align: center; }
+/* 🎼 0.63.0 Abschnitts-Überschriften im Register „Leitung“ (über die ganze Breite des Kachel-Rasters) */
+.raster .reg-abschnitt { grid-column: 1 / -1; margin: 10px 4px 0; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--grau); }
+.raster .reg-abschnitt:first-child { margin-top: 0; }
+/* 📦 0.63.0 Inventur */
+.iv-knoepfe { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.iv-video { width: 100%; max-width: 420px; aspect-ratio: 1; object-fit: cover; display: block; margin: 0 auto 12px; border-radius: 16px; background: #111; border: 4px solid #f2b705; }
+.iv-sym { font-size: 1.3rem; width: 30px; text-align: center; flex: none; }
+.iv-fach li, .iv-orte li { display: flex; align-items: center; gap: 10px; } .iv-fach small, .iv-orte small { display: block; opacity: .8; }
+.iv-rechts { display: inline-flex; gap: 6px; align-items: center; flex: none; }
+.iv-da { background: #1b7a43 !important; color: #fff !important; } .iv-fehlt { background: #b3261e !important; color: #fff !important; }
+.b-rot { background: #fde8e7; color: #b3261e; } .b-blau { background: #e3eefc; color: #1e5aa8; }
+/* Regal-Schilder: 2 je Seite, QR schwarz auf weiß */
+.iv-schilder { display: flex; flex-direction: column; gap: 14mm; }
+.iv-schild { display: flex; gap: 8mm; align-items: center; border: 1mm solid #1a1500; border-radius: 4mm; padding: 6mm; break-inside: avoid; page-break-inside: avoid; background: #fff; color: #1a1500; }
+.iv-schild-qr { width: 55mm; flex: none; } .iv-schild-qr svg { width: 100%; height: auto; display: block; }
+.iv-schild-gold { height: 3mm; background: #f2b705; border-radius: 1.5mm; margin-bottom: 3mm; }
+.iv-schild h2 { margin: 0 0 2mm; font-size: 22pt; } .iv-schild p { margin: 1mm 0; font-size: 11pt; } .iv-schild-fuss { color: #8a6400; font-size: 9pt !important; }
+/* 🎼 0.63.0 mehr als 4 Register: zwei Reihen à 3 – Namen bleiben ganz lesbar */
+.register.viele { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.register.viele button { padding: 8px 4px; font-size: .88rem; }

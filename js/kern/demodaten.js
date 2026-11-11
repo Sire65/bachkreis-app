@@ -253,6 +253,11 @@ export function erzeugeDemodaten(heute = new Date()) {
     i.wartung_faellig = isoTag(tag(jetzt, Math.floor(-40 + r() * monate * 30)));
   }
   for (const i of d.inventar) Object.assign(i, { eigentuemer: i.finanziert_von ? "foerderverein" : wahl(["foerderverein", "foerderverein", "schule"]), inventur_am: isoTag(tag(jetzt, -Math.floor(20 + r() * 400))) });
+  // 📦 0.63.0 Lagerorte (Regal-Schilder) – Instrumente nach Art einsortieren; Pauken und Trommel bleiben im Bühnenlager
+  d.lagerorte = [["lo-1", "Regal A · Fach 1", "Musiksaal, linke Wand", 1], ["lo-2", "Regal A · Fach 2", "Musiksaal, linke Wand", 2], ["lo-3", "Schrank Celli & Bässe", "Instrumentenraum", 3],
+    ["lo-4", "Bläser-Schrank", "Instrumentenraum", 4], ["lo-5", "Bühnenlager", "PZ hinter der Bühne", 5], ["lo-6", "Notenständer-Wagen", "Instrumentenraum", 6]].map(([id, name, raum, sort]) => ({ id, name, raum, sort }));
+  for (const i of d.inventar) i.lagerort_id = { "t-vl": i.groesse === "4/4" ? "lo-2" : "lo-1", "t-va": "lo-2", "t-vc": "lo-3", "t-kb": "lo-3", "t-pk": "lo-5", "t-sw": "lo-5", "t-kla": "lo-5" }[i.typ_id] || "lo-4";
+  d.inventuren = [{ id: "ivt-1", titel: "Inventur Sommer 2026", beginn: iso(tag(jetzt, -120, 16, 0)), abgeschlossen: iso(tag(jetzt, -118, 18, 0)), ergebnis: {}, von: "p-leitung" }];
   // 📦 Inventar-Fälle (0.19.0): eine Geige defekt, ein Cello auf der Konzertreise gestohlen (Anzeige erstattet)
   Object.assign(d.inventar[2], { status: "defekt", zustand: "maengel", notiz: "Steg umgefallen, Decke gerissen – Kostenvoranschlag anfragen" });
   Object.assign(d.inventar[12], { status: "gestohlen", ausgeschieden_am: isoTag(tag(jetzt, -48)), ausgeschieden_grund: "Diebstahl aus dem Bus, Anzeige Polizei Bergkamen Az. 123/26 (Beispiel), Versicherung informiert" });
@@ -270,6 +275,7 @@ export function erzeugeDemodaten(heute = new Date()) {
   aus("dirigent", "Ersatz-Taktstock", { wert: 25, anschaffung: vor(200), status: "vermisst", notiz: "seit dem Sommerkonzert nicht wiedergefunden" });
   aus("stuhl", "Orchesterstühle (höhenverstellbar)", { anzahl: 30, wert: 4500, anschaffung: vor(1800), finanzierung: "zuschuss", eigentuemer: "schule", standort: "Musikraum 104", inventur_am: vor(200) });
   aus("stuhl", "Cellistenhocker", { anzahl: 4, wert: 380, anschaffung: vor(1100), inventur_am: vor(200) });
+  for (const x of d.ausstattung) if (x.kategorie === "notenstaender") x.lagerort_id = "lo-6"; // 📦 0.63.0
   aus("schlagwerk", "Paukenfelle Ersatzsatz", { wert: 310, anschaffung: vor(300), standort: "PZ Bühnenlager" });
   aus("koffer", "Transportcase Pauke", { anzahl: 2, wert: 890, anschaffung: vor(600), standort: "PZ Bühnenlager", status: "reparatur", notiz: "Rolle abgebrochen – beim Sattler" });
   aus("technik", "Aktive Lautsprecher (Paar)", { hersteller: "the box pro (Beispiel)", wert: 699, anschaffung: vor(500), seriennummer: "SN-4471-A/B", garantie_bis: isoTag(tag(jetzt, 230)) });

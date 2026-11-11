@@ -34,7 +34,8 @@ test("⚡ Zeile über den Kacheln wie in der Club App", () => {
 });
 test("🔍 0.62.0 Ausweis prüfen: Kamera-Seite für Leitung/Lehrkraft/Vorstand, jsQR als Ersatz, Kachel und Eltern-Zeile", () => {
   const a = readFileSync(new URL("../js/app/ausweis.js", import.meta.url), "utf8"), s = readFileSync(new URL("../js/app/start.js", import.meta.url), "utf8");
-  assert.match(a, /VIEWS\.ausweispruefen/); assert.match(a, /lib\/jsqr\/jsQR\.js/); assert.match(a, /getSupportedFormats/);
+  const q = readFileSync(new URL("../js/kern/qrleser.js", import.meta.url), "utf8"); // 0.63.0 gemeinsamer QR-Leser (auch für die Inventur)
+  assert.match(a, /VIEWS\.ausweispruefen/); assert.match(a, /qrLeserStart/); assert.match(q, /lib\/jsqr\/jsQR\.js/); assert.match(q, /getSupportedFormats/);
   assert.match(s, /id: "ausweispruefen"[^\n]*hatRolle\("admin", "leitung", "lehrkraft", "vorstand"\)/);
   assert.ok(readFileSync(new URL("../lib/jsqr/LICENSE", import.meta.url), "utf8").includes("Apache License"));
   assert.match(readFileSync(new URL("../js/app/elternstart.js", import.meta.url), "utf8"), /data-a="ausweisZeigen"/);

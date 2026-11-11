@@ -23,6 +23,7 @@ create table if not exists bk_inventar (
   afa_jahre integer,
   verantwortlich_id text,
   inventur_am date,
+  lagerort_id text,
   ausgeschieden_am date,
   ausgeschieden_grund text,
   notiz text,
@@ -67,11 +68,13 @@ alter table bk_inventar add constraint bk_inventar_afa_art_check check (afa_art 
 alter table bk_inventar add column if not exists afa_jahre integer;
 alter table bk_inventar add column if not exists verantwortlich_id text;
 alter table bk_inventar add column if not exists inventur_am date;
+alter table bk_inventar add column if not exists lagerort_id text;
 alter table bk_inventar add column if not exists ausgeschieden_am date;
 alter table bk_inventar add column if not exists ausgeschieden_grund text;
 alter table bk_inventar add column if not exists notiz text;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_inventar_typ_id_fk') then alter table bk_inventar add constraint bk_inventar_typ_id_fk foreign key (typ_id) references bk_instrument_typen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_inventar_verantwortlich_id_fk') then alter table bk_inventar add constraint bk_inventar_verantwortlich_id_fk foreign key (verantwortlich_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_inventar_lagerort_id_fk') then alter table bk_inventar add constraint bk_inventar_lagerort_id_fk foreign key (lagerort_id) references bk_lagerorte(id) on delete restrict; end if; end $$;
 
 -- Ausstattung & Zubehör
 create table if not exists bk_ausstattung (
@@ -97,6 +100,7 @@ create table if not exists bk_ausstattung (
   afa_jahre integer,
   verantwortlich_id text,
   inventur_am date,
+  lagerort_id text,
   ausgeschieden_am date,
   ausgeschieden_grund text,
   notiz text,
@@ -146,9 +150,11 @@ alter table bk_ausstattung add constraint bk_ausstattung_afa_art_check check (af
 alter table bk_ausstattung add column if not exists afa_jahre integer;
 alter table bk_ausstattung add column if not exists verantwortlich_id text;
 alter table bk_ausstattung add column if not exists inventur_am date;
+alter table bk_ausstattung add column if not exists lagerort_id text;
 alter table bk_ausstattung add column if not exists ausgeschieden_am date;
 alter table bk_ausstattung add column if not exists ausgeschieden_grund text;
 alter table bk_ausstattung add column if not exists notiz text;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausstattung_einkauf_id_fk') then alter table bk_ausstattung add constraint bk_ausstattung_einkauf_id_fk foreign key (einkauf_id) references bk_einkaeufe(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausstattung_verantwortlich_id_fk') then alter table bk_ausstattung add constraint bk_ausstattung_verantwortlich_id_fk foreign key (verantwortlich_id) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_ausstattung_lagerort_id_fk') then alter table bk_ausstattung add constraint bk_ausstattung_lagerort_id_fk foreign key (lagerort_id) references bk_lagerorte(id) on delete restrict; end if; end $$;
 

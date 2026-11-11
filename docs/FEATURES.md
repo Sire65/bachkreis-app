@@ -10,22 +10,22 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | ID | Funktion | Stand | Test |
 |---|---|---|---|
 | BK-F01 | Teilnehmerverwaltung, Register/Gruppen-Registry | ✅ | logik: Demodaten/Pflichtfelder |
-| BK-F02 | Link-/QR-Login, Rollen | ✅ Code-Login, QR-Karten · 🟡 Server-Hash | Rundgang |
+| BK-F02 | Link-/QR-Login, Rollen | ✅ Code-Login, QR-Karten, Server speichert nur den Hash · 👆 Passkey (0.56.0) | Rundgang, server.test, passkey.test |
 | BK-F03 | Terminarten-Registry, Einzel- & Serientermine, Projekte | ✅ | Rundgang |
 | BK-F04 | Zusage/Vielleicht/Absage, Notiz, Frist, Abwesenheit | ✅ | Rundgang |
 | BK-F05 | Terminplan Liste/Monat, Filter | ✅ | Rundgang |
 | BK-F06 | Besetzungsampel (grau = unbekannt) | ✅ | logik: Ampel, Mehrfach-Instrumente |
-| BK-F07 | Push | 🟡 simuliert, lokale Benachrichtigung auf dem Gerät | – |
-| BK-F08 | E-Mail | 🟡 simuliert (Brevo-Adapter folgt) | – |
+| BK-F07 | Push | ✅ Web-Push über den Server (VAPID, `web-push`) · in der Vorführversion nur lokal | kom.test |
+| BK-F08 | E-Mail | ✅ Brevo-Adapter im BK Communicator (Echtbetrieb, sobald Brevo-Konto da) · Vorführversion simuliert | kom.test |
 | BK-F09 | WhatsApp-Übergabe | ✅ | logik: waLink |
-| BK-F10 | ICS-Export | ✅ Datei · ⏳ Abo-Feed (Server) | logik: ICS |
+| BK-F10 | ICS-Export | ✅ Datei · ✅ Abo-Feed (Server, `?kalender=…`, Apple/Google/Outlook) | logik: ICS, ueben.test |
 | BK-F11 | Instrumente: Katalog, Inventar, Ausleihe | ✅ | Rundgang |
 | BK-F12 | Präsenzliste | ✅ in Termin-Detail | – |
-| BK-F13 | Auswertungen + Export | ✅ Kennzahlen, CSV · ⏳ Berichte | logik: CSV |
+| BK-F13 | Auswertungen + Export | ✅ Kennzahlen, CSV · ✅ 📊 Jahresbericht mit PDF (0.56.0) | logik: CSV, karten.test |
 | BK-F14 | Terminfindung (Doodle) → 🗳️ Terminumfrage (0.39.0, siehe BK-F90) | ✅ | tests/terminumfrage.test.mjs |
-| BK-F15 | Mitfahrgelegenheiten | ⏳ | – |
+| BK-F15 | Mitfahrgelegenheiten | ✅ 🚗 Mitfahrbörse (Plätze anbieten · suchen · buchen) | extras.test |
 | BK-F16 | Notenarchiv, „Meine Noten“ | ✅ Metadaten · ✅ PDF in der App (0.40.0) | Rundgang, notensatz.test (Demo-Probenoten, Explorer 0.18.0) |
-| BK-F17 | Offline-/Notbetrieb | 🟡 App startet offline (SW) · ⏳ signierte Vorab-Antworten | – |
+| BK-F17 | Offline-/Notbetrieb | ✅ App startet offline (Service Worker), Zusagen warten im Ausgang · ⏳ signierte Vorab-Antworten (offen, niedrige Priorität) | – |
 | BK-F18 | Mandantenfähigkeit | ⏳ optional | – |
 | BK-F19 | Gruppen A–D, Wechsel generell/temporär, Wechselwunsch | ✅ | logik: temporär/generell |
 | BK-F20 | Mehrere Instrumente, Wahl je Termin | ✅ | logik |
@@ -35,13 +35,13 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F25 | Kommunikation: Verteiler, Vorlagen, Rückmeldung, Versandprotokoll | ✅ | Rundgang |
 | BK-F26 | Genehmigungen der Eltern | ✅ | logik: überfällig |
 | BK-F27 | Konzerte & Projekte mit Checkliste | ✅ | Rundgang |
-| BK-F28 | Reisen/Probenfreizeiten (Zimmer, Notfallinfos mit Auto-Löschung) | ⏳ (Genehmigung + Termin vorhanden) | – |
+| BK-F28 | Reisen/Probenfreizeiten (Zimmer, Notfallinfos mit Auto-Löschung) | ✅ Anmeldung, Zimmer/Gruppe, Bezahlt, Gesundheitsangaben nur für Begleitpersonen, Löschfrist | paket-tests, schutz.test |
 | BK-F29 | Reparatur mit Freigabegrenze | ✅ | Rundgang |
 | BK-F30 | Einkauf / Beschaffung | ✅ | Rundgang |
 | BK-F31 | Spender & Dank | ✅ | Rundgang |
-| BK-F32 | Inventur per QR | ⏳ | – |
+| BK-F32 | Inventur per QR | ✅ Inventur + QR-Etiketten in der PC-Verwaltung · ⏳ Etikett mit der Handy-Kamera scannen (Scanner aus 🔍 Ausweis prüfen wiederverwenden) | – |
 | BK-F33 | Schuljahreswechsel | ✅ (Verwaltung) | – |
-| BK-F34 | Datenschutz: Auskunft, Export, Audit | ✅ Auskunft/Export/Protokoll · ⏳ Löschfristen | – |
+| BK-F34 | Datenschutz: Auskunft, Export, Audit | ✅ Auskunft/Export/Protokoll · ✅ Löschfristen (Server-Wartung) · ✅ ⚖️ Datenschutzerklärung & Zustimmung (0.55.0) | rechtliches.test |
 | BK-F35 | PC-Verwaltung inkl. Zugänge, Import/Export, Abgleich | ✅ | Rundgang |
 | BK-F36 | Bühne mit Orchester: Melodien (Musik-Engine), Konzertaufnahmen, Mitschnitt, Eselsohr | ✅ | logik: Musik · Bühnen-Test |
 | BK-F38 | Echtbetrieb-Server bk-api: Anmeldung, Rechte & Sichtbarkeit je Rolle, Delta-Abgleich, Versionskonflikte | ✅ (eingespielt sobald Konto da) | server.test (13), e2e echtbetrieb |

@@ -133,3 +133,21 @@ table.vw-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .vw-kurzliste li.an .vw-link { box-shadow: inset 4px 0 0 var(--marke); }
 .vw-tabelle input[data-ue-rm] { width: 100%; min-width: 180px; border: 2px solid var(--linie); border-radius: 10px; padding: 5px 8px; background: var(--karte); color: var(--text); }
 .vw-austausch { display: grid; gap: 4px; padding: 6px 0; border-bottom: 1px solid var(--linie); }
+
+/* ✉️ 0.65.0 Elternbrief – ein Blatt je Elternteil */
+.elternbriefe { display: grid; gap: 16px; }
+.elternbrief { background: #fff; color: #1a1500; border: 1px solid var(--linie); border-radius: 12px; padding: 18px 22px; font-size: .95rem; line-height: 1.45; max-width: 760px; }
+.eb-kopf { display: flex; align-items: center; gap: 12px; border-bottom: 3px solid #f2b705; padding-bottom: 8px; margin-bottom: 10px; }
+.eb-kopf .bk-logo { width: 46px; height: 46px; flex: none; }
+.eb-kopf b { font-size: 1.15rem; } .eb-datum { margin-left: auto; font-size: .85rem; }
+.eb-start { display: flex; gap: 16px; align-items: center; background: #f6f1e4; border-radius: 12px; padding: 10px 14px; }
+.eb-start img { width: 150px; height: 150px; image-rendering: pixelated; flex: none; }
+.eb-start ol { margin: 0; padding-left: 20px; } .eb-start li { margin: 4px 0; }
+.eb-link { font-family: monospace; font-size: .8rem; word-break: break-all; }
+.eb-code code { font-size: 1.1rem; font-weight: 900; letter-spacing: .08em; }
+.eb-ds { font-size: .82rem; border-left: 4px solid #1e88e5; padding: 4px 10px; margin: 10px 0; background: #eef5fc; }
+.eb-rueck { margin-top: 14px; font-size: .9rem; }
+.eb-schere { text-align: center; color: #666; font-size: .78rem; white-space: nowrap; overflow: hidden; margin-bottom: 6px; }
+.eb-kind { display: flex; gap: 18px; flex-wrap: wrap; padding: 4px 0; } .eb-kind > span:first-child { font-weight: 800; min-width: 160px; }
+.eb-unterschrift { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+@media print { .elternbrief { border: none; border-radius: 0; max-width: none; padding: 0; break-after: page; } .elternbrief:last-child { break-after: auto; } .eb-start, .eb-ds { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

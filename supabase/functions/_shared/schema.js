@@ -58,7 +58,7 @@ export const ANWESENHEIT = { ja: ["✅", "da"], spaet: ["⏰", "verspätet"], en
 export const ANWESENHEIT_NAMEN = { "": "nicht erfasst", ...Object.fromEntries(Object.entries(ANWESENHEIT).map(([k, [, t]]) => [k, t])) };
 // 📷 Einwilligungen je Zweck (0.20.0): Genehmigungs-Vorlagen tragen einen Zweck; Foto-Zwecke ergeben die Foto-Liste
 export const GENEHMIGUNG_ZWECKE = { teilnahme: "Teilnahme & Datenschutz", foto_intern: "📷 Fotos intern (App, nur Mitglieder)", foto_website: "📷 Fotos Schul-Website",
-  foto_presse: "📷 Fotos Presse", foto_social: "📷 Fotos Social Media", reise: "Fahrt / Freizeit", leihvertrag: "Leihvertrag Instrument", gesundheit: "Gesundheit / Erste Hilfe", uebeaufnahmen: "🎙️ Übe-Aufnahmen an die Lehrkraft", sonstiges: "Sonstiges" };
+  foto_presse: "📷 Fotos Presse", foto_social: "📷 Fotos Social Media", reise: "Fahrt / Freizeit", leihvertrag: "Leihvertrag Instrument", gesundheit: "Gesundheit / Erste Hilfe", uebeaufnahmen: "🎙️ Übe-Aufnahmen an die Lehrkraft", eigener_zugang: "🔑 Eigener App-Zugang für mein Kind", sonstiges: "Sonstiges" }; // 🔑 0.65.0 Kinder-Zugang nur mit Ja der Eltern
 // 🎭 Übe-Bühne (0.26.0): Arten von Übeaufgaben, Demo-Stücke (= musik.js STUECKE), Tonarten (= uebematerial.js TONARTEN)
 export const UEBE_ARTEN = { frei: "📝 Freie Aufgabe", notenstelle: "🎼 Notenstelle mitspielen", rhythmus: "🥁 Rhythmus", tonleiter: "🎵 Tonleiter", tonhalten: "🎯 Ton halten (Stimmgerät)", gehoer: "👂 Ohr-Spiel", material: "📎 Eigenes Material (PDF / Vorspiel)" };
 export const UEBE_STUECKE = { menuett: "Menuett G-Dur (Petzold)", kanon: "Kanon in D (Pachelbel)", freude: "Ode an die Freude (Beethoven)", nachtmusik: "Eine kleine Nachtmusik (Mozart)", largo: "Largo (Dvořák)", fanfare: "Bachkreis-Fanfare" };

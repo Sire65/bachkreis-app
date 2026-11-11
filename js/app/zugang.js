@@ -2,8 +2,9 @@
 // (KC-CLUB-INSTALL-EINLADUNG), 🛡️ Zugang im Blick – Anmeldeversuche/Sperre und „Installiert?“ (KC-CLUB-INSTALL-STAND), 📊 Bachkreis in Zahlen.
 // Gerätedaten: nur die Art (installiert/Browser/PC) – kein Gerätename, keine Kennung.
 import { S, VIEWS, zeichne, kopf, name, istLeitung, istVerwalter, einst } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, datumKurz, vorZeit } from "../kern/ui.js";
-import { liste, istEchtbetrieb, serverAktion, konfig } from "../kern/daten.js";
+import { esc, AKTIONEN, toast, blatt, datumKurz, vorZeit, frage } from "../kern/ui.js";
+import { liste, hole, istEchtbetrieb, serverAktion, konfig } from "../kern/daten.js";
+import { senden } from "../kern/versand.js";
 
 // ---------- 📲 Wie läuft die App auf diesem Gerät? ----------
 const standalone = () => matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true;
@@ -89,12 +90,46 @@ function speicherHtml() {
     <details data-klappe="zg_tabellen" data-ohne-unten data-ohne-schloss><summary>Größte Tabellen</summary><ul class="liste">${(s.tabellen || []).map((t) => `<li><div class="fl">${esc(t.tabelle.replace(/^bk_/, ""))}</div><b>${MB(t.bytes).toFixed(1)} MB</b></li>`).join("")}</ul></details>
     <p class="hinweis">Gemessen ${esc(vorZeit(s.gemessen))}. Das Änderungsprotokoll wird nach ${esc(String(konfig().aenderungen_monate || 12))} Monaten automatisch aufgeräumt. Grenzen änderbar in der PC-Verwaltung (Einstellungen).</p></div>`;
 }
+// 👋 0.65.0 „Wer fehlt noch?“ – aktive Zugänge, mit denen sich noch nie jemand angemeldet hat. Erinnerung per E-Mail an alle mit Adresse,
+// für die übrigen eine Liste zum Ausdrucken (Ansprechen in der Probe). Nur Namen und Gruppe – keine Codes (die liegen nur als Hash vor).
+const TYP_NAME = { eltern: "👪 Eltern", schueler: "🎻 Schüler", lehrkraft: "🎓 Lehrkräfte", leitung: "🎼 Leitung", foerderverein: "💛 Vorstand/Förderverein" };
+function fehlen() {
+  return liste("zugaenge", (z) => z.aktiv && !z.zuletzt).map((z) => hole("personen", z.person_id)).filter((p) => p && p.typ !== "ehemalig")
+    .sort((a, b) => String(a.typ).localeCompare(String(b.typ)) || name(a).localeCompare(name(b)));
+}
+function fehlenHtml() {
+  const f = fehlen(), mitMail = f.filter((p) => p.email).length;
+  if (!f.length) return '<div class="karte"><h3>👋 Wer fehlt noch?</h3><p>✅ Alle mit Zugang haben sich schon angemeldet.</p></div>';
+  const gruppen = Object.entries(f.reduce((o, p) => ((o[p.typ] = o[p.typ] || []).push(p), o), {}));
+  return `<div class="karte zg-fehlen"><h3>👋 Wer fehlt noch? (${f.length} noch nie angemeldet)</h3>
+    ${gruppen.map(([t, l]) => `<details data-ohne-unten data-ohne-schloss><summary>${esc(TYP_NAME[t] || t)} · ${l.length}</summary><ul class="liste">${l.map((p) => `<li><div class="fl">${esc(name(p))}</div>${p.email ? '<span title="hat E-Mail">✉️</span>' : '<span class="hinweis">ohne E-Mail</span>'}</li>`).join("")}</ul></details>`).join("")}
+    <div class="knopfreihe"><button class="knopf haupt" data-a="zgErinnern" ${mitMail ? "" : "disabled"}>✉️ Erinnerung an ${mitMail} mit E-Mail</button> <button class="knopf" data-a="zgFehlenDrucken">🖨️ Liste drucken</button></div>
+    <p class="hinweis">Brief oder Karte verloren? In der PC-Verwaltung unter 🔑 Zugänge „🔄 Neue Codes für alle, die sich nie angemeldet haben“ – dann neu drucken.</p></div>`;
+}
+AKTIONEN.zgErinnern = async () => {
+  const an = fehlen().filter((p) => p.email).map((p) => p.id); if (!an.length) return;
+  if (!(await frage(`Freundliche Erinnerung per E-Mail an ${an.length} Personen schicken?`))) return;
+  const verein = konfig().name || "Bachkreis";
+  try {
+    const r = await senden({ an, betreff: `📲 Ihre ${verein}-App wartet noch auf Sie`, ereignis: "rundschreiben", kanaele: ["mail"],
+      text: `Hallo,\n\nSie haben einen persönlichen Zugang zur ${verein}-App, sich aber noch nicht angemeldet. Es dauert nur eine Minute: den QR-Code auf Ihrem Brief bzw. Ihrer Karte mit der Handy-Kamera scannen, zum Startbildschirm hinzufügen, zustimmen – fertig.\n\nBrief oder Karte nicht mehr da? Kurz bei der Leitung melden, Sie bekommen einen neuen.\n\nViele Grüße\nIhre Leitung` });
+    toast(`✉️ Erinnerung vorgemerkt (${r.mail || r.vorgemerkt || an.length})`);
+  } catch (e) { toast("❌ Nicht verschickt: " + (e.message || e)); }
+};
+AKTIONEN.zgFehlenDrucken = () => {
+  const w = window.open("", "_blank"); if (!w) return toast("Bitte Pop-ups erlauben");
+  const f = fehlen();
+  w.document.write(`<!doctype html><meta charset="utf-8"><title>Wer fehlt noch?</title><style>body{font-family:system-ui,sans-serif;margin:24px}td,th{border-bottom:1px solid #ccc;padding:6px 10px;text-align:left}table{border-collapse:collapse;width:100%}</style>
+    <h2>👋 Noch nie in der App angemeldet (${f.length}) – Stand ${new Date().toLocaleDateString("de-DE")}</h2><table><tr><th>Name</th><th>Gruppe</th><th>E-Mail?</th><th>angesprochen ✓</th></tr>
+    ${f.map((p) => `<tr><td>${esc(name(p))}</td><td>${esc(TYP_NAME[p.typ] || p.typ)}</td><td>${p.email ? "ja" : "–"}</td><td>☐</td></tr>`).join("")}</table>`);
+  w.document.close(); w.focus(); w.print();
+};
 VIEWS.zugang = {
   render() {
     if (!istLeitung()) return kopf("🛡️ Zugang im Blick") + '<p class="hinweis">Nur für die Leitung.</p>';
     const ich = `<p class="hinweis">Dieses Gerät: ${MODUS[installModus()].join(" ")}</p>`;
     if (!istEchtbetrieb()) return kopf("🛡️ Zugang im Blick") + `<div class="karte"><p>Anmeldeversuche, Sperren und „📲 Installiert?“ zeigt der Server – in der <b>Vorführversion</b> gibt es keinen.</p>${ich}
-      <p class="hinweis">Im Echtbetrieb: 💾 Speicher (Datenbank und Dateien gegen die Grenzen des kostenlosen Tarifs, Warnung ab 80 %), Anmeldeversuche der letzten 14 Tage (gelungen/fehlgeschlagen), wie viele Anschlüsse gerade gesperrt sind (nach ${20} Fehlversuchen in 15 Minuten) und je Mitglied, ob die App installiert ist.</p></div>`;
+      <p class="hinweis">Im Echtbetrieb: 💾 Speicher (Datenbank und Dateien gegen die Grenzen des kostenlosen Tarifs, Warnung ab 80 %), Anmeldeversuche der letzten 14 Tage (gelungen/fehlgeschlagen), wie viele Anschlüsse gerade gesperrt sind (nach ${20} Fehlversuchen in 15 Minuten) und je Mitglied, ob die App installiert ist.</p></div>${fehlenHtml()}`;
     if (!ZG.daten && !ZG.fehler) { zgLaden(); return kopf("🛡️ Zugang im Blick") + '<p class="hinweis">Wird geladen …</p>'; }
     if (ZG.fehler) return kopf("🛡️ Zugang im Blick") + `<div class="karte"><p class="badge b-grau">❔ Unbekannt – ${esc(ZG.fehler)}</p><button class="knopf" data-a="zgNeu">↻ Nochmal</button></div>`;
     const d = ZG.daten, fehl14 = d.tage.reduce((s, t) => s + t.fehl, 0), ok14 = d.tage.reduce((s, t) => s + t.ok, 0), max = Math.max(1, ...d.tage.map((t) => t.ok + t.fehl));
@@ -108,7 +143,7 @@ VIEWS.zugang = {
       <p class="hinweis">Gesperrt wird ein Anschluss nach ${d.max} Fehlversuchen in 15 Minuten. Gespeichert ist nur eine Prüfsumme der Adresse – niemand kann daraus ablesen, wer es war.</p></div>
       <div class="karte"><h3>📲 Installiert?</h3>${ich}<div class="wahlen">${chip("alle", `Alle ${g.length}`)}${chip("installiert", `✅ ${zahl("installiert")}`)}${chip("browser", `🌐 ${zahl("browser")}`)}${chip("pc", `💻 ${zahl("pc")}`)}${chip("nie", `❔ ${zahl(null)}`)}</div>
       <ul class="liste">${gl.map((x) => `<li><div class="fl"><div class="zeile-titel">${esc(name(x.person_id))}</div><div class="zeile-unter">${x.m ? MODUS[x.m].join(" ") : "❔ noch nicht gesehen"}${x.zuletzt ? ` · zuletzt ${esc(vorZeit(x.zuletzt))}` : ""}</div></div></li>`).join("") || '<li class="hinweis">Niemand in dieser Auswahl.</li>'}</ul>
-      <p class="hinweis">🌐 = öffnet die App im Browser – am besten einmal installieren lassen (Benachrichtigungen kommen dann zuverlässig).</p></div>`;
+      <p class="hinweis">🌐 = öffnet die App im Browser – am besten einmal installieren lassen (Benachrichtigungen kommen dann zuverlässig).</p></div>${fehlenHtml()}`;
   },
 };
 AKTIONEN.zgNeu = () => { ZG.daten = null; ZG.fehler = null; ZG.speicher = null; zeichne(); };

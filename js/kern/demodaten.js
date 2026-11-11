@@ -407,6 +407,7 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "gv-2", titel: "Foto & Video – Schul-Website", zweck: "foto_website", text: "Fotos und Videos von Proben und Konzerten, auf denen mein Kind zu sehen ist, dürfen auf der Schulwebsite veröffentlicht werden. Widerruf jederzeit möglich.", fassung: 2, gueltig_monate: 12 },
     { id: "gv-5", titel: "Fotos intern (App, nur Mitglieder)", zweck: "foto_intern", text: "Fotos von Proben und Konzerten mit meinem Kind dürfen in der Bachkreis-App gezeigt werden (nur für angemeldete Mitglieder). Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: null },
     { id: "gv-6", titel: "Fotos Presse", zweck: "foto_presse", text: "Fotos von Konzerten, auf denen mein Kind zu sehen ist, dürfen an die Lokalpresse gegeben werden (ohne Nachnamen). Widerruf für künftige Fotos jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
+    { id: "gv-zugang", titel: "Eigener App-Zugang für mein Kind", zweck: "eigener_zugang", text: "Mein Kind bekommt einen eigenen Zugang zur Bachkreis-App (eigene Zusagen, Nachrichten mit Leitung und Lehrkräften, Üben). Ohne Zugang erledige ich das für mein Kind. Widerruf jederzeit möglich – dann wird der Zugang gesperrt.", fassung: 1, gueltig_monate: null },
     { id: "gv-7", titel: "Fotos Social Media", zweck: "foto_social", text: "Fotos von Konzerten mit meinem Kind dürfen auf den Social-Media-Kanälen des Bachkreises gezeigt werden. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
     { id: "gv-3", titel: "Probenfreizeit", text: "Mein Kind darf an der Probenfreizeit teilnehmen. Die Begleitpersonen dürfen im Notfall die nötigen Entscheidungen treffen. Gesundheitsangaben habe ich in der App hinterlegt.", fassung: 1, gueltig_monate: null, zweck: "reise" },
     { id: "gv-8", titel: "Übe-Aufnahmen an die Lehrkraft", zweck: "uebeaufnahmen", text: "Mein Kind darf sich in der Übe-Bühne beim Vorspielen aufnehmen und die Aufnahme an seine Lehrkraft schicken. Nur die Lehrkräfte und die Leitung hören sie; sie wird nach 30 Tagen automatisch gelöscht. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
@@ -425,6 +426,9 @@ export function erzeugeDemodaten(heute = new Date()) {
   }
   for (const g of d.genehmigungen) if (g.status !== "ausstehend") { g.beantwortet_am = iso(tag(jetzt, -Math.floor(1 + r() * 20), 19)); g.beantwortet_von = d.eltern_kind.find((e) => e.kind_id === g.kind_id)?.eltern_id || null; }
   for (const g of d.genehmigungen) if (g.status !== "ausstehend") g.vorlage_version = d.genehmigung_vorlagen.find((v) => v.id === g.vorlage_id)?.fassung || 1;
+  // 🔑 0.65.0 eigener App-Zugang: fest (ohne Zufall, damit die übrigen Demodaten gleich bleiben) – 7 von 10 Ja, 1 Nein, 2 offen
+  [...kinderA, ...mitglieder("g-b")].forEach((kid, i) => { const st = i % 10 < 7 ? "erteilt" : i % 10 === 7 ? "abgelehnt" : "ausstehend";
+    d.genehmigungen.push({ id: `ge-z${i}`, vorlage_id: "gv-zugang", kind_id: kid, frist: isoTag(tag(jetzt, 14)), status: st, ...(st !== "ausstehend" ? { beantwortet_am: iso(tag(jetzt, -3 - (i % 5), 19)), beantwortet_von: d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || null, vorlage_version: 1 } : {}) }); });
   // 🎙️ Übe-Aufnahmen (0.26.0): etwa zwei Drittel erteilt (fest, ohne Zufall – die übrigen Demodaten bleiben gleich)
   [...kinderA, ...mitglieder("g-b")].forEach((kid, i) => {
     const ja = kid === demoSchueler?.id || kid === demoKindB?.id || i % 3 !== 2;

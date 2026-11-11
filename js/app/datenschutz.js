@@ -83,6 +83,7 @@ AKTIONEN.zsZustimmen = async () => {
     for (const a of arten) if (!hat(ich, a)) await speichere("zustimmungen", { person_id: ich, fuer_id: ich, art: a, fassung: DS_VERSION, zeit: zeit() }, { still: true });
     for (const el of document.querySelectorAll("#zsFenster [data-kind]:checked")) for (const a of ["datenschutz", "regeln"]) if (!hat(el.dataset.kind, a)) await speichere("zustimmungen", { person_id: ich, fuer_id: el.dataset.kind, art: a, fassung: DS_VERSION, zeit: zeit() }, { still: true });
     document.getElementById("zsFenster")?.remove(); toast("✅ Danke – viel Freude mit der App!"); zeichne();
+    document.dispatchEvent(new CustomEvent("bk-zugestimmt")); // 🎓 0.65.0 danach die Einführung
   } catch (e) { toast("⚠️ " + (e.message || "Speichern ging nicht – bitte gleich nochmal")); }
 };
 AKTIONEN.zsVorschau = () => zustimmungPruefen({ vorschau: true });

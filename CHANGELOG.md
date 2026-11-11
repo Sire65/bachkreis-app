@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.65.0 DEV – 11.11.2026
+🎓 **Wie alle die App bekommen** – Einführung, Elternbrief und Zugänge (Konzept mit Beispielbild abgestimmt, Wunsch Hansi):
+- **Einführung beim ersten Start:** nach der Zustimmung „👋 Willkommen – darf ich dir die App in 1 Minute zeigen?“ (Später / ▶ Los geht's). Danach wird Schritt für Schritt das **echte** Element hell hervorgehoben – eigene Tour für **Eltern** (Bitte erledigen, Kind wählen, Termine, Krank/Status, Genehmigungen, Nachrichten, Ausweis), **Kinder** (Termine, Üben, Quiz, SOS) und **Leitung/alle anderen** (Kopf-Knopf, Status, Register, Termine, Nachrichten, Ausweis, Hilfe). Zum Schluss: 📲 auf den Startbildschirm (mit iPhone-Anleitung), 🔔 Mitteilungen erlauben, „Wie viel Hilfe?“. Automatisch nur im Echtbetrieb und einmal je Gerät; jederzeit unter ❓ Hilfe & Tipps → „🎓 Einführung starten“
+- **🔑 Eigener Zugang für Kinder nur mit Ja der Eltern:** neue Genehmigung „Eigener App-Zugang für mein Kind“ (Zweck `eigener_zugang`, Migration `20261126000000_bk_eigener_zugang.sql`). PC-Verwaltung → Zugänge → Schüler zeigt die Spalte **Eltern-Ja** (✅ Ja · ⛔ Nein · ⏳ offen · volljährig); „＋ fehlende Zugänge anlegen“ legt für Kinder nur mit Ja an, einzeln nur nach Rückfrage
+- **✉️ Elternbrief drucken** (Zugänge → Eltern): je Elternteil ein Blatt mit persönlichem QR-Code und Link, 3 Schritten, Datenschutz kurz und – je Kind – Rückgabe-Abschnitt „☐ Ja, eigener Zugang · ☐ Nein“ mit Unterschrift (oder digital unter ✍️ Genehmigungen); Seitenumbruch je Brief
+- **🔄 Neue Codes für alle, die sich nie angemeldet haben** – macht Karten und Briefe wieder druckbar (Codes liegen nur als Hash vor)
+- **👋 Wer fehlt noch?** in 🛡️ Zugang im Blick: alle Zugänge ohne Anmeldung nach Gruppe, **Erinnerung per E-Mail** an alle mit Adresse, **Liste drucken** zum Ansprechen in der Probe
+
 ## 0.64.0 DEV – 11.11.2026
 ⌃ **Ein Knopf, vier Stufen** – die neue Kopfsteuerung der Club App (KC-CLUB-KOPF-EIN-KNOPF 2.915.0 / KC-CLUB-KOPF-4-STUFEN 2.916.0), Wunsch Hansi:
 - Statt der beiden Pfeile ⌃ und ⌃⌃ gibt es **einen Knopf** oben: 1× tippen → die **drei Felder** (neue Nachrichten, online, nächster Termin) weg · 2× → auch das **Infofeld** weg · 3× → auch **Logo und Gruß** weg (die **Statusleiste bleibt** – Bachkreis-Entscheidung vom 10.11.; Pfeil zeigt nach unten) · 4× → **alles wieder da**

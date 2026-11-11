@@ -10,8 +10,11 @@ const srv = spawn(process.execPath, [new URL("./server-lokal.mjs", import.meta.u
 const info = await new Promise((ok, f) => { srv.stdout.once("data", (d) => ok(JSON.parse(String(d).split("\n")[0]))); srv.once("exit", () => f(new Error("Server beendet"))); });
 const fehler = [];
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-const seite = async (breite = 400) => {
-  const p = await (await b.newContext({ viewport: { width: breite, height: 860 }, serviceWorkers: "block" })).newPage();
+// 🎓 0.65.0 Einführung: nur die erste Eltern-Seite geht sie durch, alle anderen haben sie „schon gesehen“
+const seite = async (breite = 400, tour = false) => {
+  const ctx = await b.newContext({ viewport: { width: breite, height: 860 }, serviceWorkers: "block" });
+  if (!tour) await ctx.addInitScript(() => { try { const e = JSON.parse(localStorage.getItem("bk_einstellungen") || "{}"); if (!e.einfuehrung) localStorage.setItem("bk_einstellungen", JSON.stringify({ ...e, einfuehrung: 1 })); } catch { /* ohne Speicher */ } });
+  const p = await ctx.newPage();
   p.on("pageerror", (e) => fehler.push(e.message)); p.on("dialog", (d) => d.accept()); return p;
 };
 const sicht = (p) => p.evaluate(async () => {
@@ -24,12 +27,23 @@ async function pinnwandGelesen(pg) {
   await pg.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start")); await pg.waitForSelector("#raster .kachel");
 }
 try {
-  const p = await seite();
+  const p = await seite(400, true);
   await p.goto(B + "/index.html"); await p.waitForSelector("#anmeldeCode");
   assert.ok(!(await p.$("#demoleiste")), "keine Demo-Leiste im Echtbetrieb");
   await p.fill("#anmeldeCode", "FALSCH12"); await p.click('[data-a="anmeldenCode"]'); await p.waitForSelector(".badge.b-rot");
   await p.goto(B + "/index.html?k=" + info.codes.eltern.code); await p.waitForSelector(".kachel", { timeout: 20000 });
   assert.ok(!p.url().includes("k="), "Code aus der Adresszeile entfernt");
+  // 🎓 Einführung beim ersten Start: Begrüßung → Eltern-Tour mit hervorgehobenen Elementen → Install/Mitteilungen/Hilfe-Stufe → gemerkt
+  await p.waitForSelector('#efFenster [data-a="efLos"]', { timeout: 10000 }); await p.click('#efFenster [data-a="efLos"]');
+  let schritte = 0;
+  while (await p.waitForSelector('#efFenster [data-a="efWeiter"], #efFenster [data-a="efFertig"]', { timeout: 5000 }).then(() => p.$('#efFenster [data-a="efWeiter"]'))) {
+    assert.ok(await p.$("#efFenster .ef-spot"), "Element hervorgehoben"); schritte++; await p.click('#efFenster [data-a="efWeiter"]'); await p.waitForTimeout(150);
+    assert.ok(schritte < 12, "Tour endet");
+  }
+  assert.ok(schritte >= 4, "Eltern-Tour mit mindestens 4 Schritten: " + schritte);
+  await p.click('#efFenster [data-a="efStufe"][data-x="viel"]'); await p.click('#efFenster [data-a="efFertig"]');
+  const ef = await p.evaluate(async () => { const z = await import("/js/app/zustand.js"); return [z.einst().einfuehrung, z.einst().hilfeStufe, !!document.getElementById("efFenster")]; });
+  assert.deepEqual(ef, [1, "viel", false], "Einführung gemerkt, Hilfe-Stufe gesetzt");
   await pinnwandGelesen(p);
   const s = await sicht(p);
   assert.equal(s.info.art, "supabase"); assert.equal(s.zugaenge, 0); assert.equal(s.spenden, 0);

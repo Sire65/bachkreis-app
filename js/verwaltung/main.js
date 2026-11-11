@@ -7,7 +7,7 @@ import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTA
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND, senden } from "../kern/versand.js";
-import { loeschKandidaten, ANONYM_LEEREN, ANONYM_LOESCHEN, schuljahrVorschlaege, einkaufInventar, eingeladene, personenDaten, cockpit, csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
+import { loeschKandidaten, ANONYM_LEEREN, ANONYM_LOESCHEN, schuljahrVorschlaege, einkaufInventar, eingeladene, personenDaten, cockpit, csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, einwilligung, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
 
 const db = { liste, hole, konfig };
@@ -399,16 +399,21 @@ const codeVon = (z) => z?.code || FRISCH.get(z?.id) || null;
 async function zugangSpeichern(obj) { const code = obj.code; const z = await speichere("zugaenge", obj); if (code) FRISCH.set(z.id, code); return z; }
 function neuerCode() { const a = new Uint32Array(8); crypto.getRandomValues(a); return [...a].map((x) => ZEICHEN[x % ZEICHEN.length]).join(""); }
 const appLink = (code) => new URL(`index.html?k=${code}`, location.href).href;
+// 🔑 0.65.0 eigener Zugang für Kinder nur mit Ja der Eltern (Genehmigung Zweck „eigener_zugang“); ohne Eltern-Zuordnung (volljährig) „frei“
+const elternJa = (kid) => (elternVon(db, kid).length ? einwilligung(db, kid, "eigener_zugang") : "frei");
+const ELTERN_JA = { ja: "✅ Ja", nein: "⛔ Nein", offen: "⏳ offen", frei: "– (volljährig)" };
 ANSICHTEN.zugaenge = () => {
   const typ = V.filter || "schueler";
   const personen = liste("personen", (p) => p.typ === typ).sort((a, b) => name(a).localeCompare(name(b)));
   const schreiben = darf("zugaenge", "schreiben");
   return `<div class="vw-kopf"><h2>🔑 Zugänge & QR-Karten</h2><select data-c="vwZugTyp">${["schueler", "eltern", "lehrkraft", "foerderverein", "leitung", "ehemalig"].map((t) => `<option value="${t}" ${t === typ ? "selected" : ""}>${esc(TABELLEN.personen.felder.find((f) => f.k === "typ").werte[t])}</option>`).join("")}</select>
-    ${schreiben ? `<button class="knopf" data-a="zugAlleAnlegen">＋ fehlende Zugänge anlegen</button>` : ""}<button class="knopf haupt" data-a="zugKarten">🖨️ QR-Karten drucken</button></div>
-    <div class="karte"><p class="hinweis">Anmeldung ohne Passwort über einen persönlichen Link/QR-Code (wie in der Club-App). Codes werden nur hier gepflegt – sperren, neu erzeugen, Verwaltungsrecht vergeben. Im Echtbetrieb liegt nur ein Hash des Codes auf dem Server.</p></div>
-    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Verwaltung</th><th>zuletzt</th><th></th></tr></thead><tbody>${personen.map((p) => {
+    ${schreiben ? `<button class="knopf" data-a="zugAlleAnlegen">＋ fehlende Zugänge anlegen${typ === "schueler" ? " (mit Eltern-Ja)" : ""}</button> <button class="knopf" data-a="zugNieNeu">🔄 Neue Codes für alle, die sich nie angemeldet haben</button>` : ""}
+    ${typ === "eltern" ? `<button class="knopf haupt" data-a="zugBriefe">✉️ Elternbriefe drucken</button>` : ""}<button class="knopf${typ === "eltern" ? "" : " haupt"}" data-a="zugKarten">🖨️ QR-Karten drucken</button></div>
+    <div class="karte"><p class="hinweis">Anmeldung ohne Passwort über einen persönlichen Link/QR-Code (wie in der Club-App). Codes werden nur hier gepflegt – sperren, neu erzeugen, Verwaltungsrecht vergeben. Im Echtbetrieb liegt nur ein Hash des Codes auf dem Server – drucken lassen sich Karten und Briefe darum nur direkt nach dem Erzeugen.</p>
+    ${typ === "schueler" ? `<p class="hinweis">🔑 <b>Eigener Zugang für Kinder nur mit Ja der Eltern</b> (Genehmigung „Eigener App-Zugang“ – im Elternbrief zum Ankreuzen oder in der App unter ✍️ Genehmigungen). Ohne Zugang sagen die Eltern für ihr Kind zu. Volljährige ohne Eltern-Zuordnung brauchen kein Ja.</p>` : ""}</div>
+    <div class="vw-tabelle-wrap" tabindex="0" role="region" aria-label="Tabelle"><table class="vw-tabelle"><thead><tr><th>Name</th>${typ === "schueler" ? "<th>Eltern-Ja</th>" : ""}<th>Code</th><th>Status</th><th>Verwaltung</th><th>zuletzt</th><th></th></tr></thead><tbody>${personen.map((p) => {
       const z = liste("zugaenge", (x) => x.person_id === p.id)[0];
-      return `<tr><td>${esc(name(p))}</td><td><code>${esc(codeVon(z) || (z ? "•••• (verschlüsselt)" : "–"))}</code></td><td>${z ? (z.aktiv ? "✅ aktiv" : "⛔ gesperrt") : "–"}</td><td>${z?.verwaltung ? "💻" : ""}</td><td>${z?.zuletzt ? vorZeit(z.zuletzt) : "nie"}</td>
+      return `<tr><td>${esc(name(p))}</td>${typ === "schueler" ? `<td>${ELTERN_JA[elternJa(p.id)]}</td>` : ""}<td><code>${esc(codeVon(z) || (z ? "•••• (verschlüsselt)" : "–"))}</code></td><td>${z ? (z.aktiv ? "✅ aktiv" : "⛔ gesperrt") : "–"}</td><td>${z?.verwaltung ? "💻" : ""}</td><td>${z?.zuletzt ? vorZeit(z.zuletzt) : "nie"}</td>
         <td style="white-space:nowrap">${schreiben ? (z ? `<button class="knopf klein" data-a="zugNeu" data-x="${z.id}">🔄 neuer Code</button> <button class="knopf klein" data-a="zugAktiv" data-x="${z.id}">${z.aktiv ? "sperren" : "freigeben"}</button> <button class="knopf klein" data-a="zugVw" data-x="${z.id}">💻</button>` : `<button class="knopf klein" data-a="zugAnlegen" data-x="${p.id}">anlegen</button>`) : ""} ${codeVon(z) ? `<button class="knopf klein" data-a="zugLink" data-x="${esc(codeVon(z))}">🔗</button>` : ""}</td></tr>`;
     }).join("")}</tbody></table></div><div id="qrBereich"></div>`;
 };
@@ -416,14 +421,29 @@ AKTIONEN.vwZugTyp = (v) => { V.filter = v; zeichne(); };
 AKTIONEN.zugNeu = async (id) => { if (!(await frage("Neuen Code erzeugen? Der alte Link funktioniert dann nicht mehr."))) return; await zugangSpeichern({ ...hole("zugaenge", id), code: neuerCode() }); zeichne(); };
 AKTIONEN.zugAktiv = async (id) => { const z = hole("zugaenge", id); await speichere("zugaenge", { ...z, aktiv: !z.aktiv }); zeichne(); };
 AKTIONEN.zugVw = async (id) => { const z = hole("zugaenge", id); await speichere("zugaenge", { ...z, verwaltung: !z.verwaltung }); toast(z.verwaltung ? "Verwaltungsrecht entzogen" : "💻 darf jetzt die PC-Verwaltung nutzen"); zeichne(); };
-AKTIONEN.zugAnlegen = async (pid) => { await zugangSpeichern({ person_id: pid, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }); zeichne(); };
+AKTIONEN.zugAnlegen = async (pid) => {
+  const p = hole("personen", pid), ja = p?.typ === "schueler" ? elternJa(pid) : "frei";
+  if (ja === "nein" || ja === "offen") { if (!(await frage(`Für ${name(p)} haben die Eltern ${ja === "nein" ? "„Nein“ gesagt" : "noch nicht zugestimmt"}. Trotzdem einen eigenen Zugang anlegen (z. B. Ja auf Papier)?`))) return; }
+  await zugangSpeichern({ person_id: pid, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }); zeichne(); };
 AKTIONEN.zugAlleAnlegen = async () => {
   const typ = V.filter || "schueler";
-  const ohne = liste("personen", (p) => p.typ === typ && !liste("zugaenge", (z) => z.person_id === p.id).length);
+  const alle = liste("personen", (p) => p.typ === typ && !liste("zugaenge", (z) => z.person_id === p.id).length);
+  const ohne = typ === "schueler" ? alle.filter((p) => ["ja", "frei"].includes(elternJa(p.id))) : alle; // Kinder nur mit Eltern-Ja
   const neu = ohne.map((p) => ({ person_id: p.id, code: neuerCode(), art: "link", aktiv: true, verwaltung: false }));
+  const gespeichert = neu.length ? await speichereViele("zugaenge", neu) : [];
+  gespeichert.forEach((z, i) => FRISCH.set(z.id, neu[i].code));
+  toast(`${ohne.length} Zugänge angelegt${alle.length > ohne.length ? ` · ${alle.length - ohne.length} warten noch auf das Ja der Eltern` : ""}`); zeichne();
+};
+// 🔄 alle aktiven Zugänge, mit denen sich noch nie jemand angemeldet hat, bekommen einen neuen Code → Karten/Briefe wieder druckbar
+AKTIONEN.zugNieNeu = async () => {
+  const typ = V.filter || "schueler";
+  const nie = liste("personen", (p) => p.typ === typ).map((p) => liste("zugaenge", (x) => x.person_id === p.id && x.aktiv && !x.zuletzt)[0]).filter((z) => z && !codeVon(z));
+  if (!nie.length) return toast("Alle mit Zugang haben schon einen druckbaren Code oder sich angemeldet 👍");
+  if (!(await frage(`${nie.length} Zugänge haben sich noch nie angemeldet. Für sie neue Codes erzeugen? Alte Karten/Briefe dieser Personen gelten dann nicht mehr.`))) return;
+  const neu = nie.map((z) => ({ ...z, code: neuerCode() }));
   const gespeichert = await speichereViele("zugaenge", neu);
   gespeichert.forEach((z, i) => FRISCH.set(z.id, neu[i].code));
-  toast(`${ohne.length} Zugänge angelegt`); zeichne();
+  toast(`🔄 ${nie.length} neue Codes – jetzt ${typ === "eltern" ? "Elternbriefe oder " : ""}QR-Karten drucken`); zeichne();
 };
 AKTIONEN.zugLink = async (code) => { try { await navigator.clipboard.writeText(appLink(code)); toast("🔗 Link kopiert"); } catch { prompt("Link:", appLink(code)); } };
 function qrBild(text) {
@@ -443,6 +463,39 @@ AKTIONEN.zugKarten = () => {
   $("#qrBereich").scrollIntoView({ behavior: "smooth" });
 };
 AKTIONEN.vwDrucken = () => window.print();
+
+// ✉️ 0.65.0 Elternbrief: je Elternteil ein Blatt mit persönlichem QR-Code, 3 Schritten, Datenschutz-Kurzinfo und je Kind
+// „eigener Zugang ja/nein“ + Rückgabe-Abschnitt (Abtrennen, in der Probe abgeben – oder in der App unter ✍️ Genehmigungen).
+AKTIONEN.zugBriefe = () => {
+  const k = konfig(), verein = k.name || "Bachkreis";
+  const eltern = liste("personen", (p) => p.typ === "eltern").sort((a, b) => name(a).localeCompare(name(b))).map((p) => ({ p, z: liste("zugaenge", (x) => x.person_id === p.id && x.aktiv)[0] })).filter((x) => x.z);
+  const druckbar = eltern.filter((x) => codeVon(x.z)), ohneCode = eltern.length - druckbar.length;
+  const ohneZugang = liste("personen", (p) => p.typ === "eltern").length - eltern.length;
+  const brief = ({ p, z }) => {
+    const code = codeVon(z), kinder = kinderVon(db, p.id).map((id) => hole("personen", id)).filter(Boolean);
+    const anrede = p.vorname ? `Liebe/r ${esc(name(p))}` : "Liebe Eltern";
+    return `<section class="elternbrief"><header class="eb-kopf">${BACHKREIS_LOGO}<div><b>${esc(verein)}</b><div class="hinweis">Elternbrief · Ihre persönliche Bachkreis-App</div></div><div class="eb-datum">${new Date().toLocaleDateString("de-DE")}</div></header>
+      <p>${anrede},</p>
+      <p>ab sofort gibt es die <b>${esc(verein)}-App</b>: Termine zu- und absagen, Nachrichten der Leitung, Genehmigungen und Krankmeldungen – alles an einem Ort, ohne Passwort. Dieser Brief enthält <b>Ihren persönlichen Zugang</b>${kinder.length ? ` für ${kinder.map((c) => esc(c.vorname || name(c))).join(" und ")}` : ""}.</p>
+      <div class="eb-start"><img alt="Persönlicher QR-Code" src="${qrBild(appLink(code))}"><ol>
+        <li><b>QR-Code mit der Handy-Kamera scannen</b> (oder Link eingeben: <span class="eb-link">${esc(appLink(code))}</span>)</li>
+        <li><b>Zum Startbildschirm hinzufügen</b> – iPhone: Teilen ⬆️ → „Zum Home-Bildschirm“, Android: ⋮ → „App installieren“</li>
+        <li><b>Zustimmen – fertig!</b> Eine kurze Einführung zeigt Ihnen alles Wichtige.</li></ol></div>
+      <p class="eb-code">Ihr Code: <code>${esc(code)}</code> · Bitte nicht weitergeben – jedes Elternteil hat einen eigenen.</p>
+      <div class="eb-ds"><b>🔒 Datenschutz kurz:</b> Gespeichert wird nur, was der Verein ohnehin braucht (Name, Kontakt, Gruppen, Zu-/Absagen). Server in der EU, kein Werbe-Tracking, keine Weitergabe. Nachrichten sind privat. Die ausführliche Datenschutzerklärung finden Sie in der App unter ⚖️ Rechtliches. Fragen: an die Leitung.</div>
+      ${kinder.length ? `<div class="eb-rueck"><div class="eb-schere">✂ – – – – – – – – – – – – – – – Rückgabe-Abschnitt (in der Probe abgeben) – – – – – – – – – – – – – – –</div>
+        <p><b>Eigener App-Zugang für mein Kind</b> – Kinder ab etwa Klasse 5 bzw. mit eigenem Handy können einen eigenen Zugang bekommen (Termine, Üben, Quiz, SOS). Chats nur mit Leitung, Lehrkräften und Ihnen. Ohne eigenen Zugang sagen Sie für Ihr Kind zu.</p>
+        ${kinder.map((c) => `<div class="eb-kind"><span>${esc(name(c))}:</span> <span>☐ Ja, eigener Zugang</span> <span>☐ Nein, ich sage für mein Kind zu</span>${elternJa(c.id) === "ja" ? ' <span class="hinweis">(Ja liegt schon vor)</span>' : ""}</div>`).join("")}
+        <p class="hinweis">Lieber digital? In der App unter ✍️ Genehmigungen → „Eigener App-Zugang für mein Kind“. Widerruf jederzeit.</p>
+        <div class="eb-unterschrift"><span>Name: ${esc(name(p))}</span><span>Datum, Unterschrift: ______________________</span></div></div>` : ""}
+    </section>`;
+  };
+  $("#qrBereich").innerHTML = `<h3 class="vw-noprint">✉️ Elternbriefe (${druckbar.length}) <button class="knopf" data-a="vwDrucken">🖨️ Drucken</button></h3>
+    ${ohneCode ? `<p class="hinweis vw-noprint">${ohneCode} Eltern mit Zugang ohne druckbaren Code (verschlüsselt gespeichert). „🔄 Neue Codes für alle, die sich nie angemeldet haben“ macht ihre Briefe wieder druckbar.</p>` : ""}
+    ${ohneZugang ? `<p class="hinweis vw-noprint">${ohneZugang} Eltern haben noch keinen Zugang – erst „＋ fehlende Zugänge anlegen“.</p>` : ""}
+    <div class="elternbriefe">${druckbar.map(brief).join("")}</div>`;
+  $("#qrBereich").scrollIntoView({ behavior: "smooth" });
+};
 
 // ---------- 📦 Inventar & Abschreibung (0.19.0): Instrumente + Ausstattung in einer Liste ----------
 // Kennzahlen (Bestand, Anschaffungswert, Restbuchwert, AfA im Jahr), Problemfälle, Anlagenverzeichnis (CSV), Inventur, QR-Etiketten.

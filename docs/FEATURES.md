@@ -164,6 +164,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F154 | 🔍 Ausweis prüfen (Kamera, BarcodeDetector/jsQR, Server-Prüfcode) · 👪 Eltern-Start 8 Kacheln + QR · ⌃⌃ Statusleiste bleibt | ✅ | tests/ausweis.test.mjs |
 | BK-F155 | 🎼 Register nach Zweck: Bachkreis · Leitung (Abschnitte) · Entdecken · Meins · Technik · Admin | ✅ | inventur.test |
 | BK-F156 | ⌃ Kopf: ein Knopf, vier Stufen (wie KC-CLUB-KOPF-4-STUFEN), lange drücken = ganz auf | ✅ | Rundgang |
+| BK-F157 | 🎓 Einführung beim ersten Start je Rolle (Eltern · Kinder · Leitung), Install + Mitteilungen + Hilfe-Stufe | ✅ | einfuehrung.test |
+| BK-F158 | 🔑 Eigener App-Zugang für Kinder nur mit Ja der Eltern (Genehmigung, Spalte Eltern-Ja) | ✅ | einfuehrung.test |
+| BK-F159 | ✉️ Elternbrief mit QR, Datenschutz kurz und Rückgabe-Abschnitt · 🔄 neue Codes für nie Angemeldete | ✅ | einfuehrung.test |
+| BK-F160 | 👋 Wer fehlt noch? Erinnerung per E-Mail und Liste drucken | ✅ | einfuehrung.test |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

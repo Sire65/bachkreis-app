@@ -4,9 +4,10 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig, KARTEN_JE_STANDARD, KARTEN_CODE_ZEICHEN } from "./schema.js";
+import { KUENDIGUNG_VERWALTER, rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig, KARTEN_JE_STANDARD, KARTEN_CODE_ZEICHEN } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
+import { kuendigungVollziehen } from "./kuendigung.js";
 import { kontext, filtern, schreibPruefung, TISCH_GAST_EINLADEN } from "./regeln.js";
 import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
 import { registrierungPruefen, anmeldungPruefen, b64u } from "./passkey.js";
@@ -724,6 +725,11 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     if (aktion === "ausweis_pruefen") return await ausweisPruefen(db, s, body, dienste);
     if (aktion === "kalender_link") return await kalenderLink(db, s, body, dienste);
     if (aktion === "online") return await online(db, s, body);
+    if (aktion === "kuendigung_vollziehen") { // 🚪 0.66.0 bestätigte Kündigung sofort wirksam machen – nur Leitung/Vorstand/Admin
+      if (!rollenMit(s.person.rollen || []).some((r) => KUENDIGUNG_VERWALTER.includes(r))) return fehler(403, "NUR_LEITUNG");
+      const r = await kuendigungVollziehen(db, String(body.id || ""), name(s.person));
+      return { status: r.ok ? 200 : 409, json: r };
+    }
     if (aktion === "zugang_lage") return await zugangLage(db, s);
     if (aktion === "speicher_lage") return await speicherLage(db, s);
     if (aktion === "nutzung_lage") return await nutzungLage(db, body);

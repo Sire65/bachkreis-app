@@ -117,6 +117,14 @@ export const EK_QUELLEN = { teilen: "📲 geteilt", druck: "🖨️ aus der Druc
 // 📝 0.52.0 Leihvertrag-Formular
 export const LV_STATUS = { entwurf: "✏️ Entwurf", wartet: "✍️ wartet auf Unterschrift", unterschrieben: "✅ unterschrieben", beendet: "↩️ zurückgegeben" };
 export const LV_VERWALTER = ["admin", "leitung", "vorstand", "instrumentenwart"];
+// 🚪 0.66.0 Kündigung in vier Varianten (Wunsch Hansi): alles · als Ehemalige/r bleiben · Teilbereiche · pausieren
+export const KUENDIGUNG_ARTEN = { alles: "🚪 Alles kündigen", ehemalig: "🎓 Als Ehemalige/r bleiben", teil: "🧩 Nur einen Teil", pause: "💤 Pausieren" };
+export const KUENDIGUNG_BEREICHE = { gruppe: "🎻 Gruppe/Orchester verlassen", foerderverein: "💛 Förderverein-Mitgliedschaft", mitteilungen: "🔕 E-Mails und Push abbestellen (nur noch in der App)", fotos: "📷 Foto-Einwilligungen widerrufen" };
+export const KUENDIGUNG_STATUS = { eingegangen: "📮 eingegangen", bestaetigt: "✅ bestätigt", vollzogen: "🏁 wirksam", zurueckgenommen: "↩️ zurückgenommen", beendet: "▶️ Pause beendet" };
+export const KUENDIGUNG_WEGE = { app: "📱 in der App", papier: "📄 auf Papier", mail: "✉️ per E-Mail", muendlich: "🗣️ mündlich" };
+export const KUENDIGUNG_VERWALTER = ["admin", "leitung", "vorstand"];
+export const KUENDIGUNG_NACHWEIS_JAHRE = 3; // so lange bleibt der Nachweis (Tabelle kuendigungen) nach dem Wirksam-Datum
+export const kuendigungOffen = (k) => !!k && !k.geloescht_am && ["eingegangen", "bestaetigt"].includes(k.status);
 export const LV_ROLLEN = { mitglied: "Mitglied (Entleiher/in)", eltern: "Erziehungsberechtigte/r", bachkreis: "für den Bachkreis" };
 export const LV_KLAUSEL = `1. Das Instrument und das Zubehör bleiben Eigentum des Bachkreises (bzw. seines Fördervereins) und werden nur für das Musizieren im Bachkreis und den Unterricht überlassen.
 2. Instrument und Zubehör sind pfleglich zu behandeln: trocken lagern, nicht in die Nähe von Heizung oder Sonne, nicht im Auto liegen lassen, nach dem Spielen reinigen.
@@ -374,6 +382,7 @@ export const TABELLEN = {
       { k: "typ", t: "Art", typ: "wahl", werte: PERSONEN_TYPEN, pflicht: true },
       { k: "status", t: "Status", typ: "wahl", werte: { aktiv: "aktiv", pausiert: "pausiert", gast: "Gast/Aushilfe", ausgetreten: "ausgetreten" } },
       { k: "ausgetreten_am", t: "ausgetreten am (Löschfrist beginnt)", typ: "datum" },
+      { k: "pause_bis", t: "pausiert bis (danach wieder aktiv)", typ: "datum" }, // 💤 0.66.0
       { k: "fz_vorgelegt_am", t: "erweitertes Führungszeugnis eingesehen am (nur Datum, kein Inhalt)", typ: "datum", geschuetzt: true, nur: (z) => !["schueler"].includes(z.typ) },
       { k: "jahrgang", t: "Jahrgangsstufe", typ: "zahl", nur: (z) => z.typ === "schueler" },
       { k: "schule", t: "Schule", typ: "text", nur: (z) => z.typ === "schueler" },
@@ -907,6 +916,27 @@ export const TABELLEN = {
   },
   // 📝 0.52.0 Leihvertrag als Formular: mehrere Instrumente + Zubehör, Anschrift/Geburtsdatum zum Zeitpunkt des Vertrags, Schadensklausel,
   // Unterschriften von Mitglied, Erziehungsberechtigten (bei Minderjährigen) und Bachkreis – mit dem Finger, vor Ort oder jede/r auf dem eigenen Gerät
+  // 🚪 0.66.0 Kündigungen: Nachweis (wer, was, zum, Unterschrift, bestätigt von) – bleibt nach dem Wirksam-Datum KUENDIGUNG_NACHWEIS_JAHRE Jahre.
+  // Lesen: die Person selbst, ihre Eltern, Leitung/Vorstand (Server-Regel). Wirksam macht die Wartung (Server) bzw. „Jetzt wirksam machen“.
+  kuendigungen: {
+    titel: "Kündigungen", sym: "📮", gruppe: "Verwaltung", lesen: KUENDIGUNG_VERWALTER, schreiben: [],
+    felder: [
+      { k: "az", t: "Aktenzeichen", typ: "text" },
+      { k: "person_id", t: "Wer", typ: "ref", ref: "personen", pflicht: true },
+      { k: "art", t: "Was", typ: "wahl", werte: KUENDIGUNG_ARTEN, pflicht: true },
+      { k: "bereiche", t: "Teilbereiche", typ: "liste", werte: KUENDIGUNG_BEREICHE },
+      { k: "gruppe_ids", t: "Gruppen verlassen", typ: "refs", ref: "gruppen" },
+      { k: "zum", t: "wirksam zum", typ: "datum", pflicht: true },
+      { k: "bis", t: "Pause bis", typ: "datum" },
+      { k: "grund", t: "Grund (freiwillig)", typ: "text" },
+      { k: "weg", t: "eingegangen", typ: "wahl", werte: KUENDIGUNG_WEGE },
+      { k: "status", t: "Status", typ: "wahl", werte: KUENDIGUNG_STATUS },
+      { k: "offen", t: "Noch zurückzugeben / offen", typ: "lang" },
+      { k: "notiz", t: "Notiz der Leitung", typ: "lang", vermerk: true },
+    ],
+    intern: [{ k: "unterschrift", typ: "json" }, { k: "eingereicht_von", typ: "text" }, { k: "eingereicht_am", typ: "zeit" }, { k: "bestaetigt_von", typ: "text" }, { k: "bestaetigt_am", typ: "zeit" }, { k: "vollzogen_am", typ: "zeit" }],
+    liste: ["az", "person_id", "art", "zum", "status"],
+  },
   leihvertraege: {
     titel: "Leihverträge", sym: "📝", gruppe: "Instrumente", lesen: [], schreiben: [],
     felder: [

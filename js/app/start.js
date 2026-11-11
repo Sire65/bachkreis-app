@@ -119,6 +119,7 @@ export const KACHELN = {
     { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin"), abs: "mitglieder" },
     { id: "zustimmungen", sym: "✅", t: "Zustimmungen", u: "Wer hat Datenschutz & Regeln bestätigt?", v: "zustimmungen", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "mitglieder" },
     { id: "ausweispruefen", sym: "🔍", t: "Ausweis prüfen", u: "QR scannen · Abendkasse, Abfahrt, Ausgabe", v: "ausweispruefen", nur: () => hatRolle("admin", "leitung", "lehrkraft", "vorstand"), abs: "mitglieder" },
+    { id: "kuendigungen", sym: "📮", t: "Kündigungen", u: "Eingang · bestätigen · Schreiben · 🗄️ Archiv", v: "kuendigungen", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "mitglieder", zahl: () => liste("kuendigungen", (k) => k.status === "eingegangen" && !k.geloescht_am).length },
     { id: "zugang", sym: "🛡️", t: "Zugang im Blick", u: "💾 Speicher · Anmeldeversuche · 📲 Installiert?", v: "zugang", nur: () => istLeitung(), abs: "mitglieder" },
     { id: "instrumente", sym: "🎻", t: "Instrumente", u: "Inventar · Verleih · Reparatur", v: "instrumente", nur: () => istVerwalter(), zahl: () => liste("reparaturen", (r) => r.status === "gemeldet" || r.status === "angebot").length, abs: "instrumente" },
     { id: "leihvertraege", sym: "📝", t: "Leihverträge", u: "Instrumente leihen · unterschreiben · drucken", v: "leihvertraege", nur: () => lvChef(), zahl: () => meineOffenenUnterschriften() || liste("leihvertraege", (v) => v.status === "wartet").length, abs: "instrumente" },
@@ -129,7 +130,6 @@ export const KACHELN = {
     { id: "partner", sym: "🤝", t: "Partner & Kontakte", u: "Musikschule · Partnerorchester · Austausch", v: "partner", nur: () => istLehrkraft() || istVorstand(), abs: "verein" },
     { id: "jahresbericht", sym: "📊", t: "Jahresbericht", u: "Das Jahr in Zahlen · für Vorstand & Versammlung", v: "jahresbericht", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "verein" },
     { id: "zahlen", sym: "📊", t: "Bachkreis in Zahlen", u: "Mitglieder · Termine · Zusagen · Übezeit", v: "zahlen", nur: () => istVerwalter(), abs: "verein" },
-    { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "verein" },
     { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter(), abs: "verein" },
   ],
   // 🎈 Entdecken (0.63.0): Freizeit, Spiele, Erinnerungen – für alle
@@ -166,6 +166,7 @@ export const KACHELN = {
     { id: "meingesicht", sym: "🙂", t: "Mein Gesicht", u: "Frisur, Brille, Farben – fürs Orchester", aktion: "meinGesicht" },
     { id: "unterlagen", sym: "📁", t: "Meine Unterlagen", u: "Bescheinigungen · Verträge · Atteste", v: "unterlagen", nur: () => !istSchueler() || hatRolle("admin", "leitung") },
     { id: "meinstatus", sym: "🟢", t: "Mein Status", u: "Verfügbar, Urlaub, krank – mit Hinweis", v: "meinstatus", aktion: "statusOeffnen" },
+    { id: "mitgliedschaft", sym: "🚪", t: "Mitgliedschaft & Kündigung", u: "Pausieren · einen Teil kündigen · austreten", v: "kuendigung" },
     { id: "meinedaten", sym: "🔐", t: "Meine Daten", u: "Was ist über mich gespeichert?", v: "meinedaten" },
     { id: "aenderung", sym: "✏️", t: "Änderung melden", u: "Neue Anschrift, Telefon …", v: "aenderung" },
     { id: "einstellungen", sym: "⚙️", t: "Meine Einstellungen", u: "Benachrichtigung · Schrift · Ansicht", v: "einstellungen" },
@@ -174,6 +175,7 @@ export const KACHELN = {
   technik: [
     { id: "update", sym: "🔄", t: "Update prüfen", u: () => `Installiert: v${APP_VERSION} ${APP_STUFE}`, aktion: "updatePruefen" },
     { id: "installieren", sym: "📲", t: "App installieren", u: "Auf den Startbildschirm – startet schneller", aktion: "installieren" },
+    { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung", nur: () => hatRolle("admin", "leitung", "vorstand") },
     { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
     { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },

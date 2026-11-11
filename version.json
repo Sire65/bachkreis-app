@@ -1,14 +1,23 @@
 {
-  "version": "0.65.0",
+  "version": "0.66.0",
   "datum": "11.11.2026",
   "stufe": "DEV",
   "neu": [
-    "🎓 Einführung beim ersten Start: eine kurze Tour je Rolle (Eltern, Kinder, Leitung) – jederzeit wieder unter Hilfe & Tipps",
-    "🔑 Eigener App-Zugang für Kinder nur mit Ja der Eltern (neue Genehmigung)",
-    "✉️ PC-Verwaltung: Elternbrief mit persönlichem QR-Code und Rückgabe-Abschnitt drucken",
-    "👋 Zugang im Blick: wer sich noch nie angemeldet hat – mit Erinnerung per E-Mail"
+    "🚪 Mitgliedschaft & Kündigung unter Meins: pausieren, einen Teil kündigen, als Ehemalige/r bleiben oder austreten – mit Unterschrift",
+    "✅ Schriftliche Bestätigung im Bachkreis-Kopfbogen (PDF im Eingangskorb und per E-Mail)",
+    "📮 Leitung: Kündigungen bestätigen, Papier/Mail erfassen, Archiv der Ausgetretenen"
   ],
   "verlauf": [
+    {
+      "version": "0.65.0",
+      "datum": "11.11.2026",
+      "neu": [
+        "🎓 Einführung beim ersten Start: eine kurze Tour je Rolle (Eltern, Kinder, Leitung) – jederzeit wieder unter Hilfe & Tipps",
+        "🔑 Eigener App-Zugang für Kinder nur mit Ja der Eltern (neue Genehmigung)",
+        "✉️ PC-Verwaltung: Elternbrief mit persönlichem QR-Code und Rückgabe-Abschnitt drucken",
+        "👋 Zugang im Blick: wer sich noch nie angemeldet hat – mit Erinnerung per E-Mail"
+      ]
+    },
     {
       "version": "0.64.0",
       "datum": "2026-11-11",

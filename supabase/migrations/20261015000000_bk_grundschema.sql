@@ -18,6 +18,7 @@ create table if not exists bk_personen (
   typ text not null check (typ is null or typ in ('schueler', 'eltern', 'leitung', 'lehrkraft', 'foerderverein', 'unterstuetzer', 'spender', 'partner', 'dienstleister', 'ehemalig')),
   status text check (status is null or status in ('aktiv', 'pausiert', 'gast', 'ausgetreten')),
   ausgetreten_am date,
+  pause_bis date,
   fz_vorgelegt_am date,
   jahrgang integer,
   schule text,
@@ -840,6 +841,40 @@ revoke all on bk_eingangskorb from public, anon, authenticated;
 grant select, insert, update, delete on bk_eingangskorb to service_role;
 drop trigger if exists bk_eingangskorb_stempel on bk_eingangskorb;
 create trigger bk_eingangskorb_stempel before update on bk_eingangskorb for each row execute function bk_abgleich_stempel();
+
+-- Kündigungen
+create table if not exists bk_kuendigungen (
+  id text primary key default gen_random_uuid()::text,
+  az text,
+  person_id text not null,
+  art text not null check (art is null or art in ('alles', 'ehemalig', 'teil', 'pause')),
+  bereiche text[],
+  gruppe_ids text[],
+  zum date not null,
+  bis date,
+  grund text,
+  weg text check (weg is null or weg in ('app', 'papier', 'mail', 'muendlich')),
+  status text check (status is null or status in ('eingegangen', 'bestaetigt', 'vollzogen', 'zurueckgenommen', 'beendet')),
+  offen text,
+  notiz text,
+  unterschrift jsonb,
+  eingereicht_von text,
+  eingereicht_am timestamptz,
+  bestaetigt_von text,
+  bestaetigt_am timestamptz,
+  vollzogen_am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_kuendigungen_geaendert on bk_kuendigungen (geaendert_am);
+alter table bk_kuendigungen enable row level security;
+revoke all on bk_kuendigungen from public, anon, authenticated;
+grant select, insert, update, delete on bk_kuendigungen to service_role;
+drop trigger if exists bk_kuendigungen_stempel on bk_kuendigungen;
+create trigger bk_kuendigungen_stempel before update on bk_kuendigungen for each row execute function bk_abgleich_stempel();
 
 -- Leihverträge
 create table if not exists bk_leihvertraege (
@@ -2364,6 +2399,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_zusti
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_zustimmungen_fuer_id_fk') then alter table bk_zustimmungen add constraint bk_zustimmungen_fuer_id_fk foreign key (fuer_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_eingangskorb_person_id_fk') then alter table bk_eingangskorb add constraint bk_eingangskorb_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_eingangskorb_von_fk') then alter table bk_eingangskorb add constraint bk_eingangskorb_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_kuendigungen_person_id_fk') then alter table bk_kuendigungen add constraint bk_kuendigungen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_leihvertraege_person_id_fk') then alter table bk_leihvertraege add constraint bk_leihvertraege_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_leihvertraege_eltern_id_fk') then alter table bk_leihvertraege add constraint bk_leihvertraege_eltern_id_fk foreign key (eltern_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_reparaturen_inventar_id_fk') then alter table bk_reparaturen add constraint bk_reparaturen_inventar_id_fk foreign key (inventar_id) references bk_inventar(id) on delete restrict; end if; end $$;

@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.66.0 DEV – 11.11.2026
+🚪 **Kündigung bzw. raus aus der App – in vier Varianten** (Konzept mit Beispielbild abgestimmt, Wunsch Hansi „mit Pausieren“):
+- **👤 Meins → 🚪 Mitgliedschaft & Kündigung:** 💤 **Pausieren** (von–bis, keine Einladungen, danach automatisch wieder aktiv, „Pause verlängern“) · 🧩 **Nur einen Teil** (Gruppe verlassen, Förderverein, E-Mails/Push abbestellen – Notfälle kommen weiter –, Foto-Einwilligungen widerrufen) · 🎓 **Als Ehemalige/r bleiben** (Orchester verlassen, Ehemaligen-Gruppe) · 🚪 **Alles kündigen** (sofort, Monatsende, Schuljahresende oder Datum; Förderverein als eigener Haken)
+- **Drei Schritte:** was/für wen/zum → **„Das passiert“** (was mit den Daten geschieht, was noch zurück muss: Leihinstrument, Noten, Schlüssel) → **mit dem Finger unterschreiben**. Kinder unter 18 kündigen über die Eltern. Eingangsbestätigung sofort; **zurücknehmen** bis zum Datum
+- **📮 Kündigungen** (Leitung → 👥 Mitglieder, Leitung/Vorstand): Eingang · Bestätigt · Alle · 🗄️ **Archiv** (Ausgetretene mit Löschdatum); **＋ Papier/Mail** erfassen; **✅ Bestätigen** mit „noch zurückzugeben“ → **Bestätigungsschreiben im Bachkreis-Kopfbogen** mit Aktenzeichen und Datenteil – als PDF in den 📥 Eingangskorb (bei Kindern an die Eltern) und als E-Mail; **🏁 Jetzt wirksam**
+- **Wirksam am Datum** macht der Server (Wartung): bei „alles“ Status ausgetreten, Zugang gesperrt, alle Geräte abgemeldet, Push aus, Gesundheitsangaben und Übe-Aufnahmen gelöscht, Gruppen beendet. Kontaktdaten folgen der Löschfrist (24 Monate, dann anonymisiert); **Kündigungs-Nachweis 3 Jahre**
+- Neue Tabelle `kuendigungen` und Feld `pause_bis` (Migration `20261127000000_bk_kuendigungen.sql`, mit Rechten nur für service_role); Pausierte bekommen keine Termin-Einladungen
+- „So nutzen wir die App“ steht jetzt unter ⚙️ Technik (das Leitungs-Register bleibt bei höchstens 25 Kacheln)
+
 ## 0.65.0 DEV – 11.11.2026
 🎓 **Wie alle die App bekommen** – Einführung, Elternbrief und Zugänge (Konzept mit Beispielbild abgestimmt, Wunsch Hansi):
 - **Einführung beim ersten Start:** nach der Zustimmung „👋 Willkommen – darf ich dir die App in 1 Minute zeigen?“ (Später / ▶ Los geht's). Danach wird Schritt für Schritt das **echte** Element hell hervorgehoben – eigene Tour für **Eltern** (Bitte erledigen, Kind wählen, Termine, Krank/Status, Genehmigungen, Nachrichten, Ausweis), **Kinder** (Termine, Üben, Quiz, SOS) und **Leitung/alle anderen** (Kopf-Knopf, Status, Register, Termine, Nachrichten, Ausweis, Hilfe). Zum Schluss: 📲 auf den Startbildschirm (mit iPhone-Anleitung), 🔔 Mitteilungen erlauben, „Wie viel Hilfe?“. Automatisch nur im Echtbetrieb und einmal je Gerät; jederzeit unter ❓ Hilfe & Tipps → „🎓 Einführung starten“

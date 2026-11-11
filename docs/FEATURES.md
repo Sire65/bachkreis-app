@@ -168,6 +168,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F158 | 🔑 Eigener App-Zugang für Kinder nur mit Ja der Eltern (Genehmigung, Spalte Eltern-Ja) | ✅ | einfuehrung.test |
 | BK-F159 | ✉️ Elternbrief mit QR, Datenschutz kurz und Rückgabe-Abschnitt · 🔄 neue Codes für nie Angemeldete | ✅ | einfuehrung.test |
 | BK-F160 | 👋 Wer fehlt noch? Erinnerung per E-Mail und Liste drucken | ✅ | einfuehrung.test |
+| BK-F161 | 🚪 Kündigung in vier Varianten (alles · Ehemalige · Teil · Pause) mit Unterschrift, Vorschau „Das passiert“, Zurücknehmen | ✅ | kuendigung.test |
+| BK-F162 | ✅ Bestätigungsschreiben im Kopfbogen (PDF Eingangskorb + E-Mail) · 📮 Leitung: Eingang, Papier/Mail, Archiv | ✅ | kuendigung.test |
+| BK-F163 | 🏁 Server macht Kündigungen am Datum wirksam, beendet Pausen, löscht Nachweise nach 3 Jahren | ✅ | kuendigung.test |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

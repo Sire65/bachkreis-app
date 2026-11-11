@@ -9,6 +9,7 @@
 //                Zero-Cost), senden, bei Störung Anbieterwechsel, Wiederholung mit Backoff, „aufgegeben“, Rückfall-Kanal
 //  wartung()   = jede Minute: hängende Aufträge lösen, zustellen, Eskalationen, Anbieter-Zustand, Aufräumen
 //  quittung()  = angezeigt / geöffnet / bestätigt (Service Worker bzw. App)
+import { kuendigungenWartung } from "../kuendigung.js";
 import { TABELLEN, KOM_EREIGNISSE } from "../schema.js";
 import { sha256, zufallsToken } from "../krypto.js";
 
@@ -147,7 +148,7 @@ export async function annehmen(db, auftrag) {
   for (const { id, fuer } of empf) {
     const p = pers.get(id);
     if (p.status === "ausgetreten") { await unterdruecken(p, kanaele[0], "AUSGETRETEN"); continue; }
-    const pref = p.benachrichtigung?.[ereignis];
+    const pref = p.benachrichtigung?.[ereignis] ?? p.benachrichtigung?.["*"]; // 🔕 0.66.0 „*“ = alle Ereignisse (Kündigung: nur noch in der App)
     const kp = kritisch || !Array.isArray(pref) ? kanaele : kanaele.filter((k) => pref.includes(k));
     if (!kp.length) { await unterdruecken(p, kanaele[0], "VORLIEBE"); continue; }
     const erreichbar = (k) => k === "app" || (k === "push" && mitAbo.has(p.id)) || (k === "mail" && !!p.email);
@@ -388,6 +389,9 @@ export async function wartung(db, adapter, umg = {}) {
     await db.q(`update bk_dateien set inhalt = null, geloescht_am = now() where geloescht_am is null and id = any($1::text[])`, [ua.map((x) => String(x.aufnahme).replace(/^datei:/, ""))]);
   }
   if (ua.length) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${ua.length} abgelaufene Übe-Aufnahmen gelöscht` });
+  // 🚪 0.66.0 Kündigungen wirksam machen, Pausen beenden, alte Nachweise löschen
+  let kue = null;
+  try { kue = await kuendigungenWartung(db); if (kue.vollzogen || kue.pausenEnde || kue.nachweiseGeloescht) await protokoll(db, { art: "wartung", code: "KUENDIGUNG", text: `${kue.vollzogen} Kündigungen wirksam · ${kue.pausenEnde} Pausen beendet · ${kue.nachweiseGeloescht} alte Nachweise gelöscht` }); } catch (e) { console.error("kuendigungen", e); }
   await db.q(`delete from bk_kom_ereignisse where zeit < now() - interval '90 days'`);
   // 📞 0.50.0 Vermittlungs-Zeilen von Anrufen/Rundem Tisch nach 2 Tagen löschen (enthalten nur Technik, keine Inhalte)
   try { await db.q(`delete from bk_anrufe where beginn < now() - interval '2 days'`); } catch {}
@@ -406,7 +410,7 @@ export async function wartung(db, adapter, umg = {}) {
     if (ae.length > 1000) await protokoll(db, { art: "wartung", code: "LOESCHFRIST", text: `${ae.length} alte Einträge im Änderungsprotokoll gelöscht (älter als ${m} Monate)` }); }
   await db.q(`delete from bk_versand where zeit < now() - interval '365 days' and status <> all($1::text[])`, [OFFEN]);
   if (h.length) await protokoll(db, { art: "wartung", code: "HAENGER", text: `${h.length} hängende Aufträge erneut eingeplant` });
-  return { haenger: h.length, zustellung: z, eskaliert, nachEskalation: z2, geloescht: gs.length };
+  return { haenger: h.length, zustellung: z, eskaliert, nachEskalation: z2, geloescht: gs.length, kuendigungen: kue };
 }
 
 // ---------- Quittungen ----------

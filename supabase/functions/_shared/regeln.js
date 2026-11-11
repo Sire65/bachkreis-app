@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -125,6 +125,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "kartenreservierungen": return hatRolle(ctx, KARTEN_ROLLEN); // 🎟️ 0.56.0 Besucherdaten nur für Leitung/Vorstand
     case "zustimmungen": return ctx.meine.has(z.fuer_id) || z.person_id === ctx.ich || hatRolle(ctx, ZUSTIMMUNG_NACHWEIS); // ⚖️ 0.55.0
     case "eingangskorb": return ctx.meine.has(z.person_id) || z.von === ctx.ich; // 📥 0.53.0 privat: Person, Eltern, wer es hineingelegt hat
+    case "kuendigungen": return ctx.meine.has(z.person_id) || z.eingereicht_von === ctx.ich; // 🚪 0.66.0 eigene/Kinder (Leitung/Vorstand lesen alle)
     case "leihvertraege": return ctx.meine.has(z.person_id) || hatRolle(ctx, LV_VERWALTER); // 📝 0.52.0 eigene/Kinder + Instrumentenverwaltung
     case "reparaturen": return z.gemeldet_von === ctx.ich || ctx.inventar.has(z.inventar_id);
     case "termine": return ctx.termine.has(z.id);
@@ -679,6 +680,50 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "nr", "eltern_id", "anschrift", "geburtsdatum", "eltern_name", "eltern_anschrift", "telefon", "zubehoer_frei", "von", "bis", "kaution", "gebuehr", "versicherung", "klausel", "hinweis", "geloescht_am"]),
         person_id: pid, inventar_ids: ids("inventar_ids"), ausstattung_ids: ids("ausstattung_ids"), zubehoer: (Array.isArray(neu.zubehoer ?? alt?.zubehoer) ? neu.zubehoer ?? alt.zubehoer : []).filter((z) => LEIH_ZUBEHOER[z]),
         unterschriften, status: LV_STATUS[status] ? status : "entwurf" } };
+    }
+    case "kuendigungen": {
+      // 🚪 0.66.0 Kündigung: einreichen für sich (volljährig) oder die eigenen Kinder – mit Unterschrift; Leitung/Vorstand trägt Papier/Mail ein und bestätigt.
+      // Zurücknehmen bis zum Wirksam-Datum: Person, Eltern, wer eingereicht hat, Leitung. Wirksam macht nur der Server (Wartung / Aktion kuendigung_vollziehen).
+      const chef = hatRolle(ctx, KUENDIGUNG_VERWALTER), pid = alt?.person_id || neu.person_id, heute = jetzt.slice(0, 10);
+      const person = (ctx.personen || []).find((x) => x.id === pid); if (!person) return { ok: false, grund: "UNBEKANNT" };
+      const datum = (d) => (/^\d{4}-\d{2}-\d{2}$/.test(String(d || "")) ? String(d) : null);
+      if (alt) {
+        if (neu.geloescht_am) return chef ? { ok: true, zeile: { ...alt, geloescht_am: jetzt } } : { ok: false, grund: "NUR_LEITUNG" };
+        if (!["eingegangen", "bestaetigt"].includes(alt.status)) return { ok: false, grund: "ABGESCHLOSSEN" };
+        if (neu.status === "zurueckgenommen") {
+          if (!(chef || ctx.meine.has(pid) || alt.eingereicht_von === ctx.ich)) return { ok: false, grund: "NICHT_DEINE_KUENDIGUNG" };
+          return { ok: true, zeile: { ...alt, status: "zurueckgenommen" } };
+        }
+        if (!chef) return { ok: false, grund: "NUR_LEITUNG" };
+        const zum = datum(neu.zum) || alt.zum, bis = alt.art === "pause" ? datum(neu.bis) || alt.bis : null;
+        if (bis && bis <= zum) return { ok: false, grund: "PAUSE_ENDE" };
+        const best = neu.status === "bestaetigt" && alt.status !== "bestaetigt";
+        return { ok: true, zeile: { ...alt, zum, bis, offen: neu.offen !== undefined ? String(neu.offen || "").slice(0, 2000) : alt.offen, notiz: neu.notiz !== undefined ? String(neu.notiz || "").slice(0, 2000) : alt.notiz,
+          status: best ? "bestaetigt" : alt.status, ...(best ? { bestaetigt_von: ctx.ich, bestaetigt_am: jetzt } : {}) } };
+      }
+      const eigen = pid === ctx.ich;
+      if (!chef && !eigen && !ctx.kinder.has(pid)) return { ok: false, grund: "NICHT_DEINE_KUENDIGUNG" };
+      if (!chef && eigen && person.typ === "schueler" && istMinderjaehrig(person)) return { ok: false, grund: "NUR_ELTERN" }; // Kinder unter 18 kündigen über die Eltern
+      const art = KUENDIGUNG_ARTEN[neu.art] ? neu.art : null; if (!art) return { ok: false, grund: "ART_UNGUELTIG" };
+      if (art === "ehemalig" && person.typ !== "schueler") return { ok: false, grund: "NUR_SCHUELER" };
+      const zum = datum(neu.zum); if (!zum || (!chef && zum < heute)) return { ok: false, grund: "DATUM_UNGUELTIG" };
+      const bis = art === "pause" ? datum(neu.bis) : null; if (art === "pause" && (!bis || bis <= zum)) return { ok: false, grund: "PAUSE_ENDE" };
+      const bereiche = [...new Set(Array.isArray(neu.bereiche) ? neu.bereiche : [])].filter((b) => KUENDIGUNG_BEREICHE[b] && (art === "teil" || (art === "alles" && b === "foerderverein")));
+      if (art === "teil" && !bereiche.length) return { ok: false, grund: "BEREICH_FEHLT" };
+      const gruppe_ids = bereiche.includes("gruppe") ? [...new Set((Array.isArray(neu.gruppe_ids) ? neu.gruppe_ids : []).map(String))].slice(0, 20) : [];
+      if (bereiche.includes("gruppe") && !gruppe_ids.length) return { ok: false, grund: "GRUPPE_FEHLT" };
+      const u = neu.unterschrift, bildOk = (b) => typeof b === "string" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(b) && b.length < 150000;
+      let unterschrift = null;
+      if (u || !chef) {
+        const nameU = String(u?.name || "").trim().slice(0, 80);
+        if (!u || !bildOk(u.bild) || !nameU) return { ok: false, grund: "UNTERSCHRIFT_FEHLT" };
+        unterschrift = { name: nameU, bild: u.bild, zeit: jetzt, von: ctx.ich };
+      }
+      const id = String(neu.id || "").slice(0, 80) || undefined;
+      const az = `K-${heute.slice(0, 4)}-${String(id || jetzt).replace(/[^A-Za-z0-9]/g, "").slice(-5).toUpperCase()}`;
+      return { ok: true, zeile: { id, az, person_id: pid, art, bereiche, gruppe_ids, zum, bis, grund: String(neu.grund || "").trim().slice(0, 300) || null,
+        weg: chef ? (KUENDIGUNG_WEGE[neu.weg] ? neu.weg : "papier") : "app", status: "eingegangen", offen: chef ? String(neu.offen || "").slice(0, 2000) || null : null,
+        notiz: chef ? String(neu.notiz || "").slice(0, 2000) || null : null, unterschrift, eingereicht_von: ctx.ich, eingereicht_am: jetzt } };
     }
     case "geheimschluessel": {
       // 🔑 0.51.0 jeder pflegt nur seinen eigenen öffentlichen Schlüssel (Zeile = Person); nur EC P-256, nur öffentliche Teile

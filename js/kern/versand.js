@@ -18,7 +18,7 @@ export function regelVon(ereignis) {
   return r.find((x) => x.ereignis === ereignis) || r.find((x) => x.ereignis === "standard") || null;
 }
 export function wahlVon(person, ereignis) {
-  return person?.benachrichtigung?.[ereignis] || regelVon(ereignis)?.kanaele || ["push", "app"];
+  return person?.benachrichtigung?.[ereignis] || person?.benachrichtigung?.["*"] || regelVon(ereignis)?.kanaele || ["push", "app"];
 }
 
 // Sendet an eine Liste von Personen. Rückgabe: Zusammenfassung je Kanal.
@@ -62,7 +62,7 @@ function demoRouter({ an, betreff, text, ereignis, kanaele, korrelation, priorit
   const out = [];
   for (const id of new Set(ziel)) {
     const p = hole("personen", id); if (!p) continue;
-    const pref = p.benachrichtigung?.[ereignis];
+    const pref = p.benachrichtigung?.[ereignis] ?? p.benachrichtigung?.["*"]; // 🔕 0.66.0 „*“ = alle Ereignisse (Kündigung: nur noch in der App)
     const kp = prio === "kritisch" || !Array.isArray(pref) ? basisK : basisK.filter((k) => pref.includes(k));
     const verf = kp.filter((k) => k !== "mail" || p.email);
     const basis = { zeit: jetzt, an_id: id, betreff, info: text, ereignis, programm: programm?.schluessel || null, prioritaet: prio, korrelation, versuche: 0 };

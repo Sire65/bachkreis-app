@@ -429,6 +429,16 @@ export function erzeugeDemodaten(heute = new Date()) {
   // 🔑 0.65.0 eigener App-Zugang: fest (ohne Zufall, damit die übrigen Demodaten gleich bleiben) – 7 von 10 Ja, 1 Nein, 2 offen
   [...kinderA, ...mitglieder("g-b")].forEach((kid, i) => { const st = i % 10 < 7 ? "erteilt" : i % 10 === 7 ? "abgelehnt" : "ausstehend";
     d.genehmigungen.push({ id: `ge-z${i}`, vorlage_id: "gv-zugang", kind_id: kid, frist: isoTag(tag(jetzt, 14)), status: st, ...(st !== "ausstehend" ? { beantwortet_am: iso(tag(jetzt, -3 - (i % 5), 19)), beantwortet_von: d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || null, vorlage_version: 1 } : {}) }); });
+  // 🚪 0.66.0 Kündigungen (fest, ohne Zufall): eine eingegangen (Schuljahresende), eine bestätigte Pause, eine wirksame (Ehemalige), eine zurückgenommen
+  { const frei = mitglieder("g-b").filter((k) => k !== demoSchueler?.id && k !== demoKindB?.id), elt = (kid) => d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || "p-leitung";
+    const sj = new Date(jetzt).getMonth() >= 7 ? new Date(jetzt).getFullYear() + 1 : new Date(jetzt).getFullYear(), u = (pid) => ({ name: (d.personen.find((p) => p.id === pid) || {}).vorname || "Eltern", bild: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAAEklEQVR4nGP4//8/AzJmQBcAAKKNF+lb9uFKAAAAAElFTkSuQmCC", zeit: iso(tag(jetzt, -2, 20)), von: pid });
+    const ehem = d.personen.find((p) => p.typ === "ehemalig");
+    d.kuendigungen = [
+      frei[0] && { id: "kue-1", az: `K-${new Date(jetzt).getFullYear()}-0001`, person_id: frei[0], art: "alles", bereiche: [], gruppe_ids: [], zum: `${sj}-07-31`, grund: "Umzug nach Hamburg", weg: "app", status: "eingegangen", unterschrift: u(elt(frei[0])), eingereicht_von: elt(frei[0]), eingereicht_am: iso(tag(jetzt, -2, 20)) },
+      frei[1] && { id: "kue-2", az: `K-${new Date(jetzt).getFullYear()}-0002`, person_id: frei[1], art: "pause", bereiche: [], gruppe_ids: [], zum: isoTag(tag(jetzt, 10)), bis: isoTag(tag(jetzt, 130)), grund: "Auslandsjahr", weg: "papier", status: "bestaetigt", offen: "", eingereicht_von: "p-leitung", eingereicht_am: iso(tag(jetzt, -6, 18)), bestaetigt_von: "p-leitung", bestaetigt_am: iso(tag(jetzt, -5, 9)) },
+      ehem && { id: "kue-3", az: `K-${new Date(jetzt).getFullYear()}-0003`, person_id: ehem.id, art: "ehemalig", bereiche: [], gruppe_ids: [], zum: isoTag(tag(jetzt, -60)), weg: "app", status: "vollzogen", unterschrift: u(ehem.id), eingereicht_von: ehem.id, eingereicht_am: iso(tag(jetzt, -75, 19)), bestaetigt_von: "p-leitung", bestaetigt_am: iso(tag(jetzt, -74, 10)), vollzogen_am: iso(tag(jetzt, -60, 0, 5)) },
+      frei[2] && { id: "kue-4", az: `K-${new Date(jetzt).getFullYear()}-0004`, person_id: frei[2], art: "teil", bereiche: ["mitteilungen"], gruppe_ids: [], zum: isoTag(tag(jetzt, -20)), weg: "app", status: "zurueckgenommen", unterschrift: u(elt(frei[2])), eingereicht_von: elt(frei[2]), eingereicht_am: iso(tag(jetzt, -22, 21)) },
+    ].filter(Boolean); }
   // 🎙️ Übe-Aufnahmen (0.26.0): etwa zwei Drittel erteilt (fest, ohne Zufall – die übrigen Demodaten bleiben gleich)
   [...kinderA, ...mitglieder("g-b")].forEach((kid, i) => {
     const ja = kid === demoSchueler?.id || kid === demoKindB?.id || i % 3 !== 2;

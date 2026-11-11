@@ -509,3 +509,21 @@ body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau lieg
 .ef-liste { padding-left: 2px; list-style: none; margin: 4px 0 10px; } .ef-liste li { margin: 8px 0; line-height: 1.45; }
 .ef-stufen { display: flex; flex-direction: column; gap: 6px; }
 @media (prefers-reduced-motion: reduce) { .ef-spot { transition: none; } }
+
+/* 🚪 0.66.0 Mitgliedschaft & Kündigung */
+.ku-arten { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ku-art { text-align: left; background: var(--karte, #fff); border: 2px solid var(--linie, #e5dcc0); border-left-width: 6px; border-radius: 14px; padding: 10px 12px; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.ku-art small { color: var(--leise, #6b6250); } .ku-art.an { border-color: #f2b705; box-shadow: 0 0 0 2px #f2b705 inset; }
+.ku-pause { border-left-color: #2e7d32; } .ku-teil { border-left-color: #1e88e5; } .ku-ehemalig { border-left-color: #8a6400; } .ku-alles { border-left-color: #c62828; }
+.ku-schritte { display: flex; gap: 6px; margin: 4px 0 10px; } .ku-schritte i { flex: 1; height: 6px; border-radius: 3px; background: var(--linie, #ddd); } .ku-schritte i.an { background: #f2b705; }
+.ku-folgen li { align-items: center; } .ku-folgen small { color: var(--leise, #6b6250); text-align: right; max-width: 48%; }
+.ku-offen { border-left: 5px solid #e0a800; } .ku-hinweis { border-left: 5px solid #2e7d32; }
+.ku-daten { padding-left: 18px; margin: 0; line-height: 1.5; }
+.knopf.ku-rot { background: #c62828; color: #fff; border-color: #c62828; }
+.ku-knoepfe { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+.ku-gruppen { padding-left: 22px; }
+.ku-brief .ku-an { margin: -10px 0 18px; line-height: 1.4; } .ku-brief h1 small { font-weight: 400; color: #666; font-size: 12px; }
+.ku-tabelle { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 12.5px; } .ku-tabelle th, .ku-tabelle td { text-align: left; vertical-align: top; border-bottom: 1px solid #e3e3e3; padding: 4px 6px; } .ku-tabelle th { width: 38%; }
+.ku-gez { margin-top: 22px; }
+@media (max-width: 380px) { .ku-arten { grid-template-columns: 1fr; } }
+.ku-liste > li { flex-wrap: wrap; } .ku-liste > li > .fl { flex: 1 1 100%; } .ku-liste > li > .ku-knoepfe { flex: 1; }

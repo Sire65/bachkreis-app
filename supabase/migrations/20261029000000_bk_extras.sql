@@ -8,6 +8,7 @@ create table if not exists bk_personen (
   typ text not null check (typ is null or typ in ('schueler', 'eltern', 'leitung', 'lehrkraft', 'foerderverein', 'unterstuetzer', 'spender', 'partner', 'dienstleister', 'ehemalig')),
   status text check (status is null or status in ('aktiv', 'pausiert', 'gast', 'ausgetreten')),
   ausgetreten_am date,
+  pause_bis date,
   fz_vorgelegt_am date,
   jahrgang integer,
   schule text,
@@ -52,6 +53,7 @@ alter table bk_personen add column if not exists status text;
 alter table bk_personen drop constraint if exists bk_personen_status_check;
 alter table bk_personen add constraint bk_personen_status_check check (status is null or status in ('aktiv', 'pausiert', 'gast', 'ausgetreten'));
 alter table bk_personen add column if not exists ausgetreten_am date;
+alter table bk_personen add column if not exists pause_bis date;
 alter table bk_personen add column if not exists fz_vorgelegt_am date;
 alter table bk_personen add column if not exists jahrgang integer;
 alter table bk_personen add column if not exists schule text;

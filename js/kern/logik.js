@@ -1,6 +1,6 @@
 // Fachlogik ohne Oberfläche – rein, testbar (tests/logik.test.mjs). Bekommt einen Datenzugriff „db“ mit
 // liste(tab, filter), hole(tab, id), konfig(). Dieselben Regeln gelten später serverseitig.
-import { AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG, FOTO_ZWECKE, elternZugriff, TABELLEN, TABELLEN_NAMEN } from "./schema.js";
+import { KUENDIGUNG_ARTEN, AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG, FOTO_ZWECKE, elternZugriff, TABELLEN, TABELLEN_NAMEN } from "./schema.js";
 
 export const tagIso = (d) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
 const imZeitraum = (z, tag) => (!z.von || z.von <= tag) && (!z.bis || z.bis >= tag);
@@ -67,7 +67,7 @@ export function eingeladene(db, termin) {
   const kandidaten = new Set(db.liste("gruppe_zuordnung", (z) => termin.fuer_alle || (termin.gruppen || []).includes(z.gruppe_id)).map((z) => z.person_id));
   return [...kandidaten].filter((p) => {
     const person = db.hole("personen", p);
-    return person && person.status !== "ausgetreten" && eingeladen(db, termin, p);
+    return person && person.status !== "ausgetreten" && person.status !== "pausiert" && eingeladen(db, termin, p); // 💤 0.66.0 pausiert: keine Einladungen
   });
 }
 // ❗ erforderlich · 🙂 erwünscht · ℹ️ nur zur Info – ohne Angabe: Pflicht-Terminart → erforderlich, sonst erwünscht
@@ -501,6 +501,80 @@ export function loeschKandidaten(db, { monate = 24, heute = new Date() } = {}) {
 // Anonymisieren statt löschen: Statistik (Anwesenheit, Ausleih-Verlauf) bleibt, die Person ist nicht mehr erkennbar
 export const ANONYM_LEEREN = ["email", "mobil", "telefon", "strasse", "plz", "ort", "geburtsdatum", "notfall_info", "notiz", "schule", "avatar", "freigaben", "benachrichtigung", "uebe_plan"];
 export const ANONYM_LOESCHEN = ["gesundheit", "uebungen", "eigene_termine", "eltern_kind", "klopfen", "reise_anmeldungen"];
+
+// ---------- 🚪 0.66.0 Kündigung: was beim Wirksamwerden passiert ----------
+// Reine Funktion – dieselbe in der Vorführung (App) und auf dem Server (Wartung). Liefert die zu schreibenden Zeilen [{ tab, zeile, datei? }].
+// Sofort gelöscht werden nur Dinge, die ohne Mitgliedschaft keinen Zweck mehr haben (Gesundheit, Übe-Aufnahmen); der Rest folgt der Löschfrist.
+export const GESUNDHEIT_LEEREN = ["allergien", "ernaehrung", "medikamente", "erkrankungen", "notfall_name", "notfall_tel", "krankenkasse", "hausarzt"];
+export function kuendigungFolgen(db, k, heute = new Date()) {
+  const p = db.hole("personen", k?.person_id); if (!p || !KUENDIGUNG_ARTEN[k.art]) return [];
+  const jetzt = heute.toISOString(), tag = tagIso(heute), zum = k.zum && k.zum < tag ? k.zum : tag;
+  const m = new Map(), setze = (tab, z, felder, extra = {}) => { // mehrere Änderungen an derselben Zeile zusammenfassen
+    const key = `${tab}:${z.id}`, alt = m.get(key);
+    m.set(key, { ...(alt || {}), ...extra, tab, zeile: { ...(alt?.zeile || z), ...felder } });
+  };
+  const gruppenEnde = (f = () => true) => db.liste("gruppe_zuordnung", (g) => g.person_id === p.id && !g.geloescht_am && (!g.bis || g.bis > zum) && f(g)).forEach((g) => setze("gruppe_zuordnung", g, { bis: zum }));
+  const gesundheitWeg = () => {
+    db.liste("gesundheit", (g) => g.person_id === p.id && !g.geloescht_am).forEach((g) => setze("gesundheit", g, { geloescht_am: jetzt, ...Object.fromEntries(GESUNDHEIT_LEEREN.map((f) => [f, null])) }));
+    db.liste("uebe_ergebnisse", (u) => u.person_id === p.id && u.aufnahme).forEach((u) => setze("uebe_ergebnisse", u, { aufnahme: null, loeschen_am: null }, { datei: u.aufnahme }));
+  };
+  const fvAus = () => db.liste("fv_mitglieder", (f) => f.person_id === p.id && !f.austritt && !f.geloescht_am).forEach((f) => setze("fv_mitglieder", f, { austritt: zum }));
+  const bereiche = new Set(k.bereiche || []);
+  if (k.art === "alles") {
+    setze("personen", p, { status: "ausgetreten", ausgetreten_am: zum, pause_bis: null });
+    db.liste("zugaenge", (z) => z.person_id === p.id && z.aktiv).forEach((z) => setze("zugaenge", z, { aktiv: false }));
+    gruppenEnde(); gesundheitWeg(); if (bereiche.has("foerderverein")) fvAus();
+  } else if (k.art === "ehemalig") {
+    setze("personen", p, { typ: "ehemalig", status: "aktiv", pause_bis: null });
+    gruppenEnde(); gesundheitWeg();
+    const eg = db.liste("gruppen", (g) => g.ehemalige && !g.geloescht_am)[0];
+    if (eg && !db.liste("gruppe_zuordnung", (g) => g.person_id === p.id && g.gruppe_id === eg.id && !g.geloescht_am && (!g.bis || g.bis > zum)).length)
+      setze("gruppe_zuordnung", { id: `kz-${k.id}` }, { person_id: p.id, gruppe_id: eg.id, art: "stamm", von: zum });
+  } else if (k.art === "teil") {
+    if (bereiche.has("gruppe")) gruppenEnde((g) => (k.gruppe_ids || []).includes(g.gruppe_id));
+    if (bereiche.has("foerderverein")) fvAus();
+    if (bereiche.has("mitteilungen")) setze("personen", p, { benachrichtigung: { "*": ["app"] } });
+    if (bereiche.has("fotos")) {
+      setze("personen", p, { foto_ok: false });
+      db.liste("genehmigung_vorlagen", (v) => FOTO_ZWECKE.includes(v.zweck) && !v.geloescht_am).forEach((v) => setze("genehmigungen", { id: `kg-${k.id}-${v.id}` },
+        { vorlage_id: v.id, kind_id: p.id, status: "abgelehnt", beantwortet_am: jetzt, beantwortet_von: k.eingereicht_von || null, vorlage_version: v.fassung || 1 }));
+    }
+  } else if (k.art === "pause") setze("personen", p, { status: "pausiert", pause_bis: k.bis || null });
+  setze("kuendigungen", k, { status: "vollzogen", vollzogen_am: jetzt });
+  return [...m.values()];
+}
+// fällig: bestätigte Kündigungen, deren Datum erreicht ist; Pausen, deren Ende vorbei ist (dann wieder aktiv)
+export const kuendigungenFaellig = (db, heute = new Date()) => db.liste("kuendigungen", (k) => !k.geloescht_am && k.status === "bestaetigt" && k.zum <= tagIso(heute));
+export function pausenEnde(db, heute = new Date()) {
+  const tag = tagIso(heute), out = [];
+  for (const p of db.liste("personen", (x) => x.status === "pausiert" && x.pause_bis && x.pause_bis < tag)) out.push({ tab: "personen", zeile: { ...p, status: "aktiv", pause_bis: null } });
+  for (const k of db.liste("kuendigungen", (x) => !x.geloescht_am && x.art === "pause" && x.status === "vollzogen" && x.bis && x.bis < tag)) out.push({ tab: "kuendigungen", zeile: { ...k, status: "beendet" } });
+  return out;
+}
+// Vorschau „Das passiert“ für Schritt 2 und das Bestätigungsschreiben: [sym, was, wann]
+export function kuendigungVorschau(db, k, { monate = 24 } = {}) {
+  const p = db.hole("personen", k.person_id), z = [];
+  const de = (iso) => (iso ? String(iso).slice(0, 10).split("-").reverse().join(".") : "–");
+  const bis = (d, mon) => { const x = new Date(d || Date.now()); x.setMonth(x.getMonth() + mon); return de(tagIso(x)); };
+  if (k.art === "alles") {
+    z.push(["🔑", "Zugang zur App", `gesperrt ab ${de(k.zum)}`], ["🩺", "Gesundheitsangaben, 🎙️ Übe-Aufnahmen", "sofort gelöscht, wenn wirksam"],
+      ["📇", "Kontakt- und Adressdaten", `gelöscht nach ${monate} Monaten (${bis(k.zum, monate)})`], ["📊", "Anwesenheit, Ausleih-Verlauf", "dann anonymisiert (ohne Namen)"],
+      ["💬", "Gesendete Nachrichten", "bleiben bei den Empfängern"]);
+    if ((k.bereiche || []).includes("foerderverein")) z.push(["💛", "Förderverein", `Austritt zum ${de(k.zum)}; Beitrags-Buchungen 10 Jahre (Steuerrecht)`]);
+  } else if (k.art === "ehemalig") z.push(["🎓", "Ehemaligen-Bereich", "Chat, Konzerte, Chronik, Jahrbuch bleiben"], ["🎻", "Gruppen und Proben", `keine Einladungen mehr ab ${de(k.zum)}`], ["🩺", "Gesundheitsangaben, 🎙️ Übe-Aufnahmen", "gelöscht, wenn wirksam"]);
+  else if (k.art === "teil") for (const b of k.bereiche || []) z.push([b === "gruppe" ? "🎻" : b === "foerderverein" ? "💛" : b === "mitteilungen" ? "🔕" : "📷", { gruppe: `Gruppe verlassen: ${(k.gruppe_ids || []).map((g) => db.hole("gruppen", g)?.name || g).join(", ")}`, foerderverein: "Förderverein", mitteilungen: "E-Mails und Push", fotos: "Foto-Einwilligungen" }[b], { gruppe: `ab ${de(k.zum)}`, foerderverein: `Austritt zum ${de(k.zum)}`, mitteilungen: "nur noch in der App (Notfälle kommen weiter)", fotos: "widerrufen – keine neuen Fotos" }[b]]);
+  else if (k.art === "pause") z.push(["💤", "Pause", `${de(k.zum)} bis ${de(k.bis)}`], ["📅", "Einladungen und Erinnerungen", "ruhen in dieser Zeit"], ["📇", "Daten und Platz", "bleiben – danach automatisch wieder aktiv"]);
+  z.push(["📮", "Dieser Kündigungs-Nachweis", "wird 3 Jahre aufbewahrt"]);
+  return { person: p, zeilen: z };
+}
+// offene Punkte: was noch zurück muss (Leihinstrumente, Ausstattung, Noten-Exemplare, Schlüssel)
+export function kuendigungOffenePunkte(db, pid) {
+  const l = [];
+  for (const a of db.liste("ausleihen", (x) => x.person_id === pid && x.status === "aktiv" && !x.geloescht_am)) { const i = db.hole("inventar", a.inventar_id) || db.hole("ausstattung", a.ausstattung_id); l.push(`🎻 ${i?.inventar_nr || ""} ${i?.bezeichnung || "Leihgegenstand"}`.trim()); }
+  const n = db.liste("notenexemplare", (x) => x.person_id === pid && !x.zurueck_am && !x.geloescht_am).length; if (n) l.push(`🎼 ${n} Noten-Exemplar${n > 1 ? "e" : ""}`);
+  for (const s of db.liste("schluessel", (x) => x.person_id === pid && x.status === "ausgegeben" && !x.geloescht_am)) l.push(`🔑 Schlüssel ${s.nr || ""} ${s.bezeichnung || ""}`.trim());
+  return l;
+}
 
 // ---------- 🛒 Einkauf → Inventar (0.24.0, gemeinsam für App und PC) ----------
 // Instrument (Typ am Titel erkannt) oder Ausstattung (Notenständer, Technik …); Nummer über beide Tabellen eindeutig

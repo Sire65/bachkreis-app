@@ -4,6 +4,7 @@
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
 import assert from "node:assert/strict";
+const vwGeh = (pg, a, x) => pg.evaluate(async ([a, x]) => (await import("/js/kern/ui.js")).AKTIONEN[a](x), [a, x]); // 🧭 0.67.0 Menü ist eingeklappt – direkt aufrufen
 
 const PORT = 8791, B = `http://localhost:${PORT}`;
 const srv = spawn(process.execPath, [new URL("./server-lokal.mjs", import.meta.url).pathname, String(PORT)], { stdio: ["ignore", "pipe", "inherit"] });
@@ -65,13 +66,13 @@ try {
   await v.goto(B + "/verwaltung.html"); await v.waitForSelector("#vwCode");
   await v.fill("#vwCode", info.codes.eltern.code); await v.click('[data-a="vwCodeServer"]'); await v.waitForSelector(".badge.b-rot");
   await v.fill("#vwCode", info.codes.leitung.code); await v.click('[data-a="vwCodeServer"]'); await v.waitForSelector(".vw-seite", { timeout: 20000 });
-  await v.click('[data-a="vwAnsicht"][data-x="zugaenge"]');
+  await vwGeh(v, "vwAnsicht", "zugaenge");
   await v.click('.vw-tabelle tbody tr [data-a="zugNeu"]'); await v.waitForTimeout(500);
   await v.click('[data-a="zugKarten"]');
   const code = await v.$eval(".qr-karte code", (c) => c.textContent);
   await v.waitForTimeout(1500);
   // BK Communicator: Konsole, Test-Mail an mich → Auftrag „gesendet“ über den (Protokoll-)Anbieter
-  await v.click('[data-a="vwAnsicht"][data-x="communicator"]'); await v.waitForSelector(".led");
+  await vwGeh(v, "vwAnsicht", "communicator"); await v.waitForSelector(".led");
   await v.click('[data-a="komTest"][data-x="mail"]');
   await v.waitForFunction(() => [...document.querySelectorAll(".vw-tabelle .badge")].some((b) => b.textContent === "gesendet"), null, { timeout: 15000 });
   const n = await seite();

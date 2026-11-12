@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.67.0 DEV – 12.11.2026
+💻 **PC-Verwaltung aufgeräumt** (Wunsch Hansi „zu viele Menüpunkte, das darf den Bediener nicht erschlagen“ – Konzept mit Beispielbild abgestimmt):
+- Statt rund 110 Menüpunkten (21 Werkzeuge + 90 Tabellen) **sieben Bereiche nach Aufgabe**: 👥 Mitglieder & Familien · 📅 Termine & Projekte · 🎼 Orchester & Noten · 🎻 Instrumente · 💬 Kommunikation · 💛 Verein & Kasse · ⚙️ System – **immer nur einer offen** (Akkordeon), der Bereich der aktuellen Seite öffnet sich von selbst
+- **🏠 Heute zu tun** als Startseite: Karten nur für das, was gerade wartet (Kündigungen, Genehmigungen, nie angemeldet, überfällige Leihinstrumente, Reparatur-Freigaben, Erstattungen, Interessenten, Rückmeldungen, Vorgänge, Termine der Woche) – ein Klick führt hin; darunter „Außerdem im Blick“ und die Bereiche
+- **Rote Zahlen** im Menü nur für Dringendes (Genehmigungen und „nie angemeldet“ stehen nur auf der Startseite)
+- **🙂 Einfach / 🔧 Erweitert**: „Einfach“ zeigt nur die Aufgaben; „Erweitert“ zusätzlich **🗂️ Alle Datentabellen** (eingeklappt, nach Gruppen) – Technisches wie Chat-Einstellungen, Lese-Status, Communicator-Tabellen steht nur dort
+- **🔍 Suche** oben im Menü findet jeden Punkt – auch Tabellen aus „Erweitert“ (Enter öffnet den ersten Treffer, Esc leert)
+- Offener Bereich und Einfach/Erweitert werden je Gerät gemerkt; jede Rolle sieht weiterhin nur ihre Bereiche
+
 ## 0.66.0 DEV – 11.11.2026
 🚪 **Kündigung bzw. raus aus der App – in vier Varianten** (Konzept mit Beispielbild abgestimmt, Wunsch Hansi „mit Pausieren“):
 - **👤 Meins → 🚪 Mitgliedschaft & Kündigung:** 💤 **Pausieren** (von–bis, keine Einladungen, danach automatisch wieder aktiv, „Pause verlängern“) · 🧩 **Nur einen Teil** (Gruppe verlassen, Förderverein, E-Mails/Push abbestellen – Notfälle kommen weiter –, Foto-Einwilligungen widerrufen) · 🎓 **Als Ehemalige/r bleiben** (Orchester verlassen, Ehemaligen-Gruppe) · 🚪 **Alles kündigen** (sofort, Monatsende, Schuljahresende oder Datum; Förderverein als eigener Haken)

@@ -1,13 +1,22 @@
 {
-  "version": "0.66.0",
-  "datum": "11.11.2026",
+  "version": "0.67.0",
+  "datum": "12.11.2026",
   "stufe": "DEV",
   "neu": [
-    "🚪 Mitgliedschaft & Kündigung unter Meins: pausieren, einen Teil kündigen, als Ehemalige/r bleiben oder austreten – mit Unterschrift",
-    "✅ Schriftliche Bestätigung im Bachkreis-Kopfbogen (PDF im Eingangskorb und per E-Mail)",
-    "📮 Leitung: Kündigungen bestätigen, Papier/Mail erfassen, Archiv der Ausgetretenen"
+    "💻 PC-Verwaltung aufgeräumt: 7 Bereiche zum Einklappen statt rund 110 Menüpunkten",
+    "🏠 Startseite „Heute zu tun“: nur, was gerade wartet – ein Klick führt hin",
+    "🔍 Suche im Menü und Schalter Einfach / Erweitert (alle Datentabellen nur in Erweitert)"
   ],
   "verlauf": [
+    {
+      "version": "0.66.0",
+      "datum": "11.11.2026",
+      "neu": [
+        "🚪 Mitgliedschaft & Kündigung unter Meins: pausieren, einen Teil kündigen, als Ehemalige/r bleiben oder austreten – mit Unterschrift",
+        "✅ Schriftliche Bestätigung im Bachkreis-Kopfbogen (PDF im Eingangskorb und per E-Mail)",
+        "📮 Leitung: Kündigungen bestätigen, Papier/Mail erfassen, Archiv der Ausgetretenen"
+      ]
+    },
     {
       "version": "0.65.0",
       "datum": "11.11.2026",

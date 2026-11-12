@@ -66,28 +66,98 @@ const SONDER_BEREICH = { gruppenboard: "Orchester", schuljahr: "Orchester", inve
 const SONDER_RECHT = {}; // Werkzeuge mit eigener Rechte-Prüfung (werkzeuge.js)
 const sonderSichtbar = ([k]) => (!SONDER_RECHT[k] || SONDER_RECHT[k]()) && (k !== "zugaenge" || darf("zugaenge", "lesen")) && (k !== "communicator" || darf("kom_einstellungen", "lesen")) && (!["schuljahr", "gruppenboard"].includes(k) || darf("gruppe_zuordnung", "schreiben"))
   && (k !== "inventarbericht" || darf("ausstattung", "lesen")) && (k !== "anwesenheit" || darf("antworten", "lesen")) && (k !== "datenschutz" || darf("zugaenge", "schreiben"));
-function seitenleiste() {
-  const gruppen = {};
-  for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
-  const btn = (an, a, x, sym, t, anz = "") => `<button class="${an ? "an" : ""}" data-a="${a}" data-x="${x}" title="${esc(t)}"><span class="sym">${sym}</span><span class="txt">${esc(t)}</span><span class="anz">${anz}</span></button>`;
-  const sonder = SONDER.filter(sonderSichtbar);
-  return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;color:#b9b29c">v${APP_VERSION} ${APP_STUFE}</div></div></div>
-    ${btn(V.ansicht === "uebersicht", "vwAnsicht", "uebersicht", "🏠", "Übersicht")}
-    <h4>Werkzeuge</h4>${sonder.filter(([k]) => k !== "uebersicht").map(([k, sy, t]) => btn(V.ansicht === k, "vwAnsicht", k, sy, t)).join("")}
-    ${Object.entries(gruppen).map(([g, ts]) => `<h4>${esc(g)}</h4>${ts.map((t) => btn(V.ansicht === "tabelle" && V.tab === t, "vwTabelle", t, TABELLEN[t].sym, TABELLEN[t].titel, liste(t).length)).join("")}`).join("")}
-    <h4>Sitzung</h4>${btn(false, "vwApp", "", "📱", "App öffnen")}${btn(false, "vwAbmelden", "", "🚪", "Abmelden")}`;
+// 🧭 0.67.0 Menü aufgeräumt (Wunsch Hansi „zu viele Menüpunkte – zusammenfassen oder einklappen“): sieben Bereiche nach Aufgabe,
+// immer nur einer offen (Akkordeon), 🙂 Einfach / 🔧 Erweitert (nur dort alle Datentabellen), Suche über alles, rote Zahlen = wartet.
+// Einträge: "w:<werkzeug>" (SONDER) oder "t:<tabelle>" (TABELLEN). Was die Rolle nicht darf, fällt weg; leere Bereiche auch.
+const BEREICHE = [
+  ["mitglieder", "👥", "Mitglieder & Familien", ["t:personen", "t:eltern_kind", "w:zugaenge", "w:genehmigungen", "t:kuendigungen", "w:schutzlisten", "t:interessenten", "w:bescheinigung"]],
+  ["termine", "📅", "Termine & Projekte", ["w:termineplanen", "w:projekteplanen", "w:ferien", "w:anwesenheit", "w:mitfahrboerse", "w:vereinsleben", "t:dienste"]],
+  ["orchester", "🎼", "Orchester & Noten", ["w:gruppenboard", "w:schuljahr", "t:gruppen", "w:uebebuehne", "t:werke", "t:notenexemplare", "t:chronik"]],
+  ["instrumente", "🎻", "Instrumente", ["w:inventarbericht", "t:inventar", "t:ausleihen", "t:reparaturen", "t:einkaeufe", "t:lagerorte"]],
+  ["kommunikation", "💬", "Kommunikation", ["w:rundschreiben", "t:pinnwand", "t:startnachrichten", "t:rueckmeldungen"]],
+  ["verein", "💛", "Verein & Kasse", ["w:kasse", "t:fv_mitglieder", "t:erstattungen", "t:spenden", "t:dokumente", "t:partner", "t:aufgaben"]],
+  ["system", "⚙️", "System", ["w:konfig", "w:datenschutz", "w:import", "w:communicator", "w:abgleich", "t:fehlerberichte"]],
+];
+const M = (() => { try { return { offen: null, modus: "einfach", ...JSON.parse(localStorage.getItem("bk_vw_menue") || "{}"), q: "" }; } catch { return { offen: null, modus: "einfach", q: "" }; } })();
+const menueMerken = () => { try { localStorage.setItem("bk_vw_menue", JSON.stringify({ offen: M.offen, modus: M.modus })); } catch {} };
+const heuteIso = () => tagIso(new Date());
+// Was wartet? (rote Zahlen im Menü und Karten auf „Heute zu tun“) – je Eintrag
+const WARTET = {
+  "t:kuendigungen": () => liste("kuendigungen", (k) => k.status === "eingegangen" && !k.geloescht_am).length,
+  "w:genehmigungen": () => liste("genehmigungen", (g) => g.status === "ausstehend").length,
+  "w:zugaenge": () => liste("zugaenge", (z) => z.aktiv && !z.zuletzt).length,
+  "t:ausleihen": () => liste("ausleihen", (a) => a.status === "aktiv" && a.bis && a.bis < heuteIso()).length,
+  "t:reparaturen": () => liste("reparaturen", (r) => r.status === "angebot").length,
+  "t:erstattungen": () => liste("erstattungen", (e) => e.status === "eingereicht").length,
+  "t:interessenten": () => liste("interessenten", (x) => x.status === "anfrage").length,
+  "t:rueckmeldungen": () => liste("rueckmeldungen", (x) => x.status === "neu").length,
+  "t:aufgaben": () => liste("aufgaben", (a) => a.status === "offen").length,
+};
+const eintragDa = (e) => { const [art, k] = e.split(":"); return art === "t" ? !!TABELLEN[k] && darf(k, "lesen") : SONDER.some(([x]) => x === k) && sonderSichtbar(SONDER.find(([x]) => x === k)); };
+const eintragInfo = (e) => { const [art, k] = e.split(":"); if (art === "t") return { a: "vwTabelle", x: k, sym: TABELLEN[k].sym, t: TABELLEN[k].titel }; const w = SONDER.find(([x]) => x === k); return { a: "vwAnsicht", x: k, sym: w[1], t: w[2] }; };
+const eintragAn = (e) => { const [art, k] = e.split(":"); return art === "t" ? V.ansicht === "tabelle" && V.tab === k : V.ansicht === k; };
+const wartet = (e) => { try { return WARTET[e]?.() || 0; } catch { return 0; } };
+// rote Zahl im Menü nur für Dringendes – Genehmigungen und „noch nie angemeldet“ stehen nur als Karte auf „Heute zu tun“ (sonst schreit das Menü)
+const LEISE = new Set(["w:genehmigungen", "w:zugaenge"]);
+const rot = (e) => (LEISE.has(e) ? 0 : wartet(e));
+function bereicheSichtbar() { return BEREICHE.map(([id, sym, t, l]) => [id, sym, t, l.filter(eintragDa)]).filter(([, , , l]) => l.length); }
+// alle Einträge, die die Person sieht (für die Suche und „Erweitert“)
+function alleEintraege() {
+  const w = SONDER.filter(sonderSichtbar).filter(([k]) => k !== "uebersicht").map(([k]) => "w:" + k);
+  return [...w, ...TABELLEN_NAMEN.filter((t) => darf(t, "lesen")).map((t) => "t:" + t)];
 }
+function seitenleiste() {
+  const btn = (e, einzug = true) => { const i = eintragInfo(e), n = rot(e);
+    return `<button class="${eintragAn(e) ? "an" : ""}${einzug ? " vw-unter" : ""}" data-a="${i.a}" data-x="${i.x}" title="${esc(i.t)}"><span class="sym">${i.sym}</span><span class="txt">${esc(i.t)}</span>${n ? `<span class="vw-zahl">${n}</span>` : ""}</button>`; };
+  const ber = bereicheSichtbar();
+  const aktiv = ber.find(([, , , l]) => l.some(eintragAn))?.[0];
+  if (aktiv && M.offen !== aktiv && !M.manuell) M.offen = aktiv;
+  M.manuell = false;
+  const summe = ber.reduce((s2, [, , , l]) => s2 + l.reduce((a, e) => a + rot(e), 0), 0);
+  const gruppen = {};
+  if (M.modus === "erweitert") for (const t of TABELLEN_NAMEN) if (darf(t, "lesen")) (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
+  return `<div class="marke">${BACHKREIS_LOGO}<div><b>Verwaltung</b><div style="font-size:.75rem;color:#b9b29c">${esc(name(V.ich))} · v${APP_VERSION} ${APP_STUFE}</div></div></div>
+    <div class="vw-such"><input id="vwMenueSuche" type="search" placeholder="🔍 Was suchen Sie?" aria-label="Menü durchsuchen" autocomplete="off" value="${esc(M.q)}"></div>
+    <div id="vwTreffer" hidden></div>
+    <div id="vwMenue">
+    <button class="${V.ansicht === "uebersicht" ? "an" : ""}" data-a="vwAnsicht" data-x="uebersicht"><span class="sym">🏠</span><span class="txt">Heute zu tun</span>${summe ? `<span class="vw-zahl">${summe}</span>` : ""}</button>
+    ${ber.map(([id, sym, t, l]) => { const offen = M.offen === id, n = l.reduce((a, e) => a + rot(e), 0);
+      return `<div class="vw-ber${offen ? " offen" : ""}"><button class="vw-ber-kopf" data-a="vwBereich" data-x="${id}" aria-expanded="${offen}"><span class="sym">${sym}</span><span class="txt">${esc(t)}</span>${!offen && n ? `<span class="vw-zahl">${n}</span>` : ""}<span class="pfeil" aria-hidden="true">${offen ? "▾" : "▸"}</span></button>
+        ${offen ? `<div class="vw-ber-inhalt">${l.map((e) => btn(e)).join("")}</div>` : ""}</div>`; }).join("")}
+    ${M.modus === "erweitert" ? `<div class="vw-ber vw-alle${M.offen === "alle" ? " offen" : ""}"><button class="vw-ber-kopf" data-a="vwBereich" data-x="alle" aria-expanded="${M.offen === "alle"}"><span class="sym">🗂️</span><span class="txt">Alle Datentabellen (${Object.values(gruppen).flat().length})</span><span class="pfeil" aria-hidden="true">${M.offen === "alle" ? "▾" : "▸"}</span></button>
+      ${M.offen === "alle" ? `<div class="vw-ber-inhalt">${Object.entries(gruppen).map(([g, ts]) => `<h5>${esc(g)}</h5>${ts.map((t) => btn("t:" + t)).join("")}`).join("")}</div>` : ""}</div>` : ""}
+    </div>
+    <div class="vw-modus" role="group" aria-label="Menü"><button class="${M.modus === "einfach" ? "an" : ""}" data-a="vwModus" data-x="einfach" aria-pressed="${M.modus === "einfach"}">🙂 Einfach</button><button class="${M.modus === "erweitert" ? "an" : ""}" data-a="vwModus" data-x="erweitert" aria-pressed="${M.modus === "erweitert"}">🔧 Erweitert</button></div>
+    <div class="vw-sitzung">${`<button data-a="vwApp" data-x=""><span class="sym">📱</span><span class="txt">App öffnen</span></button><button data-a="vwAbmelden" data-x=""><span class="sym">🚪</span><span class="txt">Abmelden</span></button>`}</div>`;
+}
+AKTIONEN.vwBereich = (id) => { M.offen = M.offen === id ? null : id; M.manuell = true; menueMerken(); zeichne(); };
+AKTIONEN.vwModus = (m) => { M.modus = m === "erweitert" ? "erweitert" : "einfach"; if (M.modus === "einfach" && M.offen === "alle") M.offen = null; M.manuell = true; menueMerken(); zeichne(); toast(M.modus === "erweitert" ? "🔧 Erweitert: zusätzlich alle Datentabellen" : "🙂 Einfach: nur die Aufgaben"); };
+// Suche über alle Einträge (auch Tabellen aus „Erweitert“) – live beim Tippen, ohne das Menü neu zu zeichnen
+function menueSuche() {
+  const f = document.getElementById("vwMenueSuche"), box = document.getElementById("vwTreffer"), menue = document.getElementById("vwMenue"); if (!f || !box) return;
+  const zeigen = () => {
+    M.q = f.value; const q = f.value.trim().toLowerCase();
+    if (!q) { box.hidden = true; menue.hidden = false; return; }
+    const tr = alleEintraege().map((e) => [e, eintragInfo(e)]).filter(([e, i]) => i.t.toLowerCase().includes(q) || e.slice(2).replace(/_/g, " ").includes(q)).slice(0, 25);
+    box.innerHTML = tr.length ? tr.map(([e, i]) => `<button data-a="${i.a}" data-x="${i.x}"><span class="sym">${i.sym}</span><span class="txt">${esc(i.t)}</span><span class="anz">${esc(bereichVon(e))}</span></button>`).join("") : '<p class="hinweis">Nichts gefunden.</p>';
+    box.hidden = false; menue.hidden = true;
+  };
+  f.addEventListener("input", zeigen); if (M.q) zeigen();
+  f.addEventListener("keydown", (e) => { if (e.key === "Enter") document.querySelector("#vwTreffer button")?.click(); if (e.key === "Escape") { f.value = ""; zeigen(); } });
+}
+const bereichVon = (e) => BEREICHE.find(([, , , l]) => l.includes(e))?.[2] || (e.startsWith("t:") ? "Datentabelle" : "");
 function zeichne() {
   if (!V.ich) return anmeldung();
   let haupt = "";
   try { haupt = ANSICHTEN[V.ansicht === "tabelle" ? "tabelle" : V.ansicht](); }
   catch (e) { console.error(e); haupt = `<div class="karte">⚠️ ${esc(e.message)}</div>`; }
-  $("#vw").innerHTML = `<div class="vw-rahmen"><nav class="vw-seite">${seitenleiste()}</nav><section class="vw-haupt">${haupt}</section></div>`;
+  $("#vw").innerHTML = `<div class="vw-rahmen"><nav class="vw-seite" aria-label="Menü">${seitenleiste()}</nav><section class="vw-haupt">${haupt}</section></div>`;
+  menueSuche();
   NACH[V.ansicht]?.();
   beschriftungenVerknuepfen($("#vw"));
 }
-AKTIONEN.vwAnsicht = (k) => { V.ansicht = k; V.auswahl = null; zeichne(); };
-AKTIONEN.vwTabelle = (t) => { V.ansicht = "tabelle"; V.tab = t; V.auswahl = null; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
+AKTIONEN.vwAnsicht = (k) => { V.ansicht = k; V.auswahl = null; M.q = ""; zeichne(); };
+AKTIONEN.vwTabelle = (t) => { M.q = ""; V.ansicht = "tabelle"; V.tab = t; V.auswahl = null; V.suche = ""; V.filter = ""; V.sort = null; zeichne(); };
 AKTIONEN.vwApp = () => window.open("index.html", "_blank");
 
 // ---------- Namen statt IDs (0.24.0) ----------
@@ -319,19 +389,23 @@ AKTIONEN.vwCsv = () => {
 ANSICHTEN.uebersicht = () => {
   const k = (t, f) => liste(t, f).length;
   const kz = [["👥", "Schüler", k("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten")], ["👪", "Eltern", k("personen", (p) => p.typ === "eltern")], ["🎻", "Instrumente", k("inventar")], ["🤝", "verliehen", k("ausleihen", (a) => a.status === "aktiv")],
-    ["📅", "Termine", k("termine", (t) => new Date(t.beginn) > new Date())], ["✍️", "Genehmigungen offen", k("genehmigungen", (g) => g.status === "ausstehend")], ["🔑", "aktive Zugänge", k("zugaenge", (z) => z.aktiv)], ["🗂️", "offene Vorgänge", k("aufgaben", (a) => a.status !== "erledigt")]];
-  const gruppen = {};
-  for (const t of TABELLEN_NAMEN) if (darf(t, "lesen") && !t.startsWith("kom_") && t !== "versand") (gruppen[TABELLEN[t].gruppe] ||= []).push(t);
-  for (const [k2] of SONDER.filter(sonderSichtbar)) if (SONDER_BEREICH[k2]) (gruppen[SONDER_BEREICH[k2]] ||= []);
+    ["📅", "Termine", k("termine", (t) => new Date(t.beginn) > new Date())], ["🔑", "aktive Zugänge", k("zugaenge", (z) => z.aktiv)]];
+  // 🏠 0.67.0 Heute zu tun: nur, was gerade wartet – ein Klick führt hin
+  const KARTE = { "t:kuendigungen": ["📮", "Kündigungen zu bestätigen", "mit Schreiben in der App (Leitung → Kündigungen)", "rot"], "w:genehmigungen": ["✍️", "Genehmigungen offen", "an die Eltern erinnern", ""],
+    "w:zugaenge": ["👋", "noch nie angemeldet", "Codes erneuern, Elternbriefe drucken", "blau"], "t:ausleihen": ["🎻", "Leihinstrumente überfällig", "Rückgabe anmahnen", "rot"], "t:reparaturen": ["🔧", "Reparaturen warten auf Freigabe", "Kostenvoranschlag liegt vor", ""],
+    "t:erstattungen": ["💶", "Erstattungen eingereicht", "prüfen und genehmigen", ""], "t:interessenten": ["🌱", "neue Interessenten", "Probespiel vereinbaren", "gruen"], "t:rueckmeldungen": ["🆘", "Rückmeldungen zur App", "beantworten", "blau"], "t:aufgaben": ["🗂️", "offene Vorgänge", "erledigen oder zuteilen", ""] };
+  const karten = Object.keys(KARTE).filter((e) => eintragDa(e) && wartet(e)).map((e) => { const [sym, t, u, f] = KARTE[e], i = eintragInfo(e);
+    return `<button class="vw-heute ${f}" data-a="${i.a}" data-x="${i.x}"><b>${wartet(e)}</b><span>${sym} ${esc(t)}</span><small>${esc(bereichVon(e))} → ${esc(i.t)} · ${esc(u)}</small></button>`; });
+  const termine = liste("termine", (t) => t.status !== "abgesagt" && tagIso(t.beginn) >= heuteIso() && tagIso(t.beginn) <= tagIso(new Date(Date.now() + 7 * 86400000))).length;
+  if (termine && eintragDa("w:termineplanen")) karten.push(`<button class="vw-heute gruen" data-a="vwAnsicht" data-x="termineplanen"><b>${termine}</b><span>📅 Termine in den nächsten 7 Tagen</span><small>Termine &amp; Projekte → Terminplanung</small></button>`);
   const letzte = liste("aenderungen").slice(-6).reverse();
-  return `<div class="vw-kopf"><h2>🏠 Übersicht</h2><span class="hinweis">Alles an einem Ort: links die Werkzeuge und Tabellen, hier nach Bereichen.</span></div>
+  return `<div class="vw-kopf"><h2>🏠 Heute zu tun</h2><span class="hinweis">Nur, was gerade wartet – ein Klick führt direkt hin. Alles andere links in den Bereichen.</span></div>
+    <div class="vw-heute-raster">${karten.join("") || '<div class="karte">👍 Gerade wartet nichts – alles erledigt.</div>'}</div>
+    ${(() => { const c = cockpit(db, V.ich.id).sort((a, b) => b.dring - a.dring).slice(0, 6); return c.length ? `<section class="vw-bereich vw-todo"><h3>🧭 Außerdem im Blick</h3><div class="vw-raster3">${c.map((x) => `<div class="vw-todo-punkt d${x.dring}"><span>${x.sym}</span><div>${esc(x.text)}</div></div>`).join("")}</div></section>` : ""; })()}
+    <div class="vw-raster3">${bereicheSichtbar().map(([, sym, t, l]) => `<section class="vw-bereich"><h3>${sym} ${esc(t)}</h3><div class="vw-knoepfe">${l.map((e) => { const i = eintragInfo(e), n = wartet(e); return `<button class="knopf${e.startsWith("w:") ? " werkzeug" : ""}" data-a="${i.a}" data-x="${i.x}"><span>${i.sym}</span>${esc(i.t)}<i>${n ? `<b class="vw-zahl">${n}</b>` : "›"}</i></button>`; }).join("")}</div></section>`).join("")}</div>
     <div class="vw-kz4">${kz.map(([s2, t, n]) => `<div class="kennzahl"><b>${s2} ${n}</b><small>${t}</small></div>`).join("")}</div>
-    ${(() => { const c = cockpit(db, V.ich.id).sort((a, b) => b.dring - a.dring).slice(0, 9); return c.length ? `<section class="vw-bereich vw-todo"><h3>🧭 Was ist zu tun?</h3><div class="vw-raster3">${c.map((x) => `<div class="vw-todo-punkt d${x.dring}"><span>${x.sym}</span><div>${esc(x.text)}</div></div>`).join("")}</div></section>` : ""; })()}
-    <div class="vw-raster3">${Object.entries(gruppen).map(([g, ts]) => `<section class="vw-bereich"><h3>${esc(g)}</h3><div class="vw-knoepfe">
-      ${SONDER.filter(sonderSichtbar).filter(([k2]) => SONDER_BEREICH[k2] === g).map(([k2, sy, t]) => `<button class="knopf werkzeug" data-a="vwAnsicht" data-x="${k2}"><span>${sy}</span>${esc(t)}<i>›</i></button>`).join("")}
-      ${ts.map((t) => `<button class="knopf" data-a="vwTabelle" data-x="${t}"><span>${TABELLEN[t].sym}</span>${esc(TABELLEN[t].titel)}<i>${liste(t).length}</i></button>`).join("")}</div></section>`).join("")}</div>
-    <div class="vw-raster3 vw-unten"><section class="vw-bereich vw-breit2"><h3>Letzte Änderungen</h3><ul class="liste">${letzte.map((a) => `<li><div class="fl">${esc(TABELLEN[a.tabelle]?.titel || a.tabelle)} · ${esc(a.aktion)} <span class="hinweis">${esc(a.wer)} · ${esc(a.quelle)} · ${vorZeit(a.zeit)}</span></div></li>`).join("") || "<li class='hinweis'>noch keine</li>"}</ul></section>
-      <section class="vw-bereich"><h3>App & Verwaltung</h3><p class="hinweis">Die Verwaltung ist für die Arbeit am PC: Stammdaten, Listen, Auswertungen, Import/Export. Die App ist fürs Handy. Beide arbeiten auf denselben Daten.</p><button class="knopf haupt breit" data-a="vwApp">📱 App öffnen</button></section></div>`;
+    <div class="vw-raster3 vw-unten"><section class="vw-bereich vw-breit2"><h3>Letzte Änderungen</h3><ul class="liste">${letzte.map((a) => `<li><div class="fl">${esc(TABELLEN[a.tabelle]?.titel || a.tabelle)} · ${esc(a.aktion)} <span class="hinweis">${esc(a.wer)} · ${esc(a.quelle)} · ${vorZeit(a.zeit)}</span></div></li>`).join("") || "<li class=\"hinweis\">Noch keine.</li>"}</ul></section>
+      <section class="vw-bereich"><h3>App &amp; Verwaltung</h3><p class="hinweis">Die Verwaltung ist für die Arbeit am PC: Stammdaten, Listen, Auswertungen, Import/Export. Die App ist fürs Handy. Beide arbeiten auf denselben Daten. Seltenes und alle Datentabellen: unten links „🔧 Erweitert“.</p><button class="knopf haupt breit" data-a="vwApp">📱 App öffnen</button></section></div>`;
 };
 
 // ---------- Gruppen-Board (Drag & Drop = genereller Wechsel) ----------

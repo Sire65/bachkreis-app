@@ -151,3 +151,27 @@ table.vw-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .eb-kind { display: flex; gap: 18px; flex-wrap: wrap; padding: 4px 0; } .eb-kind > span:first-child { font-weight: 800; min-width: 160px; }
 .eb-unterschrift { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
 @media print { .elternbrief { border: none; border-radius: 0; max-width: none; padding: 0; break-after: page; } .elternbrief:last-child { break-after: auto; } .eb-start, .eb-ds { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* 🧭 0.67.0 Menü: sieben Bereiche zum Einklappen, Suche, Einfach/Erweitert */
+.vw-seite { display: flex; flex-direction: column; gap: 2px; }
+.vw-such input { width: 100%; border-radius: 10px; border: 1px solid #3a3000; background: #2b2400; color: #f3efe3; padding: 8px 10px; font: inherit; margin-bottom: 6px; }
+.vw-such input::placeholder { color: #b9b29c; }
+.vw-ber { margin-top: 3px; }
+.vw-seite .vw-ber-kopf { background: #262000; font-weight: 800; padding: 9px 10px; }
+.vw-ber.offen .vw-ber-kopf { background: #3a3000; }
+.vw-seite .vw-ber-kopf .pfeil { margin-left: auto; color: #b9b29c; font-size: .8rem; }
+.vw-ber-inhalt { padding: 2px 0 6px; }
+.vw-seite button.vw-unter { padding-left: 26px; font-weight: 600; }
+.vw-ber-inhalt h5 { color: var(--marke2); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; margin: 8px 10px 2px 26px; }
+.vw-zahl { margin-left: auto; background: #c62828; color: #fff; border-radius: 9px; padding: 0 7px; font-size: .75rem; font-weight: 800; font-style: normal; line-height: 1.5; }
+.vw-ber-kopf .vw-zahl { margin-left: auto; margin-right: 6px; }
+.vw-seite button.an .vw-zahl { background: #1a1500; color: #f2b705; }
+.vw-modus { display: flex; gap: 4px; background: #262000; border-radius: 12px; padding: 4px; margin-top: auto; }
+.vw-seite .vw-modus button { justify-content: center; padding: 7px 6px; font-size: .82rem; }
+.vw-sitzung { display: flex; gap: 4px; margin-top: 4px; } .vw-sitzung button { justify-content: center; }
+#vwTreffer .anz { font-size: .7rem; }
+.vw-heute-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.vw-heute { text-align: left; background: var(--karte, #fff); border: 1px solid var(--linie); border-left: 6px solid #f2b705; border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; font: inherit; color: inherit; }
+.vw-heute:hover { box-shadow: 0 3px 12px #0002; } .vw-heute b { font-size: 1.7rem; line-height: 1.1; } .vw-heute small { color: var(--leise, #6b6250); }
+.vw-heute.rot { border-left-color: #c62828; } .vw-heute.blau { border-left-color: #1e88e5; } .vw-heute.gruen { border-left-color: #2e7d32; }
+.vw-seite .vw-sitzung button { padding: 6px 4px; font-size: .8rem; gap: 4px; } .vw-sitzung button .txt { flex: none; }

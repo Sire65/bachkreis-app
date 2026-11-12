@@ -171,6 +171,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F161 | 🚪 Kündigung in vier Varianten (alles · Ehemalige · Teil · Pause) mit Unterschrift, Vorschau „Das passiert“, Zurücknehmen | ✅ | kuendigung.test |
 | BK-F162 | ✅ Bestätigungsschreiben im Kopfbogen (PDF Eingangskorb + E-Mail) · 📮 Leitung: Eingang, Papier/Mail, Archiv | ✅ | kuendigung.test |
 | BK-F163 | 🏁 Server macht Kündigungen am Datum wirksam, beendet Pausen, löscht Nachweise nach 3 Jahren | ✅ | kuendigung.test |
+| BK-F164 | 💻 PC-Verwaltung: 7 Bereiche zum Einklappen, Suche, Einfach/Erweitert, Startseite „Heute zu tun“ | ✅ | Rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

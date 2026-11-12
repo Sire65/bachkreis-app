@@ -3,6 +3,7 @@
 // Benötigt das Paket „playwright“ (in CI per npx installiert). Screenshots landen in tests/e2e/bilder/ (nicht im Repo).
 import { chromium } from "playwright";
 import fs from "node:fs";
+const vwGeh = (pg, a, x) => pg.evaluate(async ([a, x]) => (await import("/js/kern/ui.js")).AKTIONEN[a](x), [a, x]); // 🧭 0.67.0 Menü ist eingeklappt – direkt aufrufen
 
 const BASIS = process.env.BASIS || "http://localhost:8080";
 const BILDER = new URL("./bilder/", import.meta.url).pathname;
@@ -384,37 +385,45 @@ await p.screenshot({ path: `${BILDER}anfragen-partner.png`, fullPage: true });
 await p.setViewportSize({ width: 1280, height: 860 });
 await p.goto(BASIS + "/verwaltung.html");
 await p.click('[data-a="vwAls"][data-x="p-leitung"]');
-for (const x of await p.$$eval('[data-a="vwTabelle"],[data-a="vwAnsicht"]', (l) => l.map((e) => [e.dataset.a, e.dataset.x]))) {
-  await p.click(`[data-a="${x[0]}"][data-x="${x[1]}"]`);
+// 🧭 0.67.0 aufgeräumtes Menü: Einfach = höchstens 7 Bereiche, einer offen; Suche findet auch Tabellen; Erweitert zeigt alle Datentabellen
+{ const m = await p.evaluate(() => ({ bereiche: document.querySelectorAll(".vw-seite .vw-ber-kopf").length, punkte: document.querySelectorAll(".vw-seite button").length }));
+  if (m.bereiche < 5 || m.bereiche > 7 || m.punkte > 25) fehler.push("PC-Menü nicht aufgeräumt: " + JSON.stringify(m));
+  await p.fill("#vwMenueSuche", "leih"); await p.waitForTimeout(100);
+  if (!(await p.$('#vwTreffer:not([hidden]) [data-x="ausleihen"]'))) fehler.push("PC-Menü: Suche findet nichts");
+  await p.fill("#vwMenueSuche", ""); await p.click('[data-a="vwModus"][data-x="erweitert"]'); await p.click('[data-a="vwBereich"][data-x="alle"]'); }
+const vwAlle = await p.$$eval('[data-a="vwTabelle"],[data-a="vwAnsicht"]', (l) => l.map((e) => [e.dataset.a, e.dataset.x]));
+await vwGeh(p, "vwAnsicht", "uebersicht");
+for (const x of [...new Map([...vwAlle, ...(await p.$$eval('.vw-haupt [data-a="vwTabelle"],.vw-haupt [data-a="vwAnsicht"]', (l) => l.map((e) => [e.dataset.a, e.dataset.x])))].map((x) => [x.join("|"), x])).values()]) {
+  await vwGeh(p, x[0], x[1]);
   await p.waitForTimeout(60);
   if (x[1] === "uebersicht" || x[1] === "personen" || x[1] === "gruppenboard") await p.screenshot({ path: `${BILDER}verwaltung-${x[1]}.png` });
 }
 // 🧰 PC-Werkzeuge (0.24.0): Terminplanung mit Serie, Kasse, Programm sortieren, Notfallliste, Bescheinigungen; Formular-Fenster ohne Absturz
-await p.click('.vw-seite [data-a="vwAnsicht"][data-x="termineplanen"]'); await p.waitForSelector("#tpForm");
+await vwGeh(p, "vwAnsicht", "termineplanen"); await p.waitForSelector("#tpForm");
 const vorT = await p.evaluate(async () => (await import("/js/kern/daten.js")).liste("termine").length);
 await p.fill('#tpForm [name="titel"]', "Rundgang-Probe"); await p.click('#tpForm input[name="gruppen"]'); await p.selectOption('#tpForm [name="serie"]', "7");
 await p.fill('#tpForm [name="serie_bis"]', new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)); await p.click('#tpForm input[name="melden"]'); await p.click('[data-a="tpSpeichern"]'); await p.waitForTimeout(300);
 if ((await p.evaluate(async () => (await import("/js/kern/daten.js")).liste("termine").length)) - vorT < 3) fehler.push("PC-Terminplanung: Serie nicht angelegt");
-await p.click('.vw-seite [data-a="vwAnsicht"][data-x="kasse"]'); await p.waitForSelector('[data-a="fvBezahlt"]'); await p.click('[data-a="fvBezahlt"]'); await p.waitForTimeout(150);
+await vwGeh(p, "vwAnsicht", "kasse"); await p.waitForSelector('[data-a="fvBezahlt"]'); await p.click('[data-a="fvBezahlt"]'); await p.waitForTimeout(150);
 await p.screenshot({ path: `${BILDER}verwaltung-kasse.png` });
-await p.click('.vw-seite [data-a="vwAnsicht"][data-x="projekteplanen"]'); await p.waitForSelector(".vw-pg"); await p.click('[data-a="pgPc"][data-x$="|1"]'); await p.waitForTimeout(150);
+await vwGeh(p, "vwAnsicht", "projekteplanen"); await p.waitForSelector(".vw-pg"); await p.click('[data-a="pgPc"][data-x$="|1"]'); await p.waitForTimeout(150);
 await p.screenshot({ path: `${BILDER}verwaltung-projekte.png`, fullPage: true });
-await p.click('.vw-seite [data-a="vwAnsicht"][data-x="schutzlisten"]'); await p.waitForSelector(".vw-umbruch");
-await p.click('.vw-seite [data-a="vwAnsicht"][data-x="bescheinigung"]'); await p.waitForSelector(".vw-bescheinigung");
-await p.click('.vw-seite [data-a="vwAnsicht"][data-x="vereinsleben"]'); await p.waitForSelector(".vw-austausch");
+await vwGeh(p, "vwAnsicht", "schutzlisten"); await p.waitForSelector(".vw-umbruch");
+await vwGeh(p, "vwAnsicht", "bescheinigung"); await p.waitForSelector(".vw-bescheinigung");
+await vwGeh(p, "vwAnsicht", "vereinsleben"); await p.waitForSelector(".vw-austausch");
 await p.screenshot({ path: `${BILDER}verwaltung-vereinsleben.png`, fullPage: true });
-await p.click('.vw-seite [data-a="vwAnsicht"][data-x="uebebuehne"]'); await p.waitForSelector('[data-a="ueRmSpeichern"]');
+await vwGeh(p, "vwAnsicht", "uebebuehne"); await p.waitForSelector('[data-a="ueRmSpeichern"]');
 await p.fill("[data-ue-rm]", "Rundgang: super!"); await p.click('[data-a="ueRmSpeichern"]'); await p.waitForTimeout(200);
 await p.screenshot({ path: `${BILDER}verwaltung-uebebuehne.png`, fullPage: true });
 for (const tab of ["nachrichten", "gruppen", "termine", "gesundheit", "ausleihen"]) {
-  await p.click(`.vw-seite [data-a="vwTabelle"][data-x="${tab}"]`); await p.click(".vw-tabelle tbody tr"); await p.waitForTimeout(120);
+  await vwGeh(p, "vwTabelle", tab); await p.click(".vw-tabelle tbody tr"); await p.waitForTimeout(120);
   if (!(await p.$(".vw-modal #vwForm"))) fehler.push(`PC: Formular ${tab} öffnet nicht`);
   if (/^[a-z]+-\d+$/.test((await p.textContent(".vw-form-kopf h3")).replace(/^\S+\s/, "").trim())) fehler.push(`PC: ${tab} zeigt eine ID statt eines Namens`);
   await p.keyboard.press("Escape"); await p.waitForTimeout(100);
 }
 await p.screenshot({ path: `${BILDER}verwaltung-uebersicht2.png` });
 // 📦 Inventar & Abschreibung: Kennzahlen, Problemfälle, Inventur, Etiketten, neue Ausstattung mit Nummer und Abschreibung
-await p.click('[data-a="vwAnsicht"][data-x="inventarbericht"]'); await p.waitForSelector(".inv-tabelle");
+await vwGeh(p, "vwAnsicht", "inventarbericht"); await p.waitForSelector(".inv-tabelle");
 if (!/Notenständer/.test(await p.textContent(".inv-tabelle"))) fehler.push("Inventar: Notenständer fehlen");
 await p.screenshot({ path: `${BILDER}verwaltung-inventar.png` });
 await p.selectOption('select[data-x="status"]', "probleme"); await p.waitForTimeout(80);

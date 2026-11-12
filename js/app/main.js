@@ -1,0 +1,208 @@
+// Start der Bachkreis-App: Datenquelle starten, Person bestimmen (Zugangscode ?k= / gemerkte Person / Demo-Rolle),
+// Ansichten laden, Service Worker mit atomarem Update (AGENTS.md Regel 16).
+import { datenStarten, liste, hole, abonnieren, konfig, speichere, datenInfo, istEchtbetrieb, anmelden, abmelden, beiHinweis } from "../kern/daten.js";
+import { AKTIONEN, aktionenStarten, nachladenSetzen, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
+import { fehlerHookSetzen, S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
+import { setzeEmpfaengerGeraet, pushAbonnieren } from "../kern/versand.js";
+import "./start.js";
+import "./termine.js";
+import "./terminumfrage.js"; // 🗳️ 0.39.0
+import { pinnwandStart } from "./pinnwand.js";
+import { nachrichtenStart, expressPruefen } from "./nachrichten.js";
+import "./notenblatt.js";
+import "./schutz.js";
+import "./extras.js";
+import "./uebebuehne.js";
+import "./vereinsleben.js";
+import { uebenStart } from "./ueben.js";
+import { termineStart } from "./termine.js";
+import { onlineStart } from "./online.js";
+import "./hilfezentrum.js"; // ❓🔍 0.39.0
+import "./pdfansicht.js"; // 📖 0.40.0
+import "./vorschlaege.js"; // 💡🗳️ 0.41.0
+import "./protokolle.js"; // 🗒️ 0.41.0
+import "./advent.js"; // 🎄 0.41.0
+import "./rueckmeldung.js"; // 🆘 0.42.0
+import "./erstattung.js"; // 💶 0.42.0
+import "./ueberblick.js"; // 🗺️ 0.45.0
+import "./notfallpass.js"; // 🪪 0.46.0
+import "./bildschirmfoto.js"; // 📸 0.46.0
+import "./boerse.js"; // 🛍️ 0.47.0
+import "./jahrbuch.js"; // 📖 0.47.0
+import "./sitzung.js"; // 🎬 0.48.0
+import "./pruefung.js"; // 🔎 0.49.0
+import "./anruf.js"; // 📞 0.50.0
+import "./tisch.js"; // 🪑 0.50.0
+import "./fernhilfe.js"; // 🛟 0.50.0
+import "./chatextra.js"; // 👤👥🔒 0.51.0
+import "./leihvertrag.js"; // 📝 0.52.0
+import "./druckvorschau.js"; // 🖨️ 0.53.0
+import { aktionNachladen, teilLaden } from "./teile.js"; // 📦 0.55.0 selten Gebrauchtes erst bei Bedarf
+import { teilenPruefen } from "./eingangskorb.js"; // 📥📲 0.53.0
+import { zustimmungPruefen } from "./datenschutz.js"; // ⚖️ 0.55.0
+import "./fuss.js";
+import { anwendenDesign } from "./darstellung.js";
+import { snPruefen } from "./startnachricht.js";
+import { linkHilfeHtml, installEinladungPruefen } from "./zugang.js";
+import "./bedienung.js";
+import "./quiz.js";
+import "./kinderstart.js";
+import { buehneLaeuft } from "./buehne.js";
+
+window.addEventListener("error", (e) => fehlerMerken(e.error || e.message));
+window.addEventListener("unhandledrejection", (e) => fehlerMerken(e.reason));
+
+AKTIONEN.start = () => { S.verlauf = []; zeige("start", {}, { ersetzen: true }); };
+AKTIONEN.zurueck = () => zurueck();
+
+function ansichtVonPerson(p) {
+  const r = p.rollen || [];
+  if (r.includes("entwickler")) return "entwickler";
+  if (r.includes("leitung") || r.includes("admin")) return "leitung";
+  if (r.includes("lehrkraft")) return "lehrkraft";
+  if (r.includes("vorstand")) return "vorstand";
+  return p.typ === "eltern" ? "eltern" : "schueler";
+}
+function demoLeiste() {
+  const dp = konfig().demo_personen || {};
+  const opts = Object.entries(ANSICHTEN).filter(([k]) => dp[k]).map(([k, t]) => `<option value="${k}" ${S.ansicht === k ? "selected" : ""}>${t}</option>`).join("");
+  $("#demoleiste").innerHTML = `🧪 VORFÜHRVERSION · Demodaten · Ansicht als <select data-c="ansichtWahl" aria-label="Ansicht wählen">${opts}</select> <span>${esc(S.ich ? S.ich.vorname + " " + S.ich.nachname : "")}</span>`;
+}
+AKTIONEN.ansichtWahl = (v) => {
+  const id = konfig().demo_personen?.[v];
+  if (!id || !alsPerson(id)) return;
+  S.ansicht = v; S.verlauf = []; S.register = einst().startRegister;
+  setzeEmpfaengerGeraet(id);
+  demoLeiste();
+  zeige("start", {}, { ersetzen: true });
+  toast(`Ansicht: ${ANSICHTEN[v]}`);
+  setTimeout(snPruefen, 600); // 📣 offene Startnachricht der neuen Person
+};
+
+async function anmeldenMitCode(code) {
+  const z = liste("zugaenge", (x) => x.code === code && x.aktiv)[0];
+  if (!z) { toast("⚠️ Zugangscode ungültig oder gesperrt"); return false; }
+  await speichere("zugaenge", { ...z, zuletzt: new Date().toISOString() });
+  return alsPerson(z.person_id);
+}
+
+// ---------- Anmeldung (Echtbetrieb): persönlicher Code oder QR-Link ?k=CODE ----------
+function anmeldeSeite(meldung = "", grund = "") {
+  $("#demoleiste")?.remove();
+  $("#lade")?.remove();
+  $("#inhalt").innerHTML = `<div class="karte" style="max-width:440px;margin:40px auto;text-align:center">
+    <div style="width:120px;margin:0 auto 10px">${BACHKREIS_LOGO}</div><h2>${esc(konfig().name || "Bachkreis Bergkamen")}</h2>
+    <p>Bitte mit deinem persönlichen Zugangscode anmelden.</p>
+    ${meldung ? `<p class="badge b-rot">${esc(meldung)}</p>` : ""}${grund ? linkHilfeHtml(grund) : ""}
+    <div class="feld"><input id="anmeldeCode" placeholder="z. B. AB12CD34" autocomplete="one-time-code" autocapitalize="characters" style="text-align:center;font-size:1.2rem;letter-spacing:.12em"></div>
+    <button class="knopf haupt breit" data-a="anmeldenCode">Anmelden</button>
+    ${window.PublicKeyCredential && istEchtbetrieb() ? '<button class="knopf breit" data-a="pkAnmelden">👆 Mit Fingerabdruck / Gesicht anmelden</button>' : ""}
+    <p class="hinweis">Tipp: Den QR-Code auf deiner Einrichtungskarte mit der Handy-Kamera scannen – dann geht es automatisch. Keine Karte? Bitte bei der Leitung melden.</p></div>`;
+  document.getElementById("anmeldeCode")?.addEventListener("keydown", (e) => { if (e.key === "Enter") AKTIONEN.anmeldenCode(); });
+}
+const FEHLERTEXT = { CODE_UNGUELTIG: "Dieser Code ist ungültig oder gesperrt.", ZU_VIELE_VERSUCHE: "Zu viele Versuche – bitte in 15 Minuten erneut probieren." };
+AKTIONEN.anmeldenCode = async () => {
+  const code = ($("#anmeldeCode")?.value || "").trim();
+  if (code.length < 6) { toast("Bitte den vollständigen Code eingeben"); return; }
+  const r = await anmelden(code).catch(() => ({ ok: false, fehler: "OFFLINE" }));
+  if (!r.ok) { anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung nicht möglich – bitte Internetverbindung prüfen.", r.fehler || "OFFLINE"); return; }
+  location.reload();
+};
+AKTIONEN.abmeldenApp = async () => { if (!confirm("Von diesem Gerät abmelden?")) return; await abmelden(); location.reload(); };
+
+async function starten() {
+  einstAnwenden(); anwendenDesign();
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", einstAnwenden);
+  nachladenSetzen(aktionNachladen); // 📦 0.55.0
+  aktionenStarten();
+  const url = new URL(location.href);
+  const code = url.searchParams.get("k");
+  if (code) { url.searchParams.delete("k"); history.replaceState(null, "", url.pathname + url.hash); } // Code nicht in der Adresszeile lassen
+  try {
+    await datenStarten({ quelle: "app" });
+  } catch (e) {
+    if (e.code !== "ANMELDUNG") throw e;
+    if (code) { const r = await anmelden(code.trim()).catch(() => ({ ok: false })); if (r.ok) return location.reload(); return anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung mit diesem Link nicht möglich.", r.fehler || "OFFLINE"); }
+    return anmeldeSeite();
+  }
+  let ok = false;
+  if (istEchtbetrieb()) {
+    ok = alsPerson(datenInfo().ich);
+    if (!ok) return anmeldeSeite("Dein Zugang ist nicht mehr aktiv.", "CODE_UNGUELTIG");
+    $("#demoleiste")?.remove();
+    beiHinweis((t) => toast("ℹ️ " + t, 4000));
+  } else {
+    if (code) ok = await anmeldenMitCode(code.trim().toUpperCase());
+    if (!ok) { let id = null; try { id = localStorage.getItem("bk_ich"); } catch {} ok = id ? alsPerson(id) : false; }
+    if (!ok) ok = alsPerson(konfig().demo_personen?.leitung || konfig().leitung_id);
+  }
+  S.ansicht = ansichtVonPerson(S.ich);
+  S.register = einst().startRegister || "bachkreis";
+  setzeEmpfaengerGeraet(S.ich.id);
+  // 🛡️ 0.43.0 Fehlerberichte und Wartungshinweis – Admin-Teil wird erst geladen, wenn er gebraucht wird (📦 0.60.0)
+  fehlerHookSetzen((...a) => teilLaden("adminbereich.js").then((m) => m.fehlerMelden(...a)).catch(() => {}));
+  if (konfig().wartung === true) teilLaden("adminbereich.js").then((m) => m.wartungsHinweis()).catch(() => {});
+  if (!istEchtbetrieb()) demoLeiste();
+  // Echtbetrieb: Push-Abo dieses Geräts auffrischen, wenn Benachrichtigungen schon erlaubt sind (still im Hintergrund)
+  else if (globalThis.Notification?.permission === "granted") pushAbonnieren().catch((e) => console.warn("Push-Abo", e));
+  const view = location.hash.slice(1);
+  zeige("start", {}, { ersetzen: true });
+  // Pinnwand zuerst (neue Zettel, wichtige, Erinnerung – wie KC pwStart); dann Tipp des Tages, „Was ist neu“, ab und zu die Fee
+  nachrichtenStart();
+  const express = expressPruefen(); // 🏎️ Express-Sendungen zuerst (wie KC)
+  const pw = pinnwandStart();
+  const sn = !express && snPruefen(); // 📣 Startnachricht der Leitung (Pflicht-Fenster)
+  onlineStart(); // 🟢 Wer ist online · 👋 Anklopfen
+  setTimeout(() => teilenPruefen().catch(() => {}), 400); // 📲 0.53.0 „Teilen → Bachkreis“ angekommen?
+  setTimeout(() => zustimmungPruefen(), 900); // ⚖️ 0.55.0 Datenschutz & Regeln beim ersten Start bestätigen
+  // 🎓 0.65.0 Einführung beim ersten Start (nur Echtbetrieb, einmal je Gerät) – nach der Zustimmung bzw. kurz nach dem Start
+  const einfuehrungTesten = () => { if (istEchtbetrieb() && (einst().einfuehrung || 0) < 1) teilLaden("einfuehrung.js").then((m) => m.einfuehrungPruefen()).catch(() => {}); };
+  document.addEventListener("bk-zugestimmt", () => setTimeout(einfuehrungTesten, 600));
+  setTimeout(() => { if (!document.getElementById("zsFenster")) einfuehrungTesten(); }, 2200);
+  { const ohne = express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen(); teilLaden("einstellungen.js").then((m) => m.beimStart(ohne)).catch(() => {}); } // 📦 0.60.0 Einstellungen erst nach dem Start laden // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
+  if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
+  window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });
+  // Änderungen aus anderen Fenstern (z. B. PC-Verwaltung) → neu zeichnen, wenn gerade nicht getippt wird
+  abonnieren(() => {
+    if (S.ich) { const neu = hole("personen", S.ich.id); if (neu) S.ich = neu; }
+    const fokus = document.activeElement;
+    if (fokus && $("#inhalt").contains(fokus) && /INPUT|TEXTAREA|SELECT/.test(fokus.tagName)) return;
+    if (document.getElementById("blattHg")) return;
+    if (document.getElementById("heroRueck") || buehneLaeuft()) return; // Bühne nicht unterbrechen
+    zeichne();
+  });
+  $("#lade")?.remove();
+  swStarten();
+}
+
+// ---------- Service Worker: neue Version wird erst nach Bestätigung aktiv (kein Mischstand) ----------
+function updateLeiste(worker) {
+  const ziel = document.getElementById("updateHinweis") || document.body;
+  if (document.getElementById("updLeiste")) return;
+  const d = document.createElement("div");
+  d.className = "updateleiste"; d.id = "updLeiste";
+  d.innerHTML = `🔄 Neue Version bereit<button class="knopf klein">Jetzt aktualisieren</button>`;
+  d.querySelector("button").onclick = () => worker.postMessage("jetzt-aktivieren");
+  ziel.prepend(d);
+}
+async function swStarten() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.register("sw.js");
+    if (reg.waiting && navigator.serviceWorker.controller) updateLeiste(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const w = reg.installing;
+      w?.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) updateLeiste(w); });
+    });
+    document.addEventListener("bk-update", (e) => updateLeiste(e.detail));
+    // Neu laden nur bei einem echten Update (vorher gab es schon eine aktive Version) – nicht beim allerersten Besuch.
+    const hatteVersion = !!navigator.serviceWorker.controller;
+    let neu = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (!hatteVersion || neu) return; neu = true; location.reload(); });
+  } catch (e) { console.warn("Service Worker nicht registriert", e); }
+}
+
+starten().catch((e) => {
+  console.error(e); fehlerMerken(e);
+  document.getElementById("lade").innerHTML = `<div class="karte"><h3>⚠️ Start fehlgeschlagen</h3><p>${esc(e.message)}</p><a class="knopf" href="./">Neu laden</a></div>`;
+});

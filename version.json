@@ -1,0 +1,772 @@
+{
+  "version": "0.68.0",
+  "datum": "12.11.2026",
+  "stufe": "DEV",
+  "neu": [
+    "💻 PC-Verwaltung noch schlanker: jede Rolle sieht nur, was sie meist braucht (Vorstand 12 statt 26 Punkte)",
+    "👪 Eltern und Kinder direkt bei der Person verknüpfen",
+    "📆 Jahres-Aufgaben wie der Schuljahreswechsel erscheinen als Karte, wenn sie dran sind"
+  ],
+  "verlauf": [
+    {
+      "version": "0.67.0",
+      "datum": "12.11.2026",
+      "neu": [
+        "💻 PC-Verwaltung aufgeräumt: 7 Bereiche zum Einklappen statt rund 110 Menüpunkten",
+        "🏠 Startseite „Heute zu tun“: nur, was gerade wartet – ein Klick führt hin",
+        "🔍 Suche im Menü und Schalter Einfach / Erweitert (alle Datentabellen nur in Erweitert)"
+      ]
+    },
+    {
+      "version": "0.66.0",
+      "datum": "11.11.2026",
+      "neu": [
+        "🚪 Mitgliedschaft & Kündigung unter Meins: pausieren, einen Teil kündigen, als Ehemalige/r bleiben oder austreten – mit Unterschrift",
+        "✅ Schriftliche Bestätigung im Bachkreis-Kopfbogen (PDF im Eingangskorb und per E-Mail)",
+        "📮 Leitung: Kündigungen bestätigen, Papier/Mail erfassen, Archiv der Ausgetretenen"
+      ]
+    },
+    {
+      "version": "0.65.0",
+      "datum": "11.11.2026",
+      "neu": [
+        "🎓 Einführung beim ersten Start: eine kurze Tour je Rolle (Eltern, Kinder, Leitung) – jederzeit wieder unter Hilfe & Tipps",
+        "🔑 Eigener App-Zugang für Kinder nur mit Ja der Eltern (neue Genehmigung)",
+        "✉️ PC-Verwaltung: Elternbrief mit persönlichem QR-Code und Rückgabe-Abschnitt drucken",
+        "👋 Zugang im Blick: wer sich noch nie angemeldet hat – mit Erinnerung per E-Mail"
+      ]
+    },
+    {
+      "version": "0.64.0",
+      "datum": "2026-11-11",
+      "neu": [
+        "⌃ Ein Knopf für den Kopf statt zwei Pfeile: in vier Stufen einfahren, die Punkte zeigen die Stufe – wie in der Club App",
+        "Lange drücken klappt den Kopf sofort ganz auf"
+      ]
+    },
+    {
+      "version": "0.63.0",
+      "datum": "2026-11-11",
+      "neu": [
+        "🎼 Aufgeräumt: neues Register „Leitung“ mit Abschnitten und „Entdecken“ für Spiele und Erinnerungen – kein Register mehr überfüllt",
+        "📦 Inventur per Regal-Schild: Schild scannen, da/fehlt antippen, Bericht als PDF – ohne Aufkleber auf den Instrumenten",
+        "🪧 Regal-Schilder mit QR-Code drucken"
+      ]
+    },
+    {
+      "version": "0.62.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🔍 Ausweis prüfen: Leitung hält die Kamera auf den QR-Code – ✅ gültig mit Name oder ❌",
+        "👪 Eltern-Startseite aufgeräumt: die 8 wichtigsten Kacheln, dazu QR-Ausweis",
+        "⌃⌃ Kopf ganz eingerollt: die Statusleiste mit Status und Knöpfen bleibt sichtbar"
+      ]
+    },
+    {
+      "version": "0.61.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "⚡ „Schnellzugriff“ antippen zeigt oben die Schnellstart-Symbole",
+        "🟢 Einfache / 🔧 Erweiterte Ansicht direkt über den Kacheln umschalten",
+        "🪪 Rechts der QR-Knopf: dein persönlicher Ausweis zum Vorzeigen"
+      ]
+    },
+    {
+      "version": "0.60.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "♿ Besser für Vorlese-Programme und gut lesbare Zahlen (Barrierefreiheit ohne Beanstandung)",
+        "⚡ Schnellerer Start: Einstellungen und Admin-Bereich laden erst, wenn sie gebraucht werden",
+        "🌐 Mehr auf Englisch: alle Kachel-Untertitel und Seitentitel"
+      ]
+    },
+    {
+      "version": "0.59.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🔘 Alle Ein/Aus-Schalter wie in der Club App: grün = an, grau = aus",
+        "🇬🇧 Oben rechts: Verbindungs-Balken und eine Flagge – antippen stellt die Sprache um",
+        "⌃ Die Pfeile zum Einrollen des Kopfs sitzen mittig oben"
+      ]
+    },
+    {
+      "version": "0.58.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🟢 Mein Status: verfügbar, beschäftigt, Urlaub, krank oder nicht erreichbar – oben im Kopf antippen",
+        "🤒 Krank? Termine bis zum Gesundwerden mit einem Tipp absagen",
+        "👀 Die anderen sehen deinen Status am Gesicht im Chat und in der Mitgliederliste"
+      ]
+    },
+    {
+      "version": "0.57.0",
+      "datum": "2026-11-10",
+      "neu": [
+        "🇩🇪/🇬🇧 Sprache oben im Kopf mit einem Tipp umschalten",
+        "📶 Balken oben zeigen, wie gut die Verbindung ist – antippen für Messwerte",
+        "👋 Kopf neu angeordnet: „Guten Abend, Bettina!“ wird nicht mehr abgeschnitten"
+      ]
+    },
+    {
+      "version": "0.56.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🎟️ Konzertkarten: Besucher reservieren ohne Konto über einen Link, an der Abendkasse abhaken",
+        "👆 Anmelden mit Fingerabdruck oder Gesicht (Passkey) statt Code",
+        "📊 Jahresbericht für Vorstand und Versammlung – mit Druck/PDF",
+        "🌐 English: Bedienung auf Englisch (Einstellungen › Sprache)"
+      ]
+    },
+    {
+      "version": "0.55.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "⚖️ Datenschutz und Nutzungsregeln in der App – beim ersten Start einmal bestätigen, Eltern auch für ihre Kinder",
+        "⚡ Schnellerer Start: selten gebrauchte Programmteile werden erst bei Bedarf geladen"
+      ]
+    },
+    {
+      "version": "0.54.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🎨 Bachkreis-Design für alle Drucke und PDFs: Logo und Name im Kopf, unten links das Dokument, Mitte „Seite 1/2“, rechts Bachkreis Bergkamen",
+        "🖨️ Vorschau zeigt die echten Seiten – genau so wird gedruckt und ins PDF gelegt"
+      ]
+    },
+    {
+      "version": "0.53.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🖨️ Überall Druckvorschau mit Bachkreis-Kopf: Drucken, 📄 PDF teilen/speichern, 💬 in einen Chat, 📥 in den Eingangskorb",
+        "📥 Eingangskorb für alle: Geteiltes, Abgelegtes, eigene Notizen – und was die Leitung einem hineinlegt",
+        "📲 Am Handy über „Teilen → Bachkreis“ PDFs, Fotos und Texte direkt in die App schicken"
+      ]
+    },
+    {
+      "version": "0.52.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "📝 Leihvertrag als Formular: Name, Anschrift, Geburtsdatum, ein oder mehrere Instrumente, Zubehör, Leihe ab/bis, Schadensklausel",
+        "✍️ Unterschreiben mit dem Finger – Mitglied, Eltern und Bachkreis, vor Ort oder jede/r auf dem eigenen Handy",
+        "🖨️ Leihvertrag drucken oder als PDF speichern – auch als leeres Papierformular"
+      ]
+    },
+    {
+      "version": "0.51.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "🔒 Geheim schreiben: im Einzelchat unter Erwachsenen können nur noch ihr zwei die Nachricht lesen – mit 🔑 Schlüsselbund fürs zweite Gerät",
+        "👤 Kontakt teilen und 👥 Konferenz (nur Ton, bis 4) direkt aus dem Chat",
+        "👋 Anklopfen: schreiben oder sprechen? – und 📼 Sprachnachricht, wenn keiner Zeit hat",
+        "🪑 Runder Tisch: sehen, wer schon da sitzt · 💼 Tasche mit PDF, Foto, Musik · 🙋 Gäste mit eigenem Link",
+        "📶 Ohne Netz geschrieben? Die Nachricht wartet mit 🕓 und geht von selbst raus · 🐌 ehrlicher Hinweis, wenn Laden dauert"
+      ]
+    },
+    {
+      "version": "0.50.1",
+      "datum": "2026-11-09",
+      "neu": [
+        "📞 Anrufen und 🎥 Videoanruf direkt aus dem Einzelchat – Kinder nur mit den eigenen Eltern",
+        "🪑 Runder Tisch: Online-Treffen mit Bild und Ton für bis zu 8 Erwachsene, auch zur Sitzung",
+        "🛟 Fernhilfe: die Leitung schaut mit auf deinen Bildschirm und zeigt dir den Weg",
+        "✥ Nach „Fertig“ beim Anordnen ist der Knopf „Anordnen“ sofort wieder da"
+      ]
+    },
+    {
+      "version": "0.49.0",
+      "datum": "2026-11-09",
+      "neu": [
+        "📈 So nutzen wir die App: wann am meisten los ist, Nachrichten und Benachrichtigungen – für alle, ohne Namen",
+        "🎬 Sitzungen: Anwesenheit, vertagte Punkte kommen automatisch wieder, Vorschläge werden als behandelt markiert",
+        "🔎 Protokolle prüft der Schriftführer, bevor alle sie lesen",
+        "🕰️ Rotes ✕ an der Stunden-Uhr – auf Wunsch ganz aus"
+      ]
+    },
+    {
+      "version": "0.48.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🎬 Sitzungen: Vorstand, Elternabend, Leitungsrunde – Schritt für Schritt vorbereiten, einladen, leiten und das Protokoll gleich mitschreiben",
+        "📁 Meine Unterlagen: Bescheinigungen, Verträge und Atteste je Familie an einem Ort",
+        "🪧 Schilder-Druckerei: Wegweiser, Reserviert, Kuchenbuffet, Pultkarten im Bachkreis-Design"
+      ]
+    },
+    {
+      "version": "0.47.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🛍️ Bachkreis-Börse: gebrauchte Instrumente, Noten und Konzertkleidung – und „🙋 Helfer gesucht“ für Kuchen, Aufbau und Fahrdienst",
+        "📖 Jahrbuch zum Blättern – schreib deinen schönsten Bachkreis-Moment hinein",
+        "🎲 Musik-Spiele: Instrumenten-Memory und Noten-Raten",
+        "🎭 Sprachnachrichten mit lustigen Stimmen: Maus, Roboter, Riese, Gespenst …"
+      ]
+    },
+    {
+      "version": "0.46.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🪪 Notfallpass je Kind im SOS: Allergien, Medikamente, Notfallnummern zum Antippen – zum Ausdrucken",
+        "🧳 Fahrt-Mappe für Begleitpersonen: alle Notfallpässe einer Fahrt",
+        "📍 Standorte: Probenorte, Auftrittsorte, Treffpunkte mit Anfahrt und Entfernung – „🧭 Anfahrt“ auch beim Termin",
+        "📸 Bildschirmfoto mit Markierung: einkreisen und an die Leitung schicken"
+      ]
+    },
+    {
+      "version": "0.45.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🗺️ Alles auf einen Blick: jeder Bereich der App geordnet nach Registern (Technik › Alles auf einen Blick)",
+        "🙋 Wie viel Hilfe möchtest du? Viel, ein bisschen oder keine – die App richtet Tipps danach ein",
+        "🗂️ Einstellungen auch als Kartei mit Reitern zum Blättern",
+        "⏳ Neue Warte-Bilder: Geige, Metronom, Noten, Taktstock, Trommel",
+        "🗺️ Feiertage für jedes Bundesland, ✨ Blinken einstellbar"
+      ]
+    },
+    {
+      "version": "0.44.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "🔽 Klappbereiche wie in der Club App: runder roter Pfeil zum Auf- und Zuklappen, 🔓/🔒 zum Feststellen, unten „▴ Zuklappen“, oben „▾ Alle auf / ▴ Alle zu“ – die App merkt sich, was offen ist – auch innen in den Einstellungen (Farben, Themen, Tag & Nacht, Schrift, Effekte …)",
+        "💬 Im Chat: ▾-Griff über dem Schreibfeld klappt den Schreibbereich weg (mehr Platz zum Lesen), oben im Chat alle Namen per Pfeil",
+        "📋 Listen in Abschnitten zum Aufklappen: Termine, Protokolle, Erledigte Vorschläge, Rückmeldungen, Erstattungen, Instrumente, Noten"
+      ]
+    },
+    {
+      "version": "0.43.1",
+      "datum": "2026-11-08",
+      "neu": [
+        "🧑‍💻 Der Entwickler hat jetzt überall die vollen Admin-Rechte – auch in der PC-Verwaltung, im Chat und bei Empfängerlisten"
+      ]
+    },
+    {
+      "version": "0.43.0",
+      "datum": "2026-11-08",
+      "neu": [
+        "⚙️ Das Zahnrad passt sich an: Kinder, Eltern, Leitungen und Admin sehen jeweils ihre eigenen Einstellungen (oben steht „Ansicht: …“)",
+        "👪 Eltern finden unter ⚙️ › Familie alles für ihre Kinder auf einen Blick",
+        "🛡️ Für Admins: Leitstand mit Wächter-Lämpchen, Datenbank-Überwachung, Wartungsmodus und Module zum Abschalten"
+      ]
+    },
+    {
+      "version": "0.42.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🆘 Klappt etwas nicht? Problem, Frage, Idee oder Lob direkt an die Leitung – die Antwort kommt zurück (Hilfe › 🆘 oder Kachel „Hilfe & Rückmeldung“)",
+        "💶 Erstattung: Fahrtkosten und Auslagen mit Beleg einreichen – die Kasse prüft und zahlt aus",
+        "🐞🍀 Ab und zu krabbelt ein Marienkäfer über die Startseite oder der Wind bringt ein Kleeblatt – antippen!"
+      ]
+    },
+    {
+      "version": "0.41.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "💡 Vorschläge & 🗳️ Abstimmungen: Ideen einreichen und unterstützen, abstimmen mit Frist – auf Wunsch geheim",
+        "🗒️ Protokolle: freigegebene Protokolle lesen, neue sind markiert, „📌 Meine Aufgaben“ auf einen Blick",
+        "🎄 Und im Dezember wartet eine Überraschung …"
+      ]
+    },
+    {
+      "version": "0.40.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "📷 Fotoalbum: Fotos von Konzerten, Fahrten und Proben – Alben, Diashow, groß ansehen, speichern, Papierkorb. Kinder sind nur mit Foto-Einwilligung zu sehen",
+        "📖 PDFs (Noten, Dokumente, Anhänge) öffnen direkt in der App",
+        "🎼 Pult-Modus: Noten Seite für Seite bildschirmfüllend, quer zwei Seiten – blättern mit Tippen, Wischen oder Bluetooth-Pedal"
+      ]
+    },
+    {
+      "version": "0.39.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🗳️ Terminumfrage: Wann passt es? Vorschläge ankreuzen (✅ passt · 🤔 notfalls · ❌ geht nicht) – die Leitung legt den Termin mit einem Tipp fest",
+        "❓ Neues Hilfe-Zentrum: Themen, Suche, „Zeig mir wo“ und „neu“ seit deinem letzten Besuch",
+        "🔍 Lupe unten rechts: die ganze App durchsuchen – Funktionen, Hilfen, Personen, Termine, Chats, Noten – auch mit Tippfehlern"
+      ]
+    },
+    {
+      "version": "0.38.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "↪️ Nachrichten weiterleiten · 📌 wichtige Nachrichten oben anheften · @Namen erwähnen",
+        "🔕 Chats stumm schalten (8 Std., 1 Woche, immer) · ⭐ Favoriten oben · 📦 Archiv",
+        "🔍 Im Chat suchen · 🔖 Nachrichten merken · ↩️ Ungelesenes zurückholen",
+        "👁 Wer hat meine Nachricht noch nicht gelesen? – mit „Erinnern“ · 📬 Lesestand in der Übersicht",
+        "👉 Nach rechts wischen = antworten · ⬇️ Knopf nach unten · ❗ nachträglich wichtig · 📤 Anhang teilen"
+      ]
+    },
+    {
+      "version": "0.37.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🏢 Das Büro ist jetzt ein Raum wie in der Club App: Aktenschrank mit Jalousie, Bachkreis-Logo und „seit 1969“, Ordner im Regal, Schloss zum Feststellen",
+        "🪑 Schreibtisch mit Pinnwand, Lampe (Tag/Nacht/Automatik), Bildschirm mit Uhr und Namensschild, Kalender, Eingangskorb, Drucker, Handy, Telefon, Füller, Tastatur und Rechner",
+        "✏️ Schreibtisch selbst einrichten – Teile verschieben, aus dem Katalog Tischuhr, Metronom, Stimmgabel, Notenpult und mehr dazustellen",
+        "☕ Kaffeetasse = Pause mit Bildschirmschoner"
+      ]
+    },
+    {
+      "version": "0.36.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🗺️ Chronik › Orte: Weltkarte mit allen Orten, an denen der Bachkreis seit 1969 gespielt hat – über 45 Orte in 19 Ländern laut Schul-Website, nach Ländern sortiert; Punkt antippen zeigt, was dort war",
+        "📜 Chronik-Einträge mit Stadt und Land, Jahr darf fehlen (wer es weiß, trägt es nach)",
+        "💾 Leitung: Speicher im Blick (Datenbank und Dateien, Warnung ab 80 %)",
+        "🧹 Änderungsprotokoll räumt sich nach 12 Monaten selbst auf · 💤 Server schläft in den Ferien nicht ein"
+      ]
+    },
+    {
+      "version": "0.35.0",
+      "datum": "2026-11-07",
+      "neu": [
+        "🧪 Vorführversion: Nach einem Update kommen neue Beispieldaten (z. B. Büro-Vorlagen, Startnachricht) von selbst dazu – was du eingetragen oder gelöscht hast, bleibt so"
+      ]
+    },
+    {
+      "version": "0.34.0",
+      "datum": "2026-11-06",
+      "neu": [
+        "🎻 Die Instrumente klingen jetzt echt: Aufnahmen von Violine, Bratsche, Cello, Kontrabass, Flöte, Oboe, Klarinette, Fagott, Trompete, Horn, Posaune, Tuba, Harfe, Klavier, Pauke und Trommel",
+        "🎭 Auch das Orchester auf der Bühne, die Übe-Bühne und das Notenblatt spielen mit den echten Klängen",
+        "📶 Jedes Instrument wird erst beim ersten Abspielen geladen (etwa 0,2 MB) – ohne Internet klingt es wie bisher; ausschaltbar unter ⚙️ › ✨ Effekte"
+      ]
+    },
+    {
+      "version": "0.33.0",
+      "datum": "2026-11-05",
+      "neu": [
+        "🏢 Büro für Leitung, Lehrkräfte und Vorstand: Regal mit Ordnern – Protokolle, Noten & Bearbeitungen, Grafik & Design, Vorlagen, Elternbriefe, Konzerte, Verträge, Presse, Finanzen, Schule, Archiv",
+        "📥 Eingangskorb im Büro: alles, was gerade wartet, mit einem Tipp erledigen",
+        "✉️ Briefe aus Vorlagen: Platzhalter werden gefüllt – drucken mit Briefkopf, als Rundschreiben senden oder in „Elternbriefe“ ablegen · 🗒️ Protokoll mit fester Gliederung",
+        "👪 Neue Eltern-Übersicht: oben „Bitte erledigen“ (Zusagen, Genehmigungen, Notfallbogen, Leihinstrument), Umschalter zwischen den Kindern, die nächsten Termine und 10 Kacheln"
+      ]
+    },
+    {
+      "version": "0.32.0",
+      "datum": "2026-11-05",
+      "neu": [
+        "🧒 Neue Kinder-Ansicht: oben die nächste Probe mit „Ich komme / Kann nicht“ und was mitzubringen ist, darunter deine Übe-Aufgaben und 8 große Kacheln – ohne Register",
+        "🧠 Quiz: Instrumente (auch zum Anhören), Noten lesen, Rhythmus, Hören (höher/tiefer, Dur/Moll), Musik-Wörter und Unser Bachkreis – leicht oder schwer",
+        "⭐ Sterne, 🔥 Übe-Serie und 🏅 Abzeichen – nur für dich, ohne Rangliste",
+        "🙂 „Ich“: Mein Gesicht, Leihinstrument, Abzeichen, Übe-Tagebuch und Einstellungen an einem Ort · 🆘 SOS-Knopf unten",
+        "🔧 Ab Klasse 9 kannst du unten auf „Mehr anzeigen“ umschalten"
+      ]
+    },
+    {
+      "version": "0.31.0",
+      "datum": "2026-11-04",
+      "neu": [
+        "📲 Mach die Bachkreis-App zu einer echten App: im Browser kommt ab und zu eine freundliche Einladung zum Installieren – mit „Jetzt installieren“ und „Zeig mir wie“",
+        "🔗 Link funktioniert nicht? Die Anmeldeseite erklärt jetzt freundlich, woran es liegen kann und was hilft",
+        "✏️ Umfragen im Chat mit eigener Antwort – und „Mehrere Antworten erlauben“ funktioniert jetzt richtig",
+        "💡 Tipp des Tages mit 👍 / 👎 – „Kenne ich schon“ blendet ihn aus",
+        "📊 Bachkreis in Zahlen (Leitung, Lehrkräfte, Vorstand) · 🛡️ Zugang im Blick für die Leitung: Anmeldeversuche, Sperren und wer die App installiert hat"
+      ]
+    },
+    {
+      "version": "0.30.0",
+      "datum": "2026-11-04",
+      "neu": [
+        "📣 Startnachricht der Leitung: erscheint beim nächsten Öffnen als Fenster – „gelesen“ bestätigen oder ✅ Ja · ⏰ Später · ✖ Nein, dazu ↩️ Rückfrage; die Leitung sieht, wer wie geantwortet hat",
+        "🔄 Kacheln mit Rückseite haben oben rechts ein kleines 🔄 – antippen dreht sie sofort um · 🌀 Kacheln erscheinen auf Wunsch als Kachel-Zug, Welle, Wirbel, Wackeln oder Start",
+        "🌗 Schatten und ⬜ Ecken der Kacheln einstellbar · 👆 größere Tippflächen · ⚙️ Einstellungen mit Übersicht zum Antippen",
+        "📌 Die Pinnwand geht nicht mehr von selbst auf (einschaltbar) – gelesene Zettel hängen ab dem nächsten Tag als 📍 Nadel im Rahmen",
+        "🕰️ Stundenuhren: neben dem Kuckuck Big Ben, Westminster-Glockenspiel, Kiel, Freiburg, Berliner Dom, Röhrenglocken und große Standuhr – mit echten freien Aufnahmen",
+        "⏱️ Uhr & Takt: 🥁 Metronom (mit Takt und Tempo-Tippen), ⏲️ Timer mit Gong, ⏱️ Stoppuhr · 🎁 Geburtstags-Vogel im Kopf · 🟢 Namen, wer online ist · 🔔 Kopf-Pfeil blinkt bei Neuem · § Impressum"
+      ]
+    },
+    {
+      "version": "0.29.0",
+      "datum": "2026-11-04",
+      "neu": [
+        "📝❗🏎️ Versand-Leiste über dem Eingabefeld: erscheint beim Schreiben – Normal, Wichtig oder Express mit einem Tipp (in den Einstellungen „immer zeigen“)",
+        "𝐅 Schrift im Chat: *fett*, _kursiv_, ~durchgestrichen~ und Farben (Rot, Blau, Grün, Gelb als Textmarker) · 👋 Grußformel mit einem Tipp",
+        "🔗 Links zeigen ihre Adresse – verdächtige Links (Kurz-Links, Nachahmer-Namen, Passwort-Seiten) bekommen ein ⚠️ Vorsicht",
+        "📅 Steht ein Datum in der Nachricht, kannst du es direkt als eigenen Termin oder Bachkreis-Termin übernehmen · 💡 „krank / komme nicht / bin dabei“ wird für die Leitung als Absage oder Zusage vorgeschlagen",
+        "💬 Chat-Übersicht mit Filtern (Ungelesen, Gruppen, Einzeln) und Gliederung nach Zeit, Art oder Name – Ungelesenes steht oben",
+        "🟢🟠🔴 Der Nachrichten-Zähler blinkt grün, orange oder rot – je nachdem, wie lange die älteste ungelesene Nachricht schon wartet · 👥 im Chat nur andere/nur meine anzeigen · ⌨️ Tastatur-Knopf"
+      ]
+    },
+    {
+      "version": "0.28.0",
+      "datum": "2026-10-18",
+      "neu": [
+        "🟢 Einfache Ansicht neu: große Kacheln passend zur Rolle (Schüler, Eltern, Leitung), Reihenfolge änderbar – beim ersten Start fragt die App, wie du starten möchtest",
+        "🔄 Kacheln umdrehen: doppelt auf eine Kachel tippen – hinten warten Schnellaktionen (z. B. Neuer Zettel, Mitspielen, Stimmgerät, 112 anrufen)",
+        "✥ Anordnen wie in der KC App: lange auf eine Kachel drücken, dann ziehen oder Pfeile – ✕ blendet aus, 👀 zeigt Ausgeblendete; auch die Register lassen sich verschieben",
+        "📰 Info-Laufband über den drei Feldern: was zu erledigen ist (mit ✔ Zusagen direkt), Hinweise und schöne Infos – ✕ blendet für heute aus",
+        "⚡ Schnellstart-Karte im Info-Feld (bis zu 8 Symbole) · 🔢 Countdown als Fallblatt · 🔲 Kachelgröße normal, klein oder mini · ⭐ zuletzt gewählte Kachel",
+        "💡 Vorschläge zur Startseite (nur auf diesem Gerät gezählt) · 📋 Tagesübersicht für Leitung, Lehrkräfte und Vorstand"
+      ]
+    },
+    {
+      "version": "0.27.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "📜 Chronik & Repertoire: Geschichte seit 1969 (laut Schul-Website), „Was haben wir schon gespielt?“ und „Über uns“ mit Link zur Internetseite",
+        "📂 Dokumente: Satzung, Flyer, Orchesterklassen-Flyer, Vorlagen – als geschützte Datei oder Link, sichtbar für alle, Eltern, Schüler oder nur die Verwaltung",
+        "🏠 Austausch & Gastfamilien: Eltern bieten Plätze an, die Leitung bestätigt und ordnet die Gäste zu – Gastfamilien sehen ihre Gäste mit Ankunft und wichtigen Hinweisen",
+        "📨 Auftrittsanfragen von Gemeinden, Kirchen und Festen: erfassen, prüfen, zusagen – die Zusage legt den Termin für das Orchester an",
+        "🤝 Partner & Kontakte (Musikschule, Neue Philharmonie Westfalen, Austausch-Orchester) · 🎓 im Konzertprogramm: Schüler dirigiert, eigene Komposition, Uraufführung",
+        "🌙 Bessere Lesbarkeit im Dunkelmodus"
+      ]
+    },
+    {
+      "version": "0.26.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "🎻 Übe-Bühne: Auf der Bühne üben – vorne sitzt dein eigener Avatar mit deinem Instrument, das Bachkreis-Orchester begleitet dich",
+        "🎼 Mitspielen mit Tempo (langsam bis schnell), Takt von–bis, Wiederholen, Einzählen und „Tempo steigern“ – der rote Notenkopf zeigt, wo ihr seid",
+        "✋ Noten & Griffe: Note antippen → Ton, Notenname und Griffbild (Streicher, Flöte, Klarinette, Blech, Posaune), auch für Tonleitern",
+        "🥁 Rhythmus-Trainer: anhören, mittippen, Auswertung genau/knapp/daneben mit Sternen · 🎯 Stimmgerät & „Ton halten“ (Mikrofon nur im Gerät) · 👂 Ohr-Spiele",
+        "👩‍🏫 Lehrkräfte geben Übe-Aufgaben mit Notenstelle, Rhythmus-Baukasten, Tonleiter, Ton halten, Ohr-Spiel oder eigenem PDF/Vorspiel – und sehen den Fortschritt je Kind mit Rückmeldung (App und PC)",
+        "🎙️ Vorspielen & an die Lehrkraft schicken – nur mit Einwilligung der Eltern, automatisch gelöscht nach 30 Tagen"
+      ]
+    },
+    {
+      "version": "0.25.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "♿ Mit den Prüfwerkzeugen aus Git geprüft (axe-core aus dem KC Infrastructure Control Center): alle Ansichten in allen Rollen und das PC-Programm ohne Barrierefreiheits-Verstoß",
+        "🎨 Bessere Lesbarkeit: kräftigere Farben bei Zusagen/Absagen, Teilnahme- und Status-Marken, SOS-Knöpfen und erledigten Pinnwand-Zetteln",
+        "🗣️ Bildschirmleser: alle Eingabefelder und Filter haben jetzt Namen, Lesehaken und Gesichter werden richtig angesagt",
+        "🩺 Datenbank-Prüfung des KC System Check (db_monitor) läuft bei jedem Test: jede Tabelle mit Zugriffsschutz, keine offenen Rechte",
+        "🐞 PC-Programm: Listen mit freiem Text (durch Komma getrennt) wurden als Text statt als Liste gespeichert"
+      ]
+    },
+    {
+      "version": "0.24.0",
+      "datum": "2026-10-16",
+      "neu": [
+        "🖥️ PC-Programm aufgeräumt: Übersicht nach Bereichen in 3 Spalten mit gleich großen Knöpfen, „Was ist zu tun?“, Tabellen in voller Breite, Bearbeiten in einem großen Fenster mit 3 Spalten",
+        "🧰 Neue PC-Werkzeuge: Terminplanung (auch Serien & Registerproben), Genehmigungen anfordern/erinnern, Rundschreiben, Projekte & Konzerte, Kasse & Beiträge, Notfall- & Foto-Listen, Mitfahrbörse, Teilnahmebescheinigungen, Ferien",
+        "⚙️ Am PC passiert jetzt dasselbe wie in der App: Ausleihe/Rückgabe und Reparatur setzen den Instrumenten-Status, Einkauf wird Inventar, neue/abgesagte Termine benachrichtigen die Eingeladenen",
+        "🌱 Interessenten & Probespiel, 🙋 Helfer- & Dienstplan, 🎼 Probenplan beim Termin, Ausleihe auch von Ausstattung, Datenauskunft je Person am PC",
+        "🐞 Termine am PC richtig nach Datum sortiert, Namen statt Kennungen in allen Listen, Soll-Besetzung als Zahlenfelder statt Code, Absturz beim Öffnen einer Nachricht behoben"
+      ]
+    },
+    {
+      "version": "0.23.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🚗 Mitfahrbörse: zu jedem Termin Plätze anbieten, eine Mitfahrt suchen oder für das eigene Kind buchen – „Ich nehme mit“ nimmt ein Gesuch an, alle Beteiligten bekommen Bescheid",
+        "🚗 Übersicht „Mitfahrbörse“ mit allen Terminen der nächsten 6 Wochen (freie Plätze 🚗 / wer sucht 🙋) und kleine Anzeige in der Terminliste",
+        "🎺 Instrumentenkunde: der Kopf der Figur verrutscht beim Spielen nicht mehr nach links (auch beim Kontrabass)"
+      ]
+    },
+    {
+      "version": "0.22.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🚗 Mitfahrgelegenheiten beim Termin: Eltern bieten Plätze an, andere Eltern buchen für ihr Kind – der Fahrer bekommt Bescheid",
+        "📝 Übeaufgaben von den Lehrkräften – für ein Kind, ein Register oder ein Orchester; die Kinder haken unter „Üben“ ab",
+        "📜 Mietmaterial & GEMA: Rückgabefrist an den Verlag mit Erinnerung, Papier-Exemplare je Spieler, GEMA-Liste aus dem Konzertprogramm",
+        "🚪 Räume & 🔑 Schlüssel, 💛 Förderverein-Mitglieder mit Beitrag (ohne Lastschrift), 🛡️ Vermerk Führungszeugnis für Begleitpersonen",
+        "🔧 Reparaturen auch für Ausstattung (Notenständer, Technik) · 📧 Auftrag per Mail an die Werkstatt · 🛒 Einkauf wird automatisch Instrument oder Ausstattung · 💛 Sachspenden mit Inventar verknüpft",
+        "🧹 Abgelaufene Gesundheitsangaben löscht der Server jetzt automatisch"
+      ]
+    },
+    {
+      "version": "0.21.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎼 Registerproben: beim Termin einfach die Register anhaken · Registerführer sehen unter „Mein Register“, wer kommt, und können erinnern",
+        "🤝 Leihvertrag direkt an der Ausleihe: Zubehör, Kaution, Leihgebühr, Versicherung – „bezahlt“ mit einem Tipp; Ausleihe auch an Lehrkräfte und Ehemalige",
+        "👪 Eltern ändern Telefon, E-Mail und Adresse ihrer Kinder selbst · ab 18 entscheiden die Kinder, ob die Eltern weiter Zugriff haben",
+        "🎭 Konzertprogramm mit Reihenfolge, Pause, Ansagen, Zugabe, Uhrzeiten und Gesamtdauer · Treffpunkt, Kleiderordnung und Transportliste zum Abhaken",
+        "🧳 Anmeldung zu Fahrten und Freizeiten in der App – mit Plätzen, Warteliste, Anmeldeschluss und „bezahlt“",
+        "🎓 Schuljahreswechsel nach Regeln (C → B → A → Ehemalige) mit Hinweisen auf Leihinstrumente und offene Genehmigungen",
+        "🔐 Datenauskunft über alle gespeicherten Daten · 🧹 Löschfristen: Ausgetretene nach der Frist anonymisieren · Ehemalige auch in Pinnwand und Chat"
+      ]
+    },
+    {
+      "version": "0.20.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🛡️ Kinderschutz im Chat: Kindern privat schreiben dürfen nur Leitung und Lehrkräfte – und die Eltern lesen automatisch mit (im Zahnrad abschaltbar)",
+        "🩺 Gesundheit & Notfall: Eltern tragen Allergien, Medikamente, Notfallkontakt, Krankenkasse usw. selbst ein – sichtbar nur für Leitung, Lehrkräfte und Begleitpersonen während einer Fahrt; nach 13 Monaten ohne Bestätigung gelöscht",
+        "📷 Foto-Einwilligung je Zweck (App, Website, Presse, Social Media) und eine Foto-Liste je Orchester für Konzerte",
+        "📋 Anwesenheit mit ✅ da · ⏰ verspätet · 🟡 entschuldigt · ❌ unentschuldigt, Fehlzeiten-Übersicht in App und PC-Programm",
+        "🔒 Datenschutz: Vorstand, Instrumenten- und Notenwart sehen von Kindern nur das Nötige; interne Bemerkungen gehen nicht mehr an Schüler/Eltern; Reparatur-Freigaben über der Grenze prüft jetzt auch der Server"
+      ]
+    },
+    {
+      "version": "0.19.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📦 PC-Programm: weiteres Inventar – Notenständer, Taktstock, Dirigentenpult, Stühle, Technik, Koffer, Notenmappen … mit Inventar-Nr., Anschaffung, Preis, Händler, Beleg, Garantie, Standort und Anzahl",
+        "📉 Abschreibung automatisch (linear monatsgenau, bis 800 € sofort) mit Restbuchwert; Status verfügbar, im Einsatz, verliehen, in Reparatur, defekt, vermisst, gestohlen, ausgemustert, verkauft, verschrottet",
+        "📦 Neue Übersicht „Inventar & Abschreibung“: Kennzahlen, Problemfälle, ✅ Inventur, 🏷️ QR-Etiketten zum Aufkleben, 📤 Anlagenverzeichnis für die Kassenprüfung",
+        "🔒 Ausgetretene können sich nicht mehr anmelden · Stimmen „nur Gruppe“ sieht nur diese Gruppe · Instrument bleibt nach Reparatur „verliehen“, wenn es ausgeliehen ist",
+        "🧭 Gesamt-Check des Konzepts mit Vorschlägen (docs/KONZEPT-CHECK.md)"
+      ]
+    },
+    {
+      "version": "0.18.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎼 Probenoten zum Ausprobieren: 6 gemeinfreie Stücke (Menuett G-Dur, Kanon in D, Ode an die Freude, Kleine Nachtmusik, Largo, Bachkreis-Fanfare) – für jedes Instrument eine eigene Stimme",
+        "🎻 Jede Stimme richtig notiert: Violin-, Bratschen- und Bassschlüssel, Klarinette/Trompete in B und Horn in F transponiert, Kontrabass eine Oktave höher notiert",
+        "▶ Anhören mit der Klangfarbe des Instruments (die gespielte Note leuchtet rot), 🔍 größer/kleiner, 🖨️ Drucken, ⬇️ Speichern",
+        "🗂️ Notenarchiv als Explorer wie bei Windows: 📁 Stück › 🎻 Instrument › 📄 Noten – mit ▸ aufklappen und Einrückung, Orchester-Auswahl und Suche"
+      ]
+    },
+    {
+      "version": "0.17.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🏠 Startseite wie in KC: unter dem nächsten Termin drei Kacheln – 💬 neue Nachrichten · 🟢 wer ist online · ⏳ wann ist der nächste Termin (mit deiner Antwort)",
+        "🟢 Kleine grüne Zahl unten in der Fußzeile (Orchester): so viele sind gerade online – antippen der Kachel zeigt sie mit 👋 Anklopfen",
+        "🎼 Orchester (Sitzplan, Register, Besetzung): grüner Punkt am Gesicht, wer gerade online ist, und „🟢 x online“ – antippen hebt nur diese hervor"
+      ]
+    },
+    {
+      "version": "0.16.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📅 Termine kinderleicht: große Knöpfe „✅ Ich komme · ❌ Ich kann nicht · ⏳ Weiß noch nicht“, sortiert nach Heute · Morgen · Diese Woche · Nächste Woche · Monat",
+        "❗ Teilnahme erforderlich (Absage nur mit Grund – einfach antippen: krank, Schule, Urlaub …) · 🙂 erwünscht · ℹ️ nur zur Info (ohne Antwort)",
+        "⏳ „Weiß noch nicht“: du wählst, wann wir nochmal fragen (morgen, in 3 Tagen …) – dann kommt beim Öffnen die Frage noch einmal",
+        "🌍 Termine für alle (z. B. Weihnachtsfeier) und 🎻 die Termine deines Orchesters – Filter: Noch antworten · Mein Orchester · Für alle · Eigene",
+        "🙋 Eigene Termine (Üben, Unterricht, Vorspiel) mit wenigen Tipps, auch jede Woche – privat, auch im Kalender-Abo",
+        "Neue Rolle „Terminplaner“: darf Termine eintragen (wie Leitung und Lehrkräfte)",
+        "🟢 Wer ist online und 👋 Anklopfen (wie KC) in 💬 Nachrichten – im Zahnrad stellt die Leitung ein, wer die Funktion bekommt (Leitung & Lehrkräfte · Schüler · Eltern); jeder kann sich unsichtbar schalten"
+      ]
+    },
+    {
+      "version": "0.15.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎭 Bühne realistischer: die Musiker tragen die Gesichter der echten Bachkreis-Mitglieder (aus „Mein Gesicht“) und sitzen auf ihrem Register-Platz – Name beim Antippen/Darüberfahren",
+        "Instrumente genauer: Geige und Bratsche unterm Kinn, Cello zwischen den Knien, Kontrabass im Stehen, Flöte quer, Oboe/Klarinette, Fagott, Horn, Trompete, Posaune mit Zug, Pauken mit Schlegeln",
+        "Bewegung beim Spielen: Bläser heben ihr Instrument, Streicher streichen mit dem Bogen, Posaunenzug fährt, Köpfe nicken, Körper wiegen sich – wer Pause hat, lässt das Instrument sinken",
+        "Dirigentin von hinten, Podeste für Holz und Blech, Rampenlicht"
+      ]
+    },
+    {
+      "version": "0.14.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎻 Üben: Übe-Tagebuch mit ⏱ Stoppuhr – Minuten, Stück, was geübt (Tonleitern, Etüden, Vom Blatt …) und wie es lief; Wochenbalken, Wochenziel und 🔥 Tage in Folge",
+        "⏰ Übezeiten (Wochentage, Uhrzeit, Dauer): Erinnerung über den Handy-Kalender – zuverlässig auch bei geschlossener App – und beim Öffnen „Heute ist Übetag – schon geübt?“",
+        "📆 Kalender: Termine als Abo in Apple-, Google- oder Outlook-Kalender – automatisch aktuell, mit Erinnerung vor jedem Termin; oder einmal als Kalenderdatei",
+        "Jeder Termin: „📆 In meinen Kalender“ → 🍎 Apple/Outlook oder 🟢 Google Kalender",
+        "Eltern tragen fürs Kind ein und abonnieren die Termine ihrer Kinder (mit Vornamen); Leitung/Lehrkräfte sehen unter „📊 Übe-Übersicht“ nur, was Schüler teilen"
+      ]
+    },
+    {
+      "version": "0.13.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📚 Notenarchiv neu in drei Schritten: erst 🎻 Orchester bzw. Klasse, dann 🎼 Stücke, dann 📄 Noten nach Instrument – mit Pfad zum Zurückspringen",
+        "🔲 Kacheln oder ☰ Liste (das Gerät merkt sich die Wahl), 📕 Balken zeigt, wie viele Stimmen schon ein PDF haben",
+        "🔍 Suche und ⚙️ Filter: Instrument (mit der passenden Stimme direkt auf der Karte), Projekt, Schwierigkeit, Rechte, „📄 PDF fehlt“ – Sortieren nach Komponist, Titel, Schwierigkeit oder fehlenden PDFs",
+        "Beim Stück: Noten nach Instrumentengruppen (Partitur, Streicher, Holz, Blech …) mit 👥 Anzahl der Spieler im Orchester – so weiß man, wie viele Ausdrucke man braucht",
+        "PC-Verwaltung: je Werk „für Orchester / Klasse“, Schwierigkeit und Dauer"
+      ]
+    },
+    {
+      "version": "0.12.1",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🐦 Kuckuck: Ist der Ton beim Öffnen zur vollen Stunde noch gesperrt, wartet die Uhr mit „🔊 Antippen“ und ruft dann hörbar so oft, wie es Uhr ist – vorher rief er stumm"
+      ]
+    },
+    {
+      "version": "0.12.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📡 In 💬 Nachrichten oben links: blinkender Router im WLAN, blinkender Satellit im Mobilfunk – die Wellen zeigen die Verbindungsqualität (grün gut, gelb mäßig, rot schwach, grau unbekannt, ✕ keine Verbindung)",
+        "Antippen zeigt Netzart (selbst wählbar, wo das Handy sie nicht verrät), Antwortzeit, Tempo laut Handy und „📏 Jetzt messen“",
+        "⚙️ › 💬 Nachrichten: Symbol an/aus · ⚙️ › ✨ Effekte: Blinken an/aus"
+      ]
+    },
+    {
+      "version": "0.11.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎼 Orchester neu: 🪑 Sitzplan wie auf der Bühne (Streicher vorn, Holz, Blech, Schlagwerk hinten) mit Gesichtern, 👥 Register-Karten und 📊 Besetzung mit Soll/Ist je Register",
+        "📅 Zusagen zur nächsten Probe direkt im Sitzplan: ✓ kommt, ✗ fehlt, ~ vielleicht, ? offen – so sieht man sofort, welches Register dünn besetzt ist",
+        "🏷️ Leihinstrumente koordinieren: wer braucht noch ein Instrument, wie viele sind frei – mit einem Tipp zum passenden Instrument",
+        "🙂 Mein Gesicht: eigenes gezeichnetes Gesicht gestalten (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Farbe) – erscheint im Orchester, in Chats und in der Instrumentenkunde",
+        "🎺 Instrumentenkunde: 16 Orchesterinstrumente – deine Figur hält das Instrument, ▶ Melodie/Tonleiter/tief bis hoch zum Anhören, Steckbrief, worauf es ankommt, Pflege, Einstieg und „Schon gewusst?“"
+      ]
+    },
+    {
+      "version": "0.10.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "🎻 Instrumente in drei Ansichten: 🔲 Kacheln, ☰ Liste oder 🗂️ Drehregister (Karteikarten zum Wischen) – je Instrument das Wichtigste auf einen Blick",
+        "Instrumentengruppen (Streicher, Holz, Blech, Schlagwerk, Tasten & Harfe) – einklappbar, mit „frei · verliehen“; in der PC-Verwaltung je Instrumententyp einstellbar, auch mit eigenem Symbol",
+        "🔍 Suche (Nr., Instrument, Hersteller, Standort, Ausleiher …), Status-Chips mit Zahlen (frei, verliehen, Reparatur, Wartung, Rückgabe überfällig) und ⚙️ Filter, Gruppieren und Sortieren – platzsparend in einer Leiste"
+      ]
+    },
+    {
+      "version": "0.9.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "📂 Im Chat sind vergangene Tage eingeklappt – rechts steht das Datum (z. B. „Mo, 11.11.26“), ältere Wochen als „KW 45/26“; heute und Ungelesenes bleiben offen, „⤢ Alle aufklappen“ öffnet alles",
+        "📎 Anhänge: Fotos, Videos, Dateien (PDF, Word, Excel …) und 🎼 Noten – direkt aus dem Notenarchiv oder als PDF/Foto vom Handy; Fotos werden verkleinert, groß ansehen und speichern",
+        "🎙️ Sprachnachrichten (Mikrofon neben dem Schreibfeld, wie WhatsApp) und 🗣️ Diktieren – sprechen statt tippen",
+        "🎤 Sprachsteuerung oben im Kopf: „Öffne Termine“, „Nachricht an Bettina: …“, „Express an Judith: …“, „Neuer Zettel: …“, „Lies meine Nachrichten“ – gesendet wird nie ungefragt",
+        "📊 Umfragen im Chat (eine oder mehrere Antworten, Balken, wer hat was gewählt) und ⏳ Selbstlöschen nach 1 Std., 24 Std. oder 7 Tagen",
+        "🎼 Notenarchiv: PDF an eine Stimme hängen (📤 PDF) – Schüler öffnen es unter „Meine Noten“",
+        "⚙️ › 💬 Nachrichten: Tage einklappen, Kalenderwochen, Fotos automatisch laden, Sprachsteuerung"
+      ]
+    },
+    {
+      "version": "0.8.0",
+      "datum": "2026-10-16",
+      "stufe": "DEV",
+      "neu": [
+        "💬 Nachrichten wie in der KC Club App – aufgebaut wie WhatsApp: Chatliste mit Suche, Bild, letzter Nachricht und Zähler; Sprechblasen mit „Heute/Gestern“, „⬇ Neue Nachrichten“ und Uhrzeit",
+        "✓ gesendet · ✓✓ angekommen · blaue ✓✓ gelesen – in Gruppen mit „2/5“; ℹ️ Details zeigen je Empfänger, wann angekommen und gelesen (auf die Sekunde) und was der BK Communicator je Weg gemacht hat",
+        "❗ Wichtig (orange, per Push und E-Mail, auf Wunsch vorher fragen) und 🏎️ Express (kommt sofort durch – auch nachts; beim Empfänger geht ein Fenster auf mit „Empfang bestätigen“; höchstens 5 am Tag)",
+        "⏰ Später senden zu einer Uhrzeit – auch jeden Tag, werktags, jede Woche oder jeden Monat; der Server sendet, auch wenn das Handy aus ist",
+        "🔔 Je Nachricht wählen: Push, E-Mail, WhatsApp; ↩️ Antworten mit Zitat, Reaktionen, ✏️ Bearbeiten (15 Min.), 🗑️ für alle löschen, 📋 Kopieren, 🔊 Vorlesen, Entwürfe je Chat",
+        "＋ Neue Nachricht: Einzelchat oder Runde – mit Kinderschutz (Eltern schreiben privat nur Leitung, Lehrkräften und eigenen Kindern); private Chats sieht auch die Leitung nicht",
+        "⚙️ Mehr › 💬 Nachrichten: Lesebestätigung, Wichtigkeit fragen, Ton, Vorlesen, Entwürfe, Enter sendet, vorausgewählte Benachrichtigung, Chat-Farben"
+      ]
+    },
+    {
+      "version": "0.7.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "📌 Pinnwand wie in der KC Club App: Korkwand mit Post-its in vier Farben (1. gelb, 2. rosé, 3. hellgrün, 4. hellblau), leicht schräg mit Nadel",
+        "Bis zu 4 Zettel je Person mit je 200 Zeichen und Emoji-Schnellreihe; Wichtigkeit (❗ Hoch – beim Öffnen zeigen), für wen (nur ich · alle · bestimmte Personen), mit oder ohne Antwort-Knopf",
+        "✍️ Antworten mit privatem Gegen-Zettel, ✓ Erledigt je Person, 👁️ der Verfasser sieht, wer gelesen und erledigt hat; nachträglich ❗ wichtig machen – auf Wunsch mit erneutem Bescheid",
+        "Neue Zettel gehen beim Öffnen als Post-it-Fenster auf (✓ Gelesen · 📌 Zur Pinnwand · ✍️ Antworten); wichtige offene Zettel öffnen die Pinnwand; Erinnerung an eigene Zettel nach 3 Tagen (Hängen lassen = 7 Tage Ruhe)",
+        "🎂 Geburtstags-Aushang an der Pinnwand mit „Ich möchte gratulieren“; Bescheid per Push über den BK Communicator (Regel „Pinnwand-Zettel“)",
+        "Datenschutz: private Zettel sieht wirklich nur, an wen sie gerichtet sind – auch die Leitung nicht; die Leitung darf sichtbare Zettel abnehmen"
+      ]
+    },
+    {
+      "version": "0.6.1",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Warten wie in der KC Club App: das Bachkreis-Logo dreht sich – auf der Rückseite steht „since 1969“ (beim Start, Anmelden, Speichern und Abgleichen)",
+        "Logo oben links öffnet direkt die Internetseite des Bachkreises (Adresse änderbar in PC-Verwaltung → Einstellungen)"
+      ]
+    },
+    {
+      "version": "0.6.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "⚙️ Mehr – alle Einstellungen wie in der KC Club App, in Klappbereichen und mit Suche: Das Wichtigste, Benachrichtigungen, Ansagen & Tipps, Privatsphäre, Kalender, Darstellung, Effekte, Startseite, App-Installation, App-Info",
+        "Farbdesigns: Bachkreis Schwarz-Gold (Standard), Blau-Gold und alle Farbschemen der KC-App inkl. weiterer und ausgefallener (Disko, Regenbogen, Polarlicht …)",
+        "Tag/Nacht automatisch nach Sonnenstand in Bergkamen – der Mond-Knopf schaltet reihum A (Automatik) · T (immer Tag) · N (immer Nacht)",
+        "Themen (Weihnachten, Karneval, Ostern, Karibik, Oktoberfest, Halloween …) mit passender Farbe, Jahreszeit, Sende-Effekt und Schrift – auf Wunsch nach Kalender",
+        "Schrift: Große Schrift für die ganze App und Schriftgröße der Texte 70–200 % (auch mit zwei Fingern)",
+        "Chat-Farben & Hintergrund, Sparmodus, Effekt beim Senden (Papierflieger, Brieftaube, Postauto, Fahrrad, Flaschenpost, Rakete, Luftballon, Münchhausen; wichtig = Blaulicht), die kleine Fee, Reißwolf beim Löschen, Zettel werden angepinnt",
+        "Tipp des Tages, „Was ist neu“ nach Updates, Nachrichten vorlesen, Rechtschreibprüfung, Feiertage NRW im Kalender, Info-Feld-Startkarte",
+        "Privatsphäre: Geburtstag, Handy, E-Mail, Adresse selbst freigeben; alle anderen Geräte abmelden"
+      ]
+    },
+    {
+      "version": "0.5.1",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Fußleiste wie in der KC Club App: 🏠 Start · 📅 Termine · 💬 Nachrichten (mit Zähler) · 👥 Orchester (Eltern: 👪 Kinder) · ⚙️ Mehr – immer unten sichtbar; 🏠 führt von überall zurück zur Startseite"
+      ]
+    },
+    {
+      "version": "0.5.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Kopf wie in der KC Club App: Kopfzeile mit Logo und Version, Begrüßung, Tag/Nacht, Aktualisieren, Statusleiste mit LEDs, Lichtschein beim Öffnen",
+        "Jalousie: links ⌃ rollt das Infofeld ein, rechts ⌃⌃ den ganzen Kopf – mit Lamellen wie eine echte Jalousie",
+        "Infofeld zum Blättern mit ‹ › und « », Punkten und Wischen: Nächster Termin (mit Zu-/Absage), Wetter, Für dich, Demnächst, Kommunikationszentrale, Leitungszentrale",
+        "Wetter für Bergkamen (Open-Meteo, kostenlos): jetzt und 7 Tage, Tag antippen, lange drücken = Details, Wetter beim nächsten Termin, bewegte Wetter-Szene",
+        "Jahreszeiten im Kopf – das ganze Sortiment der KC Club App: Laub, Schnee mit Eiszapfen und Tropfen, Schneemann mit Dirigenten-Zylinder, Iglu, Huskys, Pistenraupe, Frühlingsblumen, Osterhase, Sonnenblume, Igel, Eichhörnchen, Laubbläser, Pilze, Hund, Regen mit Pfützen, Nikolaus-Stiefel",
+        "Deko an der Leiste (Wimpel, Lichterkette, Laternen), Themen-Bühnen Kirmes, Oktoberfest, Karibik, Karneval, Halloween; Notenständer am Probentag; Vorschau in den Einstellungen",
+        "Register-Wechsel mit Effekt (Jalousie, Kartenstapel, Umdrehen, Zufall) und Wischen; Kuckucksuhr zur vollen Stunde; Konfetti zum Geburtstag"
+      ]
+    },
+    {
+      "version": "0.4.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "BK Communicator – eigener Versand-Kern nach dem Vorbild des KC Communicators: Programme, Regeln je Ereignis, Vorlagen je Kanal, Anbieter mit Routen",
+        "Empfänger automatisch: Eltern Minderjähriger zusätzlich oder statt des Kindes (Genehmigungen immer an die Eltern), Vorlieben je Person, Erreichbarkeit",
+        "Zustellung: Web-Push (kostenlos), E-Mail über Brevo mit automatischem Wechsel auf ein eigenes Postfach (SMTP), Wiederholung mit Backoff, Rückfall auf den nächsten Kanal",
+        "Schutz: Zero-Cost-Sperre, Bremse und Tageslimit je Anbieter, Ratengrenze, Ruhezeit, Doppelte unterdrücken, Not-Aus – Notfälle (SOS) kommen immer durch",
+        "Eskalation: SOS nach 5 Min. unbestätigt per E-Mail, nach 15 Min. an die Leitung; Push-Quittungen angezeigt / geöffnet / bestätigt",
+        "Konsole in der PC-Verwaltung: Lämpchen je Anbieter, Not-Aus, Test-Push/-Mail, alle Aufträge mit Verlauf; alle Regeln und Vorlagen als Tabellen pflegbar",
+        "Push-Abo je Gerät im Echtbetrieb (Meins › Einstellungen › Push erlauben); Schlüssel und Wartung richtet die GitHub-Action ein",
+        "Tests: 11 Communicator-Tests gegen PostgreSQL (PGlite), Browser-Test Echtbetrieb mit Test-Mail"
+      ]
+    },
+    {
+      "version": "0.3.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Echtbetrieb vorbereitet: Edge Function bk-api (Anmeldung per Code/QR, Sitzungen, Delta-Abgleich, Speichern mit Versionsprüfung)",
+        "Datenschutz auf dem Server: Eltern sehen nur ihre Kinder, Schüler nur Eigenes, fremde Personen nur mit Namen, Gesundheitsangaben nur Leitung/Lehrkräfte",
+        "Supabase-Adapter: Kopie der erlaubten Daten auf dem Gerät, Abgleich alle 30 s, Ausgang auch offline, Konfliktmeldung",
+        "Anmeldeseite (App und PC-Verwaltung), Abmelden, Zugangscodes nur als Hash gespeichert, Schutz gegen Durchprobieren",
+        "Automatische Einrichtung per GitHub (Migrationen + Funktion) und Veröffentlichung Echtbetrieb mit Vorführversion unter /demo/",
+        "Tests: 13 Server-Tests gegen PostgreSQL (PGlite) und Browser-Test Echtbetrieb"
+      ]
+    },
+    {
+      "version": "0.2.1",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Veröffentlichung über den Zweig gh-pages (GitHub Pages ohne Sondereinstellung)"
+      ]
+    },
+    {
+      "version": "0.2.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Bühne mit Orchester (statt Twinkey): Vorhang auf, Dirigent, Musiker spielen mit – 6 gemeinfreie Melodien per Musik-Engine im Gerät (ohne Internet)",
+        "Konzertaufnahmen auf der Bühne: Aufnahme vom Gerät abspielen, Mitschnitt per Mikrofon (Leitung/Lehrkräfte), Orchester bewegt sich zur Musik",
+        "Eselsohr am Kopf: doppelt tippen dreht den Kopf um – dahinter die Bühne (abschaltbar in den Einstellungen)",
+        "Echtes Bachkreis-Logo überall: Kopf, Bühne, App-Symbol, Favicon, PC-Verwaltung, QR-Zugangskarten",
+        "Neue Tabelle Konzertaufnahmen (bk_aufnahmen) mit Freigabe-Stufen"
+      ]
+    },
+    {
+      "version": "0.1.0",
+      "datum": "2026-10-15",
+      "stufe": "DEV",
+      "neu": [
+        "Vorführversion der Bachkreis-App: Register Bachkreis · Meins · Technik · Admin nach Vorbild der KC Club App",
+        "Termine mit Zusage/Vielleicht/Absage (auch Eltern für Kinder), Besetzungsampel, Nachfassen, Serien, Abwesenheit, Kalender-Export",
+        "Gruppen A–D mit generellem und temporärem Wechsel, Wechselwunsch, Schuljahreswechsel-Assistent",
+        "Mehrere Instrumente je Teilnehmer, Instrumentenwahl je Termin",
+        "Nachrichten, Rundschreiben an automatische Zielgruppen mit Rückmeldung, Pinnwand, SOS",
+        "Instrumente: Inventar, Verleih mit Leihvertrag, Reparatur mit Freigabe, Einkauf, Förderverein & Spenden",
+        "Genehmigungen der Eltern mit Fristen, Erinnerung, Widerruf und Papier-Eingang",
+        "Notenarchiv und „Meine Noten“ je Instrument/Gruppe/Projekt",
+        "Leitungs-Cockpit und Admin-Leitstand (grau = unbekannt, nie OK)",
+        "PC-Verwaltung: Stammdaten, Zugänge & QR-Karten, Gruppen-Board, CSV-Import/-Export, Abgleich-Protokoll",
+        "Datenadapter lokal-demo (IndexedDB) – Supabase-Adapter und Schema vorbereitet"
+      ]
+    }
+  ]
+}

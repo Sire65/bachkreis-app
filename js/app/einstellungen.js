@@ -1,0 +1,378 @@
+// ⚙️ Mehr – Einstellungen aufgebaut wie in der KC Club App (Klappbereiche): Das Wichtigste · Benachrichtigungen · Ansagen, Töne & Tipps ·
+// Privatsphäre · Termine im Handy-Kalender · Darstellung (Farbdesign, Themen, Tag/Nacht, Schrift, Chat-Farben, Sparmodus) · Effekte ·
+// Startseite & Ansicht · App-Installation · App-Info. Fast alles gilt nur für dieses Gerät; die Privatsphäre wird beim Server gemerkt.
+import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern, istLehrkraft, istVorstand, rollen, name, db } from "./zustand.js";
+import { esc, AKTIONEN, toast, blatt } from "../kern/ui.js";
+import { speichere, datenInfo, serverAktion, konfig, konfigSetzen } from "../kern/daten.js";
+import { einstStufe, CHAT, ER_KM_SATZ } from "../kern/schema.js";
+import { klappenAlleKnopf } from "../kern/klappen.js";
+import { WARTE_WAHL, WARTE_BILDER, warteBildHtml } from "../kern/warten.js";
+import { BUNDESLAENDER } from "../kern/logik.js";
+import { einstiegPruefen, HILFE_STUFEN } from "./ueberblick.js";
+import { kinderVon } from "../kern/logik.js";
+import { kindAnsicht } from "./kinderstart.js";
+import { EREIGNISSE, KANAELE, wahlVon } from "../kern/versand.js";
+import { APP_VERSION, APP_STUFE } from "../kern/version.js";
+import { KACHELN, REGISTER_ALLE, leitungRegister } from "./start.js";
+import { REG_EFFEKTE, regEffektWahl, infoKarten, spracheSchalterHtml } from "./kopf.js";
+import { JZ_WAHL, jzWahl, JZ_DEKO_WAHL, jzDekoWahl } from "./jahreszeiten.js";
+import * as D from "./darstellung.js";
+import { onlineEinstellungenHtml } from "./online.js";
+import { SCHATTEN, KACHEL_EFFEKTE, eckenWert } from "./bedienung.js";
+import { stundenuhrenEinstHtml } from "./stundenuhren.js";
+import { installModus, installMoeglich } from "./zugang.js";
+import { ueberraschung, kaeferKommt, kleeKommt } from "./glueck.js";
+import { SENDE_EFFEKTE, sendeEffektWahl, sendeEffektSetzen, sendeEffektVorschau, blaulichtVorschau, feeKommt, reisswolf } from "./effekte.js";
+
+const JZ_VORSCHAUEN = [["herbst", "🍂 Herbst"], ["advent", "🕯️ Advent"], ["winter", "⛄ Winter"], ["fruehling", "🌱 Frühling"], ["sommer", "🌻 Sommer"],
+  ["kirmes", "🎡 Kirmes"], ["wiesn", "🥨 Oktoberfest"], ["karibik", "🌴 Karibik"], ["karneval", "🎭 Karneval"], ["halloween", "🎃 Halloween"],
+  ["advent:nikolaus", "🥾 Nikolaus"], [":regen", "☔ Regen"], [":topf", "🎼 Probentag"], ["fruehling:ostern", "🥚 Ostern"], ["herbst:igel", "🦔 Igel"], ["herbst:twinkey", "🧹 Orchesterwart"], ["heute", "📅 Heute (beenden)"]];
+const offen = new Set(["wichtig"]); // geöffnete Klappbereiche (bleiben beim Neuzeichnen offen)
+let installEreignis = null;
+addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installEreignis = e; });
+
+const schalter = (k, t, x = "", an = einst()[k] !== false, c = "einstSchalter2") => `<label class="schalter"><span><b>${t}</b>${x ? `<div class="hinweis">${x}</div>` : ""}</span><input type="checkbox" data-c="${c}" data-x="${k}" ${an ? "checked" : ""}></label>`;
+const chips = (liste, aktiv, a) => `<div class="wahlen">${liste.map(([k, t]) => `<button type="button" class="chip-wahl ${aktiv === k ? "an" : ""}" data-a="${a}" data-x="${esc(k)}" aria-pressed="${aktiv === k}">${t}</button>`).join("")}</div>`;
+// Unter-Klappe innerhalb eines Bereichs (wie KC „🎨 Weitere Farbschemen“, „🌗 Schatten einstellen“ …): Pfeil, ohne Schloss, Auf/Zu gemerkt
+const unter = (id, titel, inhalt, offen = false) => `<details class="kl innen einst-unter" data-klappe="eu_${id}" data-ohne-unten data-ohne-schloss${offen ? " open" : ""}><summary><span class="kl-titel">${titel}</span></summary><div class="kl-inhalt">${inhalt}</div></details>`;
+// 🗂️ 0.45.0 Kartei (wie KC-CLUB-ROLLKARTEI): oben Reiter, immer nur ein Bereich offen, ‹ › und Wischen blättern – „☰ Liste“ schaltet zurück
+const KARTEI = { aktiv: "wichtig" };
+const karteiAn = () => einst().einstKartei === true;
+const bereich = (id, titel, inhalt) => (karteiAn() && id !== KARTEI.aktiv ? ""
+  : karteiAn() ? `<section class="einst kartei-blatt" id="karteiBlatt" aria-label="${esc(titel.replace(/<[^>]+>/g, ""))}"><h3>${titel}</h3>${inhalt}</section>`
+  : `<details class="einst" data-klappe="${id}" ${offen.has(id) ? "open" : ""}><summary>${titel}</summary>${inhalt}</details>`);
+
+function designKnopf(d) {
+  const nacht = D.istNacht(), f = d[nacht ? "nacht" : "tag"], kopfF = d.verlauf ? d.verlauf[nacht ? "nacht" : "tag"] : `linear-gradient(135deg,${f.hero1},${f.rot},${f.hero4})`;
+  return `<button class="${d.id === D.dsEff() ? "an" : ""}" data-a="designWahl" data-x="${d.id}"><span class="vorschau" style="background:${f.bg}">`
+    + `<i style="left:0;right:0;top:0;height:24px;border-radius:0;background:${kopfF}"></i>`
+    + `<i style="left:8px;top:30px;width:44px;height:22px;background:${f.karte};border:1px solid ${f.linie}"></i><i style="left:58px;top:30px;width:44px;height:22px;background:${f.rot}"></i><i style="right:8px;top:34px;width:14px;height:14px;border-radius:50%;background:${f.gold}"></i>`
+    + `</span>${d.id === D.dsEff() ? "✓ " : ""}${esc(d.name)}</button>`;
+}
+function designWahlHtml(nurOben = false) {
+  const grund = D.DESIGNS.filter((d) => !d.mehr), mehr = D.DESIGNS.filter((d) => d.mehr && !d.bunt), bunt = D.DESIGNS.filter((d) => d.bunt);
+  const zone = (l, t) => `<details class="ds-mehr innen" data-klappe="ds_${l[0]?.bunt ? "bunt" : "mehr"}" data-ohne-schloss ${l.some((d) => d.id === D.dsEff()) ? "open" : ""}><summary>${t} (${l.length})</summary><div class="designwahl">${l.map(designKnopf).join("")}</div></details>`;
+  return `<div class="designwahl">${grund.map(designKnopf).join("")}</div>${zone(mehr, "🎨 Weitere Farbschemen")}${zone(bunt, "✨ Ausgefallene Farbschemen")}${nurOben ? "" : ""}`;
+}
+function themaWahlHtml() {
+  const w = D.themaWahl(), akt = D.aktivesThema(), nacht = D.istNacht();
+  const farbe = (t) => { const d = D.DESIGNS.find((x) => x.id === t.design) || D.DESIGNS[0], f = d[nacht ? "nacht" : "tag"]; return d.verlauf ? d.verlauf[nacht ? "nacht" : "tag"] : `linear-gradient(135deg,${f.hero1},${f.rot},${f.hero4})`; };
+  const sf = (t) => { const s = t.schrift && D.THEMA_SCHRIFTEN[t.schrift]; if (!s) return ""; D.themaSchriftLaden(t.schrift); return ` style="font-family:'${s.familie}',sans-serif;font-weight:${s.gewicht};font-size:${(0.85 * s.gr).toFixed(2)}rem"`; };
+  const k = (id, sym, name, bg, t = {}) => `<button type="button" class="thema-k${w === id ? " an" : ""}" data-a="themaWahl" data-x="${id}"><span class="thema-f" style="background:${bg}">${sym}</span><span${sf(t)}>${esc(name)}${w === id ? " ✓" : ""}</span></button>`;
+  return `<div class="themawahl">${k("aus", "🚫", "Kein Thema", "var(--karte2)")}${k("auto", "🔄", "Nach Kalender", "linear-gradient(90deg,#f2a7c3,#e8b23a,#e0802a,#9fd3f0)")}${D.THEMEN.map((t) => k(t.id, t.sym, t.name, farbe(t), t)).join("")}</div>
+    <p class="hinweis">${akt ? `Gerade: <b>${akt.sym} ${esc(akt.name)}</b>${akt.quelle === "kalender" ? " – nach Kalender" : ""}. Farbe, Jahreszeit und Sende-Effekt kannst du trotzdem einzeln ändern.` : "Kein Thema – es gelten deine eigenen Einstellungen."}</p>
+    ${schalter("themaSchrift", "✍️ Schrift des Themas", "Begrüßung im Kopf in der passenden Schrift (z. B. Weihnachten, Halloween)", D.themaSchriftAn(), "themaSchrift")}`;
+}
+
+// 👪🎼🛠️🧑‍💻 0.43.0 Zahnrad nach Stufe: Kinder · Eltern · Leitungen · Admin · Entwickler (jede Stufe sieht alles der vorherigen, ohne Familie)
+const STUFEN = { kinder: "🧒 Kinder", eltern: "👪 Eltern", leitung: "🎼 Leitung", admin: "🛠️ Admin", entwickler: "🧑‍💻 Entwickler" };
+const RANG = { kinder: 0, eltern: 1, leitung: 2, admin: 3, entwickler: 4 };
+export const meineStufe = () => einstStufe(S.ich, rollen(), S.ich?.typ === "schueler" || kindAnsicht());
+const ab = (st) => RANG[meineStufe()] >= RANG[st];
+const knoepfe = (l) => `<div class="knopfreihe">${l.map(([a, x, t]) => `<button type="button" class="knopf" data-a="${a}" data-x="${esc(x)}">${t}</button>`).join("")}</div>`;
+function familieEinst() {
+  const kinder = kinderVon(db, S.ich?.id || "");
+  return `<p>${kinder.length ? `Ihre Kinder in der App: <b>${kinder.map((k) => esc(name(k))).join(", ")}</b>` : "Noch kein Kind mit Ihnen verknüpft – bitte bei der Leitung melden."}</p>
+    ${knoepfe([["kachel", "kinder", "👧 Meine Kinder"], ["kachel", "meinegenehmigungen", "✍️ Genehmigungen"], ["kachel", "gesundheit", "🩹 Gesundheit & Notfall"], ["kachel", "abwesenheit", "🙋 Kind abmelden"], ["kachel", "meinedaten", "🔐 Gespeicherte Daten & Einwilligungen"]])}
+    <p class="hinweis">Benachrichtigungen für Ihre Kinder kommen bei Ihnen an (🔔 Benachrichtigungen). Was Ihre Kinder in der App sehen, ist kindgerecht vereinfacht.</p>`;
+}
+function leitungEinst() {
+  return `${knoepfe([["kachel", "startnachricht", "📣 Startnachricht"], ["kachel", "zugang", "🔑 Zugang im Blick"], ["kachel", "rueckmeldungen", "🆘 Rückmeldungen"], ["kachel", "zahlen", "📊 Bachkreis in Zahlen"], ["kachel", "verwaltung", "💻 PC-Verwaltung"]])}
+    ${istLehrkraft() || istVorstand() ? schalter("tagesinfo", "📋 Tagesübersicht beim Start", "Einmal am Tag: alles Wichtige für Leitung, Lehrkräfte und Vorstand", einst().tagesinfo !== false) : ""}
+    <p class="hinweis">App-weite Schalter (Wartungsmodus, Module, Express-Grenze, Löschfristen …) stellt der 🛠️ Admin ein.</p>`;
+}
+// 🛠️ App-Einstellungen für alle – nur Admin/Entwickler (Server: konfig_setzen → NUR_ADMIN)
+const AK = [["express_max_tag", "🏎️ Express-Nachrichten je Person und Tag", "zahl", CHAT.expressMax], ["bearbeiten_minuten", "✏️ Nachricht ändern bis (Minuten)", "zahl", CHAT.bearbeitenMin],
+  ["chat_schueler_untereinander", "🧒💬 Schüler dürfen sich privat schreiben", "ja", true], ["ansicht_kind_ab_klasse", "🧒 Große Kinder-Ansicht ab Klasse", "zahl", 9],
+  ["freigabe_grenze_eur", "💶 Freigabe durch Vorstand ab (€)", "zahl", 0], ["km_satz", "🚗 Kilometer-Satz (€ je km)", "zahl", ER_KM_SATZ],
+  ["grenze_db_mb", "🗄️ Grenze Datenbank (MB)", "zahl", 500], ["grenze_dateien_mb", "📁 Grenze Dateien (MB)", "zahl", 1024], ["grenze_volumen_gb", "📏 Grenze Datenvolumen im Monat (GB)", "zahl", 5],
+  ["aenderungen_monate", "🧾 Änderungsprotokoll aufheben (Monate)", "zahl", 12], ["loeschfrist_monate", "🧹 Löschfrist nach Austritt (Monate)", "zahl", 24]];
+function adminEinst() {
+  const k = konfig();
+  return `${knoepfe([["adTeilOeffnen", "lage", "🛡️ Leitstand"], ["adTeilOeffnen", "wartung", `🚧 Wartung${k.wartung === true ? " (AN)" : ""}`], ["adTeilOeffnen", "module", "🧩 Module"], ["adTeilOeffnen", "rollen", "👑 Rollen"]])}
+    <p class="hinweis">Gilt für <b>alle</b> in der App. Leer = Standard.</p>
+    ${AK.map(([key, t, typ, std]) => typ === "ja" ? `<label class="schalter"><span><b>${t}</b><div class="hinweis">Standard: ${std ? "ja" : "nein"}</div></span><input type="checkbox" data-c="akSetzen" data-x="${key}" ${k[key] !== false ? "checked" : ""}></label>`
+      : `<div class="feld ak-feld"><label for="ak-${key}">${t}</label><input id="ak-${key}" type="number" inputmode="decimal" min="0" step="any" value="${esc(k[key] ?? "")}" placeholder="Standard ${esc(std)}" data-c="akSetzen" data-x="${key}"></div>`).join("")}`;
+}
+function entwicklerEinst() {
+  return `<p class="hinweis">🧑‍💻 Du bist Entwickler – du bleibst immer und hast alle Admin-Rechte. Admins ernennst nur du (👑 Rollen).</p>
+    ${knoepfe([["adTeilOeffnen", "datenbank", "🗄️ Datenbank & Last"], ["adTeilOeffnen", "nutzung", "📈 Nutzung & Fehler"], ["adTeilOeffnen", "dienste", "🔗 Dienste"], ["adTeilOeffnen", "spiegel", "🪞 Spiegel & Sicherung"]])}
+    <p class="hinweis">Datenquelle: ${esc(datenInfo().art)} · App v${APP_VERSION} ${APP_STUFE}</p>`;
+}
+AKTIONEN.adTeilOeffnen = (t) => zeige("adminbereich", { teil: t });
+AKTIONEN.akSetzen = async (v, el) => {
+  if (!ab("admin")) return toast("🔒 Nur für Admin");
+  const key = el.dataset.x, wert = el.type === "checkbox" ? !!el.checked : String(v).trim() === "" ? null : Number(String(v).replace(",", "."));
+  if (wert !== null && typeof wert === "number" && !(wert >= 0)) return toast("Bitte eine Zahl ab 0");
+  try { await konfigSetzen(key, wert); toast("💾 Gespeichert – gilt für alle"); } catch (e) { toast("⚠️ " + e.message); }
+};
+
+// 💬 Nachrichten wie KC: Lesebestätigung (blaue Haken), Wichtigkeit fragen, Enter sendet, Entwürfe, Ton, Vorlesen, Standard-Zustellung
+function nachrichtenEinst(e) {
+  const zs = e.zustellStandard || "regel";
+  return `${schalter("lesebestaetigung", "✓✓ Lesebestätigungen (blaue Haken)", "Andere sehen, wann du ihre Nachricht gelesen hast. Aus: du siehst auch bei anderen keine blauen Haken – wie bei WhatsApp", e.lesebestaetigung !== false)}
+    ${schalter("wichtigFragen", "❗ Vor dem Senden nach der Wichtigkeit fragen", "📝 Normal oder ❗ Hoch – höchstens alle 30 Min. je Chat", e.wichtigFragen ?? rollen().some((r) => ["leitung", "admin"].includes(r)))}
+    ${schalter("versandImmer", "📝❗🏎️ Versand-Leiste immer zeigen", "Aus: erscheint erst, wenn du schreibst oder etwas anhängst", e.versandImmer === true)}
+    ${schalter("chatTon", "🔔 Ton bei neuer Nachricht im offenen Chat", "Kurzer Ton und Vibrieren", e.chatTon !== false)}
+    ${schalter("vorlesen", "🔊 Neue Nachrichten vorlesen", "Im geöffneten Chat liest das Handy neue Nachrichten vor", e.vorlesen === true)}
+    ${schalter("entwuerfe", "✏️ Entwürfe merken", "Angefangene Nachrichten bleiben je Chat stehen – auch nach dem Schließen", e.entwuerfe !== false)}
+    ${schalter("chatEinklappen", "📂 Vergangene Tage einklappen", "Im Chat nur heute und Ungelesenes offen – frühere Tage als Zeile mit Datum rechts (z. B. „Mo, 11.11.26“), antippen zum Aufklappen", e.chatEinklappen !== false)}
+    ${schalter("chatKW", "🗓️ Ältere Wochen als Kalenderwoche", "Alles, was älter als eine Woche ist, als „KW 45/26“ zusammenfassen", e.chatKW !== false)}
+    ${schalter("netzSymbol", "📡 Verbindungs-Symbol oben links", "Router im WLAN, Satellit im Mobilfunk – die Wellen zeigen die Qualität, antippen zeigt Messwerte", e.netzSymbol !== false)}
+    ${schalter("fotosLaden", "📷 Fotos automatisch laden", "Aus: Fotos erst beim Antippen laden – spart Datenvolumen", e.fotosLaden !== false)}
+    ${schalter("sprachsteuerung", "🎤 Sprachsteuerung", "Mikrofon oben im Kopf und in den Nachrichten: „Öffne Termine“, „Nachricht an Bettina: …“, „Lies meine Nachrichten“", e.sprachsteuerung !== false)}
+    ${schalter("enterSendet", "⏎ Enter-Taste sendet", "Für PC und Tablet mit Tastatur – Umschalt+Enter = neue Zeile", e.enterSendet === true)}
+    <h4>🔔 Benachrichtigen beim Senden (vorausgewählt)</h4>${chips([["regel", "Wie eingestellt"], ["push", "🔔 Push"], ["pushmail", "🔔 + ✉️ E-Mail"]], zs, "zustellStandardWahl")}
+    <p class="hinweis">„Wie eingestellt“ = so, wie jede Person es unter 🔔 Benachrichtigungen gewählt hat. Im Chat lässt es sich mit 🔔 je Nachricht ändern.</p>
+    <h4>🏎️ Express & ❗ Wichtig</h4><p class="hinweis">❗ Wichtig: bei allen orange umrandet, geht per Push <b>und</b> E-Mail raus. 🏎️ Express: kommt sofort an – auch nachts –, beim Empfänger geht ein Fenster auf (Öffnen · Später · Nein, Empfang bestätigen). Höchstens ${Number(konfig().express_max_tag) > 0 ? Number(konfig().express_max_tag) : 5} Express am Tag (Leitung unbegrenzt).</p>
+    <div class="schalter"><span><b>💬 Chat-Farben & Hintergrund</b><div class="hinweis">Farbe deiner und der fremden Sprechblasen, Hintergrund mit Motiv</div></span><button class="knopf klein" data-a="cfOeffnen">🎨 Wählen</button></div>`;
+}
+AKTIONEN.warteBildWahl = (k) => { einstSetzen("warteBild", k); neu(); };
+AKTIONEN.warteVorschau = () => blatt("⏳ Warte-Bilder", `<div class="wb-raster">${Object.entries(WARTE_BILDER).map(([k, v]) => `<button type="button" class="wb-wahl${(einst().warteBild || "logo") === k ? " an" : ""}" data-a="warteBildWahlBlatt" data-x="${k}">${warteBildHtml(k)}<span>${esc(v.t)}</span></button>`).join("")}</div><p class="hinweis">Antippen wählt das Bild.</p>`);
+AKTIONEN.warteBildWahlBlatt = (k) => { einstSetzen("warteBild", k); toast("⏳ " + WARTE_BILDER[k].t); AKTIONEN.warteVorschau(); };
+AKTIONEN.landWahl = (k) => { const l = new Set(einst().laender?.length ? einst().laender : ["NW"]); if (l.has(k) && l.size > 1) l.delete(k); else l.add(k); einstSetzen("laender", [...l]); neu(); };
+AKTIONEN.zustellStandardWahl = (w) => { einstSetzen("zustellStandard", w === "regel" ? null : w); neu(); };
+
+VIEWS.einstellungen = {
+  render() {
+    const e = einst(), ich = S.ich, fg = ich?.freigaben || {};
+    const kanaele = ["push", "mail", "app"];
+    const matrix = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th></th>${kanaele.map((k) => `<th style="font-size:.8rem">${KANAELE[k]}</th>`).join("")}</tr>${Object.entries(EREIGNISSE).map(([k, t]) => `<tr><td style="padding:6px 0;font-weight:700;font-size:.9rem">${t}</td>${kanaele.map((c) => `<td style="text-align:center"><input type="checkbox" data-c="benachWahl" data-x="${k}|${c}" ${wahlVon(ich, k).includes(c) ? "checked" : ""} ${k === "sos" && c === "push" ? "disabled" : ""}></td>`).join("")}</tr>`).join("")}</table></div>`;
+    const sz = `<div class="einst-zeile"><b>🔍 Schriftgröße der Texte</b><span style="flex:1"></span><button class="knopf klein" data-a="szAendern" data-x="-0.1" aria-label="A− kleiner">A−</button><span class="sz-wert">${Math.round(D.SZ.wert * 100)} %</span><button class="knopf klein" data-a="szAendern" data-x="0.1" aria-label="A+ größer">A+</button><button class="knopf klein" data-a="szAendern" data-x="0">100 %</button></div><p class="hinweis">Nachrichten und Zettel werden größer, Knöpfe bleiben gleich. Auch mit zwei Fingern auseinanderziehen.</p>`;
+    const sprache = `<div class="schalter" translate="no"><span><b>🌐 Sprache / Language</b><div class="hinweis">${(e.sprache || "de") === "en" ? "English – buttons and menus; messages stay as written" : "Deutsch"}</div></span>${spracheSchalterHtml()}</div>`;
+    const gross = `<div class="feld"><label>🔠 Große Schrift (ganze App)</label><div class="umschalter">${[["normal", "Normal"], ["gross", "Groß"], ["riesig", "Sehr groß"]].map(([v, n]) => `<button class="${e.schrift === v ? "an" : ""}" data-a="schriftWahl" data-x="${v}">${n}</button>`).join("")}</div></div>`;
+    const modus = `<div class="feld"><label>🌗 Tag- und Nachtmodus</label><div class="umschalter modus3">${[["auto", "🔄 Automatisch"], ["tag", "☀️ Immer Tag"], ["nacht", "🌙 Immer Nacht"]].map(([m, t]) => `<button class="${D.DS.modus === m ? "an" : ""}" data-a="modusWahl" data-x="${m}">${t}</button>`).join("")}</div><p class="hinweis">${esc(D.modusInfo())} Der Mond/Sonne-Knopf oben schaltet reihum A → T → N.</p></div>`;
+    const tipps = `<h4>🙋 Wie viel Hilfe möchtest du?</h4>${chips(HILFE_STUFEN.map(([k, t]) => [k, t]), e.hilfeStufe || "etwas", "hilfeStufe")}
+      ${schalter("tippDesTages", "💡 Tipp des Tages", "Beim ersten Öffnen am Tag ein kurzer Tipp – mit 👍/👎: „Kenne ich schon“ blendet ihn aus", e.tippDesTages !== false)}<button type="button" class="knopf klein" data-a="tippsZuruecksetzen">↺ Ausgeblendete Tipps wieder zeigen</button>
+      ${schalter("wasNeu", "👋 Beim Öffnen zeigen, was neu ist", "Nach einem Update die Neuerungen anzeigen", e.wasNeu !== false)}
+      ${schalter("vorlesen", "🔊 Neue Nachrichten vorlesen", "Im geöffneten Chat liest das Handy neue Nachrichten vor", e.vorlesen === true)}
+      ${schalter("tippfehler", "🖍️ Tippfehler rot unterstreichen", "Rechtschreibprüfung beim Schreiben", e.tippfehler !== false)}
+      ${schalter("ton", "🔔 Töne", "Kuckuck und Klänge der App", e.ton !== false)}
+      <button class="knopf" data-a="tippZeigen">💡 Tipp jetzt zeigen</button> <button class="knopf" data-a="wasNeuZeigen">👋 Was ist neu?</button> <button class="knopf" data-a="kachel" data-x="hilfe">❓ Alle Tipps</button>`;
+    const privat = `${schalter("geburtstag", "🎂 Meinen Geburtstag anzeigen (ohne Jahr)", "Andere sehen im Kopf „hat heute Geburtstag“", !!fg.geburtstag, "freigabe")}
+      <h4>Für andere im Bachkreis sichtbar</h4>
+      ${schalter("mobil", "📱 Meine Handynummer", "", !!fg.mobil, "freigabe")}${schalter("email", "✉️ Meine E-Mail-Adresse", "", !!fg.email, "freigabe")}${schalter("adresse", "🏠 Meine Adresse", "", !!fg.adresse, "freigabe")}
+      <p class="hinweis">Leitung und Lehrkräfte sehen Kontaktdaten immer (für Notfälle). ${istEltern() ? "Die Daten Ihrer Kinder verwaltet die Leitung." : ""}</p>
+      <div class="knopfreihe"><button class="knopf" data-a="kachel" data-x="meinedaten">🔐 Was ist über mich gespeichert?</button>${datenInfo().server ? `<button class="knopf" data-a="abmeldenApp">🚪 Von diesem Gerät abmelden</button><button class="knopf rot" data-a="alleGeraeteAb">🔒 Alle anderen Geräte abmelden</button>` : ""}</div>`;
+    // 🔽 0.44.0 wie KC: innerhalb der Bereiche Unter-Klappen mit Pfeil (Farben, Themen, Tag/Nacht, Schrift, Schatten … – Auf/Zu wird gemerkt)
+    const schatten = `${chips(SCHATTEN, e.schatten || "", "schattenWahl")}
+      <h4>⬜ Ecken der Kacheln</h4><div class="ecken-zeile"><span aria-hidden="true">▢</span><input type="range" min="2" max="32" step="1" value="${eckenWert()}" data-c="eckenSetzen" aria-label="Ecken der Kacheln (Pixel)"><span aria-hidden="true">◯</span><b id="eckenWert">${eckenWert()} px</b></div>
+      <div class="ecken-muster" aria-hidden="true"><i></i><i></i><i></i></div><button type="button" class="knopf klein" data-a="eckenStandard">↺ Standard</button>
+      ${schalter("tippGross", "👆 Größere Tippflächen", "Kleine Knöpfe werden mindestens fingerbreit – leichter zu treffen", e.tippGross !== false)}`;
+    const darstellung = unter("farbe", "🎨 Farbdesign", `${designWahlHtml()}<button class="knopf" data-a="designStandard">↺ Standard wiederherstellen</button>`, true)
+      + unter("themen", "🎭 Themen", themaWahlHtml())
+      + unter("modus", "🌗 Tag & Nacht", modus)
+      + unter("schrift", "🔠 Schrift & Größe", `${sprache}${gross}${sz}`)
+      + unter("schatten", "🌗 Schatten, Ecken & Tippflächen", schatten)
+      + unter("chatfarben", "💬 Chat-Farben & Hintergrund", `<div class="schalter"><span><b>💬 Chat-Farben & Hintergrund</b><div class="hinweis">Farbe deiner und der fremden Sprechblasen, Hintergrund mit Motiv – gilt für alle Chats</div></span><button class="knopf klein" data-a="cfOeffnen">🎨 Wählen</button></div>`)
+      + unter("warte", "⏳ Warte-Bild", `<p class="hinweis">Was sich dreht oder bewegt, während die App kurz arbeitet.</p>${chips(WARTE_WAHL, e.warteBild || "logo", "warteBildWahl")}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="warteVorschau">▶ Alle ansehen</button></div>`)
+      + unter("spar", "🐢 Sparmodus", `${chips([["auto", "Automatisch"], ["an", "Immer an"], ["aus", "Aus"]], D.sparWahl(), "sparWahl")}<p class="hinweis">${D.SPAR.an ? `Gerade an: ${esc(D.SPAR.grund)}.` : "Gerade aus."} Im Sparmodus ruhen alle Bewegungen – gut bei schwachem Netz oder älteren Handys.</p>`);
+    const effekte = unter("bewegung", "✨ Bewegung & Blinken", `${schalter("effekte", "✨ Animierte Knöpfe", "Bewegungen und Effekte in der ganzen App", e.effekte !== false)}
+      ${schalter("netzBlinken", "📡 Verbindungs-Symbol blinkt", "Router bzw. Satellit in 💬 Nachrichten mit blinkenden Wellen und Lämpchen (aus = ruhiges Symbol)", e.netzBlinken !== false)}
+      ${schalter("zahlBlinken", "🔴 Ungelesen-Zahlen blinken", "Die Zahl an 💬 Nachrichten blinkt, wenn etwas länger ungelesen ist (aus = ruhige Zahl)", e.zahlBlinken !== false)}
+      ${schalter("ledPuls", "🚨 Rote Lämpchen pulsieren", "Lämpchen oben und im Admin-Bereich pulsieren bei einem Problem (aus = ruhig rot)", e.ledPuls !== false)}
+      ${schalter("pfeilBlinken", "⬇️ Kopf-Pfeil blinkt bei Neuem", "Der Pfeil am Kopf blinkt gelb, wenn es etwas Neues gibt", e.pfeilBlinken !== false)}`, true)
+      + unter("uhr", "🕰️ Uhr zur vollen Stunde", `<div class="schalter"><span><b>🕰️ Stundenuhr zur vollen Stunde</b><div class="hinweis">Kuckuck, Big Ben, Glockenspiele … – nur wenn die App offen ist; nachts ohne Ton</div></span><span><input type="checkbox" data-c="einstSchalter2" data-x="kuckuck" aria-label="Stundenuhr an" ${e.kuckuck !== false ? "checked" : ""}></span></div>
+      ${e.kuckuck !== false ? stundenuhrenEinstHtml() : ""}`)
+      + unter("ueberraschung", "🎁 Überraschungen", `<div class="schalter"><span><b>🎁 Geburtstags-Vogel</b><div class="hinweis">Hat heute jemand Geburtstag, fliegt im Kopf ein Vogel mit einem Geschenk vorbei</div></span><span><button type="button" class="knopf klein" data-a="gbvVorschau">▶ Vorschau</button> <input type="checkbox" data-c="einstSchalter2" data-x="gbvogel" aria-label="Geburtstags-Vogel an" ${e.gbvogel !== false ? "checked" : ""}></span></div>
+      <div class="schalter"><span><b>🧚 Die kleine Fee</b><div class="hinweis">Ab und zu schwebt eine Fee durchs Startbild – antippen = ein schöner Spruch</div></span><span><button type="button" class="knopf klein" data-a="feeAnsehen">🧚 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="fee" aria-label="Fee an" ${e.fee !== false ? "checked" : ""}></span></div>
+      <div class="schalter"><span><b>🐞 Der Marienkäfer</b><div class="hinweis">Jeder 50. Start: krabbelt über die Startseite, dreht sich um und lächelt – antippen = Glücksspruch</div></span><span><button type="button" class="knopf klein" data-a="kaeferAnsehen">🐞 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="kaefer" aria-label="Marienkäfer an" ${e.kaefer !== false ? "checked" : ""}></span></div>
+      <div class="schalter"><span><b>🍀 Der Glücksklee</b><div class="hinweis">Jeder 25. Start: ein Windstoß pustet ein vierblättriges Kleeblatt herein – antippen = Glücksspruch</div></span><span><button type="button" class="knopf klein" data-a="kleeAnsehen">🍀 Ansehen</button> <input type="checkbox" data-c="einstSchalter2" data-x="klee" aria-label="Glücksklee an" ${e.klee !== false ? "checked" : ""}></span></div>`)
+      + unter("jahreszeit", "🍂 Jahreszeiten im Kopf", `${schalter("jahreszeit", "🍂 Jahreszeiten im Kopf", "Laub, Schnee, Blumen, Schneemann mit Zylinder – wie in der KC Club App", e.jahreszeit !== false, "jzSchalter")}
+      <h4>📅 Welche Jahreszeit?</h4>${chips(JZ_WAHL, jzWahl(), "jzWahlKnopf")}
+      <h4>🎏 Deko an der Leiste</h4>${chips(JZ_DEKO_WAHL, jzDekoWahl(), "jzDekoKnopf")}
+      <h4>👁 Vorschau im Kopf der Startseite</h4><div class="wahlen">${JZ_VORSCHAUEN.map(([x, t]) => `<button type="button" class="chip-wahl" data-a="jzVorschauKnopf" data-x="${x}">${t}</button>`).join("")}</div>`)
+      + unter("kacheln", "🌀 Kacheln & Register-Wechsel", `<h4>🌀 Kacheln erscheinen …</h4>${chips(KACHEL_EFFEKTE, e.kachelEffekt || "einfach", "kachelEffektWahl")}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="kachelEffektVorschau">▶ Auf der Startseite ansehen</button></div>
+      <h4>🎬 Effekt beim Register-Wechsel</h4>${chips(REG_EFFEKTE, regEffektWahl(), "regEffektKnopf")}`)
+      + unter("senden", "✉️ Senden & Löschen", `<h4>✉️ Effekt beim Senden</h4>${chips(SENDE_EFFEKTE, sendeEffektWahl(), "sendeEffektWahl")}
+      <div class="knopfreihe"><button class="knopf" data-a="sendeVorschau">▶ Vorschau</button><button class="knopf" data-a="blaulichtVorschauK">🚨 Wichtig (Blaulicht)</button></div>
+      <div class="schalter"><span><b>🗑️ Reißwolf beim Löschen</b><div class="hinweis">Gelöschtes läuft sichtbar durch einen Aktenvernichter</div></span><span><button type="button" class="knopf klein" data-a="reisswolfProbe" id="rwProbe">▶ Probe</button> <input type="checkbox" data-c="einstSchalter2" data-x="reisswolf" aria-label="Reißwolf an" ${e.reisswolf !== false ? "checked" : ""}></span></div>`)
+      + unter("klaenge", "🎻 Klänge", schalter("echteKlaenge", "🎻 Echte Instrumentenklänge", "Aufnahmen echter Instrumente (Violine, Cello, Flöte, Trompete …) – je Instrument beim ersten Abspielen ca. 0,2 MB; aus = erzeugter Klang", e.echteKlaenge !== false));
+    const startseite = unter("ansicht", "🟢 Ansicht & Start", `${schalter("einfach", "🟢 Einfache Ansicht", "Große Kacheln, nur das Wichtigste – ohne Register", !!e.einfach)}
+      ${schalter("eselsohr", "📄 Eselsohr am Kopf", "Doppelt tippen dreht den Kopf um – dahinter die Bühne mit dem Orchester", e.eselsohr !== false)}
+      ${schalter("feiertage", "🇩🇪 Feiertage im Kalender", "Rot im Monatskalender", e.feiertage !== false)}
+      ${e.feiertage !== false ? `<details class="kl innen einst-unter" data-klappe="eu_laender" data-ohne-unten data-ohne-schloss><summary><span class="kl-titel">🗺️ Bundesländer wählen <small class="hinweis">${esc((e.laender?.length ? e.laender : ["NW"]).join(", "))}</small></span></summary><div class="kl-inhalt"><p class="hinweis">Mehrere möglich – z. B. für Fahrten oder den Austausch.</p><div class="wahlen">${Object.entries(BUNDESLAENDER).map(([k, t]) => { const an = (e.laender?.length ? e.laender : ["NW"]).includes(k); return `<button type="button" class="chip-wahl ${an ? "an" : ""}" aria-pressed="${an}" data-a="landWahl" data-x="${k}">${esc(t)}</button>`; }).join("")}</div></div></details>` : ""}
+      <div class="feld"><label>Start-Register</label><select data-c="einstStartReg">${REGISTER_ALLE.map(([r, n]) => `<option value="${r}" ${e.startRegister === r ? "selected" : ""}>${n}</option>`).join("")}</select></div>`, true)
+      + unter("infofeld", "🪧 Info-Feld, Laufband & Schnellstart", `<div class="feld"><label>🪧 Info-Feld oben beim Start</label><select data-c="infoStart"><option value="">Die zuletzt gezeigte Karte</option>${infoKarten().map(([id, t], i) => `<option value="${id}" ${e.infoStart === id ? "selected" : ""}>${i + 1}. ${esc(t)}</option>`).join("")}</select></div>
+      ${schalter("laufband", "📰 Info-Laufband", "Über den drei Feldern oben: was zu erledigen ist, Hinweise, schöne Infos – wechselt alle 6 Sekunden", e.laufband !== false)}
+      ${schalter("schnellstart", "⚡ Schnellstart im Info-Feld", "Bis zu 8 Symbole für die wichtigsten Dinge (erweiterte Ansicht)", e.schnellstart !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="schnellWahl">✏️ Symbole wählen</button></div>
+      <h4>⏳ Countdown bis zum nächsten Termin</h4>${chips([["normal", "Normal"], ["fallblatt", "🔢 Fallblatt (Klappzahlen)"]], e.countdown || "normal", "countdownWahl")}`)
+      + unter("kacheln_start", "🔲 Kacheln: Größe, Umdrehen & Hinweise", `<h4>🔲 Kachelgröße (erweiterte Ansicht)</h4>${chips([["normal", "Normal (2–3 je Reihe)"], ["klein", "Klein (3 je Reihe)"], ["mini", "Mini (4 je Reihe)"]], e.kachelGroesse || "normal", "kachelGroesseWahl")}
+      ${schalter("kachelRueck", "🔄 Kacheln umdrehen", "Das kleine 🔄 oben rechts antippen (oder doppelt auf die Kachel) – hinten warten Schnellaktionen (erweiterte Ansicht)", e.kachelRueck !== false)}
+      ${schalter("pwFenster", "📌 Neue Zettel sofort als Fenster", "Aus (Standard): neue Pinnwand-Zettel öffnen sich nie von selbst – die Pinnwand-Kachel und der Kopf zeigen sie an", e.pwFenster === true)}
+      ${schalter("vorschlaege", "💡 Vorschläge zur Startseite", "Selten ein Vorschlag, z. B. eine lange nicht benutzte Kachel zu verbergen – die App baut nie selbst um. Gezählt wird nur auf diesem Gerät.", e.vorschlaege !== false)}<div class="knopfreihe"><button type="button" class="knopf klein" data-a="nuVergessen">🧹 Gemerktes löschen</button></div>`)
+      + unter("anordnen", "✥ Kacheln anordnen & auswählen", `<p class="hinweis">Auf der Startseite lange auf eine Kachel drücken – dann ziehen, mit den Pfeilen verschieben oder mit ✕ ausblenden. Register lassen sich genauso festhalten und verschieben.</p>
+      <div class="knopfreihe"><button type="button" class="knopf" data-a="kaAnordnen">✥ Jetzt anordnen</button><button class="knopf" data-a="kachelnStandard">↺ Alles auf Standard</button></div>
+      <h4>☑️ Welche Kacheln möchtest du sehen?</h4>${e.einfach ? '<p class="hinweis">🟢 Du nutzt gerade die einfache Ansicht – die Auswahl gilt für die erweiterte Ansicht.</p>' : ""}
+      ${["bachkreis", "leitung", "entdecken", "meins", "technik"].filter((r) => r !== "leitung" || leitungRegister()).map((r) => { const l = (KACHELN[r] || []).filter((k) => !k.nur || k.nur()), an = l.filter((k) => !e.kachelnAus.includes(k.id)).length;
+        return `<details class="ka-wahl" data-klappe="ka_${r}" data-ohne-unten><summary>${REGISTER_ALLE.find(([x]) => x === r)[1]} <span class="ka-wahl-zahl">${an} von ${l.length}</span></summary><div class="ka-wahl-raster">${l.map((k) => `<label><input type="checkbox" data-c="kachelSichtbar" data-x="${k.id}" ${e.kachelnAus.includes(k.id) ? "" : "checked"}><span>${k.sym} ${esc(typeof k.t === "function" ? k.t() : k.t)}</span></label>`).join("")}</div>
+          <button type="button" class="knopf klein" data-a="kachelnAlleAn" data-x="${r}">✅ Alle anzeigen</button></details>`; }).join("")}`);
+    const install = `<p>Die Bachkreis-App läuft im Browser und lässt sich wie eine App auf den Startbildschirm legen – kostenlos, ohne App-Store.</p>
+      <p><b>Auf diesem Gerät:</b> ${{ installiert: "✅ installiert – prima!", browser: "🌐 im Browser – bitte einmal installieren", pc: "💻 am PC" }[installModus()]}</p>
+      <div class="knopfreihe">${installEreignis || installMoeglich() ? `<button class="knopf haupt" data-a="installieren">📲 Jetzt installieren</button>` : ""}<button class="knopf" data-a="installAnleitung">🖼️ Mit Bildern</button><button class="knopf" data-a="kachel" data-x="hilfe">🙋 Hilfe</button></div>
+      ${schalter("installEinladung", "📲 An das Installieren erinnern", "Im Browser höchstens alle 3 Tage eine freundliche Einladung", e.installEinladung !== false)}
+      <h4>Android (Chrome)</h4><ol class="install-schritte"><li>Den persönlichen Link in <b>Chrome</b> öffnen</li><li>Oben rechts <b>⋮</b> antippen</li><li><b>„App installieren“</b> bzw. „Zum Startbildschirm hinzufügen“</li><li><b>„Installieren“</b> bestätigen – die App liegt jetzt in der App-Liste</li></ol>
+      <h4>iPhone / iPad (Safari)</h4><ol class="install-schritte"><li>Den Link in <b>Safari</b> öffnen</li><li>Unten das <b>Teilen-Symbol</b> (Quadrat mit Pfeil) antippen</li><li><b>„Zum Home-Bildschirm“</b> wählen und „Hinzufügen“</li><li>Erst danach funktionieren Push-Benachrichtigungen auf dem iPhone</li></ol>
+      <h4>💻 Am PC oder Tablet</h4><p class="hinweis">Einfach den Link im Browser öffnen. Für Leitung und Lehrkräfte gibt es zusätzlich die PC-Verwaltung (Technik › PC-Verwaltung).</p>
+      <p class="hinweis">Den persönlichen Link bitte <b>nicht weitergeben</b> – er ist wie ein Schlüssel.</p>`;
+    const info = `<p>Bachkreis-App <b>v${APP_VERSION} ${APP_STUFE}</b> · ${esc(datenInfo().hinweis || "")}</p>
+      <div class="knopfreihe"><button class="knopf" data-a="updatePruefen">🔄 Update prüfen</button><button class="knopf" data-a="kachel" data-x="ueber">ℹ️ Über die App</button><button class="knopf" data-a="kachel" data-x="impressum">§ Impressum</button><button class="knopf" data-a="kachel" data-x="hilfe">❓ Hilfe & Tipps</button><button class="knopf" data-a="kachel" data-x="sicherheit">🛡️ Sicherheits-Check</button></div>`;
+    const st = meineStufe(), nurFuer = (id) => (id === "familie" ? st === "eltern" : id === "leitung" ? ab("leitung") : id === "appweit" ? ab("admin") : id === "entwickler" ? st === "entwickler" : id === "startseite" ? st !== "kinder" : true);
+    const sichtbar = EU_BEREICHE.filter(([id]) => nurFuer(id)); if (!sichtbar.some(([id]) => id === KARTEI.aktiv)) KARTEI.aktiv = sichtbar[0][0];
+    const ki = sichtbar.findIndex(([id]) => id === KARTEI.aktiv);
+    const ansichtWahl = `<div class="umschalter einst-art" role="group" aria-label="Darstellung der Einstellungen"><button type="button" class="${karteiAn() ? "" : "an"}" aria-pressed="${!karteiAn()}" data-a="einstArt" data-x="liste">☰ Liste</button><button type="button" class="${karteiAn() ? "an" : ""}" aria-pressed="${karteiAn()}" data-a="einstArt" data-x="kartei">🗂️ Kartei</button></div>`;
+    const reiter = karteiAn() ? `<nav class="kartei-reiter" aria-label="Bereiche">${sichtbar.map(([id, sym, t]) => `<button type="button" class="${id === KARTEI.aktiv ? "an" : ""}" aria-current="${id === KARTEI.aktiv ? "true" : "false"}" data-a="karteiReiter" data-x="${id}">${sym} ${t}</button>`).join("")}</nav>
+      <div class="kartei-blaettern"><button type="button" class="knopf klein" data-a="karteiReiter" data-x="${sichtbar[(ki - 1 + sichtbar.length) % sichtbar.length][0]}" aria-label="Voriger Bereich">‹ ${sichtbar[(ki - 1 + sichtbar.length) % sichtbar.length][2]}</button><span>${ki + 1} / ${sichtbar.length}</span><button type="button" class="knopf klein" data-a="karteiReiter" data-x="${sichtbar[(ki + 1) % sichtbar.length][0]}" aria-label="Nächster Bereich">${sichtbar[(ki + 1) % sichtbar.length][2]} ›</button></div>` : "";
+    return kopf("⚙️ Mehr – Einstellungen") + `<div class="einst-oben"><span class="badge einst-stufe" title="Welche Einstellungen du siehst, hängt von deiner Rolle ab">Ansicht: ${STUFEN[st]}</span>${ansichtWahl}</div>${karteiAn() ? reiter : klappenAlleKnopf("inhalt")}`
+      + (st === "kinder" ? '<p class="hinweis">🧒 Hier stellst du alles für dich ein – Farben, Töne, Benachrichtigungen. Den Rest machen deine Eltern und die Leitung.</p>' : "") + `<input class="einst-suche" type="search" placeholder="🔍 Einstellung suchen …" data-c="einstSuche" aria-label="Einstellung suchen">`
+      + (karteiAn() ? "" : `<nav class="eu-raster" aria-label="Übersicht der Einstellungen">${EU_BEREICHE.filter(([id]) => nurFuer(id)).map(([id, sym, t, u]) => `<button type="button" data-a="einstBereich" data-x="${id}"><span aria-hidden="true">${sym}</span><b>${t}</b><small>${u}</small></button>`).join("")}</nav>`)
+      + bereich("wichtig", "⚙️ Das Wichtigste", `<h4>📬 Wie möchtest du Neuigkeiten bekommen?</h4><div class="knopfreihe"><button class="knopf haupt" data-a="pushErlauben">🔔 Push auf diesem Gerät erlauben</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>
+        ${schalter("ruhe", "🌙 Nicht stören", `Keine Push-Töne von ${e.ruheVon} bis ${e.ruheBis} Uhr (SOS kommt immer durch)`, !!e.ruhe)}
+        <div class="schalter"><span><b>🙂 Mein Gesicht</b><div class="hinweis">Gezeichnetes Gesicht fürs Orchester und die Instrumentenkunde</div></span><button class="knopf klein" data-a="meinGesicht">✏️ Gestalten</button></div>
+        <h4>🎨 Lieblingsfarbe</h4><div class="designwahl">${D.DESIGNS.filter((d) => !d.mehr).slice(0, 4).map(designKnopf).join("")}</div><p class="hinweis">Alle Farben unter 🎨 Darstellung.</p>
+        ${sprache}${gross}${sz}${schalter("einfach", "🟢 Einfache Ansicht", "Große Kacheln, nur das Wichtigste", !!e.einfach)}`)
+      + bereich("benachrichtigung", "🔔 Benachrichtigungen", `<div class="knopfreihe"><button class="knopf" data-a="pushErlauben">📲 Push auf diesem Handy</button><button class="knopf" data-a="kachel" data-x="test">🧪 Test an mich</button></div>
+        ${schalter("ruhe", "🌙 Nicht stören", "", !!e.ruhe)}<div class="einst-zeile"><label>von <input type="time" data-c="ruheZeit" data-x="ruheVon" value="${esc(e.ruheVon)}"></label><label>bis <input type="time" data-c="ruheZeit" data-x="ruheBis" value="${esc(e.ruheBis)}"></label></div>
+        <h4>Was willst du wie bekommen?</h4>${matrix}`)
+      + bereich("nachrichten", "💬 Nachrichten", nachrichtenEinst(e))
+      + bereich("ansagen", "🗣️ Ansagen, Töne & Tipps", tipps)
+      + bereich("online", "🟢 Wer ist online & Anklopfen", onlineEinstellungenHtml())
+      + bereich("privat", "🔒 Privatsphäre", privat)
+      + bereich("kalender", "📆 Termine im Handy-Kalender", `<p>Deine Termine im Apple-, Google- oder Outlook-Kalender – als Abo automatisch aktuell, mit Erinnerung vor jedem Termin.</p><button class="knopf" data-a="kachel" data-x="kalender">📆 Kalender einrichten</button>
+        ${schalter("uebeHinweis", "🎻 Übe-Erinnerung beim Öffnen", "An Übetagen fragt die App nach der Übezeit einmal: „Heute ist Übetag – schon geübt?“", e.uebeHinweis !== false)}`)
+      + bereich("darstellung", "🎨 Darstellung", darstellung)
+      + bereich("effekte", "✨ Effekte", effekte)
+      + (nurFuer("startseite") ? bereich("startseite", "🧩 Startseite & Ansicht", startseite) : "")
+      + bereich("install", "📲 App-Installation", install)
+      + bereich("info", "ℹ️ App-Info", info)
+      + (nurFuer("familie") ? bereich("familie", "👪 Familie", familieEinst()) : "")
+      + (nurFuer("leitung") ? bereich("leitung", "🎼 Leitung", leitungEinst()) : "")
+      + (nurFuer("appweit") ? bereich("appweit", "🛠️ App-Einstellungen für alle (Admin)", adminEinst()) : "")
+      + (nurFuer("entwickler") ? bereich("entwickler", "🧑‍💻 Entwickler", entwicklerEinst()) : "");
+  },
+  nach(wurzel) {
+    wurzel.querySelector(".einst-suche")?.addEventListener("input", (e) => AKTIONEN.einstSuche(e.target.value));
+    const blattK = wurzel.querySelector("#karteiBlatt"); // 👉 Wischen blättert in der Kartei
+    if (blattK) { let x0 = null, y0 = 0; blattK.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+      blattK.addEventListener("touchend", (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
+        if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) wurzel.querySelectorAll(".kartei-blaettern [data-a]")[dx > 0 ? 0 : 1]?.click(); }); }
+    for (const d of wurzel.querySelectorAll("details.einst")) d.addEventListener("toggle", () => { if (d.open) offen.add(d.dataset.klappe); else offen.delete(d.dataset.klappe); });
+  },
+};
+const neu = () => { const y = scrollY; zeige("einstellungen", {}, { ersetzen: true }); scrollTo(0, y); };
+// 0.30.0 KC-CLUB-EINST-UEBERSICHT: Übersicht oben – ein Tipp öffnet genau diesen Bereich und springt hin
+const EU_BEREICHE = [["wichtig", "⚙️", "Das Wichtigste", "Push · Ruhe · Gesicht"], ["benachrichtigung", "🔔", "Benachrichtigungen", "Was wie kommt"], ["nachrichten", "💬", "Nachrichten", "Haken · Versand · Chat"],
+  ["ansagen", "🗣️", "Ansagen & Tipps", "Töne · Vorlesen"], ["online", "🟢", "Wer ist online", "Anklopfen"], ["privat", "🔒", "Privatsphäre", "Geburtstag · Kontakt"], ["kalender", "📆", "Handy-Kalender", "Abo · Übe-Erinnerung"],
+  ["darstellung", "🎨", "Darstellung", "Farben · Schatten · Ecken"], ["effekte", "✨", "Effekte", "Uhren · Vogel · Kacheln"], ["startseite", "🧩", "Startseite", "Kacheln · Laufband"], ["install", "📲", "Installieren", "Auf den Startbildschirm"], ["info", "ℹ️", "App-Info", "Version · Impressum"],
+  ["familie", "👪", "Familie", "Kinder · Genehmigungen"], ["leitung", "🎼", "Leitung", "Startnachricht · Zugang"], ["appweit", "🛠️", "Für alle (Admin)", "Grenzen · Fristen · Chat"], ["entwickler", "🧑‍💻", "Entwickler", "Datenbank · Dienste"]];
+AKTIONEN.einstArt = (a) => { einstSetzen("einstKartei", a === "kartei"); neu(); };
+AKTIONEN.karteiReiter = (id) => { KARTEI.aktiv = id; zeige("einstellungen", {}, { ersetzen: true }); requestAnimationFrame(() => document.querySelector(".kartei-reiter .an")?.scrollIntoView({ block: "nearest", inline: "center" })); };
+AKTIONEN.einstBereich = (id) => {
+  if (karteiAn()) return AKTIONEN.karteiReiter(id);
+  offen.add(id); neu();
+  requestAnimationFrame(() => { const d = document.querySelector(`details.einst[data-klappe="${CSS.escape(id)}"]`); if (d) { d.open = true; d.scrollIntoView({ behavior: "smooth", block: "start" }); d.querySelector("summary")?.focus({ preventScroll: true }); } });
+};
+
+// ---------- Aktionen ----------
+AKTIONEN.schriftWahl = (v) => { einstSetzen("schrift", v); neu(); };
+AKTIONEN.kachelGroesseWahl = (x) => { einstSetzen("kachelGroesse", x); neu(); };
+AKTIONEN.countdownWahl = (x) => { einstSetzen("countdown", x); neu(); };
+AKTIONEN.kachelnAlleAn = (r) => { const ids = KACHELN[r].map((k) => k.id); einstSetzen("kachelnAus", einst().kachelnAus.filter((x) => !ids.includes(x))); neu(); };
+AKTIONEN.einstSchalter2 = (_, el) => { einstSetzen(el.dataset.x, el.checked); neu(); };
+AKTIONEN.designWahl = (id) => { D.designWaehlen(id); neu(); };
+AKTIONEN.designStandard = () => { D.designStandard(); neu(); };
+AKTIONEN.modusWahl = (m) => { D.modusWaehlen(m); neu(); };
+AKTIONEN.themaWahl = (w) => { D.themaSetzen(w); neu(); };
+AKTIONEN.themaSchrift = (_, el) => D.themaSchriftSetzen(el.checked);
+AKTIONEN.sparWahl = (w) => { D.sparSetzen(w); neu(); };
+AKTIONEN.szAendern = (d) => { D.szAendern(+d); };
+AKTIONEN.ruheZeit = (v, el) => einstSetzen(el.dataset.x, v);
+AKTIONEN.infoStart = (v) => einstSetzen("infoStart", v || null);
+AKTIONEN.sendeEffektWahl = (w) => { sendeEffektSetzen(w); neu(); };
+AKTIONEN.sendeVorschau = (_, el) => sendeEffektVorschau(el);
+AKTIONEN.blaulichtVorschauK = (_, el) => blaulichtVorschau(el);
+AKTIONEN.feeAnsehen = () => { zeige("start"); setTimeout(() => feeKommt(true), 400); };
+AKTIONEN.kaeferAnsehen = () => { zeige("start"); setTimeout(() => kaeferKommt(true), 400); };
+AKTIONEN.kleeAnsehen = () => { zeige("start"); setTimeout(() => kleeKommt(true), 400); };
+AKTIONEN.reisswolfProbe = (_, el) => { const k = el.closest(".schalter"); reisswolf(k).then(() => { if (k) k.style.visibility = ""; }); };
+AKTIONEN.freigabe = async (_, el) => {
+  const fg = { ...(S.ich.freigaben || {}), [el.dataset.x]: el.checked };
+  S.ich = await speichere("personen", { ...S.ich, freigaben: fg });
+  toast(el.checked ? "✅ Freigegeben" : "🔒 Nicht mehr sichtbar");
+};
+AKTIONEN.alleGeraeteAb = async () => {
+  if (!confirm("Alle anderen Geräte abmelden? Dort braucht es danach wieder den persönlichen Link.")) return;
+  const r = await serverAktion("abmelden_andere", {}).catch(() => null);
+  toast(r?.ok ? `🔒 ${r.anzahl} andere Geräte abgemeldet` : "Gerade nicht möglich – bitte Internet prüfen");
+};
+AKTIONEN.appInstallieren = async () => { if (!installEreignis) return; installEreignis.prompt(); const r = await installEreignis.userChoice.catch(() => null); if (r?.outcome === "accepted") toast("📲 Installiert"); installEreignis = null; };
+AKTIONEN.einstSuche = (q) => {
+  const t = String(q || "").trim().toLowerCase();
+  for (const d of document.querySelectorAll("details.einst")) {
+    const treffer = !t || d.textContent.toLowerCase().includes(t);
+    (d.closest(".kl-rahmen") || d).style.display = treffer ? "" : "none"; if (t && treffer) d.open = true;
+    for (const u of d.querySelectorAll("details.einst-unter")) { const tu = !t || u.textContent.toLowerCase().includes(t); u.style.display = tu ? "" : "none"; if (t && tu) u.open = true; }
+  }
+};
+
+// ---------- Chat-Farben (Blatt wie KC-CLUB-CHAT-FARBEN) ----------
+function cfBlattZeichnen() {
+  const CF = D.chatFarben(), e = D.CF_EIGEN.find((x) => x.id === CF.eigen && x.c), a = D.CF_ANDERE.find((x) => x.id === CF.andere && x.c), h = D.CF_HG.find((x) => x.id === CF.hintergrund && x.css);
+  const dunkel = document.documentElement.classList.contains("dunkel");
+  const farbe = (liste, feld) => `<div class="cf-farben">${liste.map((x) => `<button type="button" class="cf-farbe${(CF[feld] || "standard") === x.id ? " an" : ""}" aria-label="${esc(x.t || x.id)}" title="${esc(x.t || x.id)}" data-a="cfSetzen" data-x="${feld}:${x.id}" style="${x.c ? `background:${dunkel && x.cd ? x.cd : x.c}` : ""}">${x.c ? "" : "↺"}</button>`).join("")}</div>`;
+  return `<div class="cf-vorschau" style="${h ? esc(`background:${h.css};background-size:cover;background-position:center bottom`) : ""}">
+      <div class="blase cf-v" style="${a ? `background:${dunkel ? a.cd : a.c}` : ""}"><div class="von">Lena</div>Bringt jemand ein Ersatz-Kolophonium mit? 🎻</div>
+      <div class="blase ich cf-v" style="${e ? `background:${e.c};color:${D.cfLesbar(e.c)}` : ""}">Mache ich, bis zur Probe! 👍</div></div>
+    <h4 class="cf-h">💬 Meine Sprechblasen</h4>${farbe(D.CF_EIGEN, "eigen")}
+    <h4 class="cf-h">👥 Sprechblasen der anderen</h4>${farbe(D.CF_ANDERE, "andere")}
+    <h4 class="cf-h">🖼️ Hintergrund</h4><div class="cf-hgs">${D.CF_HG.map((x) => `<button type="button" class="cf-hgw${(CF.hintergrund || "standard") === x.id ? " an" : ""}" data-a="cfSetzen" data-x="hintergrund:${x.id}"><span class="cf-hgbild" style="${x.css ? esc(`background:${x.css};background-size:cover;background-position:center bottom`) : ""}">${x.css ? "" : x.sym}</span><span class="cf-hgt">${esc(x.t)}</span></button>`).join("")}</div>
+    <p class="hinweis">Gilt für alle deine Chats – nur bei dir.</p><button type="button" class="knopf" data-a="cfStandard">↺ Wie vorher</button>`;
+}
+AKTIONEN.cfOeffnen = () => { const b = blatt("🎨 Chat-Farben", `<div id="cfInhalt">${cfBlattZeichnen()}</div>`); b.classList.add("cf-blatt"); };
+AKTIONEN.cfSetzen = (x) => { const [feld, id] = String(x).split(":"); D.cfSetzen(feld, id); const z = document.getElementById("cfInhalt"); if (z) z.innerHTML = cfBlattZeichnen(); };
+AKTIONEN.cfStandard = () => { D.cfStandard(); const z = document.getElementById("cfInhalt"); if (z) z.innerHTML = cfBlattZeichnen(); };
+
+// ---------- Tipp des Tages & Was ist neu ----------
+export const TIPPS = [
+  "📅 Zu- oder absagen geht direkt oben im Kopf – auf der Karte „Nächster Termin“.",
+  "‹ › Im farbigen Feld oben blätterst du mit den Pfeilen oder durch Wischen: Wetter, Für dich, Demnächst …",
+  "⌃ Der linke Pfeil ganz oben rollt das Infofeld ein, ⌃⌃ rechts den ganzen Kopf – wie eine Jalousie.",
+  "🌙 Der Mond-Knopf schaltet reihum: A = automatisch nach Sonnenstand, T = immer Tag, N = immer Nacht.",
+  "🏖️ Längere Abwesenheit? Unter Meins › Abwesenheit sagst du alle Termine im Zeitraum auf einmal ab.",
+  "🎼 Unter Meins › Meine Noten findest du automatisch die Stimmen für dein Instrument.",
+  "🔍 Mit zwei Fingern auseinanderziehen macht die Nachrichten größer – Doppeltipp mit zwei Fingern = 100 %.",
+  "🎨 Unter ⚙️ Mehr › Darstellung gibt es viele Farbdesigns und Themen – z. B. Weihnachten oder Karibik.",
+  "📄 Doppelt aufs Eselsohr unten rechts am Kopf: dahinter spielt das Orchester.",
+  "🆘 Im Notfall: Kachel SOS – Notruf, Leitung und Eltern mit einem Tipp erreichen.",
+  "📲 Lege die App auf den Startbildschirm – dann kommen auch Push-Benachrichtigungen.",
+  "🧚 Ab und zu schwebt eine Fee durchs Startbild. Antippen!",
+];
+// 💡 Tipps mit Rückmeldung (0.31.0, wie KC-CLUB-HILFE-TIPPS): 👍 hilft · 👎 kenne ich schon → dieser Tipp kommt nicht wieder (nur auf diesem Gerät)
+const tippWeg = () => { try { return new Set(JSON.parse(localStorage.getItem("bk_tipp_weg") || "[]")); } catch { return new Set(); } };
+const tippIndex = (ab) => { const w = tippWeg(); for (let d = 0; d < TIPPS.length; d++) { const i = (ab + d) % TIPPS.length; if (!w.has(i)) return i; } return -1; };
+const tippHtml = (i) => `<p style="font-size:1.1rem">${TIPPS[i]}</p><div class="tipp-rueck"><span class="hinweis">Hilft dir das?</span><button type="button" class="knopf klein" data-a="tippGut" data-x="${i}">👍 Ja</button><button type="button" class="knopf klein" data-a="tippWegK" data-x="${i}">👎 Kenne ich schon</button></div><button class="knopf" data-a="tippWeiter" data-x="${i}">Noch ein Tipp ›</button>`;
+export function tippZeigen() { const i = tippIndex(Math.floor(Date.now() / 86400000) % TIPPS.length); if (i < 0) return; blatt("💡 Tipp des Tages", tippHtml(i)).dataset.leise = "1"; } // Start-Fenster: 🏎️ Express/📣 Startnachricht dürfen es verdrängen
+AKTIONEN.tippZeigen = tippZeigen;
+AKTIONEN.tippWeiter = (i) => { const n = tippIndex(+i + 1); if (n < 0) return toast("👍 Du kennst schon alle Tipps!"); blatt("💡 Tipp", tippHtml(n)); };
+AKTIONEN.tippGut = (i, el) => { try { const g = JSON.parse(localStorage.getItem("bk_tipp_gut") || "{}"); g[i] = (g[i] || 0) + 1; localStorage.setItem("bk_tipp_gut", JSON.stringify(g)); } catch {} el.closest(".tipp-rueck").innerHTML = '<span class="hinweis">👍 Danke!</span>'; };
+AKTIONEN.tippWegK = (i) => { const w = tippWeg(); w.add(Number(i)); try { localStorage.setItem("bk_tipp_weg", JSON.stringify([...w])); } catch {} toast("👎 Alles klar – dieser Tipp kommt nicht wieder"); AKTIONEN.tippWeiter(i); };
+AKTIONEN.tippsZuruecksetzen = () => { try { localStorage.removeItem("bk_tipp_weg"); } catch {} toast("💡 Alle Tipps kommen wieder"); };
+export async function wasNeuZeigen() {
+  try { const v = await (await fetch("version.json", { cache: "no-store" })).json(); blatt(`👋 Neu in v${v.version}`, `<ul class="liste">${(v.neu || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`).dataset.leise = "1"; } catch { toast("Gerade nicht verfügbar"); }
+}
+AKTIONEN.wasNeuZeigen = wasNeuZeigen;
+// Beim Start: einmal am Tag ein Tipp, nach einem Update „Was ist neu“, jede 20. Öffnung die Fee
+export function beimStart(ohneAnsagen = false) {
+  if (ohneAnsagen) return; // die Pinnwand hat gerade etwas gezeigt – Tipp/„Was ist neu“ kommen beim nächsten Öffnen
+  const e = einst(), heute = new Date().toISOString().slice(0, 10);
+  let zuletzt = null; try { zuletzt = localStorage.getItem("bk_version_gesehen"); localStorage.setItem("bk_version_gesehen", APP_VERSION); } catch {}
+  let n = 0; try { n = +(localStorage.getItem("bk_starts") || 0) + 1; localStorage.setItem("bk_starts", String(n)); } catch {}
+  if (einstiegPruefen(n)) return; // 🙋 0.45.0 erst einmal fragen, wie viel Hilfe gewünscht ist – an dem Start sonst nichts
+  if (zuletzt && zuletzt !== APP_VERSION && e.wasNeu !== false) setTimeout(wasNeuZeigen, 1500);
+  else if (e.tippDesTages !== false) { let t = null; try { t = localStorage.getItem("bk_tipp_tag"); localStorage.setItem("bk_tipp_tag", heute); } catch {} if (t && t !== heute) setTimeout(tippZeigen, 2500); }
+  // 🐞🍀🧚 0.42.0 immer nur eine Überraschung: Marienkäfer (jeder 50.) vor Glücksklee (jeder 25.) vor Fee (jeder 20. Start)
+  const u = ueberraschung(n, e);
+  if (u === "kaefer") setTimeout(() => kaeferKommt(), 4000); else if (u === "klee") setTimeout(() => kleeKommt(), 4000); else if (u === "fee") setTimeout(() => feeKommt(), 4000);
+}
+// Rechtschreibprüfung in Eingabefeldern nach Wunsch
+document.addEventListener("bk-ansicht", () => setTimeout(() => { const an = einst().tippfehler !== false; document.querySelectorAll("textarea, input[type=text], input:not([type])").forEach((x) => { x.spellcheck = an; }); }, 0));

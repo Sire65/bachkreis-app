@@ -1,13 +1,22 @@
 {
-  "version": "0.67.0",
+  "version": "0.68.0",
   "datum": "12.11.2026",
   "stufe": "DEV",
   "neu": [
-    "💻 PC-Verwaltung aufgeräumt: 7 Bereiche zum Einklappen statt rund 110 Menüpunkten",
-    "🏠 Startseite „Heute zu tun“: nur, was gerade wartet – ein Klick führt hin",
-    "🔍 Suche im Menü und Schalter Einfach / Erweitert (alle Datentabellen nur in Erweitert)"
+    "💻 PC-Verwaltung noch schlanker: jede Rolle sieht nur, was sie meist braucht (Vorstand 12 statt 26 Punkte)",
+    "👪 Eltern und Kinder direkt bei der Person verknüpfen",
+    "📆 Jahres-Aufgaben wie der Schuljahreswechsel erscheinen als Karte, wenn sie dran sind"
   ],
   "verlauf": [
+    {
+      "version": "0.67.0",
+      "datum": "12.11.2026",
+      "neu": [
+        "💻 PC-Verwaltung aufgeräumt: 7 Bereiche zum Einklappen statt rund 110 Menüpunkten",
+        "🏠 Startseite „Heute zu tun“: nur, was gerade wartet – ein Klick führt hin",
+        "🔍 Suche im Menü und Schalter Einfach / Erweitert (alle Datentabellen nur in Erweitert)"
+      ]
+    },
     {
       "version": "0.66.0",
       "datum": "11.11.2026",

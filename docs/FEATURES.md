@@ -172,6 +172,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F162 | ✅ Bestätigungsschreiben im Kopfbogen (PDF Eingangskorb + E-Mail) · 📮 Leitung: Eingang, Papier/Mail, Archiv | ✅ | kuendigung.test |
 | BK-F163 | 🏁 Server macht Kündigungen am Datum wirksam, beendet Pausen, löscht Nachweise nach 3 Jahren | ✅ | kuendigung.test |
 | BK-F164 | 💻 PC-Verwaltung: 7 Bereiche zum Einklappen, Suche, Einfach/Erweitert, Startseite „Heute zu tun“ | ✅ | Rundgang |
+| BK-F165 | 🧭 PC-Verwaltung je Rolle ausgedünnt, Doppeltes zusammengelegt, Eltern ↔ Kind bei der Person, Jahres-Aufgaben als Karte | ✅ | Rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

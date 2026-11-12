@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.68.0 DEV – 12.11.2026
+🧭 **PC-Verwaltung nochmals ausgedünnt** (Wunsch Hansi „logisch und sorgfältig, damit man nicht erschlagen wird“ – jeden Punkt je Rolle geprüft):
+- **„Einfach“ zeigt je Rolle nur, was sie meist braucht:** Leitung 31 statt 45 Punkte (mit Admin), Lehrkraft 13 statt 34, Instrumentenwart 17, Vorstand 12 statt 26 (nur Mitglieder, Instrumente, Verein & Kasse). ⚙️ System nur für Leitung/Admin; Communicator und Abgleich nur Admin
+- **Doppeltes zusammengelegt:** „Inventar (Instrumente)“ steckt in „Inventar & Abschreibung“; „Gruppen“ im Gruppen-Board (Knopf „✏️ Gruppen bearbeiten“); **„Eltern ↔ Kind“ direkt bei der Person** – Elternteil bzw. Kind wählen und verknüpfen, ✕ löst die Verknüpfung
+- **Seltenes unter „🔧 Erweitert“:** 🧰 Weitere Werkzeuge (Schuljahreswechsel, Teilnahmebescheinigungen, Ferien, Mitfahrbörse …) und 🗂️ Alle Datentabellen (Lagerorte, Notenexemplare, Chronik, Startnachrichten, Fehlerberichte …); die Suche findet alles
+- **📆 Jahres-Aufgaben als Karte, wenn sie dran sind:** Schuljahreswechsel (Juni–September), Teilnahmebescheinigungen (Juni–Juli), Ferien eintragen (Juli–September)
+
 ## 0.67.0 DEV – 12.11.2026
 💻 **PC-Verwaltung aufgeräumt** (Wunsch Hansi „zu viele Menüpunkte, das darf den Bediener nicht erschlagen“ – Konzept mit Beispielbild abgestimmt):
 - Statt rund 110 Menüpunkten (21 Werkzeuge + 90 Tabellen) **sieben Bereiche nach Aufgabe**: 👥 Mitglieder & Familien · 📅 Termine & Projekte · 🎼 Orchester & Noten · 🎻 Instrumente · 💬 Kommunikation · 💛 Verein & Kasse · ⚙️ System – **immer nur einer offen** (Akkordeon), der Bereich der aktuellen Seite öffnet sich von selbst

@@ -69,15 +69,22 @@ const sonderSichtbar = ([k]) => (!SONDER_RECHT[k] || SONDER_RECHT[k]()) && (k !=
 // 🧭 0.67.0 Menü aufgeräumt (Wunsch Hansi „zu viele Menüpunkte – zusammenfassen oder einklappen“): sieben Bereiche nach Aufgabe,
 // immer nur einer offen (Akkordeon), 🙂 Einfach / 🔧 Erweitert (nur dort alle Datentabellen), Suche über alles, rote Zahlen = wartet.
 // Einträge: "w:<werkzeug>" (SONDER) oder "t:<tabelle>" (TABELLEN). Was die Rolle nicht darf, fällt weg; leere Bereiche auch.
+// 0.68.0 nochmals ausgedünnt (Wunsch Hansi „nicht erschlagen“): „Einfach“ zeigt je Rolle nur, was sie wirklich braucht (Rolle hinter „@“);
+// Doppeltes ist zusammengelegt (Inventar → „Inventar & Abschreibung“, Gruppen → Gruppen-Board, Eltern ↔ Kind → bei der Person),
+// Seltenes steht unter „🔧 Erweitert“ (🧰 Weitere Werkzeuge, 🗂️ Alle Datentabellen) und in der Suche; Jahres-Aufgaben kommen als Karte, wenn sie dran sind.
+const L_ = "admin,leitung", LK = "admin,leitung,lehrkraft", LV = "admin,leitung,vorstand";
 const BEREICHE = [
-  ["mitglieder", "👥", "Mitglieder & Familien", ["t:personen", "t:eltern_kind", "w:zugaenge", "w:genehmigungen", "t:kuendigungen", "w:schutzlisten", "t:interessenten", "w:bescheinigung"]],
-  ["termine", "📅", "Termine & Projekte", ["w:termineplanen", "w:projekteplanen", "w:ferien", "w:anwesenheit", "w:mitfahrboerse", "w:vereinsleben", "t:dienste"]],
-  ["orchester", "🎼", "Orchester & Noten", ["w:gruppenboard", "w:schuljahr", "t:gruppen", "w:uebebuehne", "t:werke", "t:notenexemplare", "t:chronik"]],
-  ["instrumente", "🎻", "Instrumente", ["w:inventarbericht", "t:inventar", "t:ausleihen", "t:reparaturen", "t:einkaeufe", "t:lagerorte"]],
-  ["kommunikation", "💬", "Kommunikation", ["w:rundschreiben", "t:pinnwand", "t:startnachrichten", "t:rueckmeldungen"]],
-  ["verein", "💛", "Verein & Kasse", ["w:kasse", "t:fv_mitglieder", "t:erstattungen", "t:spenden", "t:dokumente", "t:partner", "t:aufgaben"]],
-  ["system", "⚙️", "System", ["w:konfig", "w:datenschutz", "w:import", "w:communicator", "w:abgleich", "t:fehlerberichte"]],
+  ["mitglieder", "👥", "Mitglieder & Familien", ["t:personen", "w:zugaenge", "w:genehmigungen@" + LK, "t:kuendigungen", "w:schutzlisten@" + LK, "t:interessenten@" + LK]],
+  ["termine", "📅", "Termine & Projekte", ["w:termineplanen@" + LK + ",terminplaner", "w:projekteplanen@" + LK, "w:anwesenheit@" + LK + ",terminplaner", "w:vereinsleben@" + LK]],
+  ["orchester", "🎼", "Orchester & Noten", ["w:gruppenboard@" + LK, "w:uebebuehne@" + LK, "t:werke@" + LK + ",notenwart"]],
+  ["instrumente", "🎻", "Instrumente", ["w:inventarbericht@" + LV + ",instrumentenwart", "t:ausleihen@" + LV + ",instrumentenwart", "t:reparaturen@" + LV + ",instrumentenwart", "t:einkaeufe@" + LV + ",instrumentenwart"]],
+  ["kommunikation", "💬", "Kommunikation", ["w:rundschreiben@" + LK, "t:pinnwand@" + LK, "t:rueckmeldungen@" + L_]],
+  ["verein", "💛", "Verein & Kasse", ["w:kasse@" + LV, "t:fv_mitglieder@" + LV, "t:erstattungen@" + LV, "t:spenden@" + LV, "t:dokumente@" + LV, "t:aufgaben@" + LV]],
+  ["system", "⚙️", "System", ["w:konfig@" + L_, "w:datenschutz@" + L_, "w:import@" + L_, "w:communicator@admin", "w:abgleich@admin"]],
 ];
+// 📆 Jahres-Aufgaben: erscheinen nur, wenn sie dran sind (Monat 1–12, von–bis), als Karte auf „Heute zu tun“
+const SAISON = [["w:schuljahr", [6, 9], "🎓", "Schuljahreswechsel vorbereiten", "Gruppen fürs neue Schuljahr – nach den Regeln der Gruppen"],
+  ["w:bescheinigung", [6, 7], "📜", "Teilnahmebescheinigungen", "zum Schuljahresende für alle drucken"], ["w:ferien", [7, 9], "🏖️", "Ferien & freie Tage eintragen", "fürs neue Schuljahr – damit keine Probe in die Ferien fällt"]];
 const M = (() => { try { return { offen: null, modus: "einfach", ...JSON.parse(localStorage.getItem("bk_vw_menue") || "{}"), q: "" }; } catch { return { offen: null, modus: "einfach", q: "" }; } })();
 const menueMerken = () => { try { localStorage.setItem("bk_vw_menue", JSON.stringify({ offen: M.offen, modus: M.modus })); } catch {} };
 const heuteIso = () => tagIso(new Date());
@@ -93,14 +100,18 @@ const WARTET = {
   "t:rueckmeldungen": () => liste("rueckmeldungen", (x) => x.status === "neu").length,
   "t:aufgaben": () => liste("aufgaben", (a) => a.status === "offen").length,
 };
-const eintragDa = (e) => { const [art, k] = e.split(":"); return art === "t" ? !!TABELLEN[k] && darf(k, "lesen") : SONDER.some(([x]) => x === k) && sonderSichtbar(SONDER.find(([x]) => x === k)); };
-const eintragInfo = (e) => { const [art, k] = e.split(":"); if (art === "t") return { a: "vwTabelle", x: k, sym: TABELLEN[k].sym, t: TABELLEN[k].titel }; const w = SONDER.find(([x]) => x === k); return { a: "vwAnsicht", x: k, sym: w[1], t: w[2] }; };
-const eintragAn = (e) => { const [art, k] = e.split(":"); return art === "t" ? V.ansicht === "tabelle" && V.tab === k : V.ansicht === k; };
-const wartet = (e) => { try { return WARTET[e]?.() || 0; } catch { return 0; } };
+const ohneRolle = (e) => e.split("@")[0];
+const rolleOk = (e) => { const r = e.split("@")[1]; if (!r) return true; const ich = rollenMit(V.ich?.rollen); return r.split(",").some((x) => ich.includes(x)); };
+const eintragDa = (e0) => { const e = ohneRolle(e0); if (!rolleOk(e0)) return false; const [art, k] = e.split(":"); return art === "t" ? !!TABELLEN[k] && darf(k, "lesen") : SONDER.some(([x]) => x === k) && sonderSichtbar(SONDER.find(([x]) => x === k)); };
+const eintragInfo = (e) => { const [art, k] = ohneRolle(e).split(":"); if (art === "t") return { a: "vwTabelle", x: k, sym: TABELLEN[k].sym, t: TABELLEN[k].titel }; const w = SONDER.find(([x]) => x === k); return { a: "vwAnsicht", x: k, sym: w[1], t: w[2] }; };
+const eintragAn = (e) => { const [art, k] = ohneRolle(e).split(":"); return art === "t" ? V.ansicht === "tabelle" && V.tab === k : V.ansicht === k; };
+const wartet = (e) => { try { return WARTET[ohneRolle(e)]?.() || 0; } catch { return 0; } };
 // rote Zahl im Menü nur für Dringendes – Genehmigungen und „noch nie angemeldet“ stehen nur als Karte auf „Heute zu tun“ (sonst schreit das Menü)
 const LEISE = new Set(["w:genehmigungen", "w:zugaenge"]);
-const rot = (e) => (LEISE.has(e) ? 0 : wartet(e));
-function bereicheSichtbar() { return BEREICHE.map(([id, sym, t, l]) => [id, sym, t, l.filter(eintragDa)]).filter(([, , , l]) => l.length); }
+const rot = (e) => (LEISE.has(ohneRolle(e)) ? 0 : wartet(e));
+function bereicheSichtbar() { return BEREICHE.map(([id, sym, t, l]) => [id, sym, t, l.filter(eintragDa).map(ohneRolle)]).filter(([, , , l]) => l.length); }
+// Werkzeuge, die die Rolle darf, die aber nicht in „Einfach“ stehen → „🔧 Erweitert“ unter „🧰 Weitere Werkzeuge“
+function weitereWerkzeuge() { const einfach = new Set(bereicheSichtbar().flatMap(([, , , l]) => l)); return SONDER.filter(sonderSichtbar).map(([k]) => "w:" + k).filter((e) => e !== "w:uebersicht" && !einfach.has(e)); }
 // alle Einträge, die die Person sieht (für die Suche und „Erweitert“)
 function alleEintraege() {
   const w = SONDER.filter(sonderSichtbar).filter(([k]) => k !== "uebersicht").map(([k]) => "w:" + k);
@@ -110,7 +121,7 @@ function seitenleiste() {
   const btn = (e, einzug = true) => { const i = eintragInfo(e), n = rot(e);
     return `<button class="${eintragAn(e) ? "an" : ""}${einzug ? " vw-unter" : ""}" data-a="${i.a}" data-x="${i.x}" title="${esc(i.t)}"><span class="sym">${i.sym}</span><span class="txt">${esc(i.t)}</span>${n ? `<span class="vw-zahl">${n}</span>` : ""}</button>`; };
   const ber = bereicheSichtbar();
-  const aktiv = ber.find(([, , , l]) => l.some(eintragAn))?.[0];
+  const aktiv = ber.find(([, , , l]) => l.some(eintragAn))?.[0] || (M.modus === "erweitert" ? (weitereWerkzeuge().some(eintragAn) ? "werkzeuge" : V.ansicht === "tabelle" ? "alle" : null) : null);
   if (aktiv && M.offen !== aktiv && !M.manuell) M.offen = aktiv;
   M.manuell = false;
   const summe = ber.reduce((s2, [, , , l]) => s2 + l.reduce((a, e) => a + rot(e), 0), 0);
@@ -124,6 +135,8 @@ function seitenleiste() {
     ${ber.map(([id, sym, t, l]) => { const offen = M.offen === id, n = l.reduce((a, e) => a + rot(e), 0);
       return `<div class="vw-ber${offen ? " offen" : ""}"><button class="vw-ber-kopf" data-a="vwBereich" data-x="${id}" aria-expanded="${offen}"><span class="sym">${sym}</span><span class="txt">${esc(t)}</span>${!offen && n ? `<span class="vw-zahl">${n}</span>` : ""}<span class="pfeil" aria-hidden="true">${offen ? "▾" : "▸"}</span></button>
         ${offen ? `<div class="vw-ber-inhalt">${l.map((e) => btn(e)).join("")}</div>` : ""}</div>`; }).join("")}
+    ${M.modus === "erweitert" && weitereWerkzeuge().length ? `<div class="vw-ber${M.offen === "werkzeuge" ? " offen" : ""}"><button class="vw-ber-kopf" data-a="vwBereich" data-x="werkzeuge" aria-expanded="${M.offen === "werkzeuge"}"><span class="sym">🧰</span><span class="txt">Weitere Werkzeuge (${weitereWerkzeuge().length})</span><span class="pfeil" aria-hidden="true">${M.offen === "werkzeuge" ? "▾" : "▸"}</span></button>
+      ${M.offen === "werkzeuge" ? `<div class="vw-ber-inhalt">${weitereWerkzeuge().map((e) => btn(e)).join("")}</div>` : ""}</div>` : ""}
     ${M.modus === "erweitert" ? `<div class="vw-ber vw-alle${M.offen === "alle" ? " offen" : ""}"><button class="vw-ber-kopf" data-a="vwBereich" data-x="alle" aria-expanded="${M.offen === "alle"}"><span class="sym">🗂️</span><span class="txt">Alle Datentabellen (${Object.values(gruppen).flat().length})</span><span class="pfeil" aria-hidden="true">${M.offen === "alle" ? "▾" : "▸"}</span></button>
       ${M.offen === "alle" ? `<div class="vw-ber-inhalt">${Object.entries(gruppen).map(([g, ts]) => `<h5>${esc(g)}</h5>${ts.map((t) => btn("t:" + t)).join("")}`).join("")}</div>` : ""}</div>` : ""}
     </div>
@@ -131,7 +144,7 @@ function seitenleiste() {
     <div class="vw-sitzung">${`<button data-a="vwApp" data-x=""><span class="sym">📱</span><span class="txt">App öffnen</span></button><button data-a="vwAbmelden" data-x=""><span class="sym">🚪</span><span class="txt">Abmelden</span></button>`}</div>`;
 }
 AKTIONEN.vwBereich = (id) => { M.offen = M.offen === id ? null : id; M.manuell = true; menueMerken(); zeichne(); };
-AKTIONEN.vwModus = (m) => { M.modus = m === "erweitert" ? "erweitert" : "einfach"; if (M.modus === "einfach" && M.offen === "alle") M.offen = null; M.manuell = true; menueMerken(); zeichne(); toast(M.modus === "erweitert" ? "🔧 Erweitert: zusätzlich alle Datentabellen" : "🙂 Einfach: nur die Aufgaben"); };
+AKTIONEN.vwModus = (m) => { M.modus = m === "erweitert" ? "erweitert" : "einfach"; if (M.modus === "einfach" && ["alle", "werkzeuge"].includes(M.offen)) M.offen = null; M.manuell = true; menueMerken(); zeichne(); toast(M.modus === "erweitert" ? "🔧 Erweitert: zusätzlich weitere Werkzeuge und alle Datentabellen" : "🙂 Einfach: nur, was Ihre Rolle meist braucht"); };
 // Suche über alle Einträge (auch Tabellen aus „Erweitert“) – live beim Tippen, ohne das Menü neu zu zeichnen
 function menueSuche() {
   const f = document.getElementById("vwMenueSuche"), box = document.getElementById("vwTreffer"), menue = document.getElementById("vwMenue"); if (!f || !box) return;
@@ -145,7 +158,7 @@ function menueSuche() {
   f.addEventListener("input", zeigen); if (M.q) zeigen();
   f.addEventListener("keydown", (e) => { if (e.key === "Enter") document.querySelector("#vwTreffer button")?.click(); if (e.key === "Escape") { f.value = ""; zeigen(); } });
 }
-const bereichVon = (e) => BEREICHE.find(([, , , l]) => l.includes(e))?.[2] || (e.startsWith("t:") ? "Datentabelle" : "");
+const bereichVon = (e) => BEREICHE.find(([, , , l]) => l.some((x) => ohneRolle(x) === e))?.[2] || (e.startsWith("t:") ? "Datentabelle" : "Weitere Werkzeuge");
 function zeichne() {
   if (!V.ich) return anmeldung();
   let haupt = "";
@@ -314,14 +327,26 @@ function beziehungen(tab, z) {
     const g = stammgruppe(db, z.id);
     teile.push(`<div><b>Stammgruppe:</b> ${esc(hole("gruppen", g)?.name || "–")}</div>`);
     teile.push(`<div><b>Instrumente:</b> ${instrumenteVon(db, z.id).map((i) => esc(hole("instrument_typen", i.typ_id)?.name) + (i.haupt ? " ⭐" : "")).join(", ") || "–"}</div>`);
-    teile.push(`<div><b>Eltern:</b> ${elternVon(db, z.id).map((e) => esc(name(hole("personen", e)))).join(", ") || "–"}</div>`);
+    teile.push(ekHtml(z, "eltern"));
   }
-  if (z.typ === "eltern") teile.push(`<div><b>Kinder:</b> ${kinderVon(db, z.id).map((k) => esc(name(hole("personen", k)))).join(", ") || "–"}</div>`);
+  if (z.typ === "eltern") teile.push(ekHtml(z, "kind"));
   const zug = liste("zugaenge", (x) => x.person_id === z.id)[0];
   teile.push(`<div><b>Zugang:</b> ${zug ? (zug.aktiv ? "aktiv" : "gesperrt") + (zug.verwaltung ? " · Verwaltung" : "") : "keiner"}</div>`);
   teile.push(`<div class="knopfreihe"><button class="knopf klein" data-a="vwAuskunft" data-x="${z.id}">🔐 Datenauskunft (Art. 15) exportieren</button></div>`);
-  return `<div class="karte" style="background:var(--karte2);box-shadow:none">${teile.join("")}<div class="hinweis">Verknüpfungen bearbeiten: Eltern ↔ Kind, Instrumente je Person, Gruppen-Zuordnung, Zugänge.</div></div>`;
+  return `<div class="karte" style="background:var(--karte2);box-shadow:none">${teile.join("")}<div class="hinweis">Instrumente je Person und Gruppen-Zuordnung: unter „🔧 Erweitert“ → Alle Datentabellen.</div></div>`;
 }
+// 👪 0.68.0 Eltern ↔ Kind direkt bei der Person verknüpfen und lösen (statt eigenem Menüpunkt)
+function ekHtml(z, was) {
+  const schreiben = darf("eltern_kind", "schreiben"), l = liste("eltern_kind", (e) => (was === "eltern" ? e.kind_id : e.eltern_id) === z.id);
+  const wahl = liste("personen", (p) => p.typ === (was === "eltern" ? "eltern" : "schueler") && p.status !== "ausgetreten" && !l.some((e) => (was === "eltern" ? e.eltern_id : e.kind_id) === p.id)).sort((a, b) => name(a).localeCompare(name(b)));
+  return `<div class="vw-ek"><b>${was === "eltern" ? "Eltern" : "Kinder"}:</b> ${l.map((e) => { const p = hole("personen", was === "eltern" ? e.eltern_id : e.kind_id); return `<span class="chip">${esc(name(p))}${e.beziehung ? ` <small>(${esc({ mutter: "Mutter", vater: "Vater", sonstige: "erziehungsber." }[e.beziehung] || e.beziehung)})</small>` : ""}${schreiben ? ` <button class="knopf mini" data-a="vwEkLoesen" data-x="${esc(e.id)}" aria-label="Verknüpfung mit ${esc(name(p))} lösen" title="Verknüpfung lösen">✕</button>` : ""}</span>`; }).join(" ") || "–"}
+    ${schreiben ? `<span class="vw-ek-neu"><select id="vwEkWahl" aria-label="${was === "eltern" ? "Elternteil" : "Kind"} wählen"><option value="">＋ ${was === "eltern" ? "Elternteil" : "Kind"} verknüpfen …</option>${wahl.map((p) => `<option value="${esc(p.id)}">${esc(name(p))}</option>`).join("")}</select><button class="knopf klein" data-a="vwEkNeu" data-x="${esc(z.id)}|${was}">Verknüpfen</button></span>` : ""}</div>`;
+}
+AKTIONEN.vwEkNeu = async (x) => {
+  const [pid, was] = String(x).split("|"), anderer = document.getElementById("vwEkWahl")?.value; if (!anderer) return toast("Bitte erst eine Person wählen");
+  await speichere("eltern_kind", was === "eltern" ? { eltern_id: anderer, kind_id: pid } : { eltern_id: pid, kind_id: anderer }); toast("👪 Verknüpft"); zeichne();
+};
+AKTIONEN.vwEkLoesen = async (id) => { const e = hole("eltern_kind", id); if (!e || !(await frage(`Verknüpfung ${name(hole("personen", e.eltern_id))} ↔ ${name(hole("personen", e.kind_id))} lösen?`))) return; await loesche("eltern_kind", id); toast("Verknüpfung gelöst"); zeichne(); };
 AKTIONEN.vwAuskunft = (pid) => {
   const ids = [pid, ...kinderVon(db, pid)];
   herunterladen(`auskunft-${pn(pid).replace(/\s+/g, "-")}-${tagIso(new Date())}.json`, JSON.stringify({ stand: new Date().toISOString(), erstellt_von: pn(V.ich.id), personen: ids.map(pn), daten: personenDaten(db, ids) }, null, 2), "application/json");
@@ -398,6 +423,8 @@ ANSICHTEN.uebersicht = () => {
     return `<button class="vw-heute ${f}" data-a="${i.a}" data-x="${i.x}"><b>${wartet(e)}</b><span>${sym} ${esc(t)}</span><small>${esc(bereichVon(e))} → ${esc(i.t)} · ${esc(u)}</small></button>`; });
   const termine = liste("termine", (t) => t.status !== "abgesagt" && tagIso(t.beginn) >= heuteIso() && tagIso(t.beginn) <= tagIso(new Date(Date.now() + 7 * 86400000))).length;
   if (termine && eintragDa("w:termineplanen")) karten.push(`<button class="vw-heute gruen" data-a="vwAnsicht" data-x="termineplanen"><b>${termine}</b><span>📅 Termine in den nächsten 7 Tagen</span><small>Termine &amp; Projekte → Terminplanung</small></button>`);
+  const monat = new Date().getMonth() + 1;
+  for (const [e, [von, bis], sym, t, u] of SAISON) if (monat >= von && monat <= bis && eintragDa(e)) { const i = eintragInfo(e); karten.push(`<button class="vw-heute gruen" data-a="${i.a}" data-x="${i.x}"><b>📆</b><span>${sym} ${esc(t)}</span><small>jetzt dran · ${esc(u)}</small></button>`); }
   const letzte = liste("aenderungen").slice(-6).reverse();
   return `<div class="vw-kopf"><h2>🏠 Heute zu tun</h2><span class="hinweis">Nur, was gerade wartet – ein Klick führt direkt hin. Alles andere links in den Bereichen.</span></div>
     <div class="vw-heute-raster">${karten.join("") || '<div class="karte">👍 Gerade wartet nichts – alles erledigt.</div>'}</div>
@@ -414,7 +441,7 @@ ANSICHTEN.gruppenboard = () => {
   const schueler = liste("personen", (p) => ["schueler", "ehemalig"].includes(p.typ) && p.status !== "ausgetreten");
   const ohne = schueler.filter((p) => !stammgruppe(db, p.id));
   const karte = (p) => `<div class="vw-karte" draggable="true" data-person="${p.id}"><span>${esc(name(p))}</span><small>${p.jahrgang ? "Jg " + p.jahrgang : ""} ${esc(hole("instrument_typen", instrumenteVon(db, p.id)[0]?.typ_id)?.name || "")}</small></div>`;
-  return `<div class="vw-kopf"><h2>🧩 Gruppen-Board</h2><span class="hinweis">Karte in eine andere Spalte ziehen = genereller Wechsel ab heute (Verlauf bleibt erhalten). Temporäre Zuordnungen: Tabelle „Gruppen-Zuordnung“.</span></div>
+  return `<div class="vw-kopf"><h2>🧩 Gruppen-Board</h2>${darf("gruppen", "lesen") ? '<button class="knopf" data-a="vwTabelle" data-x="gruppen">✏️ Gruppen bearbeiten</button>' : ""}<span class="hinweis">Karte in eine andere Spalte ziehen = genereller Wechsel ab heute (Verlauf bleibt erhalten). Temporäre Zuordnungen: Tabelle „Gruppen-Zuordnung“.</span></div>
     <div class="vw-board">${gruppen.map((g) => { const m = schueler.filter((p) => stammgruppe(db, p.id) === g.id).sort((a, b) => name(a).localeCompare(name(b))); return `<div class="vw-spalte" data-gruppe="${g.id}"><h3 style="border-left:6px solid ${esc(g.farbe)};padding-left:8px">${esc(g.kuerzel)} – ${esc(g.name)} <span class="hinweis">(${m.length})</span></h3>${m.map(karte).join("")}</div>`; }).join("")}
     ${ohne.length ? `<div class="vw-spalte" data-gruppe=""><h3>ohne Gruppe (${ohne.length})</h3>${ohne.map(karte).join("")}</div>` : ""}</div>`;
 };

@@ -175,3 +175,7 @@ table.vw-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .vw-heute:hover { box-shadow: 0 3px 12px #0002; } .vw-heute b { font-size: 1.7rem; line-height: 1.1; } .vw-heute small { color: var(--leise, #6b6250); }
 .vw-heute.rot { border-left-color: #c62828; } .vw-heute.blau { border-left-color: #1e88e5; } .vw-heute.gruen { border-left-color: #2e7d32; }
 .vw-seite .vw-sitzung button { padding: 6px 4px; font-size: .8rem; gap: 4px; } .vw-sitzung button .txt { flex: none; }
+.vw-ek { margin: 4px 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vw-ek .chip { display: inline-flex; align-items: center; gap: 4px; background: var(--karte, #fff); border: 1px solid var(--linie); border-radius: 999px; padding: 2px 4px 2px 10px; }
+.vw-ek .knopf.mini { padding: 0 7px; min-height: 0; line-height: 1.6; font-size: .8rem; }
+.vw-ek-neu { display: inline-flex; gap: 6px; align-items: center; } .vw-ek-neu select { max-width: 240px; }

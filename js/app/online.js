@@ -6,7 +6,7 @@
 import { S, db, einst, istLeitung, vorname, name } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
 import { liste, hole, speichere, konfig, abonnieren, istEchtbetrieb, serverAktionStill, neueId } from "../kern/daten.js";
-import { onlineErlaubt, chatPartnerErlaubt, ONLINE_KREISE, onlineFuer } from "../kern/schema.js";
+import { onlineErlaubt, chatPartnerErlaubt, ONLINE_KREISE, onlineFuer, kinderChatOffen, ksVon } from "../kern/schema.js";
 import { kinderVon, elternVon } from "../kern/logik.js";
 import { gesicht } from "./gesichter.js";
 import { ANRUF_BRUECKE as ANRUF } from "../kern/rtc.js";
@@ -20,7 +20,7 @@ export const onlineAn = () => !!S.ich && onlineErlaubt(S.ich, konfig());
 // Vorführversion: ein paar Personen „sind online“ (feste Auswahl je 5 Minuten), nach denselben Regeln wie der Server
 function demoListe() {
   const k = konfig(), ich = S.ich, verw = new Set([...kinderVon(db, ich.id), ...elternVon(db, ich.id)]);
-  const kandidaten = liste("personen", (p) => p.id !== ich.id && onlineErlaubt(p, k) && chatPartnerErlaubt(ich, p, { verwandt: verw.has(p.id), schuelerUntereinander: k.chat_schueler_untereinander !== false }));
+  const kandidaten = liste("personen", (p) => p.id !== ich.id && onlineErlaubt(p, k) && chatPartnerErlaubt(ich, p, { verwandt: verw.has(p.id), schuelerUntereinander: k.chat_schueler_untereinander !== false, kinderChat: (x) => x.kontakt_kinder ?? kinderChatOffen(ksVon({ [x.id]: hole("kinderschutz", x.id) }, x.id)) }));
   const fenster = Math.floor(Date.now() / 300000), wahl = kandidaten.filter((p, i) => (i * 7 + fenster) % 9 < 2 || p.id === "p-leitung").slice(0, 6);
   return wahl.map((p) => ({ id: p.id, vorname: p.vorname, name: name(p.id), typ: p.typ }));
 }

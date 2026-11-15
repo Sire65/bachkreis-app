@@ -1,13 +1,22 @@
 {
-  "version": "0.68.0",
-  "datum": "12.11.2026",
+  "version": "0.69.0",
+  "datum": "15.11.2026",
   "stufe": "DEV",
   "neu": [
-    "💻 PC-Verwaltung noch schlanker: jede Rolle sieht nur, was sie meist braucht (Vorstand 12 statt 26 Punkte)",
-    "👪 Eltern und Kinder direkt bei der Person verknüpfen",
-    "📆 Jahres-Aufgaben wie der Schuljahreswechsel erscheinen als Karte, wenn sie dran sind"
+    "🛡️ Schutz & Einwilligungen: Eltern legen je Kind fest – Fotos, Kontakt zu anderen Kindern, Sichtbarkeit, wer abholen darf (alles zuerst aus)",
+    "🙋 Eltern können vertraulich um besonderen Schutz bitten – die Leitung setzt die Schutzsperre",
+    "🛡️ Leitung: „Schutz & Fotos“ mit Abholliste und Hinweisen"
   ],
   "verlauf": [
+    {
+      "version": "0.68.0",
+      "datum": "12.11.2026",
+      "neu": [
+        "💻 PC-Verwaltung noch schlanker: jede Rolle sieht nur, was sie meist braucht (Vorstand 12 statt 26 Punkte)",
+        "👪 Eltern und Kinder direkt bei der Person verknüpfen",
+        "📆 Jahres-Aufgaben wie der Schuljahreswechsel erscheinen als Karte, wenn sie dran sind"
+      ]
+    },
     {
       "version": "0.67.0",
       "datum": "12.11.2026",

@@ -173,6 +173,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F163 | 🏁 Server macht Kündigungen am Datum wirksam, beendet Pausen, löscht Nachweise nach 3 Jahren | ✅ | kuendigung.test |
 | BK-F164 | 💻 PC-Verwaltung: 7 Bereiche zum Einklappen, Suche, Einfach/Erweitert, Startseite „Heute zu tun“ | ✅ | Rundgang |
 | BK-F165 | 🧭 PC-Verwaltung je Rolle ausgedünnt, Doppeltes zusammengelegt, Eltern ↔ Kind bei der Person, Jahres-Aufgaben als Karte | ✅ | Rundgang |
+| BK-F166 | 🛡️ Schutz & Einwilligungen je Kind (Fotos, Kinder-Chat, Sichtbarkeit, Online, Abholliste), alles zuerst aus, Assistent beim Start | ✅ | kinderschutz.test |
+| BK-F167 | 🛡️ Schutzsperre durch die Leitung, Bitte um Schutz ohne Gründe, Schutz & Fotos-Übersicht | ✅ | kinderschutz.test |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

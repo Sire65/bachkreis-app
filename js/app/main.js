@@ -157,8 +157,11 @@ async function starten() {
   setTimeout(() => zustimmungPruefen(), 900); // ⚖️ 0.55.0 Datenschutz & Regeln beim ersten Start bestätigen
   // 🎓 0.65.0 Einführung beim ersten Start (nur Echtbetrieb, einmal je Gerät) – nach der Zustimmung bzw. kurz nach dem Start
   const einfuehrungTesten = () => { if (istEchtbetrieb() && (einst().einfuehrung || 0) < 1) teilLaden("einfuehrung.js").then((m) => m.einfuehrungPruefen()).catch(() => {}); };
-  document.addEventListener("bk-zugestimmt", () => setTimeout(einfuehrungTesten, 600));
-  setTimeout(() => { if (!document.getElementById("zsFenster")) einfuehrungTesten(); }, 2200);
+  // 🛡️ 0.69.0 erst Schutz & Einwilligungen (Eltern, Jugendliche ab 16), danach die Einführung
+  const nachZustimmung = () => teilLaden("kinderschutz.js").then((m) => m.schutzPruefen()).catch(() => false).then((offen) => { if (!offen) einfuehrungTesten(); });
+  document.addEventListener("bk-zugestimmt", () => setTimeout(nachZustimmung, 600));
+  document.addEventListener("bk-schutz-fertig", () => setTimeout(einfuehrungTesten, 800));
+  setTimeout(() => { if (!document.getElementById("zsFenster")) nachZustimmung(); }, 2200);
   { const ohne = express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen(); teilLaden("einstellungen.js").then((m) => m.beimStart(ohne)).catch(() => {}); } // 📦 0.60.0 Einstellungen erst nach dem Start laden // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });

@@ -8,6 +8,7 @@ import { kinderVon, termineFuer, antwortVon, teilnahmeVon, ausleihenVon, tagIso 
 import { gesundheitVon } from "./schutz.js";
 import { pwWichtigFuerMich } from "./pinnwand.js";
 import { meineOffenenUnterschriften } from "./leihvertrag.js";
+import { schuljahrBeginn } from "../kern/schema.js";
 
 export const elternAnsicht = () => istEltern() && einst().elternAlle !== true;
 const kinder = () => kinderVon(db, S.ich.id).filter((id) => liste("personen", (p) => p.id === id && p.status !== "ausgetreten").length);
@@ -22,6 +23,9 @@ export function elternErledigen(ks = gewaehlt(), heute = new Date()) {
     for (const a of ausleihenVon(db, k).filter((x) => x.bis && x.bis <= tagIso(new Date(heute.getTime() + 14 * 86400000))))
       z.push({ sym: "🎻", text: `Leihinstrument (${esc(vorname(k))}): Rückgabe ${a.bis < h ? "war" : "bis"} <b>${esc(a.bis.split("-").reverse().join("."))}</b>`, a: "kachel", x: "meininstrument" });
   }
+  // 🛡️ 0.69.0 Schutz & Einwilligungen: noch nicht gewählt, oder zum neuen Schuljahr kurz bestätigen
+  const ksOffen = ks.filter((k) => { const z = liste("kinderschutz", (x) => x.kind_id === k)[0]; return !z?.bestaetigt_am || z.bestaetigt_am < schuljahrBeginn(heute); });
+  if (ksOffen.length) z.push({ sym: "🛡️", text: `Schutz &amp; Einwilligungen für <b>${ksOffen.map((k) => esc(vorname(k))).join(", ")}</b> ${ksOffen.some((k) => liste("kinderschutz", (x) => x.kind_id === k && x.bestaetigt_am).length) ? "fürs neue Schuljahr bestätigen" : "festlegen"}`, a: "kachel", x: "kinderschutz" });
   const gen = liste("genehmigungen", (g) => ks.includes(g.kind_id) && g.status === "ausstehend").length;
   if (gen) z.unshift({ sym: "✍️", text: `<b>${gen}</b> Genehmigung${gen > 1 ? "en warten" : " wartet"} auf Ihre Antwort`, a: "kachel", x: "meinegenehmigungen" });
   const lv = meineOffenenUnterschriften(); // 📝 0.52.0

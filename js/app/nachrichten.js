@@ -26,7 +26,7 @@ import { onlineLeisteHtml } from "./online.js";
 import { textHtml, erkennen, terminErkennen, NA_FARBEN } from "../kern/chattext.js";
 import { kinderVon as kinderVonL, termineFuer, antwortVon, tagIso } from "../kern/logik.js";
 import { terminVorlage, eigenTerminVorlage } from "./termine.js";
-import { erwaehnteIn } from "../kern/schema.js";
+import { erwaehnteIn, kinderChatOffen, ksVon } from "../kern/schema.js";
 import { anrufKnoepfe } from "./anruf.js";
 import { kontaktHtml, konferenzHtml, konferenzKnopf, geheimKnopf, geheimHinweis, geheimAn, geheimVerpacken, geheimMerken, geheimHtml, geheimFuellen } from "./chatextra.js";
 import { stummAn, archiviert, favorit, archivAufwachen, angeheftetHtml, darfAnheften, gemerkt, zurueckholbar, erwaehnungVorschlag, erwaehnungenMarkieren, chatGestenVerdrahten, runterNeu } from "./chatplus.js";
@@ -164,9 +164,11 @@ AKTIONEN.gliedUm = (k) => { const o = gliedOffen(); o[k] = o[k] === false; try {
 
 // ---------- Neue Nachricht: Einzelchat (gibt es schon einen, öffnet er sich) oder Runde mit Betreff ----------
 const NEU = { wahl: [], suche: "", titel: "" };
+// 🛡️ 0.69.0 privat mit anderen Kindern nur, wenn beide Familien es erlauben (Server liefert kontakt_kinder; eigene Zeile/Vorführung: Tabelle)
+export const kinderChatErlaubt = (p) => p.kontakt_kinder ?? kinderChatOffen(ksVon({ [p.id]: hole("kinderschutz", p.id) }, p.id));
 function partnerListe() {
   const me = S.ich, verwandt = new Set([...kinderVon(db, me.id), ...elternVon(db, me.id)]);
-  const opt = { schuelerUntereinander: konfig().chat_schueler_untereinander !== false };
+  const opt = { schuelerUntereinander: konfig().chat_schueler_untereinander !== false, kinderChat: kinderChatErlaubt }; // 🛡️ 0.69.0
   return liste("personen", (p) => pwAppPerson(p) && chatPartnerErlaubt(me, p, { ...opt, verwandt: verwandt.has(p.id) })).sort((a, b) => name(a).localeCompare(name(b), "de"));
 }
 VIEWS.chatNeu = {

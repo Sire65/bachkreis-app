@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -55,6 +55,8 @@ export function kontext(person, alle) {
   ctx.vsMap = new Map((alle.vorschlaege || []).map((z) => [z.id, z])); // 💡 0.41.0
   ctx.elternKind = ek;
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
+  ctx.schutz = new Map((alle.kinderschutz || []).filter((z) => !z.geloescht_am).map((z) => [z.kind_id, z])); // 🛡️ 0.69.0
+  ctx.ksLesen = rollen.some((r) => KS_LESEN.includes(r));
   // 🎙️ Übe-Aufnahmen: für welche (eigenen) Kinder haben die Eltern zuletzt „erteilt“ (Zweck uebeaufnahmen)?
   const uaV = new Set((alle.genehmigung_vorlagen || []).filter((v) => v.zweck === "uebeaufnahmen" && !v.geloescht_am).map((v) => v.id)), uaLetzte = new Map();
   for (const g of alle.genehmigungen || []) if (!g.geloescht_am && uaV.has(g.vorlage_id) && meine.has(g.kind_id) && g.status !== "ausstehend" && String(g.beantwortet_am || "") >= String(uaLetzte.get(g.kind_id)?.beantwortet_am || "")) uaLetzte.set(g.kind_id, g);
@@ -100,7 +102,10 @@ function unterhaltungSichtbar(u, ctx, alle) {
 function zeileSichtbar(tab, z, ctx) {
   if (ALLGEMEIN.has(tab)) return true;
   switch (tab) {
-    case "personen": return ctx.meine.has(z.id) || ctx.eltern.has(z.id) || ["leitung", "lehrkraft", "schueler", "ehemalig"].includes(z.typ);
+    case "personen": // 🛡️ 0.69.0 Kinder mit „nur Leitung“ oder Schutzsperre sehen andere nicht
+      if (z.typ === "schueler" && !ctx.meine.has(z.id) && !ctx.eltern.has(z.id) && !ctx.ksLesen && ksVerborgen(ksVon(ctx.schutz, z.id))) return false;
+      return ctx.meine.has(z.id) || ctx.eltern.has(z.id) || ["leitung", "lehrkraft", "schueler", "ehemalig"].includes(z.typ);
+    case "kinderschutz": return ctx.meine.has(z.kind_id); // eigene/Kinder (Leitung und Lehrkräfte lesen alle)
     case "eltern_kind": return ctx.meine.has(z.kind_id) || ctx.meine.has(z.eltern_id);
     case "gruppe_zuordnung": case "person_instrument": return ctx.person?.typ === "schueler" || ctx.meine.has(z.person_id);
     case "inventar": return ctx.inventar.has(z.id);
@@ -182,6 +187,11 @@ function kuerzen(tab, z, ctx, alleLesen) {
     if (fg.email) out.email = z.email;
     if (fg.adresse) { out.strasse = z.strasse; out.plz = z.plz; out.ort = z.ort; }
     if (fg.geburtstag && z.geburtsdatum) out.gb_md = String(z.geburtsdatum).slice(5, 10); // nur Tag und Monat, kein Jahr
+    if (z.typ === "schueler") { // 🛡️ 0.69.0 was die Eltern gewählt haben
+      const ks = ksVon(ctx.schutz, z.id);
+      if (ks.sichtbar !== "voll" && !ctx.ksLesen) { out.nachname = z.nachname ? String(z.nachname).slice(0, 1) + "." : ""; out.avatar = null; }
+      out.kontakt_kinder = kinderChatOffen(ks); out.online_kinder = !!ks.online_sichtbar;
+    }
   }
   // Need-to-know: Vorstand, Instrumentenwart, Notenwart sehen fremde Personen nur mit den Feldern ihrer Rolle
   if (tab === "personen" && alleLesen && !hatRolle(ctx, PERSONEN_VOLL) && !ctx.meine.has(z.id) && !ctx.eltern.has(z.id)) {
@@ -246,7 +256,7 @@ function umfragePruefen(u) {
 // Darf ctx.ich mit Person id eine eigene Unterhaltung anfangen? (Kinderschutz-Regel in schema.js)
 export function chatPartnerOk(ctx, id) {
   const p = (ctx.personen || []).find((x) => x.id === id);
-  return chatPartnerErlaubt(ctx.person, p, { verwandt: ctx.kinder.has(id) || ctx.eltern.has(id), schuelerUntereinander: ctx.konfig?.chat_schueler_untereinander !== false });
+  return chatPartnerErlaubt(ctx.person, p, { verwandt: ctx.kinder.has(id) || ctx.eltern.has(id), schuelerUntereinander: ctx.konfig?.chat_schueler_untereinander !== false, kinderChat: (x) => kinderChatOffen(ksVon(ctx.schutz, x.id)) });
 }
 
 // Eigene Unterhaltung anfangen (Einzelchat oder Runde) – nur mit erlaubten Partnern (Kinderschutz-Regel). Schreibt ein
@@ -470,12 +480,40 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       if (alt) return { ok: false, grund: "NUR_NEU" };
       return { ok: false, grund: "ART_UNGUELTIG" };
-    case "genehmigungen":
-      if (!alt || !ctx.kinder.has(alt.kind_id)) return { ok: false, grund: "NICHT_MEIN_KIND" };
+    case "genehmigungen": {
+      const selbst16 = (kid) => kid === ctx.ich && ab16(ctx.person); // 🛡️ 0.69.0 ab 16 stimmt das Kind selbst zu
+      if (!alt) { // 🛡️ 0.69.0 Eltern geben Foto-Einwilligungen (und eigener Zugang) auch ohne Anfrage der Leitung – im Schutz-Assistenten
+        const v = ctx.gvMap?.get(neu.vorlage_id);
+        if (!v || v.geloescht_am || ![...FOTO_ZWECKE, "eigener_zugang"].includes(v.zweck)) return { ok: false, grund: "NUR_ANFRAGE_DER_LEITUNG" };
+        if (!ctx.kinder.has(neu.kind_id) && !selbst16(neu.kind_id)) return { ok: false, grund: "NICHT_MEIN_KIND" };
+        if (!["erteilt", "abgelehnt"].includes(neu.status)) return { ok: false, grund: "STATUS_UNGUELTIG" };
+        return { ok: true, zeile: { id: neu.id, vorlage_id: v.id, kind_id: neu.kind_id, status: neu.status, frist: null, beantwortet_von: ctx.ich, beantwortet_am: jetzt, vorlage_version: v.fassung ?? 1 } };
+      }
+      if (!ctx.kinder.has(alt.kind_id) && !selbst16(alt.kind_id)) return { ok: false, grund: "NICHT_MEIN_KIND" };
       if (!["erteilt", "abgelehnt", "widerrufen"].includes(neu.status)) return { ok: false, grund: "STATUS_UNGUELTIG" };
       if (neu.status === "widerrufen" && alt.status !== "erteilt") return { ok: false, grund: "NUR_ERTEILTE_WIDERRUFBAR" };
       // Textfassung kommt vom Server (welche Fassung die Eltern bestätigt haben), nicht vom Gerät
       return { ok: true, zeile: { ...alt, status: neu.status, beantwortet_von: ctx.ich, beantwortet_am: jetzt, vorlage_version: ctx.gvMap?.get(alt.vorlage_id)?.fassung ?? alt.vorlage_version ?? 1 } };
+    }
+    case "kinderschutz": {
+      // 🛡️ 0.69.0 Eltern (und das Kind ab 16) wählen Kontakt, Sichtbarkeit, Name unter Fotos, Abholliste und bitten ggf. um Schutz;
+      // die Schutzsperre setzt nur die Leitung. Gründe werden nicht gespeichert. Zeit und Person der Bestätigung setzt der Server.
+      const pid = String(alt?.kind_id || neu.kind_id || ""), p = (ctx.personen || []).find((x) => x.id === pid);
+      if (!p || p.typ !== "schueler") return { ok: false, grund: "NUR_KINDER" };
+      const chef = hatRolle(ctx, KS_SPERRE), familie = ctx.kinder.has(pid) || (pid === ctx.ich && ab16(ctx.person));
+      if (!chef && !familie) return { ok: false, grund: "NICHT_MEIN_KIND" };
+      const z = { ...KS_STANDARD, ...(alt || {}), id: pid, kind_id: pid };
+      if (KS_CHAT[neu.kinder_chat]) z.kinder_chat = neu.kinder_chat;
+      if (KS_SICHT[neu.sichtbar]) z.sichtbar = neu.sichtbar;
+      for (const k of ["online_sichtbar", "foto_name", "schutz_wunsch"]) if (k in neu) z[k] = !!neu[k];
+      if ("abholer" in neu) z.abholer = (Array.isArray(neu.abholer) ? neu.abholer : []).slice(0, 8).map((a) => ({ name: String(a?.name || "").trim().slice(0, 60), beziehung: String(a?.beziehung || "").trim().slice(0, 40), telefon: String(a?.telefon || "").trim().slice(0, 30) })).filter((a) => a.name);
+      if (chef && "schutz_aktiv" in neu && !!neu.schutz_aktiv !== !!alt?.schutz_aktiv) Object.assign(z, { schutz_aktiv: !!neu.schutz_aktiv, schutz_von: ctx.ich, schutz_geprueft_am: jetzt });
+      else z.schutz_aktiv = !!alt?.schutz_aktiv;
+      if (chef && neu.schutz_geprueft) z.schutz_geprueft_am = jetzt;
+      if (familie && z.schutz_wunsch && !alt?.schutz_wunsch) z.schutz_geprueft_am = null; // neue Bitte → Leitung prüft
+      if (familie) Object.assign(z, { bestaetigt_am: jetzt, bestaetigt_von: ctx.ich }); // nur die Familie „bestätigt“ – die Leitung setzt nur die Sperre
+      return { ok: true, zeile: z };
+    }
     case "uebeaufgaben": {
       // 📝 Schüler/Eltern haken nur sich bzw. die eigenen Kinder als erledigt ab – sonst bleibt die Aufgabe unverändert
       if (!alt || !zeileSichtbar("uebeaufgaben", alt, ctx)) return { ok: false, grund: "NICHT_SICHTBAR" };

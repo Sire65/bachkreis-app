@@ -431,6 +431,7 @@ export function naechsteInventarNr(db, praefix = "A-") {
 // Stand einer Einwilligung (Vorlagen mit diesem Zweck): "ja" = erteilt und nicht abgelaufen, "nein" = abgelehnt/widerrufen, "offen" = nichts da.
 // "offen" heißt im Zweifel NEIN (nicht fotografieren/veröffentlichen). Gibt es noch keine Vorlage für den Zweck, gilt das alte Feld foto_ok.
 export function einwilligung(db, kindId, zweck, heute = new Date()) {
+  if (FOTO_ZWECKE.includes(zweck) && db.hole("kinderschutz", kindId)?.schutz_aktiv) return "nein"; // 🛡️ 0.69.0 Schutzsperre: nie aufs Foto
   const vorlagen = db.liste("genehmigung_vorlagen", (v) => v.zweck === zweck);
   if (!vorlagen.length) { const p = db.hole("personen", kindId); return FOTO_ZWECKE.includes(zweck) && p?.foto_ok != null ? (p.foto_ok ? "ja" : "nein") : "offen"; }
   const ids = new Set(vorlagen.map((v) => v.id));

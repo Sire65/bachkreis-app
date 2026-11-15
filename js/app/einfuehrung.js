@@ -42,7 +42,7 @@ function rolle() { return kindAnsicht() || (istSchueler() && document.querySelec
 // automatisch beim Start (Echtbetrieb, noch nicht gesehen) – nur, wenn kein anderes Fenster offen ist
 export function einfuehrungPruefen() {
   if (!S.ich || !istEchtbetrieb() || (einst().einfuehrung || 0) >= EINFUEHRUNG_FASSUNG) return false;
-  if (document.getElementById("zsFenster") || document.getElementById("efFenster") || document.getElementById("blattHg")) return false;
+  if (document.getElementById("zsFenster") || document.getElementById("efFenster") || document.getElementById("blattHg") || S.view === "kinderschutz") return false;
   begruessen(); return true;
 }
 function fenster(html, art = "mitte") {

@@ -93,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261128000000_bk_kinderschutz.sql": { titel: "🛡️ Schutz & Einwilligungen je Kind, Abholliste (0.69.0)", tabellen: ["kinderschutz"], extra: ["create unique index if not exists bk_kinderschutz_kind on bk_kinderschutz (kind_id) where geloescht_am is null;"] },
   "20261127000000_bk_kuendigungen.sql": { titel: "🚪 Kündigung in vier Varianten, 💤 Pause bis (0.66.0)", tabellen: ["kuendigungen", "personen"], extra: ["create index if not exists bk_kuendigungen_faellig on bk_kuendigungen (status, zum);"] },
   "20261126000000_bk_eigener_zugang.sql": { titel: "🔑 Genehmigung „eigener App-Zugang“ für Kinder (0.65.0)", tabellen: [], pruefungen: [["genehmigung_vorlagen", "zweck"]] },
   "20261125000000_bk_inventur.sql": { titel: "📦 Inventur per Regal-Schild: Lagerorte, Inventuren (0.63.0)", tabellen: ["lagerorte", "inventuren", "inventar", "ausstattung"], extra: ["create index if not exists bk_inventar_lagerort on bk_inventar (lagerort_id);"] },

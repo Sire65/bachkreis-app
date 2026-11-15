@@ -4,7 +4,7 @@
 // Aktionen:  anmelden {code, verwaltung?} · laden {seit?} · speichern {tab, zeilen[]} · versenden {…} · abmelden
 //            push_schluessel · push_abo · push_ab · push_status · quittieren · kom_test · kom_wartung (BK Communicator)
 // Anmeldung: persönlicher Zugangscode (QR-Link) → Sitzung (Token; in der DB nur als SHA-256-Hash).
-import { KUENDIGUNG_VERWALTER, rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig, KARTEN_JE_STANDARD, KARTEN_CODE_ZEICHEN } from "./schema.js";
+import { ksVon, kinderChatOffen, ksVerborgen, KUENDIGUNG_VERWALTER, rollenMit, ADMIN_KONFIG, TABELLEN, TABELLEN_NAMEN, pwEmpfaenger, CHAT, DATEI, nachrichtFrei, nachrichtAbgelaufen, onlineErlaubt, chatPartnerErlaubt, istMinderjaehrig, KARTEN_JE_STANDARD, KARTEN_CODE_ZEICHEN } from "./schema.js";
 import { ABLAGE_DATENBANK } from "./ablage.js";
 import { nachrichtBescheid, speicherDb } from "./nachrichten.js";
 import { kuendigungVollziehen } from "./kuendigung.js";
@@ -239,7 +239,7 @@ async function alleZeilen(db, tab) {
 }
 async function kontextLaden(db, person) {
   // Alles, was die Regeln brauchen (regeln.js kontext): Begleitpersonen/Anmeldung (projekte, reise_anmeldungen), Textfassung (genehmigung_vorlagen)
-  const noetig = ["eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben", "vorschlaege"];
+  const noetig = ["kinderschutz", "eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben", "vorschlaege"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   const ctx = kontext(person, alle);
@@ -388,7 +388,7 @@ async function speichern(db, s, body) {
     ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
     const markiert = [...new Set(zeilen.flatMap((z) => (Array.isArray(z?.personen) ? z.personen : [])).map(String))];
     ctx.fotoOk = new Set();
-    if (markiert.length) { const mdb = await speicherDb(db, ["genehmigung_vorlagen", "genehmigungen", "personen", "eltern_kind"]); for (const p of markiert) if (einwilligung(mdb, p, "foto_intern") === "ja") ctx.fotoOk.add(p); }
+    if (markiert.length) { const mdb = await speicherDb(db, ["genehmigung_vorlagen", "genehmigungen", "personen", "eltern_kind", "kinderschutz"]); for (const p of markiert) if (einwilligung(mdb, p, "foto_intern") === "ja") ctx.fotoOk.add(p); }
   }
   if (tab === "nachricht_status" || tab === "chat_merker") {
     const ids = [...new Set(zeilen.map((z) => String(z?.nachricht_id || "")))];
@@ -616,7 +616,9 @@ async function onlineListe(db, s, ctx) {
   const k = ctx.konfig, verw = new Set([...ctx.kinder, ...ctx.eltern]);
   const r = (await db.q(`select to_jsonb(p) as z from bk_online o join bk_personen p on p.id = o.person_id
     where o.zuletzt > now() - ($2 || ' seconds')::interval and o.sichtbar and p.id <> $1 and p.geloescht_am is null`, [s.person.id, String(ONLINE_SEK)])).map((x) => x.z);
-  return r.filter((p) => onlineErlaubt(p, k) && chatPartnerErlaubt(s.person, p, { verwandt: verw.has(p.id), schuelerUntereinander: k.chat_schueler_untereinander !== false }))
+  const kind = (x) => x.typ === "schueler", ks = (x) => ksVon(ctx.schutz, x.id); // 🛡️ 0.69.0 Kinder sehen andere Kinder nur, wenn deren Eltern es erlauben
+  return r.filter((p) => onlineErlaubt(p, k) && chatPartnerErlaubt(s.person, p, { verwandt: verw.has(p.id), schuelerUntereinander: k.chat_schueler_untereinander !== false, kinderChat: (x) => kinderChatOffen(ks(x)) })
+    && !(kind(s.person) && kind(p) && (!ks(p).online_sichtbar || ksVerborgen(ks(p)))))
     .map((p) => ({ id: p.id, vorname: p.vorname, name: `${p.vorname || ""} ${p.nachname || ""}`.trim(), typ: p.typ }));
 }
 async function online(db, s, body) {

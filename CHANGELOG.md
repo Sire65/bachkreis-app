@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.69.0 DEV – 15.11.2026
+🛡️ **Datenschutz & Kinderschutz – Eltern legen fest, was für ihr Kind gilt** (Gespräch Frau Jacka, Konzept mit Beispielbild abgestimmt, „mit Abholliste“):
+- **Alles zuerst aus** („Datenschutz durch Voreinstellung“): ohne Wahl der Eltern keine Fotos, kein privater Chat mit anderen Kindern, nur der Vorname für andere, kein Online-Status
+- **Schutz-Assistent** direkt nach der Zustimmung zu Datenschutz und Regeln (Echtbetrieb, je Kind, danach die Einführung) und jederzeit unter 👤 Meins → 🛡️ Schutz & Einwilligungen: ① 📷 Fotos je Zweck (App, Website, Presse, Social) + Name unter dem Foto · ② 💬 privat mit anderen Kindern schreiben (nur wenn **beide** Familien Ja sagen) · 👀 Sichtbarkeit (Name und Gesicht / nur Vorname / nur Leitung) · 🟢 Online-Status · 🔑 eigener Zugang · ③ 🛡️ Bitte um besonderen Schutz (vertraulicher Hinweis an die Leitung, **Gründe nie in der App**) · 🚗 **Abholliste** (außer den Eltern)
+- Ab 16 legt das Kind seine Einstellungen selbst fest; „✅ Bitte erledigen“ erinnert Eltern, wenn noch nichts gewählt ist, und zum neuen Schuljahr ans kurze Bestätigen
+- **🛡️ Schutz & Fotos** (Leitung/Lehrkräfte, ersetzt die Foto-Liste): Fotos je Zweck, 💬, 👀, 🚗; Filter Schutz · Bitten · nicht gewählt; antippen → Abholliste mit Telefon und Einstellungen; **Schutzsperre** setzt nur die Leitung (keine Fotos, für andere unsichtbar, keine Kontakte zu anderen Kindern, ⚠️ für Lehrkräfte)
+- **Der Server setzt alles durch:** Sichtbarkeit und Kürzung des Nachnamens beim Laden, Kinder-Chats und Online-Liste nur mit beidseitigem Ja, Foto-Einwilligung „nein“ bei Schutzsperre, Eltern geben Foto-Einwilligungen selbst; neue Tabelle `kinderschutz` (Migration `20261128000000_bk_kinderschutz.sql`, nur service_role)
+- PC-Verwaltung: Karte „🛡️ Eltern bitten um besonderen Schutz“ auf „Heute zu tun“, Tabelle unter Mitglieder & Familien
+
 ## 0.68.0 DEV – 12.11.2026
 🧭 **PC-Verwaltung nochmals ausgedünnt** (Wunsch Hansi „logisch und sorgfältig, damit man nicht erschlagen wird“ – jeden Punkt je Rolle geprüft):
 - **„Einfach“ zeigt je Rolle nur, was sie meist braucht:** Leitung 31 statt 45 Punkte (mit Admin), Lehrkraft 13 statt 34, Instrumentenwart 17, Vorstand 12 statt 26 (nur Mitglieder, Instrumente, Verein & Kasse). ⚙️ System nur für Leitung/Admin; Communicator und Abgleich nur Admin

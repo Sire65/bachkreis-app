@@ -125,6 +125,19 @@ export const KUENDIGUNG_WEGE = { app: "📱 in der App", papier: "📄 auf Papie
 export const KUENDIGUNG_VERWALTER = ["admin", "leitung", "vorstand"];
 export const KUENDIGUNG_NACHWEIS_JAHRE = 3; // so lange bleibt der Nachweis (Tabelle kuendigungen) nach dem Wirksam-Datum
 export const kuendigungOffen = (k) => !!k && !k.geloescht_am && ["eingegangen", "bestaetigt"].includes(k.status);
+// 🛡️ 0.69.0 Datenschutz & Kinderschutz je Kind (Wunsch Frau Jacka/Hansi): Eltern legen beim Start fest, was gilt – alles zuerst AUS
+// („Datenschutz durch Voreinstellung“). Fotos laufen über die Genehmigungen (foto_*), der Rest über die Tabelle kinderschutz (id = Kind).
+export const KS_CHAT = { ja: "✅ Ja", nein: "🚫 Nein – nur Gruppenchats der Leitung" };
+export const KS_SICHT = { voll: "👤 Name und Gesicht", vorname: "🔤 nur Vorname", leitung: "🔒 nur Leitung und Lehrkräfte" };
+export const KS_STANDARD = { kinder_chat: "nein", sichtbar: "vorname", online_sichtbar: false, foto_name: false, schutz_wunsch: false, schutz_aktiv: false, abholer: [] };
+export const KS_LESEN = ["admin", "leitung", "lehrkraft"]; // sehen Einstellungen, Schutz-Hinweis und Abholliste aller Kinder
+export const KS_SPERRE = ["admin", "leitung"]; // setzen die Schutzsperre
+export const ksVon = (quelle, id) => ({ ...KS_STANDARD, ...((quelle?.get ? quelle.get(id) : quelle?.[id]) || {}) });
+export const kinderChatOffen = (ks) => !!ks && ks.kinder_chat === "ja" && !ks.schutz_aktiv;
+export const ksVerborgen = (ks) => !!ks && (ks.sichtbar === "leitung" || !!ks.schutz_aktiv);
+export const alterJahre = (p, heute = new Date()) => { if (!p?.geburtsdatum) return null; const g = new Date(p.geburtsdatum); let a = heute.getFullYear() - g.getFullYear(); if (heute.getMonth() < g.getMonth() || (heute.getMonth() === g.getMonth() && heute.getDate() < g.getDate())) a--; return a; };
+export const ab16 = (p) => p?.typ === "schueler" && (alterJahre(p) ?? 0) >= 16; // ab 16 stimmt das Kind selbst zu
+export const schuljahrBeginn = (heute = new Date()) => `${heute.getMonth() >= 7 ? heute.getFullYear() : heute.getFullYear() - 1}-08-01`;
 export const LV_ROLLEN = { mitglied: "Mitglied (Entleiher/in)", eltern: "Erziehungsberechtigte/r", bachkreis: "für den Bachkreis" };
 export const LV_KLAUSEL = `1. Das Instrument und das Zubehör bleiben Eigentum des Bachkreises (bzw. seines Fördervereins) und werden nur für das Musizieren im Bachkreis und den Unterricht überlassen.
 2. Instrument und Zubehör sind pfleglich zu behandeln: trocken lagern, nicht in die Nähe von Heizung oder Sonne, nicht im Auto liegen lassen, nach dem Spielen reinigen.
@@ -214,11 +227,11 @@ export const nachrichtFrei = (n, jetzt = new Date().toISOString()) => !n.geplant
 // 🛡️ Kinderschutz (0.20.0): Erwachsene schreiben Kindern privat nur, wenn sie Leitung oder Lehrkraft sind (nicht Notenwart,
 // Instrumentenwart, Vorstand …) – und bei Minderjährigen sind die Eltern automatisch dabei (elternInKopie, konfig.chat_eltern_kopie).
 const fuehrt = (x) => ["leitung", "lehrkraft"].includes(x.typ) || rollenMit(x.rollen).some((r) => ["admin", "leitung", "lehrkraft"].includes(r));
-export function chatPartnerErlaubt(ich, p, { verwandt = false, schuelerUntereinander = true } = {}) {
+export function chatPartnerErlaubt(ich, p, { verwandt = false, schuelerUntereinander = true, kinderChat = null } = {}) {
   if (!ich || !p || p.id === ich.id || !pwAppPerson(p)) return false;
   if (verwandt) return true;
   const kind = (x) => x.typ === "schueler";
-  if (kind(ich) && kind(p)) return schuelerUntereinander !== false;
+  if (kind(ich) && kind(p)) return schuelerUntereinander !== false && (!kinderChat || (kinderChat(ich) && kinderChat(p))); // 🛡️ 0.69.0 beide Eltern müssen es erlauben
   if (kind(ich) || kind(p)) return fuehrt(kind(ich) ? p : ich); // Kind ↔ Erwachsener: nur Leitung und Lehrkräfte
   const verw = (x) => fuehrt(x) || rollenMit(x.rollen).some((r) => VERWALTER.includes(r));
   if (ich.typ === "ehemalig" && p.typ === "ehemalig") return true; // 🎓 Ehemalige untereinander (0.21.0)
@@ -918,6 +931,23 @@ export const TABELLEN = {
   // Unterschriften von Mitglied, Erziehungsberechtigten (bei Minderjährigen) und Bachkreis – mit dem Finger, vor Ort oder jede/r auf dem eigenen Gerät
   // 🚪 0.66.0 Kündigungen: Nachweis (wer, was, zum, Unterschrift, bestätigt von) – bleibt nach dem Wirksam-Datum KUENDIGUNG_NACHWEIS_JAHRE Jahre.
   // Lesen: die Person selbst, ihre Eltern, Leitung/Vorstand (Server-Regel). Wirksam macht die Wartung (Server) bzw. „Jetzt wirksam machen“.
+  // 🛡️ 0.69.0 Schutz & Einwilligungen je Kind (Zeile = Kind, id = kind_id). Eltern (und das Kind ab 16) wählen; die Schutzsperre setzt nur die Leitung.
+  // Gründe für besonderen Schutz stehen NICHT in der App – nur der Hinweis. Abholliste: wer das Kind außer den Eltern abholen darf.
+  kinderschutz: {
+    titel: "Schutz & Einwilligungen (Kinder)", sym: "🛡️", gruppe: "Genehmigungen", lesen: KS_LESEN, schreiben: [],
+    felder: [
+      { k: "kind_id", t: "Kind", typ: "ref", ref: "personen", filter: (p) => p.typ === "schueler", pflicht: true },
+      { k: "kinder_chat", t: "Privat mit anderen Kindern schreiben", typ: "wahl", werte: KS_CHAT },
+      { k: "sichtbar", t: "Für andere sichtbar als", typ: "wahl", werte: KS_SICHT },
+      { k: "online_sichtbar", t: "Online-Status für andere Kinder sichtbar", typ: "ja" },
+      { k: "foto_name", t: "Name unter Fotos", typ: "ja" },
+      { k: "schutz_wunsch", t: "Eltern bitten um besonderen Schutz", typ: "ja" },
+      { k: "schutz_aktiv", t: "🛡️ Schutzsperre aktiv (nur Leitung)", typ: "ja" },
+      { k: "abholer", t: "Abholberechtigt außer den Eltern", typ: "json" },
+    ],
+    intern: [{ k: "bestaetigt_am", typ: "zeit" }, { k: "bestaetigt_von", typ: "text" }, { k: "schutz_geprueft_am", typ: "zeit" }, { k: "schutz_von", typ: "text" }],
+    liste: ["kind_id", "kinder_chat", "sichtbar", "schutz_aktiv", "bestaetigt_am"],
+  },
   kuendigungen: {
     titel: "Kündigungen", sym: "📮", gruppe: "Verwaltung", lesen: KUENDIGUNG_VERWALTER, schreiben: [],
     felder: [

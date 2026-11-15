@@ -32,7 +32,7 @@ import { tischDa } from "./tisch.js";
 import { lvChef, meineOffenenUnterschriften } from "./leihvertrag.js";
 import { korbNeu } from "./eingangskorb.js";
 import { geheimTechnik } from "../kern/geheim.js";
-import { erwachsen } from "../kern/schema.js";
+import { erwachsen, ab16 } from "../kern/schema.js";
 const erwachsenIch = () => erwachsen(S.ich);
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
@@ -115,7 +115,7 @@ export const KACHELN = {
     { id: "anfragen", sym: "📨", t: "Auftrittsanfragen", u: "Gemeinden, Kirchen, Feste – zusagen", v: "anfragen", nur: () => istLehrkraft() || istVorstand(), zahl: () => anfragenOffen(), abs: "planen" },
     { id: "genehmigungen", sym: "✍️", t: "Genehmigungen", u: "Einverständnis der Eltern", v: "genehmigungen", nur: () => istLehrkraft(), abs: "mitglieder" },
     { id: "anwesenheit", sym: "📋", t: "Anwesenheit", u: "Fehlzeiten je Kind · Orchester", v: "anwesenheit", nur: () => hatRolle("admin", "leitung", "lehrkraft", "terminplaner"), abs: "mitglieder" },
-    { id: "fotoliste", sym: "📷", t: "Foto-Liste", u: "Wer darf aufs Foto – App, Website, Presse, Social", v: "fotoliste", nur: () => istLehrkraft(), abs: "mitglieder" },
+    { id: "fotoliste", sym: "🛡️", t: "Schutz & Fotos", u: "Fotos · Kontakt · ⚠️ Schutz · 🚗 Abholliste", v: "fotoliste", nur: () => istLehrkraft(), abs: "mitglieder", zahl: () => (hatRolle("admin", "leitung") ? liste("kinderschutz", (z) => z.schutz_wunsch && !z.schutz_geprueft_am).length : 0) },
     { id: "uebeuebersicht", sym: "📊", t: "Übe-Übersicht", u: "Geteilte Übezeiten der Schüler", v: "uebenUebersicht", nur: () => hatRolle("leitung", "lehrkraft", "admin"), abs: "mitglieder" },
     { id: "zustimmungen", sym: "✅", t: "Zustimmungen", u: "Wer hat Datenschutz & Regeln bestätigt?", v: "zustimmungen", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "mitglieder" },
     { id: "ausweispruefen", sym: "🔍", t: "Ausweis prüfen", u: "QR scannen · Abendkasse, Abfahrt, Ausgabe", v: "ausweispruefen", nur: () => hatRolle("admin", "leitung", "lehrkraft", "vorstand"), abs: "mitglieder" },
@@ -166,6 +166,7 @@ export const KACHELN = {
     { id: "meingesicht", sym: "🙂", t: "Mein Gesicht", u: "Frisur, Brille, Farben – fürs Orchester", aktion: "meinGesicht" },
     { id: "unterlagen", sym: "📁", t: "Meine Unterlagen", u: "Bescheinigungen · Verträge · Atteste", v: "unterlagen", nur: () => !istSchueler() || hatRolle("admin", "leitung") },
     { id: "meinstatus", sym: "🟢", t: "Mein Status", u: "Verfügbar, Urlaub, krank – mit Hinweis", v: "meinstatus", aktion: "statusOeffnen" },
+    { id: "kinderschutz", sym: "🛡️", t: "Schutz & Einwilligungen", u: "Fotos · Kontakt · wer abholen darf", v: "kinderschutz", nur: () => istEltern() || (istSchueler() && ab16(S.ich)) },
     { id: "mitgliedschaft", sym: "🚪", t: "Mitgliedschaft & Kündigung", u: "Pausieren · einen Teil kündigen · austreten", v: "kuendigung" },
     { id: "meinedaten", sym: "🔐", t: "Meine Daten", u: "Was ist über mich gespeichert?", v: "meinedaten" },
     { id: "aenderung", sym: "✏️", t: "Änderung melden", u: "Neue Anschrift, Telefon …", v: "aenderung" },

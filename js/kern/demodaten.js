@@ -429,6 +429,20 @@ export function erzeugeDemodaten(heute = new Date()) {
   // 🔑 0.65.0 eigener App-Zugang: fest (ohne Zufall, damit die übrigen Demodaten gleich bleiben) – 7 von 10 Ja, 1 Nein, 2 offen
   [...kinderA, ...mitglieder("g-b")].forEach((kid, i) => { const st = i % 10 < 7 ? "erteilt" : i % 10 === 7 ? "abgelehnt" : "ausstehend";
     d.genehmigungen.push({ id: `ge-z${i}`, vorlage_id: "gv-zugang", kind_id: kid, frist: isoTag(tag(jetzt, 14)), status: st, ...(st !== "ausstehend" ? { beantwortet_am: iso(tag(jetzt, -3 - (i % 5), 19)), beantwortet_von: d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || null, vorlage_version: 1 } : {}) }); });
+  // 🛡️ 0.69.0 Schutz & Einwilligungen (fest, ohne Zufall): die meisten Eltern haben gewählt, einige noch nicht (→ alles aus),
+  // ein Kind mit Schutzsperre, eine offene Bitte um besonderen Schutz; Abholliste bei einigen (Oma, Nachbarin …)
+  { const kids = d.personen.filter((p) => p.typ === "schueler"), wahl = (i) => iso(tag(jetzt, -20 - (i % 30), 19, i % 50));
+    const frei = (k) => k.id !== demoSchueler?.id && k.id !== demoKindB?.id && !(d.kuendigungen || []).some((x) => x.person_id === k.id);
+    const kandidaten = kids.filter(frei), gesperrt = kandidaten[kandidaten.length - 1], wunsch = kandidaten[kandidaten.length - 2];
+    const ABH = [["Ingrid", "Großmutter"], ["Frau Yilmaz", "Nachbarin"], ["Jonas", "großer Bruder (19)"], ["Herr Becker", "Fahrgemeinschaft"]];
+    d.kinderschutz = kids.map((k, i) => {
+      if (frei(k) && i % 9 === 8 && k !== gesperrt && k !== wunsch) return null; // Eltern haben noch nicht gewählt
+      const demo = !frei(k), e = d.eltern_kind.find((x) => x.kind_id === k.id)?.eltern_id || null;
+      return { id: k.id, kind_id: k.id, kinder_chat: demo || i % 7 !== 3 ? "ja" : "nein", sichtbar: demo ? "voll" : k === gesperrt ? "leitung" : i % 5 === 2 ? "vorname" : "voll",
+        online_sichtbar: demo || i % 3 !== 0, foto_name: i % 2 === 0, schutz_wunsch: k === gesperrt || k === wunsch, schutz_aktiv: k === gesperrt,
+        abholer: i % 4 === 1 ? [{ name: ABH[i % ABH.length][0], beziehung: ABH[i % ABH.length][1], telefon: "" }] : [],
+        bestaetigt_am: wahl(i), bestaetigt_von: e, ...(k === gesperrt ? { schutz_geprueft_am: wahl(i + 1), schutz_von: "p-leitung" } : {}) };
+    }).filter(Boolean); }
   // 🚪 0.66.0 Kündigungen (fest, ohne Zufall): eine eingegangen (Schuljahresende), eine bestätigte Pause, eine wirksame (Ehemalige), eine zurückgenommen
   { const frei = mitglieder("g-b").filter((k) => k !== demoSchueler?.id && k !== demoKindB?.id), elt = (kid) => d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || "p-leitung";
     const sj = new Date(jetzt).getMonth() >= 7 ? new Date(jetzt).getFullYear() + 1 : new Date(jetzt).getFullYear(), u = (pid) => ({ name: (d.personen.find((p) => p.id === pid) || {}).vorname || "Eltern", bild: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAAEklEQVR4nGP4//8/AzJmQBcAAKKNF+lb9uFKAAAAAElFTkSuQmCC", zeit: iso(tag(jetzt, -2, 20)), von: pid });

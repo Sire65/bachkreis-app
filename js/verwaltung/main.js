@@ -74,7 +74,7 @@ const sonderSichtbar = ([k]) => (!SONDER_RECHT[k] || SONDER_RECHT[k]()) && (k !=
 // Seltenes steht unter „🔧 Erweitert“ (🧰 Weitere Werkzeuge, 🗂️ Alle Datentabellen) und in der Suche; Jahres-Aufgaben kommen als Karte, wenn sie dran sind.
 const L_ = "admin,leitung", LK = "admin,leitung,lehrkraft", LV = "admin,leitung,vorstand";
 const BEREICHE = [
-  ["mitglieder", "👥", "Mitglieder & Familien", ["t:personen", "w:zugaenge", "w:genehmigungen@" + LK, "t:kuendigungen", "w:schutzlisten@" + LK, "t:interessenten@" + LK]],
+  ["mitglieder", "👥", "Mitglieder & Familien", ["t:personen", "w:zugaenge", "w:genehmigungen@" + LK, "t:kuendigungen", "w:schutzlisten@" + LK, "t:kinderschutz@" + LK, "t:interessenten@" + LK]],
   ["termine", "📅", "Termine & Projekte", ["w:termineplanen@" + LK + ",terminplaner", "w:projekteplanen@" + LK, "w:anwesenheit@" + LK + ",terminplaner", "w:vereinsleben@" + LK]],
   ["orchester", "🎼", "Orchester & Noten", ["w:gruppenboard@" + LK, "w:uebebuehne@" + LK, "t:werke@" + LK + ",notenwart"]],
   ["instrumente", "🎻", "Instrumente", ["w:inventarbericht@" + LV + ",instrumentenwart", "t:ausleihen@" + LV + ",instrumentenwart", "t:reparaturen@" + LV + ",instrumentenwart", "t:einkaeufe@" + LV + ",instrumentenwart"]],
@@ -99,6 +99,7 @@ const WARTET = {
   "t:interessenten": () => liste("interessenten", (x) => x.status === "anfrage").length,
   "t:rueckmeldungen": () => liste("rueckmeldungen", (x) => x.status === "neu").length,
   "t:aufgaben": () => liste("aufgaben", (a) => a.status === "offen").length,
+  "t:kinderschutz": () => liste("kinderschutz", (z) => z.schutz_wunsch && !z.schutz_geprueft_am).length, // 🛡️ 0.69.0
 };
 const ohneRolle = (e) => e.split("@")[0];
 const rolleOk = (e) => { const r = e.split("@")[1]; if (!r) return true; const ich = rollenMit(V.ich?.rollen); return r.split(",").some((x) => ich.includes(x)); };
@@ -418,7 +419,8 @@ ANSICHTEN.uebersicht = () => {
   // 🏠 0.67.0 Heute zu tun: nur, was gerade wartet – ein Klick führt hin
   const KARTE = { "t:kuendigungen": ["📮", "Kündigungen zu bestätigen", "mit Schreiben in der App (Leitung → Kündigungen)", "rot"], "w:genehmigungen": ["✍️", "Genehmigungen offen", "an die Eltern erinnern", ""],
     "w:zugaenge": ["👋", "noch nie angemeldet", "Codes erneuern, Elternbriefe drucken", "blau"], "t:ausleihen": ["🎻", "Leihinstrumente überfällig", "Rückgabe anmahnen", "rot"], "t:reparaturen": ["🔧", "Reparaturen warten auf Freigabe", "Kostenvoranschlag liegt vor", ""],
-    "t:erstattungen": ["💶", "Erstattungen eingereicht", "prüfen und genehmigen", ""], "t:interessenten": ["🌱", "neue Interessenten", "Probespiel vereinbaren", "gruen"], "t:rueckmeldungen": ["🆘", "Rückmeldungen zur App", "beantworten", "blau"], "t:aufgaben": ["🗂️", "offene Vorgänge", "erledigen oder zuteilen", ""] };
+    "t:erstattungen": ["💶", "Erstattungen eingereicht", "prüfen und genehmigen", ""], "t:interessenten": ["🌱", "neue Interessenten", "Probespiel vereinbaren", "gruen"], "t:rueckmeldungen": ["🆘", "Rückmeldungen zur App", "beantworten", "blau"], "t:aufgaben": ["🗂️", "offene Vorgänge", "erledigen oder zuteilen", ""],
+    "t:kinderschutz": ["🛡️", "Eltern bitten um besonderen Schutz", "persönlich melden; Sperre in der App (Leitung → Schutz & Fotos)", "rot"] };
   const karten = Object.keys(KARTE).filter((e) => eintragDa(e) && wartet(e)).map((e) => { const [sym, t, u, f] = KARTE[e], i = eintragInfo(e);
     return `<button class="vw-heute ${f}" data-a="${i.a}" data-x="${i.x}"><b>${wartet(e)}</b><span>${sym} ${esc(t)}</span><small>${esc(bereichVon(e))} → ${esc(i.t)} · ${esc(u)}</small></button>`; });
   const termine = liste("termine", (t) => t.status !== "abgesagt" && tagIso(t.beginn) >= heuteIso() && tagIso(t.beginn) <= tagIso(new Date(Date.now() + 7 * 86400000))).length;

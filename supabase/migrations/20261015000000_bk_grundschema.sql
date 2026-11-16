@@ -1632,6 +1632,7 @@ create table if not exists bk_vorschlaege (
   anonym boolean,
   status text check (status is null or status in ('offen', 'beendet', 'erledigt')),
   ergebnis text,
+  gegen_zu text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -2483,6 +2484,7 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrb
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_von_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_freigegeben_von_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_freigegeben_von_fk foreign key (freigegeben_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_von_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_gegen_zu_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_gegen_zu_fk foreign key (gegen_zu) references bk_vorschlaege(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_vorschlag_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_vorschlag_id_fk foreign key (vorschlag_id) references bk_vorschlaege(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_person_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fotoalben_projekt_id_fk') then alter table bk_fotoalben add constraint bk_fotoalben_projekt_id_fk foreign key (projekt_id) references bk_projekte(id) on delete restrict; end if; end $$;

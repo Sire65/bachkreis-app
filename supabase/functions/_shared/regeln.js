@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { VS_GEGEN_MAX, vsGruppe, KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -898,11 +898,20 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       // 💡 Vorschläge darf jede/r einreichen (an alle oder ans Team), 🗳️ Abstimmungen nur Leitung/Lehrkräfte/Vorstand; ändern: wer es angelegt hat oder die Leitung
       const art = neu.art === "abstimmung" ? "abstimmung" : "vorschlag";
       if (!alt && art === "abstimmung" && !hatRolle(ctx, VS_ABSTIMMEN)) return { ok: false, grund: "NUR_LEITUNG_VORSTAND" };
-      if (!alt && art === "vorschlag" && !["alle", "team"].includes(neu.an)) return { ok: false, grund: "AN_UNGUELTIG" };
+      if (!alt && art === "vorschlag" && !neu.gegen_zu && !["alle", "team"].includes(neu.an)) return { ok: false, grund: "AN_UNGUELTIG" }; // Gegenvorschlag: Zielgruppe vom ersten
       if (alt && alt.von !== ctx.ich && !hatRolle(ctx, MODERATION) && !(alt.an === "vorstand" && hatRolle(ctx, ["vorstand"]))) return { ok: false, grund: "NUR_EIGENE" };
       if (neu.geloescht_am && !alt?.geloescht_am) return { ok: true, zeile: { ...alt, geloescht_am: jetzt } };
       const titel = String(neu.titel ?? "").trim().slice(0, 140); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
-      const an = Object.keys({ alle: 1, eltern: 1, team: 1, vorstand: 1 }).includes(neu.an) ? neu.an : "alle";
+      // ↔️ 0.71.0 Gegenvorschlag: nur zu offenen Vorschlägen (nicht zu Abstimmungen), die man sehen darf; höchstens 3 je Gruppe; gleiche Zielgruppe
+      let gegen = alt?.gegen_zu || null, gegenAn = null;
+      if (!alt && neu.gegen_zu) {
+        const z = ctx.vsMap?.get(String(neu.gegen_zu)), wurzel = z && (z.gegen_zu ? ctx.vsMap.get(z.gegen_zu) || z : z);
+        if (!wurzel || wurzel.geloescht_am || wurzel.art !== "vorschlag" || wurzel.status !== "offen" || !vsSichtbar(wurzel, ctx) || art !== "vorschlag") return { ok: false, grund: "GEGENVORSCHLAG_NICHT_MOEGLICH" };
+        const gruppe = vsGruppe([...ctx.vsMap.values()].filter((x) => x.status === "offen"), wurzel);
+        if (gruppe.length >= VS_GEGEN_MAX) return { ok: false, grund: "HOECHSTENS_DREI" };
+        gegen = wurzel.gegen_zu || wurzel.id; gegenAn = wurzel.an;
+      }
+      const an = gegenAn || (Object.keys({ alle: 1, eltern: 1, team: 1, vorstand: 1 }).includes(neu.an) ? neu.an : "alle");
       let optionen = null;
       if ((alt?.art || art) === "abstimmung") {
         const ids = new Set(); optionen = [];
@@ -914,7 +923,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       }
       return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), titel, text: String(neu.text ?? "").trim().slice(0, 2000) || null, von: alt?.von || ctx.ich, art: alt?.art || art, an: alt ? alt.an : an, optionen: optionen?.length ? optionen : null,
         frist: /^\d{4}-\d{2}-\d{2}$/.test(String(neu.frist || "")) ? neu.frist : null, anonym: alt ? !!alt.anonym : !!neu.anonym, status: ["offen", "beendet", "erledigt"].includes(neu.status) ? neu.status : "offen",
-        ergebnis: String(neu.ergebnis ?? "").trim().slice(0, 2000) || null } };
+        ergebnis: String(neu.ergebnis ?? "").trim().slice(0, 2000) || null, gegen_zu: gegen } };
     }
     case "vorschlag_stimmen": {
       // ✋ je Person eine Stimme (ändern/zurücknehmen bis zur Frist); geheim: die Person steht nur in der eigenen Zeile
@@ -927,7 +936,9 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       const erlaubt = v.art === "abstimmung" ? (v.optionen?.length ? v.optionen.map((o) => o.id) : ["ja", "nein", "enth"]) : ["dafuer"];
       const wahl = neu.wahl == null || neu.wahl === "" ? null : String(neu.wahl);
       if (wahl && !erlaubt.includes(wahl)) return { ok: false, grund: "WAHL_UNGUELTIG" };
-      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), vorschlag_id: v.id, person_id: ctx.ich, wahl, am: jetzt } };
+      // ↔️ 0.71.0 in einer Gegenvorschlags-Gruppe unterstützt man nur einen: die Stimme bei den anderen nimmt der Server weg (api.js)
+      const gruppe = v.art === "vorschlag" && wahl ? vsGruppe([...ctx.vsMap.values()], v).map((x) => x.id).filter((id) => id !== v.id) : [];
+      return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), vorschlag_id: v.id, person_id: ctx.ich, wahl, am: jetzt }, andereWeg: gruppe };
     }
     case "fotoalben": {
       // 📷 0.40.0 Alben legt das Team an; ändern: wer es angelegt hat oder die Leitung

@@ -545,3 +545,14 @@ body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau lieg
 .ka-kopf-k.an { background: #c62828; color: #fff; } .ka-kopf-k:active { filter: brightness(.92); }
 @media (max-width: 599px) { .ka-kopf:not(:empty):not(.kk-eng) { gap: 4px; margin-left: 4px; } .ka-kopf-k { width: 28px; height: 28px; font-size: .9rem; } }
 .ae-bitte { border-left: 5px solid #f2b705; }
+
+/* ↔️ 0.71.0 Gegenvorschlag */
+.vs-gruppe h3 .vs-oder { font-weight: 400; color: var(--leise, #6b6250); font-size: .9em; }
+.vs-frage { font-weight: 700; margin: 4px 0 8px; }
+.vs-gegen { display: grid; gap: 8px; } @media (min-width: 700px) { .vs-gegen { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); } }
+.vs-gegen-teil { display: flex; gap: 10px; align-items: flex-start; border: 2px solid var(--linie); border-radius: 14px; padding: 10px; }
+.vs-gegen-teil.meine { border-color: #f2b705; box-shadow: 0 0 0 2px #f2b70555; }
+.vs-gegen-teil p { margin: 4px 0 0; }
+.vs-buchst { flex: none; width: 30px; height: 30px; border-radius: 50%; background: #1a1500; color: #f2b705; display: grid; place-items: center; }
+.vs-gegen-wahl { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
+.vs-gegen-zu { background: var(--karte2); border-radius: 10px; padding: 8px 10px; }

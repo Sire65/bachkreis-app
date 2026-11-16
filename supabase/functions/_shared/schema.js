@@ -131,6 +131,11 @@ export const kuendigungOffen = (k) => !!k && !k.geloescht_am && ["eingegangen", 
 // ✏️ 0.70.0 wie Club App 2.957.0 (KC-CLUB-AENDERUNG-ERBITTEN): Leitung bittet ein Mitglied, neue Angaben zu melden (nur Arten, nie Werte)
 export const AENDERUNG_ARTEN = { mobil: ["📱", "deine neue Handynummer", "Telefon / Handy"], anschrift: ["🏠", "deine neue Anschrift", "Anschrift"], telefon: ["☎️", "deine neue Festnetznummer", "Telefon / Handy"],
   email: ["✉️", "deine neue E-Mail-Adresse", "E-Mail"], name: ["👤", "deinen neuen Namen", "Sonstiges"], notfall: ["🆘", "deinen Notfallkontakt", "Gesundheit / Notfall"] };
+// ↔️ 0.71.0 Gegenvorschlag (wie Club App 2.956.0): zu einem offenen Vorschlag bis zu 3 Vorschläge (A, B, C) als eine Gruppe; jede Person
+// unterstützt einen davon. Gruppe = der erste Vorschlag (gegen_zu leer) und alle, die auf ihn zeigen.
+export const VS_GEGEN_MAX = 3;
+export const vsGruppenId = (v) => v?.gegen_zu || v?.id;
+export const vsGruppe = (alle, v) => (alle || []).filter((x) => !x.geloescht_am && x.art === "vorschlag" && vsGruppenId(x) === vsGruppenId(v)).sort((a, b) => (a.gegen_zu ? 1 : 0) - (b.gegen_zu ? 1 : 0) || String(a.erstellt_am || a.id).localeCompare(String(b.erstellt_am || b.id)));
 export const KS_CHAT = { ja: "✅ Ja", nein: "🚫 Nein – nur Gruppenchats der Leitung" };
 export const KS_SICHT = { voll: "👤 Name und Gesicht", vorname: "🔤 nur Vorname", leitung: "🔒 nur Leitung und Lehrkräfte" };
 export const KS_STANDARD = { kinder_chat: "nein", sichtbar: "vorname", online_sichtbar: false, foto_name: false, schutz_wunsch: false, schutz_aktiv: false, abholer: [] };
@@ -1447,6 +1452,7 @@ export const TABELLEN = {
       { k: "anonym", t: "🔒 geheim", typ: "ja" },
       { k: "status", t: "Status", typ: "wahl", werte: { offen: "läuft", beendet: "beendet", erledigt: "erledigt" } },
       { k: "ergebnis", t: "Ergebnis / Beschluss", typ: "lang" },
+      { k: "gegen_zu", t: "↔️ Gegenvorschlag zu", typ: "ref", ref: "vorschlaege" }, // 0.71.0 wie Club App KC-CLUB-GEGENVORSCHLAG
     ],
     liste: ["titel", "art", "an", "status"],
     anzeige: (z) => z.titel,

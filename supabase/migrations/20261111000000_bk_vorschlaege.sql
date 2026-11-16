@@ -13,6 +13,7 @@ create table if not exists bk_vorschlaege (
   anonym boolean,
   status text check (status is null or status in ('offen', 'beendet', 'erledigt')),
   ergebnis text,
+  gegen_zu text,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -42,7 +43,9 @@ alter table bk_vorschlaege add column if not exists status text;
 alter table bk_vorschlaege drop constraint if exists bk_vorschlaege_status_check;
 alter table bk_vorschlaege add constraint bk_vorschlaege_status_check check (status is null or status in ('offen', 'beendet', 'erledigt'));
 alter table bk_vorschlaege add column if not exists ergebnis text;
+alter table bk_vorschlaege add column if not exists gegen_zu text;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_von_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_gegen_zu_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_gegen_zu_fk foreign key (gegen_zu) references bk_vorschlaege(id) on delete restrict; end if; end $$;
 
 -- Stimmen
 create table if not exists bk_vorschlag_stimmen (

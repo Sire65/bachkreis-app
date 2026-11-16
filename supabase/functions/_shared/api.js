@@ -431,6 +431,8 @@ async function speichern(db, s, body) {
       `insert into bk_${tab} (${cols.join(", ")}) select ${cols.join(", ")} from jsonb_populate_record(null::bk_${tab}, $1::jsonb)
        on conflict (id) do update set ${upd} returning to_jsonb(bk_${tab}.*) as z`, [JSON.stringify(daten)]);
     const zeile = r[0].z;
+    if (tab === "vorschlag_stimmen" && p.andereWeg?.length) // ↔️ 0.71.0 Gegenvorschlag: die Unterstützung wandert
+      await db.q(`update bk_vorschlag_stimmen set wahl = null, am = now(), geaendert_am = now(), version = version + 1, geaendert_von = $3 where person_id = $1 and vorschlag_id = any($2::text[]) and wahl is not null`, [s.person.id, p.andereWeg, name(s.person)]);
     if (tab === "pinnwand") ctx.pw.set(zeile.id, zeile); // mehrere Zettel in einem Rutsch: Grenze und Farben stimmen weiter
     if (tab === "unterhaltungen") { ctx.unterhaltungen.add(zeile.id); ctx.uMap.set(zeile.id, zeile); }
     await db.q(`insert into bk_aenderungen (zeit, tabelle, zeile_id, aktion, wer, quelle) values (now(), $1, $2, $3, $4, $5)`,

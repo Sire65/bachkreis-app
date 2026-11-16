@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.70.0 DEV – 16.11.2026
+🆕 **Neues aus der Club App** (Abgleich mit Club App 2.917.0–2.957.0, Wunsch Hansi):
+- **👀/🙈 Ein Umschalt-Knopf für ausgeblendete Kacheln** (wie KC-CLUB-KA-KOPF-TOGGLE, 2.953.0): neben „< Erweiterte Ansicht >“ ein runder Knopf – 👀 zeigt nur die ausgeblendeten Kacheln, danach 🙈 (rot) verbirgt sie wieder. Nur wenn wirklich Kacheln ausgeblendet sind, nicht in der einfachen Ansicht und nicht beim Anordnen; passt er nicht in die Zeile (stößt an ✥/QR oder macht sie höher), bleibt er weg – unten gibt es den Weg weiter. Geprüft bei 320, 360, 412 und 768 px
+- **✏️ Änderung erbitten** (wie KC-CLUB-AENDERUNG-ERBITTEN, 2.957.0): in der PC-Verwaltung bei der Person „✏️ Änderung erbitten“ (Handynummer, Anschrift, Festnetz, E-Mail, Name, Notfallkontakt + kurzer Satz). Beim nächsten Start – sobald nichts anderes offen ist, höchstens einmal am Tag – kommt „Bitte melde … damit im Bachkreis alles aktuell ist“ mit **✏️ Sofort erledigen** (öffnet „Änderung melden“ passend vorausgefüllt), **⏰ Später** und **Hat sich nichts geändert**. Bei Kindern sehen es die Eltern. Gemeldet = Bitte erledigt; „Bitte zurücknehmen“ bei der Leitung. Nur Arten, nie Werte; setzen darf nur die Leitung, das Mitglied kann sie nur erledigen (Server). Migration `20261129000000_bk_aenderung_bitte.sql`
+- **🎨 Bildschirmfoto, PDF-Druck und Fernhilfe mit modernen Farben** (wie KC-CLUB-BILDSCHIRMFOTO-OKLAB, 2.952.0): Mischfarben (`color-mix` → `color(…)`, `oklab`, `oklch` …) führten in html2canvas zu „Attempting to parse an unsupported color function“. Jetzt malt der Browser sie in der Kopie auf einen 1-Pixel-Grund und setzt rgba ein – im Rundgang geprüft (vorher Fehler, jetzt Bild)
+- Nicht übernommen: Flagge neben dem Netz-Chip (Bachkreis ordnet beide schon nebeneinander), Update-Hinweis auf der Ladeanzeige (Bachkreis hat keine), Online-Meldungen (gibt es in Bachkreis nicht); ↔️ Gegenvorschlag bei Vorschlägen als eigener Schritt möglich
+
 ## 0.69.0 DEV – 15.11.2026
 🛡️ **Datenschutz & Kinderschutz – Eltern legen fest, was für ihr Kind gilt** (Gespräch Frau Jacka, Konzept mit Beispielbild abgestimmt, „mit Abholliste“):
 - **Alles zuerst aus** („Datenschutz durch Voreinstellung“): ohne Wahl der Eltern keine Fotos, kein privater Chat mit anderen Kindern, nur der Vorname für andere, kein Online-Status

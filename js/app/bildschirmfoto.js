@@ -36,13 +36,38 @@ export function unsichtbar(el) {
   if (["OPTION", "NOSCRIPT", "SCRIPT", "STYLE", "TEMPLATE"].includes(el.tagName)) return true; // sonst malt html2canvas sie oben links hin
   const st = getComputedStyle(el); return st.visibility === "hidden" || st.opacity === "0" || (st.position === "absolute" && st.clip === "rect(0px, 0px, 0px, 0px)") || (parseFloat(st.width) <= 1 && parseFloat(st.height) <= 1 && st.overflow === "hidden");
 }
+// 🎨 0.70.0 wie Club App 2.952.0 (KC-CLUB-BILDSCHIRMFOTO-OKLAB): Browser rechnen Mischfarben (color-mix) in „color(srgb …)“, neuere auch in
+// „oklab(…)“/„oklch(…)“ um – das kennt html2canvas 1.4.1 nicht („Attempting to parse an unsupported color function …“). Nur in der Kopie fürs
+// Foto/PDF werden solche Werte vom Browser selbst auf einen 1-Pixel-Malgrund gemalt und als rgba() eingesetzt; die Seite bleibt unverändert.
+const MODERN = /\b(?:color|oklab|oklch|lab|lch|hwb)\((?:[^()]|\([^()]*\))*\)/g, FARB_MERK = new Map();
+function farbeRgba(f) {
+  if (FARB_MERK.has(f)) return FARB_MERK.get(f);
+  let out = "rgba(0, 0, 0, 0)";
+  try {
+    const c = document.createElement("canvas"); c.width = c.height = 1; const x = c.getContext("2d", { willReadFrequently: true });
+    x.clearRect(0, 0, 1, 1); x.fillStyle = "rgba(0, 0, 0, 0)"; x.fillStyle = f; x.fillRect(0, 0, 1, 1);
+    const [r, g, b, a] = x.getImageData(0, 0, 1, 1).data; out = `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 1000) / 1000})`;
+  } catch { /* unbekannt → durchsichtig */ }
+  if (FARB_MERK.size < 500) FARB_MERK.set(f, out);
+  return out;
+}
+export const rgbaAus = (v) => String(v).replace(MODERN, (m) => farbeRgba(m));
+const modern = (v) => { MODERN.lastIndex = 0; const ja = MODERN.test(v); MODERN.lastIndex = 0; return ja; };
+const FARBFELDER = ["color", "background-color", "background-image", "border-top-color", "border-right-color", "border-bottom-color", "border-left-color", "outline-color", "box-shadow", "text-shadow", "text-decoration-color", "fill", "stroke", "caret-color", "column-rule-color"];
+export function farbenGlaetten(d) {
+  const win = d.defaultView || window;
+  for (const el of d.querySelectorAll("*")) {
+    const cs = win.getComputedStyle(el);
+    for (const f of FARBFELDER) { const v = cs.getPropertyValue(f); if (v && modern(v)) el.style.setProperty(f, rgbaAus(v), "important"); }
+  }
+}
 async function aufnehmen() {
   const rahmen = document.getElementById("bfAusloeserRahmen");
   try {
     await laden();
     F.ansicht = S.view;
     const c = await globalThis.html2canvas(document.body, { x: scrollX, y: scrollY, width: innerWidth, height: innerHeight, windowWidth: innerWidth, windowHeight: innerHeight, scale: Math.min(2, devicePixelRatio || 1), useCORS: true, logging: false,
-      backgroundColor: getComputedStyle(document.body).backgroundColor, ignoreElements: unsichtbar });
+      backgroundColor: rgbaAus(getComputedStyle(document.body).backgroundColor), ignoreElements: unsichtbar, onclone: farbenGlaetten });
     rahmen?.remove(); document.getElementById("toast")?.classList.add("versteckt"); // Meldung weg, damit sie nicht über dem Foto liegt
     const blitz = document.createElement("div"); blitz.className = "bf-blitz"; document.body.appendChild(blitz); setTimeout(() => blitz.remove(), 450);
     F.canvas = c; F.striche = []; editor();

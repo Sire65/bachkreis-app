@@ -1,13 +1,22 @@
 {
-  "version": "0.69.0",
-  "datum": "15.11.2026",
+  "version": "0.70.0",
+  "datum": "16.11.2026",
   "stufe": "DEV",
   "neu": [
-    "🛡️ Schutz & Einwilligungen: Eltern legen je Kind fest – Fotos, Kontakt zu anderen Kindern, Sichtbarkeit, wer abholen darf (alles zuerst aus)",
-    "🙋 Eltern können vertraulich um besonderen Schutz bitten – die Leitung setzt die Schutzsperre",
-    "🛡️ Leitung: „Schutz & Fotos“ mit Abholliste und Hinweisen"
+    "👀 Ein Knopf neben „Erweiterte Ansicht“: ausgeblendete Kacheln zeigen und wieder verbergen – wie in der Club App",
+    "✏️ Die Leitung kann um neue Angaben bitten (z. B. Handynummer) – mit „Sofort erledigen“",
+    "📸 Bildschirmfoto und PDF klappen jetzt auch mit modernen Farben"
   ],
   "verlauf": [
+    {
+      "version": "0.69.0",
+      "datum": "15.11.2026",
+      "neu": [
+        "🛡️ Schutz & Einwilligungen: Eltern legen je Kind fest – Fotos, Kontakt zu anderen Kindern, Sichtbarkeit, wer abholen darf (alles zuerst aus)",
+        "🙋 Eltern können vertraulich um besonderen Schutz bitten – die Leitung setzt die Schutzsperre",
+        "🛡️ Leitung: „Schutz & Fotos“ mit Abholliste und Hinweisen"
+      ]
+    },
     {
       "version": "0.68.0",
       "datum": "12.11.2026",

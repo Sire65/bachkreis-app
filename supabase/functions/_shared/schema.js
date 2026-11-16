@@ -128,6 +128,9 @@ export const KUENDIGUNG_NACHWEIS_JAHRE = 3; // so lange bleibt der Nachweis (Tab
 export const kuendigungOffen = (k) => !!k && !k.geloescht_am && ["eingegangen", "bestaetigt"].includes(k.status);
 // 🛡️ 0.69.0 Datenschutz & Kinderschutz je Kind (Wunsch Frau Jacka/Hansi): Eltern legen beim Start fest, was gilt – alles zuerst AUS
 // („Datenschutz durch Voreinstellung“). Fotos laufen über die Genehmigungen (foto_*), der Rest über die Tabelle kinderschutz (id = Kind).
+// ✏️ 0.70.0 wie Club App 2.957.0 (KC-CLUB-AENDERUNG-ERBITTEN): Leitung bittet ein Mitglied, neue Angaben zu melden (nur Arten, nie Werte)
+export const AENDERUNG_ARTEN = { mobil: ["📱", "deine neue Handynummer", "Telefon / Handy"], anschrift: ["🏠", "deine neue Anschrift", "Anschrift"], telefon: ["☎️", "deine neue Festnetznummer", "Telefon / Handy"],
+  email: ["✉️", "deine neue E-Mail-Adresse", "E-Mail"], name: ["👤", "deinen neuen Namen", "Sonstiges"], notfall: ["🆘", "deinen Notfallkontakt", "Gesundheit / Notfall"] };
 export const KS_CHAT = { ja: "✅ Ja", nein: "🚫 Nein – nur Gruppenchats der Leitung" };
 export const KS_SICHT = { voll: "👤 Name und Gesicht", vorname: "🔤 nur Vorname", leitung: "🔒 nur Leitung und Lehrkräfte" };
 export const KS_STANDARD = { kinder_chat: "nein", sichtbar: "vorname", online_sichtbar: false, foto_name: false, schutz_wunsch: false, schutz_aktiv: false, abholer: [] };
@@ -415,7 +418,7 @@ export const TABELLEN = {
       { k: "notiz", t: "Notiz", typ: "lang" },
     ],
     liste: ["nachname", "vorname", "typ", "jahrgang", "email", "mobil", "ort"],
-    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }, { k: "avatar", typ: "json" }, { k: "uebe_plan", typ: "json" }, { k: "kalender_alarm", typ: "zahl" }, { k: "anonymisiert", typ: "ja" }], // uebe_plan: Übezeiten & Wochenziel · kalender_alarm: Erinnerung in Minuten vor Terminen (Kalender-Abo) · avatar: selbst gestaltetes Gesicht · freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
+    intern: [{ k: "benachrichtigung", typ: "json" }, { k: "freigaben", typ: "json" }, { k: "avatar", typ: "json" }, { k: "uebe_plan", typ: "json" }, { k: "kalender_alarm", typ: "zahl" }, { k: "anonymisiert", typ: "ja" }, { k: "aenderung_bitte", typ: "json" }], // uebe_plan: Übezeiten & Wochenziel · kalender_alarm: Erinnerung in Minuten vor Terminen (Kalender-Abo) · avatar: selbst gestaltetes Gesicht · freigaben: { geburtstag, mobil, email, adresse } (Privatsphäre, setzt die Person selbst)
     anzeige: (z) => `${z.vorname || ""} ${z.nachname || ""}`.trim(),
   },
   eltern_kind: {

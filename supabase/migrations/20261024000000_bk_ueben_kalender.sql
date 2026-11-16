@@ -66,6 +66,7 @@ create table if not exists bk_personen (
   uebe_plan jsonb,
   kalender_alarm integer,
   anonymisiert boolean,
+  aenderung_bitte jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -111,6 +112,7 @@ alter table bk_personen add column if not exists avatar jsonb;
 alter table bk_personen add column if not exists uebe_plan jsonb;
 alter table bk_personen add column if not exists kalender_alarm integer;
 alter table bk_personen add column if not exists anonymisiert boolean;
+alter table bk_personen add column if not exists aenderung_bitte jsonb;
 
 -- 📆 Kalender-Abo: nur die Zählnummer je Person (neuer Link = +1, alter ungültig) – der Link selbst wird nie gespeichert
 create table if not exists bk_kalender_abos (person_id text primary key references bk_personen(id) on delete cascade, epoche integer not null default 0, zuletzt timestamptz);

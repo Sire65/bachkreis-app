@@ -162,6 +162,7 @@ async function starten() {
   document.addEventListener("bk-zugestimmt", () => setTimeout(nachZustimmung, 600));
   document.addEventListener("bk-schutz-fertig", () => setTimeout(einfuehrungTesten, 800));
   setTimeout(() => { if (!document.getElementById("zsFenster")) nachZustimmung(); }, 2200);
+  setTimeout(() => teilLaden("meins.js").then((m) => m.aenderungBittePruefen()).catch(() => {}), 6000); // ✏️ 0.70.0 Änderung erbitten (nach Zustimmung/Schutz/Einführung)
   { const ohne = express || pw || sn || termineStart() || uebenStart() || installEinladungPruefen(); teilLaden("einstellungen.js").then((m) => m.beimStart(ohne)).catch(() => {}); } // 📦 0.60.0 Einstellungen erst nach dem Start laden // 🎻 „Heute ist Übetag“ nur, wenn nichts Wichtigeres aufgeht
   if (view && view !== "start") { /* Unterseiten nach Neuladen nicht direkt öffnen – Parameter fehlen */ }
   window.addEventListener("popstate", () => { if (S.view !== "start") zurueck(); });

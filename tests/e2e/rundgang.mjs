@@ -381,6 +381,27 @@ await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("anfrage
 if (!(await p.evaluate(async () => (await import("/js/kern/daten.js")).liste("termine", (t) => /^🎺 Auftritt:/.test(t.titel)).length))) fehler.push("Anfrage: Termin nicht angelegt");
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("partner")); await p.waitForSelector(".karte");
 await p.screenshot({ path: `${BILDER}anfragen-partner.png`, fullPage: true });
+// 0.70.0 aus der Club App: 🎨 Bildschirmfoto mit modernen Farben · 👀/🙈 ein Knopf für ausgeblendete Kacheln · ✏️ Änderung erbitten
+{ const f = await p.evaluate(async () => {
+    const m = await import("/js/app/bildschirmfoto.js"); await m.laden();
+    const d = document.createElement("div"); d.id = "farbProbe"; d.style.cssText = "position:fixed;top:0;left:0;width:120px;height:60px;background:oklab(0.6 0.1 0.1);color:color-mix(in oklch, red, blue);border:3px solid oklch(0.7 0.15 80)"; d.textContent = "Farbe"; document.body.appendChild(d);
+    try { await globalThis.html2canvas(document.body, { width: 300, height: 200, logging: false, onclone: m.farbenGlaetten }); return "ok"; } catch (e) { return e.message; } finally { d.remove(); } });
+  if (f !== "ok") fehler.push("Bildschirmfoto mit modernen Farben: " + f);
+  await p.evaluate(async () => { const z = await import("/js/app/zustand.js"); z.einstSetzen("einfach", false); z.einstSetzen("kachelnAus", ["termine"]); z.S.register = "bachkreis"; z.zeige("start", {}, { ersetzen: true }); });
+  await p.waitForSelector("#kaKopfKnoepfe button");
+  await p.click("#kaKopfKnoepfe button"); await p.waitForSelector('#kaKopfKnoepfe button.an');
+  if ((await p.$$eval("#raster .kachel", (l) => l.length)) !== 1) fehler.push("👀 zeigt nicht nur die ausgeblendete Kachel");
+  await p.click("#kaKopfKnoepfe button"); await p.waitForSelector('#kaKopfKnoepfe button:not(.an)');
+  await p.evaluate(async () => { const z = await import("/js/app/zustand.js"); z.einstSetzen("kachelnAus", []); z.zeige("start", {}, { ersetzen: true }); });
+  if (await p.$("#kaKopfKnoepfe button")) fehler.push("👀-Knopf ohne ausgeblendete Kacheln sichtbar");
+  const ae = await p.evaluate(async () => {
+    const z = await import("/js/app/zustand.js"), dd = await import("/js/kern/daten.js");
+    z.S.ich = await dd.speichere("personen", { ...z.S.ich, aenderung_bitte: { arten: ["mobil"], von: "p-leitung", am: new Date().toISOString() } }); z.einstSetzen("aeBitteTag", null);
+    const m = await import("/js/app/meins.js"); return m.aenderungBittePruefen(); });
+  if (!ae) fehler.push("✏️ Änderungs-Bitte kommt nicht");
+  await p.click('[data-a="aeBitteJetzt"]'); await p.waitForSelector(".ae-bitte");
+  await p.fill('#aeForm textarea[name="text"]', "0170 1234567"); await p.click('[data-a="aeSenden"]'); await p.waitForTimeout(300);
+  if (await p.evaluate(async () => !!(await import("/js/app/zustand.js")).S.ich.aenderung_bitte)) fehler.push("✏️ Bitte nach dem Melden nicht erledigt"); }
 // PC-Verwaltung: alle Tabellen und Sonderansichten
 await p.setViewportSize({ width: 1280, height: 860 });
 await p.goto(BASIS + "/verwaltung.html");

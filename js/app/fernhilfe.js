@@ -8,7 +8,7 @@ import { anrufErlaubt, erwachsen, rollenMit, FERNHILFE_HELFER } from "../kern/sc
 import { senden } from "../kern/versand.js";
 import { rtcMoeglich, neueVerbindung, angebotMachen, antwortMachen, antwortSetzen, vermittlung, ANRUF_FEHLER, datenSenden, datenEmpfang } from "../kern/rtc.js";
 import { modulAbgeschaltet, anrufLaeuft } from "./anruf.js";
-import { laden as fotoLaden, unsichtbar } from "./bildschirmfoto.js";
+import { laden as fotoLaden, unsichtbar, farbenGlaetten, rgbaAus } from "./bildschirmfoto.js";
 import { onlineIds } from "./online.js";
 
 const F = { pc: null, kanal: null, id: null, rolle: null, mit: null, ton: null, bedienen: false, darf: false, modus: "zeigen", bild: null, takt: null, poll: null, verbunden: false, beschaeftigt: false };
@@ -68,7 +68,7 @@ function bilderStarten() {
     try {
       await fotoLaden();
       const c = await globalThis.html2canvas(document.body, { x: scrollX, y: scrollY, width: innerWidth, height: innerHeight, windowWidth: innerWidth, windowHeight: innerHeight, scale: Math.min(0.6, 540 / innerWidth), logging: false, useCORS: true,
-        backgroundColor: getComputedStyle(document.body).backgroundColor, ignoreElements: privat });
+        backgroundColor: rgbaAus(getComputedStyle(document.body).backgroundColor), ignoreElements: privat, onclone: farbenGlaetten }); // 🎨 0.70.0
       datenSenden(F.kanal, { bild: c.toDataURL("image/jpeg", 0.55) });
     } catch {} finally { F.beschaeftigt = false; }
   }, 1500);

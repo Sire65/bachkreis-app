@@ -91,6 +91,7 @@ create table if not exists bk_personen (
   uebe_plan jsonb,
   kalender_alarm integer,
   anonymisiert boolean,
+  aenderung_bitte jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -136,6 +137,7 @@ alter table bk_personen add column if not exists avatar jsonb;
 alter table bk_personen add column if not exists uebe_plan jsonb;
 alter table bk_personen add column if not exists kalender_alarm integer;
 alter table bk_personen add column if not exists anonymisiert boolean;
+alter table bk_personen add column if not exists aenderung_bitte jsonb;
 
 create index if not exists bk_kuendigungen_faellig on bk_kuendigungen (status, zum);
 

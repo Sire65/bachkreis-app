@@ -2,9 +2,9 @@
 // und Admin-Blätter (Leitstand). Vorbild: KC Club „Meins“/„Technik“/„Admin“.
 import { S, VIEWS, db, zeige, zurueck, kopf, name, einst, einstSetzen, istEltern, fehlerListe } from "./zustand.js";
 import { kachelnFuer, adminZustaende } from "./start.js";
-import { esc, AKTIONEN, vorZeit, toast, formWerte, herunterladen, frage } from "../kern/ui.js";
+import { esc, AKTIONEN, vorZeit, toast, formWerte, herunterladen, frage, blatt, blattZu } from "../kern/ui.js";
 import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb, konfig } from "../kern/daten.js";
-import { TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
+import { TABELLEN, TABELLEN_NAMEN, AENDERUNG_ARTEN } from "../kern/schema.js";
 import { kinderVon, wirksameGruppen, instrumenteVon, tagIso, personenDaten } from "../kern/logik.js";
 import { KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
 import { APP_VERSION, APP_STUFE } from "../kern/version.js";
@@ -32,17 +32,42 @@ AKTIONEN.meineDatenExport = () => {
 };
 
 VIEWS.aenderung = {
-  render() {
-    return kopf("✏️ Änderung melden") + `<div class="karte" id="aeForm"><div class="feld"><label>Was hat sich geändert?</label><select name="art"><option>Anschrift</option><option>Telefon / Handy</option><option>E-Mail</option><option>Instrument</option><option>Gesundheit / Notfall</option><option>Sonstiges</option></select></div>
+  render(p = {}) {
+    const wahl = p.art || "", fuer = p.fuer && p.fuer !== S.ich.id ? hole("personen", p.fuer) : null;
+    return kopf("✏️ Änderung melden") + `${p.bitte ? `<div class="karte ae-bitte">✏️ Die Leitung bittet${fuer ? ` für <b>${esc(name(fuer))}</b>` : ""} um: <b>${esc(p.bitte)}</b></div>` : ""}<div class="karte" id="aeForm" data-fuer="${esc(fuer?.id || "")}"><div class="feld"><label>Was hat sich geändert?</label><select name="art">${["Anschrift", "Telefon / Handy", "E-Mail", "Instrument", "Gesundheit / Notfall", "Sonstiges"].map((o) => `<option${o === wahl ? " selected" : ""}>${o}</option>`).join("")}</select></div>
       <div class="feld"><label>Neue Angaben</label><textarea name="text"></textarea></div><button class="knopf haupt breit" data-a="aeSenden">📨 An die Leitung senden</button><p class="hinweis">Die Leitung prüft und trägt die Änderung in der PC-Verwaltung ein.</p></div>`;
   },
 };
 AKTIONEN.aeSenden = async () => {
   const f = formWerte(document.getElementById("aeForm"));
   if (!f.text.trim()) return;
-  await speichere("aufgaben", { titel: `Änderung ${f.art}: ${name(S.ich)}`, art: "aenderung", status: "offen", von_id: S.ich.id, zustaendig_id: db.konfig().leitung_id, text: f.text, frist: tagIso(new Date(Date.now() + 7 * 86400000)) });
+  const fuer = hole("personen", document.getElementById("aeForm")?.dataset.fuer) || S.ich;
+  await speichere("aufgaben", { titel: `Änderung ${f.art}: ${name(fuer)}${fuer.id !== S.ich.id ? ` (gemeldet von ${name(S.ich)})` : ""}`, art: "aenderung", status: "offen", von_id: S.ich.id, zustaendig_id: db.konfig().leitung_id, text: f.text, frist: tagIso(new Date(Date.now() + 7 * 86400000)) });
+  if (hole("personen", fuer.id)?.aenderung_bitte) await bitteErledigt(fuer.id).catch(() => {}); // ✏️ 0.70.0 Bitte ist damit erledigt
   toast("✏️ Änderung gemeldet"); zurueck();
 };
+
+// ---------- ✏️ 0.70.0 Änderung erbitten (wie Club App 2.957.0, KC-CLUB-AENDERUNG-ERBITTEN) ----------
+// Beim Start – sobald nichts anderes offen ist, höchstens einmal am Tag – für mich bzw. meine Kinder: „Bitte melde … damit alles aktuell ist“
+// mit ✏️ Sofort erledigen (öffnet das passende Formular), ⏰ Später (morgen wieder) und „Hat sich nichts geändert“ (Bitte gelöscht).
+const offeneBitten = () => [S.ich?.id, ...(istEltern() ? kinderVon(db, S.ich.id) : [])].map((id) => hole("personen", id)).filter((p) => p?.aenderung_bitte?.arten?.length);
+async function bitteErledigt(pid) { const p = hole("personen", pid); const neu = await speichere("personen", { ...p, aenderung_bitte: null }); if (pid === S.ich.id) S.ich = neu; }
+export function aenderungBittePruefen() {
+  const heute = tagIso(new Date());
+  if (!S.ich || einst().aeBitteTag === heute || document.querySelector("#zsFenster, #efFenster, #blattHg") || S.view === "kinderschutz") return false;
+  const p = offeneBitten()[0]; if (!p) return false;
+  einstSetzen("aeBitteTag", heute);
+  const b = p.aenderung_bitte, du = p.id === S.ich.id, sie = S.ich.typ !== "schueler", was = b.arten.map((a) => AENDERUNG_ARTEN[a]).filter(Boolean);
+  const satz = was.map(([sym, t]) => `${sym} ${du ? t : t.replace(/^dein(e|en)? /, (m) => ({ "deine ": "die ", "deinen ": "den ", "dein ": "den " })[m] || m)}`).join(", ");
+  blatt("✏️ Bitte kurz melden", `<p>Hallo ${esc(S.ich.vorname || "")}, bitte ${sie ? "melden Sie" : "melde"} ${du ? "" : `für <b>${esc(name(p))}</b> `}<b>${esc(satz)}</b> – damit im Bachkreis alles aktuell ist.</p>
+    ${b.text ? `<p class="hinweis">„${esc(b.text)}“ – ${esc(name(b.von) || "Leitung")}</p>` : ""}
+    <div class="knopfspalte"><button type="button" class="knopf haupt" data-a="aeBitteJetzt" data-x="${esc(p.id)}">✏️ Sofort erledigen</button>
+    <button type="button" class="knopf" data-a="aeBitteSpaeter">⏰ Später</button><button type="button" class="knopf" data-a="aeBitteNichts" data-x="${esc(p.id)}">Hat sich nichts geändert</button></div>`);
+  return true;
+}
+AKTIONEN.aeBitteJetzt = (pid) => { const p = hole("personen", pid), b = p?.aenderung_bitte || {}; blattZu(); zeige("aenderung", { art: AENDERUNG_ARTEN[b.arten?.[0]]?.[2] || "Sonstiges", fuer: pid, bitte: (b.arten || []).map((a) => AENDERUNG_ARTEN[a]?.[1].replace(/^dein(e|en)? /, "")).filter(Boolean).join(", ") }); };
+AKTIONEN.aeBitteSpaeter = () => { blattZu(); toast("⏰ Morgen frage ich noch einmal"); };
+AKTIONEN.aeBitteNichts = async (pid) => { blattZu(); try { await bitteErledigt(pid); toast("👍 Danke – Bitte erledigt"); } catch (e) { toast("⚠️ " + (e.message || "ging nicht")); } };
 
 // Einstellungen: siehe einstellungen.js (⚙️ Mehr, wie in der KC Club App)
 AKTIONEN.einstSchalter = (_, el) => { einstSetzen(el.dataset.x, el.checked); zeige("einstellungen", {}, { ersetzen: true }); };

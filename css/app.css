@@ -538,3 +538,10 @@ body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau lieg
 .ks-knoepfe { justify-content: space-between; }
 .ks-knoepfe { margin-bottom: 96px; } /* über den runden Hilfe-Knöpfen */
 .ks-meldung { border-radius: 12px; padding: 8px 12px; font-weight: 700; margin: 6px 0; } .ks-meldung.rot { background: #fde3e1; color: #8e1c16; } .ks-meldung.gelb { background: #fff3c4; color: #5c4400; }
+
+/* 👀 0.70.0 Umschalt-Knopf für ausgeblendete Kacheln (wie Club App 2.953.0) */
+.ka-kopf { display: none; } .ka-kopf:not(:empty):not(.kk-eng) { display: inline-flex; gap: 6px; margin: 0 0 0 8px; flex: none; vertical-align: middle; }
+.ka-kopf-k { border: none; border-radius: 50%; width: 34px; height: 34px; padding: 0; display: grid; place-items: center; background: var(--karte2); color: inherit; font-size: 1.05rem; line-height: 1; cursor: pointer; }
+.ka-kopf-k.an { background: #c62828; color: #fff; } .ka-kopf-k:active { filter: brightness(.92); }
+@media (max-width: 599px) { .ka-kopf:not(:empty):not(.kk-eng) { gap: 4px; margin-left: 4px; } .ka-kopf-k { width: 28px; height: 28px; font-size: .9rem; } }
+.ae-bitte { border-left: 5px solid #f2b705; }

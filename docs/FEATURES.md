@@ -175,6 +175,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F165 | 🧭 PC-Verwaltung je Rolle ausgedünnt, Doppeltes zusammengelegt, Eltern ↔ Kind bei der Person, Jahres-Aufgaben als Karte | ✅ | Rundgang |
 | BK-F166 | 🛡️ Schutz & Einwilligungen je Kind (Fotos, Kinder-Chat, Sichtbarkeit, Online, Abholliste), alles zuerst aus, Assistent beim Start | ✅ | kinderschutz.test |
 | BK-F167 | 🛡️ Schutzsperre durch die Leitung, Bitte um Schutz ohne Gründe, Schutz & Fotos-Übersicht | ✅ | kinderschutz.test |
+| BK-F168 | 👀/🙈 ein Umschalt-Knopf für ausgeblendete Kacheln neben „Erweiterte Ansicht“ (wie KC 2.953.0) | ✅ | Rundgang, clubapp-neu.test |
+| BK-F169 | ✏️ Änderung erbitten: Leitung bittet, Mitglied meldet „Sofort“ (wie KC 2.957.0) | ✅ | clubapp-neu.test, Rundgang |
+| BK-F170 | 🎨 Bildschirmfoto/PDF/Fernhilfe mit modernen Farben (wie KC 2.952.0) | ✅ | Rundgang |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

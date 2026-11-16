@@ -8,7 +8,7 @@ import { esc, AKTIONEN, toast, blatt, blattZu } from "../kern/ui.js";
 import { liste, speichere, konfig } from "../kern/daten.js";
 import { hochladen } from "../kern/dateien.js";
 import { pdfAusJpegs, umbrueche } from "../kern/pdf.js";
-import { laden as html2canvasLaden } from "./bildschirmfoto.js";
+import { laden as html2canvasLaden, farbenGlaetten } from "./bildschirmfoto.js";
 import { EK_VERTEILER } from "../kern/schema.js";
 
 // 🎨 Corporate Design (Maße in px bei 96 dpi; 1 mm ≈ 3,78 px)
@@ -58,7 +58,7 @@ export function seitenSetzen() {
       const grenzen = [...satz.querySelectorAll("p, li, tr, h1, h2, h3, h4, section, table, img, figure, .lv-zeile, .lv-unterschrift, .karte, div")].map(unten);
       const nachUeberschrift = new Set([...satz.querySelectorAll("h1, h2, h3, h4, legend, thead")].map(unten)); // nie direkt nach einer Überschrift umbrechen
       const gesamt = Math.max(1, satz.offsetHeight), starts = umbrueche(gesamt, platz, grenzen.filter((g) => !nachUeberschrift.has(g))), enden = [...starts.slice(1), gesamt];
-      const bild = await globalThis.html2canvas(satz, { scale: SKALA, backgroundColor: "#ffffff", logging: false, useCORS: true });
+      const bild = await globalThis.html2canvas(satz, { scale: SKALA, backgroundColor: "#ffffff", logging: false, useCORS: true, onclone: farbenGlaetten }); // 🎨 0.70.0 moderne Farben
       const logo = await bildLaden("icons/logo.png"), m = marke(), n = starts.length, seiten = [];
       for (let i = 0; i < n; i++) {
         const c = document.createElement("canvas"); c.width = B * SKALA; c.height = H * SKALA;

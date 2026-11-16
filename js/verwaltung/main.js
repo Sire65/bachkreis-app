@@ -3,7 +3,7 @@
 // Zugänge (Codes/QR-Karten, Sperren, Verwaltungsrecht) werden HIER – außerhalb der App – gepflegt.
 import { werkzeugeRegistrieren, WERKZEUG_ANSICHTEN } from "./werkzeuge.js";
 import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo } from "../kern/daten.js";
-import { TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN, rollenMit } from "../kern/schema.js";
+import { AENDERUNG_ARTEN, TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN, rollenMit } from "../kern/schema.js";
 import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND, senden } from "../kern/versand.js";
@@ -333,6 +333,14 @@ function beziehungen(tab, z) {
   if (z.typ === "eltern") teile.push(ekHtml(z, "kind"));
   const zug = liste("zugaenge", (x) => x.person_id === z.id)[0];
   teile.push(`<div><b>Zugang:</b> ${zug ? (zug.aktiv ? "aktiv" : "gesperrt") + (zug.verwaltung ? " · Verwaltung" : "") : "keiner"}</div>`);
+  // ✏️ 0.70.0 Änderung erbitten (wie Club App 2.957.0): nur Arten, nie Werte – das Mitglied (bzw. die Eltern) meldet beim nächsten Start
+  if (darf("personen", "schreiben")) {
+    const b = z.aenderung_bitte;
+    teile.push(b?.arten?.length ? `<div class="vw-ae">✏️ <b>Bitte offen</b> (${esc(datumKurz(b.am))}): ${b.arten.map((a) => esc(AENDERUNG_ARTEN[a]?.[0] + " " + AENDERUNG_ARTEN[a]?.[1].replace(/^dein(e|en)? /, ""))).join(", ")}${b.text ? ` – „${esc(b.text)}“` : ""} <button class="knopf klein" data-a="vwAeZurueck" data-x="${z.id}">Bitte zurücknehmen</button></div>`
+      : `<details class="vw-ae"><summary>✏️ Änderung erbitten</summary><div class="vw-ae-wahl">${Object.entries(AENDERUNG_ARTEN).map(([k, [sym, t]]) => `<label><input type="checkbox" name="vwAeArt" value="${k}"> ${sym} ${esc(t.replace(/^dein(e|en)? /, ""))}</label>`).join("")}</div>
+        <input id="vwAeText" maxlength="160" placeholder="kurzer Satz (freiwillig), z. B. „Die Nummer geht nicht mehr“"> <button class="knopf klein haupt" data-a="vwAeSenden" data-x="${z.id}">Bitte senden</button>
+        <div class="hinweis">Beim nächsten Start (höchstens einmal am Tag) kommt: „Bitte melde …“ mit „Sofort erledigen“. Ist die Meldung da, ist die Bitte erledigt.${z.typ === "schueler" ? " Bei Kindern sehen es auch die Eltern." : ""}</div></details>`);
+  }
   teile.push(`<div class="knopfreihe"><button class="knopf klein" data-a="vwAuskunft" data-x="${z.id}">🔐 Datenauskunft (Art. 15) exportieren</button></div>`);
   return `<div class="karte" style="background:var(--karte2);box-shadow:none">${teile.join("")}<div class="hinweis">Instrumente je Person und Gruppen-Zuordnung: unter „🔧 Erweitert“ → Alle Datentabellen.</div></div>`;
 }
@@ -348,6 +356,12 @@ AKTIONEN.vwEkNeu = async (x) => {
   await speichere("eltern_kind", was === "eltern" ? { eltern_id: anderer, kind_id: pid } : { eltern_id: pid, kind_id: anderer }); toast("👪 Verknüpft"); zeichne();
 };
 AKTIONEN.vwEkLoesen = async (id) => { const e = hole("eltern_kind", id); if (!e || !(await frage(`Verknüpfung ${name(hole("personen", e.eltern_id))} ↔ ${name(hole("personen", e.kind_id))} lösen?`))) return; await loesche("eltern_kind", id); toast("Verknüpfung gelöst"); zeichne(); };
+AKTIONEN.vwAeSenden = async (pid) => {
+  const arten = [...document.querySelectorAll('input[name="vwAeArt"]:checked')].map((e) => e.value); if (!arten.length) return toast("Bitte mindestens eine Angabe ankreuzen");
+  const p = hole("personen", pid); await speichere("personen", { ...p, aenderung_bitte: { arten, text: ($("#vwAeText")?.value || "").trim().slice(0, 160) || null, von: V.ich.id, am: new Date().toISOString() } });
+  toast("✏️ Bitte gespeichert – kommt beim nächsten Start"); zeichne();
+};
+AKTIONEN.vwAeZurueck = async (pid) => { const p = hole("personen", pid); await speichere("personen", { ...p, aenderung_bitte: null }); toast("Bitte zurückgenommen"); zeichne(); };
 AKTIONEN.vwAuskunft = (pid) => {
   const ids = [pid, ...kinderVon(db, pid)];
   herunterladen(`auskunft-${pn(pid).replace(/\s+/g, "-")}-${tagIso(new Date())}.json`, JSON.stringify({ stand: new Date().toISOString(), erstellt_von: pn(V.ich.id), personen: ids.map(pn), daten: personenDaten(db, ids) }, null, 2), "application/json");

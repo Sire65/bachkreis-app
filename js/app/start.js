@@ -281,6 +281,25 @@ function rasterBlock() {
     : ausN ? `<div class="ka-aus-zeile"><button type="button" class="ka-ausgeblendet" data-a="kaNurAus" data-x="1">👀 ${ausN} ausgeblendete Kachel${ausN > 1 ? "n" : ""} zeigen</button></div>` : "";
   return `<div class="register${registerSichtbar().length > 4 ? " viele" : ""}" id="register">${registerHtml()}</div>${ANO.an ? anordnenLeiste() : ""}<div class="raster${groesse()}${ANO.an ? " anordnen" : ""}${ANO.nurAus ? " nur-aus" : ""}" id="raster">${inhalt}</div>${hinweis}`;
 }
+// 👀 0.70.0 wie Club App 2.953.0 (KC-CLUB-KA-KOPF-TOGGLE): neben „< Erweiterte Ansicht >“ EIN runder Knopf – 👀 nur die ausgeblendeten
+// Kacheln zeigen, danach 🙈 (rot) wieder verbergen. Nur wenn wirklich Kacheln ausgeblendet sind, nicht in der einfachen Ansicht, nicht beim Anordnen.
+// Passt er nicht in die Zeile (bricht sie um oder stößt an ✥/QR), bleibt er weg – unten gibt es den Weg immer.
+function kaKopfHtml() {
+  if (einst().einfach || ANO.an) return "";
+  const ausN = kachelnAlle(S.register).length - kachelnFuer(S.register).length;
+  const k = (x, sym, t, an = false) => `<button type="button" class="ka-kopf-k${an ? " an" : ""}" data-a="kaNurAus" data-x="${x}" title="${t}" aria-label="${t}" aria-pressed="${an}">${sym}</button>`;
+  return ANO.nurAus && ausN ? k("0", "🙈", "Ausgeblendete wieder verbergen", true) : ausN ? k("1", "👀", `Nur ausgeblendete zeigen (${ausN})`) : "";
+}
+export function kaKopfPasst() {
+  const k = document.getElementById("kaKopfKnoepfe"), a = k?.closest(".sz-zeile"); if (!k || !a) return;
+  k.classList.remove("kk-eng"); if (!k.innerHTML) return;
+  const h = a.querySelector("h3"), r = a.querySelector(".sz-rechts");
+  k.classList.add("kk-eng"); const grund = h ? h.getBoundingClientRect().height : 0; k.classList.remove("kk-eng"); // Grundhöhe ohne Knopf
+  const eng = (h && h.getBoundingClientRect().height > Math.max(44, grund + 2)) || (r && k.getBoundingClientRect().right > r.getBoundingClientRect().left + 1);
+  if (eng) k.classList.add("kk-eng");
+}
+function kaKopfNeu() { const k = document.getElementById("kaKopfKnoepfe"); if (k) { k.innerHTML = kaKopfHtml(); kaKopfPasst(); } }
+addEventListener("resize", () => { try { kaKopfPasst(); } catch { /* ohne Startseite */ } }, { passive: true });
 VIEWS.start = {
   render() {
     if (kindAnsicht()) return kinderStartHtml(); // 🧒 0.32.0 eigene Kinder-Startseite
@@ -292,7 +311,7 @@ VIEWS.start = {
       <div id="kopfPlatz"></div>
       <div id="updateHinweis"></div>
       <div class="abschnitt sz-zeile"><h3><button type="button" class="sz-link" data-a="schnellstartOben" title="Antippen: oben die Schnellstart-Symbole zeigen">Schnellzugriff</button>
-        ${e.einfach ? '<button type="button" class="ansichtname ein" data-a="ansichtWechseln" title="Antippen: zur erweiterten Ansicht wechseln">&gt; Einfache Ansicht &lt;</button>' : '<button type="button" class="ansichtname erw" data-a="ansichtWechseln" title="Antippen: zur einfachen Ansicht wechseln">&lt; Erweiterte Ansicht &gt;</button>'}</h3>
+        ${e.einfach ? '<button type="button" class="ansichtname ein" data-a="ansichtWechseln" title="Antippen: zur erweiterten Ansicht wechseln">&gt; Einfache Ansicht &lt;</button>' : '<button type="button" class="ansichtname erw" data-a="ansichtWechseln" title="Antippen: zur einfachen Ansicht wechseln">&lt; Erweiterte Ansicht &gt;</button>'}</h3><span class="ka-kopf" id="kaKopfKnoepfe">${kaKopfHtml()}</span>
         <span class="sz-rechts"><button type="button" class="knopf klein sz-anordnen" data-a="kaAnordnen" title="Kacheln verschieben${e.einfach ? "" : " oder ausblenden"}" aria-label="✥ Anordnen – Kacheln verschieben" ${ANO.an ? "hidden" : ""}>✥</button><button type="button" class="ausweis-knopf" data-a="ausweisZeigen" title="Mein Ausweis-QR – zum Vorzeigen" aria-label="QR – mein Ausweis"><svg class="qr-sym" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 1h6v6H1zM2.5 2.5v3h3v-3zM9 1h6v6H9zm1.5 1.5v3h3v-3zM1 9h6v6H1zm1.5 1.5v3h3v-3zM9 9h2v2H9zm4 0h2v2h-2zm-2 2h2v2h-2zm-2 2h2v2H9zm4 0h2v2h-2z" fill="currentColor" fill-rule="evenodd"/></svg> QR</button></span></div>
       <div id="rasterBlock">${rasterBlock()}</div>
       ${e.einfach || ANO.an ? "" : `<div class="wischhinweis">‹ wischen für weitere Bereiche · doppelt tippen dreht eine Kachel um · lange drücken ordnet an ›</div>`}
@@ -305,7 +324,7 @@ VIEWS.start = {
   nach() {
     kopfEinsetzen(document.getElementById("kopfPlatz"));
     if (kindAnsicht() || elternAnsicht()) { setTimeout(gbvPruefen, 1500); return; }
-    nachDemZeichnen(); nuTagZaehlen();
+    nachDemZeichnen(); nuTagZaehlen(); kaKopfPasst();
     clearTimeout(START_FRAGEN); START_FRAGEN = setTimeout(() => { if (S.view === "start" && !ansichtFrage()) tagesinfoBeimStart(); }, 1200);
     clearTimeout(START_VORSCHLAG); START_VORSCHLAG = setTimeout(vorschlagPruefen, 25000);
     setTimeout(gbvPruefen, 1500); // 🎁 Geburtstags-Vogel (höchstens einmal je Stunde)
@@ -330,6 +349,7 @@ function startNeu() {
   if (kachelOffenHinten() && !ANO.an) document.querySelector("#raster > .kachel.kr-hinten")?.classList.remove("kr-hinten");
   b.innerHTML = rasterBlock(); nachDemZeichnen();
   const knopf = document.querySelector('#v-start .abschnitt [data-a="kaAnordnen"]'); if (knopf) knopf.hidden = ANO.an;
+  kaKopfNeu();
 }
 startseiteVerbinden({ KACHELN, kachelnFuer, kachelnAlle, neuZeichnen: startNeu, ungelesen: () => ungelesen(), offeneAntworten: () => offeneAntworten(), offeneGenehmigungen: () => offeneGenehmigungen(),
   onlineZahl: () => (onlineSichtbar() ? onlineZahl() : 0), pwOffen: () => pwOffenZahl(), kopfNeu: () => document.dispatchEvent(new CustomEvent("bk-kopf-neu")) });
@@ -344,7 +364,7 @@ function registerWechseln(r, richtung) {
   const neu = r !== S.register; S.register = r;
   const b = document.getElementById("rasterBlock");
   if (S.view !== "start" || !b) return zeige("start", {}, { ersetzen: true });
-  ANO.nurAus = false; b.innerHTML = rasterBlock(); nachDemZeichnen();
+  ANO.nurAus = false; b.innerHTML = rasterBlock(); nachDemZeichnen(); kaKopfNeu();
   const ra = document.getElementById("raster");
   if (neu && !regEffekt(richtung || 1) && richtung && ra) { ra.classList.remove("rein-links", "rein-rechts"); void ra.offsetWidth; ra.classList.add(richtung > 0 ? "rein-links" : "rein-rechts"); }
 }

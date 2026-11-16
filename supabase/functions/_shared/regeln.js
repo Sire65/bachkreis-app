@@ -1034,14 +1034,15 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
     }
     case "personen":
       // 👪 Eltern ändern Kontaktdaten ihrer (minderjährigen) Kinder direkt – nur diese Felder
-      if (alt && ctx.kinder.has(alt.id)) return { ok: true, zeile: { ...alt, ...Object.fromEntries(KIND_KONTAKT.filter((k) => k in neu).map((k) => [k, neu[k] == null ? null : String(neu[k]).slice(0, 200)])) } };
+      if (alt && ctx.kinder.has(alt.id)) return { ok: true, zeile: { ...alt, ...Object.fromEntries(KIND_KONTAKT.filter((k) => k in neu).map((k) => [k, neu[k] == null ? null : String(neu[k]).slice(0, 200)])), ...(neu.aenderung_bitte === null ? { aenderung_bitte: null } : {}) } }; // ✏️ 0.70.0 Bitte erledigt
       if (!alt || alt.id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_EINSTELLUNGEN" };
       { const fg = neu.freigaben && typeof neu.freigaben === "object" ? Object.fromEntries(["geburtstag", "mobil", "email", "adresse"].map((k) => [k, neu.freigaben[k] === true])) : alt.freigaben;
         // 🙂 eigenes Gesicht: nur kleine Zahlen je Merkmal (Haut, Frisur, Haarfarbe, Augen, Mund, Brille, Hintergrund) – nie Bilder oder Text
         const av = neu.avatar === null ? null : neu.avatar && typeof neu.avatar === "object" ? Object.fromEntries(["haut", "frisur", "haar", "augen", "mund", "brille", "farbe"].filter((k) => Number.isInteger(neu.avatar[k]) && neu.avatar[k] >= 0 && neu.avatar[k] < 20).map((k) => [k, neu.avatar[k]])) : alt.avatar;
         const plan = "uebe_plan" in neu ? uebePlanPruefen(neu.uebe_plan) : alt.uebe_plan;
         const alarm = "kalender_alarm" in neu ? ([0, 15, 30, 60, 120, 1440].includes(Number(neu.kalender_alarm)) ? Number(neu.kalender_alarm) : null) : alt.kalender_alarm;
-        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg, avatar: av ?? null, uebe_plan: plan ?? null, kalender_alarm: alarm ?? null } }; }
+        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg, avatar: av ?? null, uebe_plan: plan ?? null, kalender_alarm: alarm ?? null,
+          aenderung_bitte: neu.aenderung_bitte === null ? null : alt.aenderung_bitte ?? null } }; } // ✏️ 0.70.0 die Bitte darf man nur erledigen (löschen), nie selbst setzen
     default:
       return { ok: false, grund: "KEIN_SCHREIBRECHT" };
   }

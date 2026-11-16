@@ -101,6 +101,7 @@ export const TEILE_KARTE = {
   "diashow": "fotoalbum.js",
   "drehSchritt": "instrumente.js",
   "drehZu": "instrumente.js",
+  "echoBach": "echo.js",
   "echoBild": "echo.js",
   "echoBlaettern": "echo.js",
   "echoEinreichen": "echo.js",

@@ -1,15 +1,23 @@
 {
-  "version": "0.70.0",
+  "version": "0.71.0",
   "datum": "16.11.2026",
   "stufe": "DEV",
   "neu": [
-    "📰 Bachkreis-Echo: unser Heft zum Blättern, als A5-PDF und zum Heftdruck – alle können mitschreiben, die Leitung gibt frei",
-    "👀 Ein Knopf neben „Erweiterte Ansicht“: ausgeblendete Kacheln zeigen und wieder verbergen – wie in der Club App",
-    "✏️ Die Leitung kann um neue Angaben bitten (z. B. Handynummer) – mit „Sofort erledigen“",
-    "📸 Bildschirmfoto und PDF klappen jetzt auch mit modernen Farben",
-    "↔️ Gegenvorschlag: zu einem Vorschlag eine Alternative einreichen – alle unterstützen ihren Favoriten"
+    "🎻 Bühne: neuer Reiter „Bach“ – echte Orchesteraufnahme (Badinerie), frei von Rechten; weitere Stücke folgen",
+    "📰 Echo: beim Komponisten Bach direkt zur Bühne zum Anhören"
   ],
   "verlauf": [
+    {
+      "version": "0.70.0",
+      "datum": "16.11.2026",
+      "neu": [
+        "📰 Bachkreis-Echo: unser Heft zum Blättern, als A5-PDF und zum Heftdruck – alle können mitschreiben, die Leitung gibt frei",
+        "👀 Ein Knopf neben „Erweiterte Ansicht“: ausgeblendete Kacheln zeigen und wieder verbergen – wie in der Club App",
+        "✏️ Die Leitung kann um neue Angaben bitten (z. B. Handynummer) – mit „Sofort erledigen“",
+        "📸 Bildschirmfoto und PDF klappen jetzt auch mit modernen Farben",
+        "↔️ Gegenvorschlag: zu einem Vorschlag eine Alternative einreichen – alle unterstützen ihren Favoriten"
+      ]
+    },
     {
       "version": "0.69.0",
       "datum": "15.11.2026",

@@ -172,7 +172,7 @@ export function echoBloecke(h) {
   for (const [r, sym, t, unter] of [["orchesterleben", "🎻", "Aus dem Orchesterleben", "Proben, Konzerte, Ausflüge"], ["vorstellen", "👋", "Wir stellen vor", ""], ["schueler", "✏️", "Schüler schreiben", ""]])
     if (rub(r).length) abschnitt(t, rubrikKopf(sym, t, unter), rub(r).flatMap(beitragBloecke));
   // Komponist, Wörterbuch, Wissen
-  abschnitt(`Komponist: ${komp.name}`, rubrikKopf("🎼", "Komponist des Monats"), [{ html: `<h3>${esc(komp.name)}</h3><p class="echo-unter">${esc(komp.jahre)} · ${esc(komp.ort)}</p><p>${esc(komp.text)}</p>` }, { html: `<div class="echo-kasten">🎧 <b>Hörtipp:</b> ${esc(komp.hoeren)}</div>` }]);
+  abschnitt(`Komponist: ${komp.name}`, rubrikKopf("🎼", "Komponist des Monats"), [{ html: `<h3>${esc(komp.name)}</h3><p class="echo-unter">${esc(komp.jahre)} · ${esc(komp.ort)}</p><p>${esc(komp.text)}</p>` }, { html: `<div class="echo-kasten">🎧 <b>Hörtipp:</b> ${esc(komp.hoeren)}${komp.id === "bach" ? `<br><span class="nur-app"><button type="button" class="knopf klein" data-a="echoBach">🎻 Bach auf der Bühne anhören</button></span><span class="nur-druck">🎻 Zum Anhören: App → Entdecken → Bühne → 🎻 Bach</span>` : ""}</div>` }]);
   abschnitt("Musik-Wörterbuch", rubrikKopf("📚", "Musik-Wörterbuch"), [{ html: `<dl class="echo-woerter">${wahl(WOERTER, h.nr || 1, 5).map(([w, e]) => `<dt>${esc(w)}</dt><dd>${esc(e)}</dd>`).join("")}</dl>` }], false);
   if (rub("wissen").length) abschnitt("Wusstest du schon?", rubrikKopf("💡", "Wusstest du schon?"), rub("wissen").flatMap(beitragBloecke), false);
   // Rätsel & Spiele
@@ -335,6 +335,7 @@ AKTIONEN.echoInhalt = (id) => {
 };
 AKTIONEN.echoSprung = (n) => { blattZu(); E.seite = Number(n) - 1; const h = hole("echo_hefte", document.getElementById("echoBuch")?.dataset.heft); if (h) buchZeichnen(h); };
 AKTIONEN.echoKlang = (id) => lehreKlang(id);
+AKTIONEN.echoBach = () => zeige("buehne", { modus: "bach" });
 
 // ---------- 📄 PDF: A5-Seiten oder Heftdruck (A4 quer, schon ausgeschossen) ----------
 const SKALA = 2.6;

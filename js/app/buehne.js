@@ -110,6 +110,17 @@ const SOLO_INST = { v1: ["v1", "geige"], v2: ["v2", "geige"], va: ["va", "bratsc
 export const soloMoeglich = (key) => !!SOLO_INST[key];
 // Weitere Bühnen-Modi (z. B. „Üben“ aus uebebuehne.js): { titel, html() }
 export const BUEHNE_MODI = {};
+// 🎻 0.71.0 Bach zum Anhören (Wunsch Hansi „weil es ja ein Bachkreis ist“): echte Orchesteraufnahmen, gemeinfrei (US-Militärmusik =
+// Public Domain) bzw. CC0, von Wikimedia Commons – liegen in audio/bach/ (eigene Seite, kein fremder Server, kein Internet-Abruf beim Hören).
+// Quellen und Lizenzen: audio/bach/QUELLEN.md
+export const BACH_AUFNAHMEN = [
+  { id: "badinerie", titel: "Badinerie", werk: "Orchestersuite Nr. 2 h-Moll, BWV 1067", wer: "historische Aufnahme (European Archive)", lizenz: "CC0" },
+];
+// folgen, sobald Wikimedia den Abruf wieder zulässt (alle gemeinfrei/CC0, Quellen geprüft): Air BWV 1068 (US Air Force Strings),
+// Jesus bleibet meine Freude BWV 147 (Orchestra Gli Armonici), Violinkonzert a-Moll BWV 1041 (US Marine Band), Wachet auf BWV 140 (Stellar Brass)
+const bachHtml = () => `<div class="bw-stuecke">${BACH_AUFNAHMEN.map((x) => `<button type="button" data-a="bwBach" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.werk)} · ${esc(x.wer)}</small></button>`).join("")}</div>
+  <div class="knopfreihe"><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div><div class="bw-regler"><label>🔊 Lautstärke <input type="range" min="0" max="1" step="0.05" value="${B.laut}" data-c="bwLaut"></label></div>
+  <p class="hinweis">🎻 Johann Sebastian Bach (1685–1750) – unser Namensgeber. Echte Orchesteraufnahmen (weitere folgen), frei von Rechten (gemeinfrei bzw. CC0, über Wikimedia Commons). Stück antippen – der Vorhang geht auf.</p>`;
 export function orchesterSvg(opt = {}) {
   const m = [], bes = besetzungFuerBuehne();
   let nr = 0;
@@ -154,7 +165,7 @@ export function buehneHtml(kompakt = false) {
   return `<div class="buehne ${kompakt ? "kompakt" : ""}" id="buehne">
     <div class="buehne-rahmen ${B.lauf || B.audio ? "offen" : ""}" id="bwRahmen">${orchesterSvg()}</div><div class="bw-titel" id="bwTitel">${esc(B.lauf ? st.titel : "Vorhang auf für den Bachkreis!")}</div>
     ${umschalter()}
-    ${B.modus === "melodien" ? `
+    ${B.modus === "bach" ? bachHtml() : B.modus === "melodien" ? `
       <div class="bw-stuecke">${STUECKE.map((x) => `<button class="${x.id === B.stueck ? "an" : ""}" data-a="bwStueck" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.komponist)}</small></button>`).join("")}</div>
       <div class="knopfreihe"><button class="knopf haupt" data-a="bwSpielen">▶ Vorhang auf</button><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div>
       <div class="bw-regler"><label>🥁 Tempo <input type="range" min="0.7" max="1.3" step="0.05" value="${B.tempo}" data-c="bwTempo"></label><label>🔊 Lautstärke <input type="range" min="0" max="1" step="0.05" value="${B.laut}" data-c="bwLaut"></label>
@@ -171,7 +182,7 @@ export function buehneHtml(kompakt = false) {
 }
 
 function umschalter() {
-  const modi = [["melodien", "🎼 Melodien"], ["aufnahmen", "🎧 Aufnahmen"], ...Object.entries(BUEHNE_MODI).map(([k, m]) => [k, m.titel])];
+  const modi = [["melodien", "🎼 Melodien"], ["bach", "🎻 Bach"], ["aufnahmen", "🎧 Aufnahmen"], ...Object.entries(BUEHNE_MODI).map(([k, m]) => [k, m.titel])];
   return `<div class="umschalter">${modi.map(([k, t]) => `<button type="button" class="${B.modus === k ? "an" : ""}" data-a="bwModus" data-x="${k}">${t}</button>`).join("")}</div>`;
 }
 export function sekAn(sek, dauer = 0.4) {
@@ -261,6 +272,7 @@ AKTIONEN.bwAufnahme = (id) => {
   if (!a?.datei) { toast("🎧 Vorführversion: Die Datei liegt später im geschützten Speicher. Zum Ausprobieren: „Aufnahme vom Gerät abspielen“."); return; }
   aufnahmeSpielen(a.datei, a.titel);
 };
+AKTIONEN.bwBach = (id) => { const x = BACH_AUFNAHMEN.find((y) => y.id === id); if (x) aufnahmeSpielen(`audio/bach/${x.id}.mp3`, `${x.titel} – J. S. Bach`); };
 AKTIONEN.bwDatei = (_, el) => {
   const f = el.files?.[0]; if (!f) return;
   if (B.blobUrl) URL.revokeObjectURL(B.blobUrl);

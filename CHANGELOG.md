@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.71.0 DEV – 16.11.2026
+🎻 **Bach zum Anhören** (Wunsch Hansi „weil es ja ein Bachkreis ist“):
+- **🎭 Bühne → neuer Reiter „🎻 Bach“:** Stück antippen – der Vorhang geht auf und das Orchester bewegt sich zur echten Aufnahme. Zum Start die **Badinerie** aus der Orchestersuite Nr. 2 (BWV 1067)
+- Nur Aufnahmen, die **gemeinfrei oder CC0** sind (Wikimedia Commons) – keine Kosten, keine Lizenzpflichten; Quellen in `audio/bach/QUELLEN.md`. Die MP3s liegen auf der eigenen Seite (kein fremder Server) und werden nicht vorab aufs Gerät geladen
+- **Folgen:** Air (BWV 1068), Jesus bleibet meine Freude (BWV 147), Violinkonzert a-Moll (BWV 1041), Wachet auf (BWV 140) – Wikimedia sperrt den Abruf gerade wegen „zu vieler Anfragen“
+- 📰 Echo: beim Komponisten des Monats Bach führt „🎻 Bach auf der Bühne anhören“ direkt dorthin
+
 ## 0.70.0 DEV – 16.11.2026
 📰 **Bachkreis-Echo – unser Heft** (Konzept mit Beispielbild abgestimmt, Wunsch Hansi „4 Hefte pro Jahr oder öfter nach Abstimmung, Schüler sollen mitmachen können, in der App als Blätterversion, als Druckversion in PDF als A5-Heft mit richtiger Seitenaufteilung“):
 - **🏠 Bachkreis → 📰 Bachkreis-Echo:** das neue Heft, ältere Hefte, „✍️ Beitrag einreichen“ für alle (auch Schülerinnen und Schüler; Text, Foto, Bildunterschrift, wer vorkommt) und „Meine Beiträge“ mit Stand und Hinweis der Redaktion

@@ -2,25 +2,32 @@ name: Tests
 on:
   push:
   pull_request:
+permissions:
+  contents: read
+
 jobs:
   vertrag-logik-server:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npm test
   browser:
     runs-on: ubuntu-24.04 # Playwright 1.56 kann auf ubuntu-latest (26.04) keinen Chromium installieren – sonst wird Pages übersprungen
     needs: vertrag-logik-server
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
-      - run: npm ci && npm i --no-save playwright@1.56.1 @axe-core/playwright@4.14.0 && npx playwright install --with-deps chromium
+      - run: npm ci --ignore-scripts && npm i --ignore-scripts --no-save playwright@1.56.1 @axe-core/playwright@4.14.0 && npx playwright install --with-deps chromium
       - name: Rundgang Vorführversion (alle Rollen, alle Kacheln)
         run: |
           python3 -m http.server 8080 &
@@ -33,7 +40,7 @@ jobs:
           curl -s -o /dev/null http://localhost:8080/ || (python3 -m http.server 8080 &)
           sleep 1
           BASIS=http://localhost:8080 node tests/e2e/barrierefrei.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: rundgang-bilder

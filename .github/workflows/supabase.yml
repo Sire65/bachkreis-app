@@ -14,6 +14,9 @@ on:
 concurrency:
   group: supabase
   cancel-in-progress: false
+permissions:
+  contents: read
+
 jobs:
   einrichten:
     runs-on: ubuntu-latest
@@ -29,9 +32,11 @@ jobs:
             echo "::notice::Supabase-Secrets fehlen – Einrichtung übersprungen (siehe docs/ECHTBETRIEB.md)."
             echo "los=nein" >> "$GITHUB_OUTPUT"
           else echo "los=ja" >> "$GITHUB_OUTPUT"; fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
         if: steps.pruefen.outputs.los == 'ja'
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@1dedf2c611547ede7232d26866dd3c56ab903bbb # v1.7.3
         if: steps.pruefen.outputs.los == 'ja'
         with:
           version: latest

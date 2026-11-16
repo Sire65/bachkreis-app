@@ -1,4 +1,4 @@
--- Bachkreis-App – Nachtrag: ↔️ Gegenvorschlag bei Vorschlägen (0.71.0) (automatisch erzeugt mit tools/schema-sql.mjs – nicht von Hand ändern)
+-- Bachkreis-App – Nachtrag: ↔️ Gegenvorschlag bei Vorschlägen (0.70.0) (automatisch erzeugt mit tools/schema-sql.mjs – nicht von Hand ändern)
 
 -- Vorschläge & Abstimmungen
 create table if not exists bk_vorschlaege (

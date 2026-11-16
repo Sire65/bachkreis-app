@@ -93,7 +93,8 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
-  "20261130000000_bk_gegenvorschlag.sql": { titel: "↔️ Gegenvorschlag bei Vorschlägen (0.71.0)", tabellen: ["vorschlaege"] },
+  "20261201000000_bk_echo.sql": { titel: "📰 Bachkreis-Echo: Hefte und Beiträge (0.70.0)", tabellen: ["echo_hefte", "echo_beitraege"], extra: ["create index if not exists bk_echo_beitraege_heft on bk_echo_beitraege (heft_id);"] },
+  "20261130000000_bk_gegenvorschlag.sql": { titel: "↔️ Gegenvorschlag bei Vorschlägen (0.70.0)", tabellen: ["vorschlaege"] },
   "20261129000000_bk_aenderung_bitte.sql": { titel: "✏️ Änderung erbitten (0.70.0)", tabellen: [], extra: ["alter table bk_personen add column if not exists aenderung_bitte jsonb;"] },
   "20261128000000_bk_kinderschutz.sql": { titel: "🛡️ Schutz & Einwilligungen je Kind, Abholliste (0.69.0)", tabellen: ["kinderschutz"], extra: ["create unique index if not exists bk_kinderschutz_kind on bk_kinderschutz (kind_id) where geloescht_am is null;"] },
   "20261127000000_bk_kuendigungen.sql": { titel: "🚪 Kündigung in vier Varianten, 💤 Pause bis (0.66.0)", tabellen: ["kuendigungen", "personen"], extra: ["create index if not exists bk_kuendigungen_faellig on bk_kuendigungen (status, zum);"] },

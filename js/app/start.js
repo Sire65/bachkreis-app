@@ -34,6 +34,9 @@ import { korbNeu } from "./eingangskorb.js";
 import { geheimTechnik } from "../kern/geheim.js";
 import { erwachsen, ab16 } from "../kern/schema.js";
 const erwachsenIch = () => erwachsen(S.ich);
+// 📰 0.70.0 Bachkreis-Echo: neues Heft (noch nicht geöffnet) + für die Redaktion neue Beiträge im Eingang
+export const echoNeuesHeft = () => { const h = liste("echo_hefte", (x) => !x.geloescht_am && x.status === "erschienen").sort((a, b) => (b.jahr || 0) - (a.jahr || 0) || (b.nr || 0) - (a.nr || 0))[0]; return h && (Number(h.nr) || 0) > (Number(einst().echoGelesen) || 0) ? h : null; };
+const echoZahl = () => (echoNeuesHeft() ? 1 : 0) + (hatRolle("admin", "leitung", "redaktion") ? liste("echo_beitraege", (b) => !b.geloescht_am && b.status === "eingereicht").length : 0);
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
 import { onlineZahl, onlineSichtbar } from "./online.js";
@@ -98,6 +101,7 @@ export const KACHELN = {
     { id: "projekte", sym: "🎭", t: "Konzerte & Projekte", u: "Programm · Ablauf · Checkliste", v: "projekte" },
     { id: "noten", sym: "📚", t: "Notenarchiv", u: "Orchester › Stücke › Noten je Instrument", v: "noten", nur: () => istVerwalter() },
     { id: "fotoalbum", sym: "📷", t: "Fotoalbum", u: "Konzerte · Fahrten · Proben", v: "fotoalbum" },
+    { id: "echo", sym: "📰", t: "Bachkreis-Echo", u: "Unser Heft · blättern · mitschreiben", v: "echo", zahl: () => echoZahl() },
     { id: "vorschlaege", sym: "💡", t: "Vorschläge & Abstimmungen", u: "Ideen · abstimmen · Ergebnisse", v: "vorschlaege", zahl: () => offeneAbstimmungen().length },
     { id: "austausch", sym: "🏠", t: "Austausch & Gastfamilien", u: "Gäste aufnehmen · Zuordnung", v: "austausch", nur: () => austauschProjekte().length > 0 && (istEltern() || istLehrkraft()), zahl: () => (istLehrkraft() ? austauschProjekte().reduce((s, p) => s + liste("gaeste", (g) => g.projekt_id === p.id && !g.gastgeber_id).length, 0) : 0) },
     { id: "sos", sym: "🆘", t: "SOS – Notfall", u: "Notruf · Kontakte im Notfall", v: "sos", klasse: "sos" },

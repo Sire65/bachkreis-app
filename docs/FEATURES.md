@@ -179,6 +179,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F169 | ✏️ Änderung erbitten: Leitung bittet, Mitglied meldet „Sofort“ (wie KC 2.957.0) | ✅ | clubapp-neu.test, Rundgang |
 | BK-F170 | 🎨 Bildschirmfoto/PDF/Fernhilfe mit modernen Farben (wie KC 2.952.0) | ✅ | Rundgang |
 | BK-F171 | ↔️ Gegenvorschlag bei Vorschlägen: bis 3 je Thema, eine Karte, Stimme wandert, Abstimmung daraus (wie KC 2.956.0) | ✅ | gegenvorschlag.test |
+| BK-F172 | 📰 Bachkreis-Echo: Heft zum Blättern, A5-PDF und Heftdruck (ausgeschossen), Beiträge von allen, Redaktion, Vier-Augen-Freigabe, Datenschutz-Prüfung | ✅ | echo.test |
 
 ## 🎻 Instrumente-Übersicht (0.10.0)
 - **Drei Ansichten** (Umschalter oben, das Gerät merkt sich die Wahl):

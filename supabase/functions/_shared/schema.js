@@ -14,6 +14,7 @@ export const ROLLEN = {
   notenwart: "Notenwart",
   registerfuehrer: "Registerführer",
   terminplaner: "Terminplaner (trägt Termine ein)",
+  redaktion: "Redaktion Bachkreis-Echo",
   schueler: "Schüler",
   eltern: "Eltern",
 };
@@ -131,7 +132,7 @@ export const kuendigungOffen = (k) => !!k && !k.geloescht_am && ["eingegangen", 
 // ✏️ 0.70.0 wie Club App 2.957.0 (KC-CLUB-AENDERUNG-ERBITTEN): Leitung bittet ein Mitglied, neue Angaben zu melden (nur Arten, nie Werte)
 export const AENDERUNG_ARTEN = { mobil: ["📱", "deine neue Handynummer", "Telefon / Handy"], anschrift: ["🏠", "deine neue Anschrift", "Anschrift"], telefon: ["☎️", "deine neue Festnetznummer", "Telefon / Handy"],
   email: ["✉️", "deine neue E-Mail-Adresse", "E-Mail"], name: ["👤", "deinen neuen Namen", "Sonstiges"], notfall: ["🆘", "deinen Notfallkontakt", "Gesundheit / Notfall"] };
-// ↔️ 0.71.0 Gegenvorschlag (wie Club App 2.956.0): zu einem offenen Vorschlag bis zu 3 Vorschläge (A, B, C) als eine Gruppe; jede Person
+// ↔️ 0.70.0 Gegenvorschlag (wie Club App 2.956.0): zu einem offenen Vorschlag bis zu 3 Vorschläge (A, B, C) als eine Gruppe; jede Person
 // unterstützt einen davon. Gruppe = der erste Vorschlag (gegen_zu leer) und alle, die auf ihn zeigen.
 export const VS_GEGEN_MAX = 3;
 export const vsGruppenId = (v) => v?.gegen_zu || v?.id;
@@ -144,6 +145,16 @@ export const KS_SPERRE = ["admin", "leitung"]; // setzen die Schutzsperre
 export const ksVon = (quelle, id) => ({ ...KS_STANDARD, ...((quelle?.get ? quelle.get(id) : quelle?.[id]) || {}) });
 export const kinderChatOffen = (ks) => !!ks && ks.kinder_chat === "ja" && !ks.schutz_aktiv;
 export const ksVerborgen = (ks) => !!ks && (ks.sichtbar === "leitung" || !!ks.schutz_aktiv);
+// 📰 0.70.0 Bachkreis-Echo: das Heft des Bachkreises – 4 Ausgaben im Jahr (oder öfter), zum Blättern in der App und als A5-Heft (PDF).
+// Jede/r reicht Beiträge ein (auch Schüler/innen), die Redaktion sortiert, die Leitung gibt frei (Vier-Augen: nicht die Person, die es
+// zur Freigabe geschickt hat). Erscheinen geht nur, wenn kein Kind mit Schutzsperre vorkommt und Fotos/Porträts eine Einwilligung haben.
+export const ECHO_RUBRIKEN = { orchesterleben: "🎻 Aus dem Orchesterleben", vorstellen: "👋 Wir stellen vor", schueler: "✏️ Schüler schreiben", raetsel: "🧩 Rätselecke", spiel: "🎲 Spieleecke", witz: "😄 Musikerwitz", wissen: "💡 Wusstest du schon?", foerderverein: "💛 Förderverein-Ecke", sonstiges: "📌 Sonstiges" };
+export const ECHO_HEFT_STATUS = { entwurf: "✏️ in Arbeit", freigabe: "👀 wartet auf Freigabe", erschienen: "📰 erschienen" };
+export const ECHO_BEITRAG_STATUS = { eingereicht: "📮 eingereicht", angenommen: "✅ kommt ins Heft", zurueck: "↩️ zurück zum Überarbeiten", abgelehnt: "❌ diesmal nicht" };
+export const ECHO_AUSGABEN = { fruehling: "Frühling", sommer: "Sommer", herbst: "Herbst", winter: "Winter", sonder: "Sonderausgabe" };
+export const ECHO_REDAKTION = ["admin", "leitung", "redaktion"];
+export const ECHO_FREIGABE = ["admin", "leitung"];
+export const ECHO_TEXT_MAX = 4000;
 export const alterJahre = (p, heute = new Date()) => { if (!p?.geburtsdatum) return null; const g = new Date(p.geburtsdatum); let a = heute.getFullYear() - g.getFullYear(); if (heute.getMonth() < g.getMonth() || (heute.getMonth() === g.getMonth() && heute.getDate() < g.getDate())) a--; return a; };
 export const ab16 = (p) => p?.typ === "schueler" && (alterJahre(p) ?? 0) >= 16; // ab 16 stimmt das Kind selbst zu
 export const schuljahrBeginn = (heute = new Date()) => `${heute.getMonth() >= 7 ? heute.getFullYear() : heute.getFullYear() - 1}-08-01`;
@@ -1439,6 +1450,44 @@ export const TABELLEN = {
     ],
     liste: ["schuljahr", "von", "freigegeben"],
   },
+  echo_hefte: {
+    titel: "Bachkreis-Echo: Hefte", sym: "📰", gruppe: "Kommunikation", lesen: ECHO_REDAKTION, schreiben: [],
+    felder: [
+      { k: "nr", t: "Heft-Nr.", typ: "zahl", pflicht: true },
+      { k: "titel", t: "Titel-Thema", typ: "text" },
+      { k: "ausgabe", t: "Ausgabe", typ: "wahl", werte: ECHO_AUSGABEN },
+      { k: "jahr", t: "Jahr", typ: "zahl" },
+      { k: "status", t: "Status", typ: "wahl", werte: ECHO_HEFT_STATUS },
+      { k: "vorwort", t: "Vorwort", typ: "lang" },
+      { k: "vorwort_von", t: "Vorwort von", typ: "ref", ref: "personen" },
+      { k: "titelbild", t: "Titelbild", typ: "text" },
+      { k: "instrument", t: "Instrument des Monats", typ: "text" },
+      { k: "komponist", t: "Komponist des Monats", typ: "text" },
+      { k: "termine_von", t: "Termine ab", typ: "datum" },
+      { k: "termine_bis", t: "Termine bis", typ: "datum" },
+      { k: "erscheint_am", t: "soll erscheinen am", typ: "datum" },
+    ],
+    intern: [{ k: "freigabe_von", typ: "text" }, { k: "freigabe_am", typ: "zeit" }, { k: "freigegeben_von", typ: "text" }, { k: "erschienen_am", typ: "zeit" }],
+    liste: ["nr", "ausgabe", "jahr", "status"],
+  },
+  echo_beitraege: {
+    titel: "Bachkreis-Echo: Beiträge", sym: "✍️", gruppe: "Kommunikation", lesen: ECHO_REDAKTION, schreiben: [],
+    felder: [
+      { k: "heft_id", t: "Heft", typ: "ref", ref: "echo_hefte" },
+      { k: "rubrik", t: "Rubrik", typ: "wahl", werte: ECHO_RUBRIKEN, pflicht: true },
+      { k: "titel", t: "Überschrift", typ: "text", pflicht: true },
+      { k: "text", t: "Text", typ: "lang", pflicht: true },
+      { k: "bild", t: "Foto", typ: "text" },
+      { k: "bild_text", t: "Bildunterschrift", typ: "text" },
+      { k: "personen", t: "Wer kommt vor (Text oder Foto)", typ: "refs", ref: "personen" },
+      { k: "autor_zeile", t: "Name unter dem Beitrag", typ: "text" },
+      { k: "von", t: "eingereicht von", typ: "ref", ref: "personen" },
+      { k: "status", t: "Status", typ: "wahl", werte: ECHO_BEITRAG_STATUS },
+      { k: "reihenfolge", t: "Reihenfolge", typ: "zahl" },
+      { k: "redaktion_notiz", t: "Hinweis der Redaktion", typ: "lang" },
+    ],
+    liste: ["titel", "rubrik", "von", "status"],
+  },
   vorschlaege: {
     titel: "Vorschläge & Abstimmungen", sym: "💡", gruppe: "Kommunikation", lesen: L, schreiben: [],
     felder: [
@@ -1452,7 +1501,7 @@ export const TABELLEN = {
       { k: "anonym", t: "🔒 geheim", typ: "ja" },
       { k: "status", t: "Status", typ: "wahl", werte: { offen: "läuft", beendet: "beendet", erledigt: "erledigt" } },
       { k: "ergebnis", t: "Ergebnis / Beschluss", typ: "lang" },
-      { k: "gegen_zu", t: "↔️ Gegenvorschlag zu", typ: "ref", ref: "vorschlaege" }, // 0.71.0 wie Club App KC-CLUB-GEGENVORSCHLAG
+      { k: "gegen_zu", t: "↔️ Gegenvorschlag zu", typ: "ref", ref: "vorschlaege" }, // 0.70.0 wie Club App KC-CLUB-GEGENVORSCHLAG
     ],
     liste: ["titel", "art", "an", "status"],
     anzeige: (z) => z.titel,

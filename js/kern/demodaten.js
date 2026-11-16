@@ -82,7 +82,7 @@ export function erzeugeDemodaten(heute = new Date()) {
   d.personen.push({ id: "p-entwickler", vorname: "Hansi", nachname: "(Entwickler)", typ: "unterstuetzer", status: "aktiv", email: "entwickler@beispiel.invalid", rollen: ["entwickler"], firma: "Technik der App (Beispiel)" });
   const lehrkraefte = [
     { id: "p-lk1", vorname: "Martin", nachname: "Sommer", typ: "lehrkraft", rollen: ["lehrkraft", "notenwart"] },
-    { id: "p-lk2", vorname: "Judith", nachname: "Engel", typ: "lehrkraft", rollen: ["lehrkraft"] },
+    { id: "p-lk2", vorname: "Judith", nachname: "Engel", typ: "lehrkraft", rollen: ["lehrkraft", "redaktion"] },
     { id: "p-lk3", vorname: "Rainer", nachname: "Blum", typ: "lehrkraft", rollen: ["lehrkraft", "instrumentenwart"] },
   ];
   const vorstand = [
@@ -826,5 +826,34 @@ export function erzeugeDemodaten(heute = new Date()) {
     online_fuer: ["leitung", "schueler"], // Vorführung: auch Schüler sehen „Wer ist online“ (im Echtbetrieb Standard nur Leitung & Lehrkräfte)
   };
   for (const t of Object.keys(d)) if (Array.isArray(d[t])) for (const z of d[t]) { z.version = 1; z.erstellt_am = z.erstellt_am || iso(jetzt); z.geaendert_am = z.geaendert_am || iso(jetzt); z.geaendert_von = "Demodaten"; }
+  // 📰 0.70.0 Bachkreis-Echo (fest, ohne Zufall): Heft 1 erschienen, Heft 2 wartet auf die Freigabe (zur Freigabe geschickt von der Redaktion,
+  // also darf die Leitung freigeben – Vier-Augen), zwei neue Beiträge im Eingang. Keine Fotos (die Vorführversion hat keine Dateien).
+  { const j = jetzt.getFullYear(), m = jetzt.getMonth(), aus = m >= 8 && m <= 10 ? "herbst" : m >= 5 && m <= 7 ? "sommer" : m >= 2 && m <= 4 ? "fruehling" : "winter";
+    const weiter = { herbst: "winter", winter: "fruehling", fruehling: "sommer", sommer: "herbst" }[aus];
+    const kind2 = d.personen.find((p) => p.typ === "schueler" && p.id !== demoSchueler?.id && p.id !== demoKindB?.id && d.kinderschutz?.some((k) => k.kind_id === p.id && !k.schutz_aktiv && k.sichtbar !== "leitung"));
+    const e1 = tag(jetzt, -45, 18);
+    d.echo_hefte = [
+      { id: "eh-1", nr: 1, ausgabe: aus, jahr: aus === "winter" && m < 2 ? j - 1 : j, titel: "Hallo, Bachkreis-Echo!", status: "erschienen", instrument: "cello", komponist: "bach",
+        vorwort: "Liebe Bachkreislerinnen und Bachkreisler, liebe Eltern,\n\nihr haltet die allererste Ausgabe unseres Bachkreis-Echos in den Händen – oder blättert sie gerade in der App durch. Ab jetzt erscheint es viermal im Jahr: mit Berichten aus den Proben und Konzerten, mit Rätseln, Witzen und vielem mehr.\n\nDas Beste: Ihr könnt alle mitschreiben! Habt ihr etwas erlebt, ein Rätsel erfunden oder einen guten Witz gehört? Schickt es der Redaktion über die App.\n\nViel Spaß beim Lesen!",
+        vorwort_von: "Bettina Jacka, Leitung", termine_von: isoTag(e1), termine_bis: isoTag(tag(jetzt, 60)), freigabe_von: "p-lk2", freigabe_am: iso(tag(jetzt, -47, 20)), freigegeben_von: "p-leitung", erschienen_am: iso(e1) },
+      { id: "eh-2", nr: 2, ausgabe: weiter, jahr: weiter === "fruehling" && m >= 9 ? j + 1 : j, titel: "Advent im Bachkreis", status: "freigabe", instrument: "harfe", komponist: "tschaikowsky",
+        vorwort: "Liebe Leserinnen und Leser,\n\nwas für ein Halbjahr! Neue Gesichter in allen Gruppen, ein volles Konzert und eine Probenfreizeit, über die wir noch lange sprechen werden. In diesem Heft lest ihr, wie es war – und erfahrt, was als Nächstes kommt.\n\nDanke an alle, die mitgeschrieben haben!",
+        vorwort_von: "Die Redaktion", termine_von: isoTag(jetzt), termine_bis: isoTag(tag(jetzt, 90)), erscheint_am: isoTag(tag(jetzt, 7)), freigabe_von: "p-lk2", freigabe_am: iso(tag(jetzt, -1, 18)) },
+    ];
+    const b = (id, heft, rubrik, titel, text, von, autor_zeile, reihenfolge, extra = {}) => ({ id, heft_id: heft, rubrik, titel, text, von, autor_zeile, status: heft ? "angenommen" : "eingereicht", reihenfolge, personen: [], erstellt_am: iso(tag(jetzt, -50 + reihenfolge)), ...extra });
+    d.echo_beitraege = [
+      b("eb-1", "eh-1", "orchesterleben", "Probenwochenende: drei Tage nur Musik", "Am Freitag ging es los: Koffer, Instrumente und Notenständer in den Bus – und ab in die Jugendherberge. Schon am ersten Abend haben wir die neue Ouvertüre einmal ganz durchgespielt. Es klang noch ziemlich wild!\n\nAm Samstag gab es Registerproben. Die Celli haben im Speisesaal geübt, die Bläser im Garten (die Nachbarn fanden es gut, hoffen wir). Abends war bunter Abend mit Sketchen und einer Nachtwanderung.\n\nAm Sonntag kam der große Durchlauf – und plötzlich passte alles zusammen. Wir freuen uns schon auf das nächste Mal!", demoSchueler?.id || "p-leitung", "Mia, 2. Violine", 1),
+      b("eb-2", "eh-1", "orchesterleben", "Herbstkonzert: volles Haus", "Über 250 Gäste kamen zu unserem Herbstkonzert – so viele wie noch nie. Das B-Orchester eröffnete mit einem Marsch, das A-Orchester spielte danach eine ganze Sinfonie. Danke an alle Eltern für Kuchen, Aufbau und Abbau!", "p-lk1", "Martin Sommer", 2),
+      b("eb-3", "eh-1", "vorstellen", "Wir stellen vor: Judith Engel", "Seit wann bist du beim Bachkreis? – Seit sechs Jahren, ich leite die Streicher im B-Orchester.\n\nWelches Instrument spielst du? – Bratsche! Viele kennen sie gar nicht, dabei ist sie das Herz des Orchesters.\n\nWas magst du am Bachkreis? – Dass die Großen den Kleinen helfen. Das gibt es nicht überall.\n\nDein Tipp fürs Üben? – Lieber jeden Tag zehn Minuten als einmal in der Woche eine Stunde.", "p-lk2", "Interview: die Redaktion", 3),
+      b("eb-4", "eh-1", "schueler", "Mein erstes Mal im A-Orchester", "Ich war so aufgeregt! Die Großen spielen viel schneller, und es gibt so viele Noten auf einer Seite. Aber meine Pultnachbarin hat mir gezeigt, wo wir sind, wenn ich mal raus war. Nach der Probe war ich richtig stolz.", demoKindB?.id || "p-leitung", "Leo, Flöte", 4),
+      b("eb-5", "eh-1", "raetsel", "Welches Instrument bin ich?", "Ich habe vier Saiten und bin größer als eine Geige, aber kleiner als ein Cello. Man nennt mich auch die Bratsche. Wer bin ich?\n\n(Lösung: die Viola)", demoSchueler?.id || "p-leitung", "Mia", 5),
+      b("eb-6", "eh-1", "foerderverein", "Neue Notenständer – danke!", "Dank Ihrer Spenden beim Sommerfest konnte der Förderverein 20 neue Notenständer kaufen. Die alten wackeln nicht mehr in der Probe – sie sind jetzt im Lager für Auftritte draußen.", "p-fv1", "Karin Lindner, Förderverein", 6),
+      b("eb-7", "eh-2", "orchesterleben", "Adventskonzert in der Kirche", "Kerzen, Tannenduft und eine volle Kirche: Unser Adventskonzert war ein echter Höhepunkt. Besonders schön war das gemeinsame Lied mit dem Publikum am Ende.", "p-lk1", "Martin Sommer", 1),
+      b("eb-8", "eh-2", "vorstellen", "Wir stellen vor: unser Förderverein", "Ohne den Förderverein gäbe es keine Leihinstrumente, keine Probenfreizeit und keine neuen Noten. Drei Menschen aus dem Vorstand erzählen, warum sie sich engagieren – und wie man mitmachen kann.", "p-fv3", "Ute Kessler", 2),
+      b("eb-9", "eh-2", "witz", "Noch ein Witz", "Was macht ein Geiger im Fitnessstudio? – Bogentraining!", demoKindB?.id || "p-leitung", "Leo", 3),
+      b("eb-10", null, "orchesterleben", "Unsere Cellogruppe beim Weihnachtsmarkt", "Wir haben zu viert Weihnachtslieder gespielt und 86 Euro für die Orchesterkasse gesammelt!", demoSchueler?.id || "p-leitung", "Mia", 7, kind2 ? { personen: [kind2.id] } : {}),
+      b("eb-11", null, "witz", "Witz", "Warum können Geister so schlecht lügen? – Weil man durch sie hindurchsieht. (Hat nichts mit Musik zu tun, ist aber lustig.)", demoKindB?.id || "p-leitung", "Leo", 8),
+    ];
+  }
   return d;
 }

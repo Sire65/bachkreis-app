@@ -1,4 +1,4 @@
-// ↔️ 0.71.0 Gegenvorschlag bei Vorschlägen (wie Club App 2.956.0, KC-CLUB-GEGENVORSCHLAG)
+// ↔️ 0.70.0 Gegenvorschlag bei Vorschlägen (wie Club App 2.956.0, KC-CLUB-GEGENVORSCHLAG)
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

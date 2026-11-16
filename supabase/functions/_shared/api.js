@@ -11,7 +11,7 @@ import { kuendigungVollziehen } from "./kuendigung.js";
 import { kontext, filtern, schreibPruefung, TISCH_GAST_EINLADEN } from "./regeln.js";
 import { sha256, zufallsToken, hmac, gleich } from "./krypto.js";
 import { registrierungPruefen, anmeldungPruefen, b64u } from "./passkey.js";
-import { termineFuer, ics, eigeneVorkommen, einwilligung, nutzungAuswerten } from "./logik.js";
+import { termineFuer, ics, eigeneVorkommen, einwilligung, nutzungAuswerten, echoPruefung } from "./logik.js";
 import * as kom from "./kom/kern.js";
 
 const SITZUNG_TAGE = 180;
@@ -239,7 +239,7 @@ async function alleZeilen(db, tab) {
 }
 async function kontextLaden(db, person) {
   // Alles, was die Regeln brauchen (regeln.js kontext): Begleitpersonen/Anmeldung (projekte, reise_anmeldungen), Textfassung (genehmigung_vorlagen)
-  const noetig = ["kinderschutz", "eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben", "vorschlaege"];
+  const noetig = ["kinderschutz", "eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben", "vorschlaege", "echo_hefte"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   const ctx = kontext(person, alle);
@@ -390,6 +390,15 @@ async function speichern(db, s, body) {
     ctx.fotoOk = new Set();
     if (markiert.length) { const mdb = await speicherDb(db, ["genehmigung_vorlagen", "genehmigungen", "personen", "eltern_kind", "kinderschutz"]); for (const p of markiert) if (einwilligung(mdb, p, "foto_intern") === "ja") ctx.fotoOk.add(p); }
   }
+  // 📰 0.70.0 Bachkreis-Echo: Foto nur aus eigenen Dateien; vor dem Erscheinen die Datenschutz-Prüfung je Heft
+  if (tab === "echo_beitraege" || tab === "echo_hefte") {
+    const ids = [...new Set(zeilen.map((z) => String(z?.bild || z?.titelbild || "").replace(/^datei:/, "")).filter(Boolean))];
+    ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
+  }
+  if (tab === "echo_hefte" && zeilen.some((z) => z?.status === "erschienen")) {
+    const mdb = await speicherDb(db, ["genehmigung_vorlagen", "genehmigungen", "personen", "eltern_kind", "kinderschutz", "echo_beitraege"]);
+    ctx.echoProbleme = new Map(zeilen.filter((z) => z?.status === "erschienen").map((z) => [String(z.id), echoPruefung(mdb, String(z.id))]));
+  }
   if (tab === "nachricht_status" || tab === "chat_merker") {
     const ids = [...new Set(zeilen.map((z) => String(z?.nachricht_id || "")))];
     ctx.nMap = new Map((await db.q(`select to_jsonb(n) as z from bk_nachrichten n where id = any($1::text[])`, [ids])).map((r) => [r.z.id, r.z]));
@@ -431,8 +440,14 @@ async function speichern(db, s, body) {
       `insert into bk_${tab} (${cols.join(", ")}) select ${cols.join(", ")} from jsonb_populate_record(null::bk_${tab}, $1::jsonb)
        on conflict (id) do update set ${upd} returning to_jsonb(bk_${tab}.*) as z`, [JSON.stringify(daten)]);
     const zeile = r[0].z;
-    if (tab === "vorschlag_stimmen" && p.andereWeg?.length) // ↔️ 0.71.0 Gegenvorschlag: die Unterstützung wandert
+    if (tab === "vorschlag_stimmen" && p.andereWeg?.length) // ↔️ 0.70.0 Gegenvorschlag: die Unterstützung wandert
       await db.q(`update bk_vorschlag_stimmen set wahl = null, am = now(), geaendert_am = now(), version = version + 1, geaendert_von = $3 where person_id = $1 and vorschlag_id = any($2::text[]) and wahl is not null`, [s.person.id, p.andereWeg, name(s.person)]);
+    if (tab === "echo_hefte") ctx.echoMap.set(zeile.id, zeile);
+    if (p.echoErschienen) { // 📰 0.70.0 „Das neue Bachkreis-Echo ist da“ an alle aktiven Mitglieder (Push/Mail nach Communicator-Regel)
+      const an = (await db.q(`select id from bk_personen where status = 'aktiv' and geloescht_am is null`)).map((r) => r.id);
+      await kom.annehmen(db, { ereignis: "echo", an, betreff: `📰 Das neue Bachkreis-Echo ist da – Heft ${zeile.nr}`, text: `${zeile.titel ? zeile.titel + " · " : ""}Jetzt in der App zum Blättern (Bachkreis → Bachkreis-Echo).`,
+        korrelation: `echo:${zeile.id}`, ausloeser: name(s.person) }).catch(() => null);
+    }
     if (tab === "pinnwand") ctx.pw.set(zeile.id, zeile); // mehrere Zettel in einem Rutsch: Grenze und Farben stimmen weiter
     if (tab === "unterhaltungen") { ctx.unterhaltungen.add(zeile.id); ctx.uMap.set(zeile.id, zeile); }
     await db.q(`insert into bk_aenderungen (zeit, tabelle, zeile_id, aktion, wer, quelle) values (now(), $1, $2, $3, $4, $5)`,
@@ -523,6 +538,8 @@ async function dateiHolen(db, s, body, ablage) {
     if (!darf) darf = filtern("boerse", (await db.q(`select to_jsonb(b) as z from bk_boerse b where foto = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 🛍️ 0.47.0
     if (!darf) darf = filtern("fotos", (await db.q(`select to_jsonb(f) as z from bk_fotos f where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📷 0.40.0
     if (!darf) darf = filtern("eingangskorb", (await db.q(`select to_jsonb(k) as z from bk_eingangskorb k where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📥 0.53.0
+    if (!darf) darf = filtern("echo_beitraege", (await db.q(`select to_jsonb(b) as z from bk_echo_beitraege b where bild = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📰 0.70.0
+    if (!darf) darf = filtern("echo_hefte", (await db.q(`select to_jsonb(h) as z from bk_echo_hefte h where titelbild = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
     if (!darf) darf = filtern("uebe_ergebnisse", (await db.q(`select to_jsonb(e) as z from bk_uebe_ergebnisse e where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
   }
   if (!darf) return fehler(403, "KEIN_ZUGRIFF");

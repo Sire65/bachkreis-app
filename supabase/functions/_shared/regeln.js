@@ -7,7 +7,7 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { VS_GEGEN_MAX, vsGruppe, KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { ECHO_RUBRIKEN, ECHO_AUSGABEN, ECHO_REDAKTION, ECHO_FREIGABE, ECHO_TEXT_MAX, VS_GEGEN_MAX, vsGruppe, KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
@@ -57,6 +57,7 @@ export function kontext(person, alle) {
   ctx.gvMap = new Map((alle.genehmigung_vorlagen || []).map((v) => [v.id, v]));
   ctx.schutz = new Map((alle.kinderschutz || []).filter((z) => !z.geloescht_am).map((z) => [z.kind_id, z])); // 🛡️ 0.69.0
   ctx.ksLesen = rollen.some((r) => KS_LESEN.includes(r));
+  ctx.echoMap = new Map((alle.echo_hefte || []).map((h) => [h.id, h])); // 📰 0.70.0
   // 🎙️ Übe-Aufnahmen: für welche (eigenen) Kinder haben die Eltern zuletzt „erteilt“ (Zweck uebeaufnahmen)?
   const uaV = new Set((alle.genehmigung_vorlagen || []).filter((v) => v.zweck === "uebeaufnahmen" && !v.geloescht_am).map((v) => v.id)), uaLetzte = new Map();
   for (const g of alle.genehmigungen || []) if (!g.geloescht_am && uaV.has(g.vorlage_id) && meine.has(g.kind_id) && g.status !== "ausstehend" && String(g.beantwortet_am || "") >= String(uaLetzte.get(g.kind_id)?.beantwortet_am || "")) uaLetzte.set(g.kind_id, g);
@@ -153,6 +154,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "anrufe": return z.von === ctx.ich || (z.an || []).includes(ctx.ich) || (z.art === "tisch_da" && erwachsen(ctx.person) && z.status !== "beendet"); // 📞 0.50.0
     case "unterlagen": return ctx.meine.has(z.person_id) || hatRolle(ctx, UNTERLAGEN_LEITUNG); // 📁 0.48.0 eigene/Kinder + Leitung
     case "versammlungen": return hatRolle(ctx, SITZUNG_PLANER) || (z.status !== "planung" && sitzungFuerMich(z, ctx.person, ctx.rollen)); // 🎬 0.48.0 Planung nur fürs Büro
+    case "echo_hefte": return z.status === "erschienen"; // 📰 0.70.0 erschienene Hefte lesen alle Angemeldeten (die Redaktion liest alles)
+    case "echo_beitraege": return z.von === ctx.ich || (z.status === "angenommen" && ctx.echoMap?.get(z.heft_id)?.status === "erschienen");
     case "jahrbuch_momente": return z.von === ctx.ich || z.freigegeben === true || hatRolle(ctx, MODERATION); // 📖 0.47.0
     case "erstattungen": return z.von === ctx.ich || hatRolle(ctx, ER_KASSE);
     case "vorschlaege": return vsSichtbar(z, ctx);
@@ -841,6 +844,60 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (n.has(ctx.ich) && (alt.status !== "offen" || a.size >= (alt.helfer_anzahl || 1))) return { ok: false, grund: "VOLL" };
       return { ok: true, zeile: { ...alt, helfer: [...n] } };
     }
+    case "echo_hefte": {
+      // 📰 0.70.0 Redaktion legt Hefte an und schickt sie zur Freigabe; erscheinen lässt nur die Leitung – nicht die Person, die es zur
+      // Freigabe geschickt hat (Vier-Augen) – und nur ohne Datenschutz-Hinweis (api.js rechnet ctx.echoProbleme mit echoPruefung aus).
+      if (!hatRolle(ctx, ECHO_REDAKTION)) return { ok: false, grund: "NUR_REDAKTION" };
+      const chef = hatRolle(ctx, ECHO_FREIGABE);
+      if (alt?.status === "erschienen" && !chef) return { ok: false, grund: "SCHON_ERSCHIENEN" };
+      if (neu.geloescht_am) return alt?.status === "erschienen" && !chef ? { ok: false, grund: "SCHON_ERSCHIENEN" } : { ok: true, zeile: { ...alt, ...nur(neu, ["id"]), geloescht_am: jetzt } };
+      const t = (k, n) => String(neu[k] ?? alt?.[k] ?? "").trim().slice(0, n) || null, d = (k) => (/^\d{4}-\d{2}-\d{2}$/.test(String(neu[k] ?? "")) ? neu[k] : neu[k] === null ? null : alt?.[k] ?? null);
+      const z = { ...(alt || {}), ...nur(neu, ["id"]), nr: Math.max(1, Math.min(999, Number(neu.nr ?? alt?.nr) || 1)), titel: t("titel", 120), ausgabe: ECHO_AUSGABEN[neu.ausgabe] ? neu.ausgabe : alt?.ausgabe || null,
+        jahr: Math.max(2020, Math.min(2100, Number(neu.jahr ?? alt?.jahr) || new Date(jetzt).getFullYear())), vorwort: t("vorwort", ECHO_TEXT_MAX), vorwort_von: t("vorwort_von", 60), titelbild: t("titelbild", 80),
+        instrument: t("instrument", 40), komponist: t("komponist", 40), termine_von: d("termine_von"), termine_bis: d("termine_bis"), erscheint_am: d("erscheint_am"), geloescht_am: null };
+      const tb = String(z.titelbild || "").replace(/^datei:/, "");
+      if (tb && z.titelbild !== alt?.titelbild && ctx.dateien?.get(tb)?.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_DATEI" };
+      if (tb) z.titelbild = "datei:" + tb;
+      const vorher = alt?.status || "entwurf", soll = ["entwurf", "freigabe", "erschienen"].includes(neu.status) ? neu.status : vorher;
+      z.status = soll;
+      if (soll === "freigabe" && vorher !== "freigabe") Object.assign(z, { freigabe_von: ctx.ich, freigabe_am: jetzt });
+      if (soll === "entwurf") Object.assign(z, { freigabe_von: null, freigabe_am: null, ...(vorher === "erschienen" ? { erschienen_am: null, freigegeben_von: null } : {}) });
+      if (soll === "erschienen" && vorher !== "erschienen") {
+        if (!chef) return { ok: false, grund: "NUR_LEITUNG" };
+        if (vorher !== "freigabe") return { ok: false, grund: "ERST_ZUR_FREIGABE" };
+        if (alt?.freigabe_von === ctx.ich) return { ok: false, grund: "VIER_AUGEN" };
+        if (ctx.echoProbleme?.get(z.id)?.length) return { ok: false, grund: "ECHO_DATENSCHUTZ" };
+        Object.assign(z, { freigegeben_von: ctx.ich, erschienen_am: jetzt });
+        return { ok: true, zeile: z, echoErschienen: true };
+      }
+      return { ok: true, zeile: z };
+    }
+    case "echo_beitraege": {
+      // 📰 0.70.0 jede/r Angemeldete reicht Beiträge ein (auch Schüler/innen) und ändert sie, solange die Redaktion sie nicht angenommen hat;
+      // die Redaktion ordnet zu, kürzt, nimmt an oder gibt zurück. Ist das Heft erschienen, ändert nur noch die Leitung.
+      const red = hatRolle(ctx, ECHO_REDAKTION), heftId = neu.heft_id === undefined ? alt?.heft_id : neu.heft_id || null, heft = heftId ? ctx.echoMap?.get(heftId) : null;
+      if (heftId && (!heft || heft.geloescht_am)) return { ok: false, grund: "HEFT_FEHLT" };
+      const zu = (h) => h?.status === "erschienen" || h?.status === "freigabe";
+      if ((zu(heft) || zu(ctx.echoMap?.get(alt?.heft_id))) && !hatRolle(ctx, ECHO_FREIGABE) && !(red && heft?.status === "freigabe")) return { ok: false, grund: "HEFT_ZU" };
+      const eigen = !alt || alt.von === ctx.ich;
+      if (!red && !eigen) return { ok: false, grund: "NUR_EIGENE" };
+      if (!red && alt && !["eingereicht", "zurueck"].includes(alt.status)) return { ok: false, grund: "SCHON_BEARBEITET" };
+      if (neu.geloescht_am) return alt ? { ok: true, zeile: { ...alt, geloescht_am: jetzt } } : { ok: false, grund: "FEHLT" };
+      const titel = String(neu.titel ?? alt?.titel ?? "").trim().slice(0, 120), text = String(neu.text ?? alt?.text ?? "").trim().slice(0, ECHO_TEXT_MAX);
+      if (!titel || !text) return { ok: false, grund: "TEXT_FEHLT" };
+      const bildNeu = neu.bild === undefined ? alt?.bild ?? null : neu.bild || null, id = String(bildNeu || "").replace(/^datei:/, "");
+      if (bildNeu && bildNeu !== alt?.bild && ctx.dateien?.get(id)?.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_DATEI" };
+      const pers = (Array.isArray(neu.personen) ? neu.personen : alt?.personen || []).map(String).filter((x) => ctx.pMap?.has(x)).slice(0, 30);
+      const z = { ...(alt || {}), ...nur(neu, ["id"]), heft_id: heftId, rubrik: ECHO_RUBRIKEN[neu.rubrik] ? neu.rubrik : alt?.rubrik || "sonstiges", titel, text, bild: bildNeu ? "datei:" + id : null,
+        bild_text: String(neu.bild_text ?? alt?.bild_text ?? "").trim().slice(0, 160) || null, personen: pers, autor_zeile: String(neu.autor_zeile ?? alt?.autor_zeile ?? "").trim().slice(0, 60) || null,
+        von: alt?.von || ctx.ich, geloescht_am: null };
+      if (red) {
+        z.status = ["eingereicht", "angenommen", "zurueck", "abgelehnt"].includes(neu.status) ? neu.status : alt?.status || "eingereicht";
+        z.reihenfolge = Number.isFinite(Number(neu.reihenfolge)) ? Math.round(Number(neu.reihenfolge)) : alt?.reihenfolge ?? null;
+        z.redaktion_notiz = String(neu.redaktion_notiz ?? alt?.redaktion_notiz ?? "").trim().slice(0, 500) || null;
+      } else Object.assign(z, { status: "eingereicht", reihenfolge: alt?.reihenfolge ?? null, redaktion_notiz: alt?.redaktion_notiz ?? null }); // überarbeitet → wieder eingereicht
+      return { ok: true, zeile: z };
+    }
     case "jahrbuch_momente": {
       // 📖 0.47.0 jede/r schreibt eigene Momente (auch Kinder); ins Jahrbuch kommt nur, was die Leitung freigibt; nach Freigabe nicht mehr ändern
       if (alt && hatRolle(ctx, MODERATION) && alt.von !== ctx.ich) return { ok: true, zeile: { ...alt, freigegeben: !!neu.freigegeben, freigegeben_von: neu.freigegeben ? ctx.ich : null, geloescht_am: neu.geloescht_am ? jetzt : alt.geloescht_am } };
@@ -902,7 +959,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (alt && alt.von !== ctx.ich && !hatRolle(ctx, MODERATION) && !(alt.an === "vorstand" && hatRolle(ctx, ["vorstand"]))) return { ok: false, grund: "NUR_EIGENE" };
       if (neu.geloescht_am && !alt?.geloescht_am) return { ok: true, zeile: { ...alt, geloescht_am: jetzt } };
       const titel = String(neu.titel ?? "").trim().slice(0, 140); if (!titel) return { ok: false, grund: "TITEL_FEHLT" };
-      // ↔️ 0.71.0 Gegenvorschlag: nur zu offenen Vorschlägen (nicht zu Abstimmungen), die man sehen darf; höchstens 3 je Gruppe; gleiche Zielgruppe
+      // ↔️ 0.70.0 Gegenvorschlag: nur zu offenen Vorschlägen (nicht zu Abstimmungen), die man sehen darf; höchstens 3 je Gruppe; gleiche Zielgruppe
       let gegen = alt?.gegen_zu || null, gegenAn = null;
       if (!alt && neu.gegen_zu) {
         const z = ctx.vsMap?.get(String(neu.gegen_zu)), wurzel = z && (z.gegen_zu ? ctx.vsMap.get(z.gegen_zu) || z : z);
@@ -936,7 +993,7 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       const erlaubt = v.art === "abstimmung" ? (v.optionen?.length ? v.optionen.map((o) => o.id) : ["ja", "nein", "enth"]) : ["dafuer"];
       const wahl = neu.wahl == null || neu.wahl === "" ? null : String(neu.wahl);
       if (wahl && !erlaubt.includes(wahl)) return { ok: false, grund: "WAHL_UNGUELTIG" };
-      // ↔️ 0.71.0 in einer Gegenvorschlags-Gruppe unterstützt man nur einen: die Stimme bei den anderen nimmt der Server weg (api.js)
+      // ↔️ 0.70.0 in einer Gegenvorschlags-Gruppe unterstützt man nur einen: die Stimme bei den anderen nimmt der Server weg (api.js)
       const gruppe = v.art === "vorschlag" && wahl ? vsGruppe([...ctx.vsMap.values()], v).map((x) => x.id).filter((id) => id !== v.id) : [];
       return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), vorschlag_id: v.id, person_id: ctx.ich, wahl, am: jetzt }, andereWeg: gruppe };
     }

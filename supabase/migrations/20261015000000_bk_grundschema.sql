@@ -1619,6 +1619,67 @@ grant select, insert, update, delete on bk_jahrbuch_momente to service_role;
 drop trigger if exists bk_jahrbuch_momente_stempel on bk_jahrbuch_momente;
 create trigger bk_jahrbuch_momente_stempel before update on bk_jahrbuch_momente for each row execute function bk_abgleich_stempel();
 
+-- Bachkreis-Echo: Hefte
+create table if not exists bk_echo_hefte (
+  id text primary key default gen_random_uuid()::text,
+  nr integer not null,
+  titel text,
+  ausgabe text check (ausgabe is null or ausgabe in ('fruehling', 'sommer', 'herbst', 'winter', 'sonder')),
+  jahr integer,
+  status text check (status is null or status in ('entwurf', 'freigabe', 'erschienen')),
+  vorwort text,
+  vorwort_von text,
+  titelbild text,
+  instrument text,
+  komponist text,
+  termine_von date,
+  termine_bis date,
+  erscheint_am date,
+  freigabe_von text,
+  freigabe_am timestamptz,
+  freigegeben_von text,
+  erschienen_am timestamptz,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_echo_hefte_geaendert on bk_echo_hefte (geaendert_am);
+alter table bk_echo_hefte enable row level security;
+revoke all on bk_echo_hefte from public, anon, authenticated;
+grant select, insert, update, delete on bk_echo_hefte to service_role;
+drop trigger if exists bk_echo_hefte_stempel on bk_echo_hefte;
+create trigger bk_echo_hefte_stempel before update on bk_echo_hefte for each row execute function bk_abgleich_stempel();
+
+-- Bachkreis-Echo: Beiträge
+create table if not exists bk_echo_beitraege (
+  id text primary key default gen_random_uuid()::text,
+  heft_id text,
+  rubrik text not null check (rubrik is null or rubrik in ('orchesterleben', 'vorstellen', 'schueler', 'raetsel', 'spiel', 'witz', 'wissen', 'foerderverein', 'sonstiges')),
+  titel text not null,
+  text text not null,
+  bild text,
+  bild_text text,
+  personen text[],
+  autor_zeile text,
+  von text,
+  status text check (status is null or status in ('eingereicht', 'angenommen', 'zurueck', 'abgelehnt')),
+  reihenfolge integer,
+  redaktion_notiz text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_echo_beitraege_geaendert on bk_echo_beitraege (geaendert_am);
+alter table bk_echo_beitraege enable row level security;
+revoke all on bk_echo_beitraege from public, anon, authenticated;
+grant select, insert, update, delete on bk_echo_beitraege to service_role;
+drop trigger if exists bk_echo_beitraege_stempel on bk_echo_beitraege;
+create trigger bk_echo_beitraege_stempel before update on bk_echo_beitraege for each row execute function bk_abgleich_stempel();
+
 -- Vorschläge & Abstimmungen
 create table if not exists bk_vorschlaege (
   id text primary key default gen_random_uuid()::text,
@@ -2483,6 +2544,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_boers
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_foto_id_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_foto_id_fk foreign key (foto_id) references bk_fotos(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_von_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrbuch_momente_freigegeben_von_fk') then alter table bk_jahrbuch_momente add constraint bk_jahrbuch_momente_freigegeben_von_fk foreign key (freigegeben_von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_hefte_vorwort_von_fk') then alter table bk_echo_hefte add constraint bk_echo_hefte_vorwort_von_fk foreign key (vorwort_von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_beitraege_heft_id_fk') then alter table bk_echo_beitraege add constraint bk_echo_beitraege_heft_id_fk foreign key (heft_id) references bk_echo_hefte(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_beitraege_von_fk') then alter table bk_echo_beitraege add constraint bk_echo_beitraege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_von_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_gegen_zu_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_gegen_zu_fk foreign key (gegen_zu) references bk_vorschlaege(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_vorschlag_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_vorschlag_id_fk foreign key (vorschlag_id) references bk_vorschlaege(id) on delete restrict; end if; end $$;

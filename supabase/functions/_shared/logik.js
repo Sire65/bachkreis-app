@@ -1,7 +1,7 @@
 // AUTOMATISCH KOPIERT aus js/kern/logik.js (tools/server-kopie.mjs) – nicht von Hand ändern.
 // Fachlogik ohne Oberfläche – rein, testbar (tests/logik.test.mjs). Bekommt einen Datenzugriff „db“ mit
 // liste(tab, filter), hole(tab, id), konfig(). Dieselben Regeln gelten später serverseitig.
-import { KUENDIGUNG_ARTEN, AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG, FOTO_ZWECKE, elternZugriff, TABELLEN, TABELLEN_NAMEN } from "./schema.js";
+import { ECHO_RUBRIKEN, KUENDIGUNG_ARTEN, AUSSTATTUNG_KATEGORIEN, ND_INSTRUMENT, GWG_GRENZE, INVENTAR_ABGANG, FOTO_ZWECKE, elternZugriff, TABELLEN, TABELLEN_NAMEN } from "./schema.js";
 
 export const tagIso = (d) => { const x = new Date(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
 const imZeitraum = (z, tag) => (!z.von || z.von <= tag) && (!z.bis || z.bis >= tag);
@@ -660,3 +660,35 @@ export function nutzungAuswerten({ aenderungen = [], nachrichten = [], versand =
     tage_liste: Object.entries(proTag).sort(([x], [y]) => x.localeCompare(y)).map(([tag, v]) => ({ tag, aktiv: v.aktiv.size >= 3 ? v.aktiv.size : 0, nachrichten: v.nachrichten, push: v.push, mail: v.mail })),
     bereiche: Object.entries(bereiche).sort((x, y) => y[1] - x[1]).slice(0, 10).map(([t, n]) => ({ t, n })) };
 }
+
+// ---------- 📰 Bachkreis-Echo (0.70.0) ----------
+// Datenschutz vor dem Erscheinen: je angenommenem Beitrag und jedem Kind, das darin vorkommt. Leere Liste = darf erscheinen.
+// 🛡️ Schutzsperre oder „nur für die Leitung sichtbar“ → nie ins Heft; 📷 Foto bzw. 👋 Porträt nur mit Foto-Einwilligung (intern).
+export function echoPruefung(db, heftId) {
+  const aus = [];
+  for (const b of db.liste("echo_beitraege", (x) => x.heft_id === heftId && x.status === "angenommen")) {
+    for (const pid of b.personen || []) {
+      const p = db.hole("personen", pid); if (!p || p.typ !== "schueler") continue;
+      const ks = db.hole("kinderschutz", pid) || {}, wer = p.vorname || "ein Kind", wo = `„${b.titel || ECHO_RUBRIKEN[b.rubrik] || "Beitrag"}“`;
+      if (ks.schutz_aktiv) { aus.push({ beitrag: b.id, person: pid, art: "schutz", text: `🛡️ ${wer} steht unter besonderem Schutz und darf nicht im Heft vorkommen (${wo}).` }); continue; }
+      if (ks.sichtbar === "leitung") aus.push({ beitrag: b.id, person: pid, art: "verborgen", text: `🙈 ${wer} ist nur für die Leitung sichtbar – bitte ohne Namen (${wo}).` });
+      const ok = einwilligung(db, pid, "foto_intern") === "ja";
+      if (b.bild && !ok) aus.push({ beitrag: b.id, person: pid, art: "foto", text: `📷 Für ${wer} gibt es keine Foto-Einwilligung – Foto weglassen (${wo}).` });
+      else if (b.rubrik === "vorstellen" && !ok) aus.push({ beitrag: b.id, person: pid, art: "portraet", text: `👋 Porträt von ${wer} nur mit Einwilligung der Eltern (${wo}).` });
+      if (b.bild && ok && ks.foto_name !== true && p.vorname && String(b.bild_text || "").toLowerCase().includes(p.vorname.toLowerCase()))
+        aus.push({ beitrag: b.id, person: pid, art: "name", text: `🏷️ ${wer}: Name unter dem Foto ist nicht erlaubt – bitte aus der Bildunterschrift nehmen (${wo}).` });
+    }
+  }
+  return aus;
+}
+// Heftdruck: Seiten auf A4 quer (je Blatt Vorder- und Rückseite, je 2 A5-Seiten), Seitenzahl auf ein Vielfaches von 4 aufgefüllt.
+// Ergebnis: Liste der Druckseiten [links, rechts] (Seitennummern ab 1, null = leer). Gefalzt und geheftet ergibt das das Heft.
+export function heftAusschiessen(n) {
+  const g = Math.max(4, Math.ceil(n / 4) * 4), z = (i) => (i <= n ? i : null), aus = [];
+  for (let i = 0; i < g / 4; i++) {
+    aus.push([z(g - 2 * i), z(1 + 2 * i)]); // Vorderseite: außen
+    aus.push([z(2 + 2 * i), z(g - 1 - 2 * i)]); // Rückseite: innen
+  }
+  return aus;
+}
+export const heftSeitenZahl = (n) => Math.max(4, Math.ceil(n / 4) * 4);

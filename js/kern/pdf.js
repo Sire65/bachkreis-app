@@ -2,9 +2,10 @@
 // ohne fremden Dienst. Jede Seite ist ein Bild (DCTDecode), das die ganze Seite füllt. Reines JavaScript, läuft auch in Tests (Node).
 const enc = new TextEncoder();
 export const A4 = { hoch: [595.28, 841.89], quer: [841.89, 595.28] };
+export const FORMATE = { ...A4, a5: [419.53, 595.28] }; // 📰 0.70.0 A5 (148 × 210 mm) fürs Bachkreis-Echo
 
 export function pdfAusJpegs(seiten, { format = "hoch", titel = "Bachkreis" } = {}) {
-  const [W, H] = A4[format] || A4.hoch, teile = [], offsets = [];
+  const [W, H] = FORMATE[format] || A4.hoch, teile = [], offsets = [];
   let laenge = 0;
   const schreib = (x) => { const b = typeof x === "string" ? enc.encode(x) : x; teile.push(b); laenge += b.length; };
   const obj = (nr, kopf, strom = null) => {

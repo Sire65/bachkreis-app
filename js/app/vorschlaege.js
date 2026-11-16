@@ -46,7 +46,7 @@ function erledigtGruppen(l, karte) {
   }
   return (g.size > 1 ? klappenAlleKnopf("inhalt") : "") + [...g].map(([k, x], i) => klappe(`vs_g_${k}`, `🗂️ ${esc(x.titel)}`, x.l.map(karte).join(""), { offen: i === 0, zahl: x.l.length })).join("");
 }
-// ↔️ 0.71.0 Gegenvorschläge (wie Club App 2.956.0): eine Gruppe = eine Karte „A … oder B …“, jede Person unterstützt einen davon
+// ↔️ 0.70.0 Gegenvorschläge (wie Club App 2.956.0): eine Gruppe = eine Karte „A … oder B …“, jede Person unterstützt einen davon
 const BUCHST = ["A", "B", "C"];
 function gruppiert(l) {
   const gesehen = new Set(), out = [];
@@ -92,7 +92,7 @@ AKTIONEN.vsStimme = async (x) => {
   const alt = meineStimme(v), neu = wahl && alt?.wahl === wahl && v.art === "vorschlag" ? null : wahl || null;
   try { await speichere("vorschlag_stimmen", { ...(alt || { id: neueId() }), vorschlag_id: v.id, person_id: ich(), wahl: neu, am: new Date().toISOString() }); }
   catch (e) { return toast("⚠️ " + e.message); }
-  // ↔️ 0.71.0 in einer Gegenvorschlags-Gruppe wandert die Unterstützung (der Server nimmt sie bei den anderen weg; hier gleich mit)
+  // ↔️ 0.70.0 in einer Gegenvorschlags-Gruppe wandert die Unterstützung (der Server nimmt sie bei den anderen weg; hier gleich mit)
   if (neu && v.art === "vorschlag") { const andere = vsGruppe(liste("vorschlaege"), v).filter((x) => x.id !== v.id).map((x) => meineStimme(x)).filter((x) => x?.wahl);
     if (andere.length) { if (istEchtbetrieb()) jetztAbgleichen().catch(() => {}); else for (const x of andere) await speichere("vorschlag_stimmen", { ...x, wahl: null, am: new Date().toISOString() }); } }
   toast(neu ? (v.art === "vorschlag" ? "👍 Danke für die Unterstützung" : "🗳️ Deine Stimme ist gezählt") : "↩️ Zurückgenommen"); zeichne();

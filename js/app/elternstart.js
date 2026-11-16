@@ -32,6 +32,9 @@ export function elternErledigen(ks = gewaehlt(), heute = new Date()) {
   if (lv) z.unshift({ sym: "📝", text: `<b>${lv}</b> Leihvertrag${lv > 1 ? "e warten" : " wartet"} auf Ihre Unterschrift`, a: "kachel", x: "leihvertraege" });
   const zettel = pwWichtigFuerMich().length;
   if (zettel) z.push({ sym: "📌", text: `<b>${zettel}</b> wichtige${zettel > 1 ? "" : "r"} Zettel an der Pinnwand`, a: "kachel", x: "pinnwand" });
+  // 📰 0.70.0 neues Bachkreis-Echo (bis es einmal geöffnet wurde)
+  const echo = liste("echo_hefte", (x) => !x.geloescht_am && x.status === "erschienen").sort((a, b) => (b.jahr || 0) - (a.jahr || 0) || (b.nr || 0) - (a.nr || 0))[0];
+  if (echo && (Number(echo.nr) || 0) > (Number(einst().echoGelesen) || 0)) z.push({ sym: "📰", text: `Das neue <b>Bachkreis-Echo</b> ist da – Heft ${esc(echo.nr)}`, a: "kachel", x: "echo" });
   return z;
 }
 // 0.62.0 die 8 wichtigsten (Wunsch Hansi); Mitfahrbörse, Üben und Elternbereich stehen unter „Alle Bereiche“

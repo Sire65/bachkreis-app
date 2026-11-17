@@ -1,0 +1,38 @@
+# 🎻 Bach-Aufnahmen einmal holen (0.73.0): gemeinfreie/CC0-Aufnahmen von Wikimedia Commons (Quellen: audio/bach/QUELLEN.md).
+# Läuft nur auf dem Zweig „bach-aufnahmen“ (nicht auf main): je Datei EINE Anfrage mit 30 s Abstand, umwandeln nach MP3 (128 kbit/s),
+# Ergebnis wird auf diesem Zweig abgelegt. Eingebaut in die App wird es danach von Hand (Tests, neue Version, „Einspielen“).
+name: Bach-Aufnahmen holen
+on:
+  push:
+    branches: [bach-aufnahmen]
+    paths: [".github/workflows/bach-aufnahmen.yml"]
+permissions:
+  contents: write
+jobs:
+  holen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg >/dev/null
+      - name: Holen (je Datei einmal) und umwandeln
+        run: |
+          mkdir -p roh audio/bach
+          hole() {
+            if curl -fsSL --max-time 300 -A "AudioFetch/1.0 (GitHub Actions; public-domain music)" -o "roh/$1" "$2"; then echo "ok $1 $(stat -c %s "roh/$1")"; else echo "FEHLT $1"; rm -f "roh/$1"; fi
+            sleep 30
+          }
+          hole air.mp3 "https://upload.wikimedia.org/wikipedia/commons/e/ec/Air_-_Air_Force_Strings_-_United_States_Air_Force_Band.mp3"
+          hole jesus.ogg "https://upload.wikimedia.org/wikipedia/commons/2/27/Bach%2C_BWV_147%2C_10._Jesus_bleibet_meine_Freude.ogg"
+          hole violinkonzert.mp3 "https://upload.wikimedia.org/wikipedia/commons/1/1d/Violin_Concerto_No.1_in_A_minor_-_I._Allegro_moderato_-_Chamber_Orchestra_-_United_States_Marine_Band.mp3"
+          hole wachet.mp3 "https://upload.wikimedia.org/wikipedia/commons/e/ec/Wachet_Auf%21_-_Stellar_Brass_-_United_States_Air_Force_Band_of_the_Rockies.mp3"
+          for f in roh/*; do n=$(basename "${f%.*}"); ffmpeg -v error -y -i "$f" -vn -map_metadata -1 -ac 2 -b:a 128k "audio/bach/$n.mp3" && echo "umgewandelt $n"; done
+          ls -la audio/bach
+      - name: Auf dem Zweig ablegen
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/bach
+          if git diff --cached --quiet; then echo "Nichts Neues geholt"; exit 1; fi
+          git commit -q -m "Bach-Aufnahmen geholt (Wikimedia Commons, gemeinfrei/CC0)"
+          git push -q origin HEAD:bach-aufnahmen

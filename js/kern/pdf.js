@@ -42,5 +42,12 @@ export function umbrueche(gesamt, seite, grenzen) {
     const ende = kand.length ? kand[kand.length - 1] : start + seite;
     aus.push(ende); start = ende;
   }
+  // 🖨️ 0.75.0 nie eine letzte Seite mit nur ein, zwei Zeilen und der Fußzeile (wie KC-CLUB-DRUCK-FUSS-NIE-ALLEIN): bliebe weniger als
+  // ein Siebtel der Seite übrig, schneidet die vorletzte Seite früher – an einer Blockgrenze, sodass die letzte Seite Zeilen mitnimmt
+  const rest = gesamt - aus[aus.length - 1], minRest = seite / 7;
+  if (aus.length > 1 && rest < minRest) {
+    const vor = aus[aus.length - 2], frueher = l.filter((g) => g > vor + seite * 0.5 && g <= gesamt - minRest && g < aus[aus.length - 1]);
+    if (frueher.length) aus[aus.length - 1] = frueher[frueher.length - 1];
+  }
   return aus;
 }

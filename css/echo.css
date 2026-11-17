@@ -106,3 +106,7 @@
 .lupe-an .pdf-pult-zone { pointer-events: none; }
 .echo-lupe-knopf { display: inline-flex; gap: 4px; }
 .pdf-pult.lupe { overflow: hidden; }
+/* 💐 0.75.0 Gute-Besserung-Karte (Vorschau im Fenster) */
+.gk-vorschau { display: grid; justify-items: center; gap: 4px; text-align: center; padding: 12px; border: 4px solid #f2b705; border-radius: 10px; color: #1a1500; margin-bottom: 10px; }
+.gk-motiv svg { width: 150px; height: 150px; display: block; }
+.gk-vorschau b { font-size: 1.15rem; } .gk-vorschau p { margin: 0; font-family: Georgia, serif; color: #3a3a3a; } .gk-vorschau small { color: #8a6400; font-weight: 700; }

@@ -4,7 +4,7 @@
 import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern, istLehrkraft, istVorstand, rollen, name, db } from "./zustand.js";
 import { esc, AKTIONEN, toast, blatt } from "../kern/ui.js";
 import { speichere, datenInfo, serverAktion, konfig, konfigSetzen } from "../kern/daten.js";
-import { einstStufe, CHAT, ER_KM_SATZ } from "../kern/schema.js";
+import { einstStufe, CHAT, ER_KM_SATZ, erwachsen } from "../kern/schema.js";
 import { klappenAlleKnopf } from "../kern/klappen.js";
 import { WARTE_WAHL, WARTE_BILDER, warteBildHtml } from "../kern/warten.js";
 import { BUNDESLAENDER } from "../kern/logik.js";
@@ -113,6 +113,8 @@ function nachrichtenEinst(e) {
   return `${schalter("lesebestaetigung", "✓✓ Lesebestätigungen (blaue Haken)", "Andere sehen, wann du ihre Nachricht gelesen hast. Aus: du siehst auch bei anderen keine blauen Haken – wie bei WhatsApp", e.lesebestaetigung !== false)}
     ${schalter("wichtigFragen", "❗ Vor dem Senden nach der Wichtigkeit fragen", "📝 Normal oder ❗ Hoch – höchstens alle 30 Min. je Chat", e.wichtigFragen ?? rollen().some((r) => ["leitung", "admin"].includes(r)))}
     ${schalter("versandImmer", "📝❗🏎️ Versand-Leiste immer zeigen", "Aus: erscheint erst, wenn du schreibst oder etwas anhängst", e.versandImmer === true)}
+    ${erwachsen(S.ich) ? `<label class="schalter"><span><b>📱 Ich lese lieber WhatsApp</b><div class="hinweis">Schreibt dir jemand im Einzelchat, öffnet sich bei ihm WhatsApp gleich mit – die Nachricht steht dann auch dort (nur mit freigegebener Handynummer, nur unter Erwachsenen)</div></span><input type="checkbox" data-c="waLieber" ${S.ich?.whatsapp_lieber ? "checked" : ""}></label>` : ""}
+    ${erwachsen(S.ich) ? schalter("waAuto", "🟢 WhatsApp automatisch öffnen", "Wenn die Person lieber WhatsApp liest: beim Senden im Einzelchat öffnet sich WhatsApp mit deinem Text – nur noch Senden", e.waAuto !== false) : ""}
     ${schalter("chatTon", "🔔 Ton bei neuer Nachricht im offenen Chat", "Kurzer Ton und Vibrieren", e.chatTon !== false)}
     ${schalter("vorlesen", "🔊 Neue Nachrichten vorlesen", "Im geöffneten Chat liest das Handy neue Nachrichten vor", e.vorlesen === true)}
     ${schalter("entwuerfe", "✏️ Entwürfe merken", "Angefangene Nachrichten bleiben je Chat stehen – auch nach dem Schließen", e.entwuerfe !== false)}
@@ -299,6 +301,10 @@ AKTIONEN.freigabe = async (_, el) => {
   const fg = { ...(S.ich.freigaben || {}), [el.dataset.x]: el.checked };
   S.ich = await speichere("personen", { ...S.ich, freigaben: fg });
   toast(el.checked ? "✅ Freigegeben" : "🔒 Nicht mehr sichtbar");
+};
+AKTIONEN.waLieber = async (_, el) => { // 📱 0.75.0 wie KC-CLUB-WA-LIEBER
+  S.ich = await speichere("personen", { ...S.ich, whatsapp_lieber: el.checked });
+  toast(el.checked ? (S.ich.freigaben?.mobil || ["leitung", "lehrkraft"].includes(S.ich.typ) ? "📱 Wer dir schreibt, bekommt WhatsApp gleich mit geöffnet" : "📱 Gemerkt – damit es klappt, bitte unter Privatsphäre die Handynummer freigeben") : "💬 Nachrichten kommen nur in der App");
 };
 AKTIONEN.alleGeraeteAb = async () => {
   if (!confirm("Alle anderen Geräte abmelden? Dort braucht es danach wieder den persönlichen Link.")) return;

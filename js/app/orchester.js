@@ -7,7 +7,7 @@ import { S, VIEWS, db, zeige, zeichne, zurueck, kopf, name, istLehrkraft, istVer
 import { esc, AKTIONEN, datumKurz, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { gruppenMitglieder, stammgruppe, wirksameGruppen, generellerWechselPlan, instrumenteVon, registerVon, elternVon, kinderVon, tagIso, ausleihenVon, antwortVon, fotoErlaubnis } from "../kern/logik.js";
-import { statusZeileHtml } from "./meinstatus.js";
+import { statusZeileHtml, statusArt } from "./meinstatus.js";
 import { gesicht, gesichtSvg, merkmale, HAUT, HAARFARBE, FRISUREN, AUGEN, MUND, FARBEN } from "./gesichter.js";
 import { onlineIds, onlineSichtbar } from "./online.js";
 import { lehreZu } from "./instrumentenkunde.js";
@@ -127,7 +127,7 @@ VIEWS.person = {
     const hist = liste("gruppe_zuordnung", (z) => z.person_id === id).sort((a, b) => (b.von || "").localeCompare(a.von || ""));
     const inst = instrumenteVon(db, id);
     let html = kopf(esc(name(p)));
-    html += `<div class="karte person-kopf"><span class="pk-gesicht">${gesicht(p, name(p))}</span>${p.id === S.ich.id ? '<button class="knopf klein" data-a="meinGesicht">🙂 Gesicht gestalten</button>' : ""}<div class="zeile-titel">${esc(name(p))}</div>${statusZeileHtml(p.id)}<div class="hinweis">${p.jahrgang ? "Jahrgangsstufe " + p.jahrgang + " · " : ""}${esc(p.schule || "")}</div>
+    html += `<div class="karte person-kopf"><span class="pk-gesicht">${gesicht(p, name(p))}</span>${p.id === S.ich.id ? '<button class="knopf klein" data-a="meinGesicht">🙂 Gesicht gestalten</button>' : ""}<div class="zeile-titel">${esc(name(p))}</div>${statusZeileHtml(p.id)}${p.id !== S.ich.id && p.status === "aktiv" ? `<button type="button" class="knopf klein${statusArt(p.id) === "krank" ? " haupt" : ""}" data-a="gkOeffnen" data-x="${esc(p.id)}">💐 Gute-Besserung-Karte</button>` : ""}<div class="hinweis">${p.jahrgang ? "Jahrgangsstufe " + p.jahrgang + " · " : ""}${esc(p.schule || "")}</div>
       <div>${wirk.map((g) => hole("gruppen", g)).map((g) => `<span class="badge" style="background:${esc(g.farbe)}22;color:${esc(g.farbe)}">${esc(g.kuerzel)} – ${esc(g.name)}${g.id !== stamm ? " (temporär)" : ""}</span>`).join("")}</div>
       <h4>Instrumente</h4><ul class="liste">${inst.map((i) => `<li><div class="fl">${i.haupt ? "⭐ " : ""}${esc(hole("instrument_typen", i.typ_id)?.name)} <span class="hinweis">→ ${esc(hole("register", i.register_id)?.name || "")}${i.eigenes ? " · eigenes" : " · Leihinstrument nötig"}</span></div></li>`).join("") || "<li>–</li>"}</ul></div>`;
     if (darfDetails) {

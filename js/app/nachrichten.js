@@ -26,7 +26,7 @@ import { onlineLeisteHtml } from "./online.js";
 import { textHtml, erkennen, terminErkennen, NA_FARBEN } from "../kern/chattext.js";
 import { kinderVon as kinderVonL, termineFuer, antwortVon, tagIso } from "../kern/logik.js";
 import { terminVorlage, eigenTerminVorlage } from "./termine.js";
-import { erwaehnteIn, kinderChatOffen, ksVon } from "../kern/schema.js";
+import { erwaehnteIn, kinderChatOffen, ksVon, erwachsen } from "../kern/schema.js";
 import { anrufKnoepfe } from "./anruf.js";
 import { kontaktHtml, konferenzHtml, konferenzKnopf, geheimKnopf, geheimHinweis, geheimAn, geheimVerpacken, geheimMerken, geheimHtml, geheimFuellen } from "./chatextra.js";
 import { stummAn, archiviert, favorit, archivAufwachen, angeheftetHtml, darfAnheften, gemerkt, zurueckholbar, erwaehnungVorschlag, erwaehnungenMarkieren, chatGestenVerdrahten, runterNeu } from "./chatplus.js";
@@ -171,6 +171,7 @@ function partnerListe() {
   const opt = { schuelerUntereinander: konfig().chat_schueler_untereinander !== false, kinderChat: kinderChatErlaubt }; // 🛡️ 0.69.0
   return liste("personen", (p) => pwAppPerson(p) && chatPartnerErlaubt(me, p, { ...opt, verwandt: verwandt.has(p.id) })).sort((a, b) => name(a).localeCompare(name(b), "de"));
 }
+export const darfChatten = (pid) => partnerListe().some((p) => p.id === pid); // 💐 0.75.0 z. B. für die Gute-Besserung-Karte
 VIEWS.chatNeu = {
   render() {
     const q = NEU.suche.toLowerCase(), l = partnerListe();
@@ -211,14 +212,27 @@ export async function einzelchatMit(pid) {
   if (da) return da;
   return speichere("unterhaltungen", { id: neueId(), titel: "Einzelgespräch", art: "einzel", mitglieder: [ich(), pid] });
 }
-AKTIONEN.chatNeuWeiter = async () => {
+// 💬 0.75.0 Gibt es schon eine Runde mit genau diesen Personen (und mir)? (wie KC-CLUB-CHAT-VORHANDEN) – die zuletzt benutzte zuerst;
+// nicht geheim (🔒) und nicht die Orchester-/Verteiler-Chats
+export function vorhandeneRunde(mitglieder) {
+  return liste("unterhaltungen", (u) => u.art === "runde" && !u.geloescht_am && !u.geheim && gleicheMitglieder(u, mitglieder))
+    .sort((a, b) => String(b.letzte_zeit || b.geaendert_am || "").localeCompare(String(a.letzte_zeit || a.geaendert_am || "")))[0] || null;
+}
+AKTIONEN.chatNeuWeiter = async (x) => {
   if (!NEU.wahl.length) return toast("Bitte mindestens eine Person auswählen.");
   const { mitglieder, kopie } = NEU.wahl.length > 1 ? mitKopie(NEU.wahl) : { kopie: [] };
+  if (NEU.wahl.length > 1 && x !== "neu") {
+    const da = vorhandeneRunde(mitglieder);
+    if (da) return blatt("💬 Diese Runde gibt es schon", `<p>Es gibt schon die Runde 👥 <b>„${esc(chatTitel(da))}“</b> mit genau diesen Personen. Deine Nachricht dort hineinschreiben?</p>
+      <div class="knopfreihe"><button type="button" class="knopf haupt" data-a="chatNeuDort" data-x="${esc(da.id)}">💬 Ja, dort schreiben</button><button type="button" class="knopf" data-a="chatNeuWeiter" data-x="neu">➕ Neue Runde anlegen</button></div>`);
+  }
+  blattZu();
   if (kopie.length) toast(`👪 ${kopie.length} ${kopie.length === 1 ? "Elternteil liest" : "Eltern lesen"} mit (Kinderschutz)`, 4000);
   const u = NEU.wahl.length === 1 ? await einzelchatMit(NEU.wahl[0])
     : await speichere("unterhaltungen", { id: neueId(), titel: (NEU.titel || "").trim() || "Runde", art: "runde", mitglieder });
   zeige("unterhaltung", { id: u.id }, { ersetzen: true });
 };
+AKTIONEN.chatNeuDort = (uid) => { blattZu(); zeige("unterhaltung", { id: uid }, { ersetzen: true }); };
 AKTIONEN.chatMit = async (pid) => { const u = await einzelchatMit(pid); zeige("unterhaltung", { id: u.id }); };
 
 // ---------- Eine Unterhaltung ----------
@@ -669,7 +683,9 @@ AKTIONEN.chatSenden = async (uid) => {
     try { const g = await geheimVerpacken(uid, text); n = { ...n, text: g.text, geheim: g.geheim, erwaehnt: [] }; geheimMerken(n.id, g.klar); }
     catch { return toast("⚠️ Verschlüsseln ging nicht – nichts wurde gesendet."); }
   }
-  const whatsappAuch = C.zustell.whatsapp && !n.geheim;
+  // 📱 0.75.0 „liest lieber WhatsApp“ (wie KC-CLUB-WA-LIEBER): im Einzelchat unter Erwachsenen öffnet sich WhatsApp im selben Antippen
+  const partner = hole("personen", chatPartnerVon(u)), waLieber = !!partner && waLieberAn(partner, n);
+  const whatsappAuch = (C.zustell.whatsapp || waLieber) && !n.geheim;
   papierflieger(document.querySelector('[data-a="chatSenden"]'), n.wichtig, n.id, n.express);
   await speichere("nachrichten", n);
   eingabeZuruecksetzen(uid);
@@ -680,6 +696,8 @@ AKTIONEN.chatSenden = async (uid) => {
   const r = await bescheid(n, u);
   if (n.express) toast(`🏎️ Per Express versandt${r ? ` (${r} Wege)` : ""}. Unter der Nachricht siehst du, wann sie angekommen ist und gelesen wurde.${expressUnbegrenzt() ? "" : ` Heute ${expressHeute()}/${expressMax()}.`}`, 5000);
 };
+// 📱 0.75.0 nur Text (keine Anlagen, nicht geheim, nicht Express), nur mit sichtbarer Nummer, beide erwachsen, abschaltbar je Gerät
+export const waLieberAn = (p, n) => !!(p?.whatsapp_lieber && p.mobil && erwachsen(p) && erwachsen(S.ich) && einst().waAuto !== false && !n.anlagen?.length && !n.geheim && !n.express);
 // Bescheid über den BK Communicator – im Echtbetrieb bestimmt der Server Empfänger und Regel (je Nachricht einmal)
 async function bescheid(n, u) {
   try {

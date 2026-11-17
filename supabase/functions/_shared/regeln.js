@@ -205,6 +205,8 @@ function kuerzen(tab, z, ctx, alleLesen) {
     if (fg.mobil) out.mobil = z.mobil;
     if (fg.email) out.email = z.email;
   }
+  // 📱 0.75.0 „liest lieber WhatsApp“ (wie KC-CLUB-WA-LIEBER): nur zusammen mit einer sichtbaren Nummer und nie bei Kindern
+  if (tab === "personen" && out !== z) { out = { ...out }; delete out.whatsapp_lieber; if (z.whatsapp_lieber && out.mobil && erwachsen(z)) out.whatsapp_lieber = true; }
   if (tab === "antworten" && !alleLesen && !ctx.meine.has(z.person_id)) { out = { ...out }; delete out.notiz; } // Registerführer: Antwort ja, Grund nein
   if (tab === "zugaenge") out = { ...out, code: null, code_hash: undefined };
   if (tab === "vorschlag_stimmen" && z.person_id !== ctx.ich && ctx.vsMap?.get(z.vorschlag_id)?.anonym) out = { ...out, person_id: null }; // 🔒 geheim: auch die Leitung sieht nicht, wer
@@ -1109,7 +1111,8 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
         const av = neu.avatar === null ? null : neu.avatar && typeof neu.avatar === "object" ? Object.fromEntries(["haut", "frisur", "haar", "augen", "mund", "brille", "farbe"].filter((k) => Number.isInteger(neu.avatar[k]) && neu.avatar[k] >= 0 && neu.avatar[k] < 20).map((k) => [k, neu.avatar[k]])) : alt.avatar;
         const plan = "uebe_plan" in neu ? uebePlanPruefen(neu.uebe_plan) : alt.uebe_plan;
         const alarm = "kalender_alarm" in neu ? ([0, 15, 30, 60, 120, 1440].includes(Number(neu.kalender_alarm)) ? Number(neu.kalender_alarm) : null) : alt.kalender_alarm;
-        return { ok: true, zeile: { ...alt, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg, avatar: av ?? null, uebe_plan: plan ?? null, kalender_alarm: alarm ?? null,
+        const waLieber = "whatsapp_lieber" in neu ? neu.whatsapp_lieber === true && erwachsen(alt) : alt.whatsapp_lieber ?? null; // 📱 0.75.0 nur Erwachsene
+        return { ok: true, zeile: { ...alt, whatsapp_lieber: waLieber, benachrichtigung: neu.benachrichtigung ?? alt.benachrichtigung, freigaben: fg, avatar: av ?? null, uebe_plan: plan ?? null, kalender_alarm: alarm ?? null,
           aenderung_bitte: neu.aenderung_bitte === null ? null : alt.aenderung_bitte ?? null } }; } // ✏️ 0.70.0 die Bitte darf man nur erledigen (löschen), nie selbst setzen
     default:
       return { ok: false, grund: "KEIN_SCHREIBRECHT" };

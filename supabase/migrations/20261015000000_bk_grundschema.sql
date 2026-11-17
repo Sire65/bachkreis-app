@@ -25,6 +25,7 @@ create table if not exists bk_personen (
   firma text,
   email text,
   mobil text,
+  whatsapp_lieber boolean,
   telefon text,
   strasse text,
   plz text,

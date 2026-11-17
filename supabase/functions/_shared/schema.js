@@ -422,6 +422,7 @@ export const TABELLEN = {
       { k: "firma", t: "Firma / Einrichtung", typ: "text", nur: (z) => ["partner", "dienstleister", "spender", "unterstuetzer"].includes(z.typ) },
       { k: "email", t: "E-Mail", typ: "email" },
       { k: "mobil", t: "Mobil (WhatsApp)", typ: "tel" },
+      { k: "whatsapp_lieber", t: "📱 Liest lieber WhatsApp (nur Erwachsene, 0.75.0)", typ: "ja" },
       { k: "telefon", t: "Telefon", typ: "tel" },
       { k: "strasse", t: "Straße", typ: "text" },
       { k: "plz", t: "PLZ", typ: "text" },

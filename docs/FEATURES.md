@@ -179,6 +179,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F169 | ✏️ Änderung erbitten: Leitung bittet, Mitglied meldet „Sofort“ (wie KC 2.957.0) | ✅ | clubapp-neu.test, Rundgang |
 | BK-F170 | 🎨 Bildschirmfoto/PDF/Fernhilfe mit modernen Farben (wie KC 2.952.0) | ✅ | Rundgang |
 | BK-F171 | ↔️ Gegenvorschlag bei Vorschlägen: bis 3 je Thema, eine Karte, Stimme wandert, Abstimmung daraus (wie KC 2.956.0) | ✅ | gegenvorschlag.test |
+| BK-F177 | 💬 Vorhandene Runde mit genau diesen Personen anbieten (wie KC 2.970) | ✅ | clubapp-2972.test |
+| BK-F178 | 📱 „Ich lese lieber WhatsApp“ – WhatsApp öffnet sich beim Senden (nur Erwachsene, wie KC 2.969) | ✅ | clubapp-2972.test |
+| BK-F179 | 💐 Gute-Besserung-Karte mit 4 Motiven in den Chat (wie KC 2.965/2.967) | ✅ | clubapp-2972.test |
+| BK-F180 | 🖨️ Nie eine fast leere letzte PDF-Seite (wie KC 2.968) | ✅ | clubapp-2972.test |
 | BK-F176 | 👉 Dirigentin gibt Einsätze: dreht sich zur Gruppe, linke Hand zeigt hin | ✅ | dirigent.test |
 | BK-F175 | 🪄 Dirigentin mit beiden Armen, echten Schlagfiguren (2/3/4) und Tempo-Erkennung bei Aufnahmen | ✅ | dirigent.test |
 | BK-F174 | 🔍 Lupe mit zwei Fingern (Echo, PDF-Pult): vergrößern, verschieben, Doppeltipp, Strg+Mausrad | ✅ | lupe.test |

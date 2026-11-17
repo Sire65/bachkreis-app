@@ -15,6 +15,7 @@ create table if not exists bk_personen (
   firma text,
   email text,
   mobil text,
+  whatsapp_lieber boolean,
   telefon text,
   strasse text,
   plz text,
@@ -61,6 +62,7 @@ alter table bk_personen add column if not exists schule text;
 alter table bk_personen add column if not exists firma text;
 alter table bk_personen add column if not exists email text;
 alter table bk_personen add column if not exists mobil text;
+alter table bk_personen add column if not exists whatsapp_lieber boolean;
 alter table bk_personen add column if not exists telefon text;
 alter table bk_personen add column if not exists strasse text;
 alter table bk_personen add column if not exists plz text;

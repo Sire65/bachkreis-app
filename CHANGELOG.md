@@ -1,6 +1,14 @@
 # Änderungen
 
 ## 0.75.0 DEV – 17.11.2026
+🆕 **Neues aus der Club App** (Abgleich mit Club App 2.958.0–2.972.0, Wunsch Hansi „prüfe, was sich geändert hat, und passe an, z. B. Nachrichten“):
+- **💬 Diese Runde gibt es schon** (wie KC-CLUB-CHAT-VORHANDEN, 2.970.0): wer unter „✉️ Neue Nachricht“ mehrere Personen wählt, mit denen es schon eine Runde gibt (genau diese Personen – bei Kindern mit den Eltern), wird gefragt: „💬 Ja, dort schreiben“ oder „➕ Neue Runde anlegen“. Nicht bei 🔒 geheimen Chats und Orchester-Chats
+- **📱 Ich lese lieber WhatsApp** (wie KC-CLUB-WA-LIEBER, 2.969.0): neue Einstellung unter ⚙️ → Nachrichten (nur Erwachsene). Schreibt ihr jemand im Einzelchat, geht die Nachricht wie immer in die App – und im selben Antippen öffnet sich WhatsApp mit dem Text, nur noch Senden. Nur mit freigegebener bzw. sichtbarer Handynummer, nur Text (nicht mit Anhang, nicht geheim, nicht Express), nur unter Erwachsenen (Kinderschutz); für Absender abschaltbar („🟢 WhatsApp automatisch öffnen“). Admin kann es in der PC-Verwaltung bei der Person setzen
+- **💐 Gute-Besserung-Karte** (wie KC-CLUB-GENESUNGSKARTE/-KARTEN, 2.965/2.967): auf der Personenseite (hervorgehoben, wenn 🤒 krank gemeldet) – 4 gemalte Motive (Blumenstrauß, Geige mit Herz, Teddy mit Noten, Sonne & Regenbogen), Überschrift, Text-Vorschlag oder eigener Text (bis 120 Zeichen), Absender; kommt als Bild in den Chat. Kein Grund auf der Karte; bei Kindern lesen die Eltern mit; nur wer der Person schreiben darf
+- **🖨️ Nie eine fast leere letzte PDF-Seite** (wie KC-CLUB-DRUCK-FUSS-NIE-ALLEIN, 2.968.0): bliebe für die letzte Seite nur ein kleiner Rest, schneidet die vorletzte Seite früher – gilt für alle Ausdrucke
+- Nicht übernommen: ⚽ Bundesliga-Tippspiel (passt nicht zum Jugendorchester, fremder Datendienst), Datenverkehr-Säulen, Hänger-Messung/Fehlerkatalog, Ablage-Register, Dienstplan, Gemeinschaftsgericht, Terminanfrage-✕ (Bachkreis-Umfragen gehen an Orchester, nicht an einzelne Personen), Online-Laufschrift (gibt es im Bachkreis nicht); 👥 gemeinsame Karte vom ganzen Orchester – auf Wunsch als Nächstes
+- Neue Spalte `personen.whatsapp_lieber` (Migration), neuer Programmteil `genesung.js` (lädt erst beim Öffnen); Test `clubapp-2972.test`
+
 🙌 **Dirigentin: Hände nicht mehr hinter dem Rücken** (Meldung Hansi „die Hände berühren sich hinter seinem Rücken – das geht nicht“):
 - Wir sehen die Dirigentin von hinten – die **Arme arbeiten jetzt vor ihrem Körper**: was vor der Brust passiert, verdeckt der Rücken; sichtbar sind Arme, Hände und Taktstock seitlich und oben, wie im echten Konzert
 - **Die Hände treffen sich nie** und kreuzen nie: der Schlag „nach innen“ bleibt auf der eigenen Seite, zwischen den Händen ist immer Abstand

@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.73.0 DEV – 17.11.2026
+👉 **Die Dirigentin gibt Einsätze** (Wunsch Hansi „zur Seite und den Einsatz z. B. der Geigen anzeigen, nicht nur rauf und runter“):
+- Setzt eine Gruppe nach einer Pause wieder ein, **dreht sich die Dirigentin zu ihr** (Oberkörper und Kopf), **zeigt mit der linken Hand hin** – nach hinten (Hörner, Pauke, Blech) höher – und ihre Schlagfigur wandert ein Stück zur Gruppe
+- Geste kommt schnell, hält kurz und geht sanft zurück; höchstens alle 1,5 Schläge. Spielt das Orchester lange durch, wendet sie sich nach etwa 8 Schlägen der nächsten spielenden Gruppe zu – wie im echten Konzert
+- Gilt für die Melodien und für Aufnahmen (z. B. 🎻 Badinerie); Sitzplätze der Gruppen wie auf der Bühne gezeichnet
+
 ## 0.72.0 DEV – 17.11.2026
 🪄 **Dirigentin wie echt** (Wunsch Hansi „realitätsnäher, nicht nur eine Hand, im Takt“):
 - **Beide Arme mit Ellenbogen** (Schulter – Ellenbogen – Hand); die rechte Hand führt den Taktstock, die linke spiegelt die Bewegung etwas kleiner

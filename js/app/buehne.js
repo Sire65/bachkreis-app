@@ -6,7 +6,7 @@ import { esc, AKTIONEN, toast, datumKurz } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
-import { SCHLAGFIGUR, SCHULTER, RUHE, armPfad, handPosition, tempoSchaetzen } from "../kern/dirigat.js";
+import { SCHLAGFIGUR, SCHULTER, RUHE, armPfad, handPosition, tempoSchaetzen, einsatzRichtung, einsatzStaerke, mitEinsatz } from "../kern/dirigat.js";
 
 const B = { ctx: null, lauf: null, audio: null, quelle: null, analyser: null, raf: 0, modus: "melodien", stueck: STUECKE[0].id, tempo: 1, laut: 0.8, applaus: true, mitschnitt: null, blobUrl: null, tipp: 0 };
 
@@ -190,6 +190,7 @@ function umschalter() {
 }
 export function sekAn(sek, dauer = 0.4) {
   const r = document.getElementById("bwRahmen"); if (!r) return;
+  einsatzPruefen(sek);
   for (const s of sek) for (const el of r.querySelectorAll(`.sek-${s}`)) {
     el.classList.add("aktiv");
     clearTimeout(el._aus); el._aus = setTimeout(() => el.classList.remove("aktiv"), Math.max(250, dauer * 1000 + 120));
@@ -203,7 +204,19 @@ function note(sek) {
   t.setAttribute("class", "notenzeichen"); t.textContent = Math.random() < 0.5 ? "♪" : "♫";
   g.appendChild(t); setTimeout(() => t.remove(), 1800);
 }
-const DIR = { schlag: 0, takte: 4, dauer: 600, zeit: 0, raf: 0, ruhe: true };
+const DIR = { schlag: 0, takte: 4, dauer: 600, zeit: 0, raf: 0, ruhe: true, einsatz: null, letzterEinsatz: 0, still: {} };
+// 👉 0.73.0 Einsatz: setzt eine Gruppe nach einer Pause (≥ 2 Schläge) wieder ein, zeigt die Dirigentin zu ihr – höchstens alle 1,5 Schläge;
+// nach 8 Schlägen ohne Einsatz wendet sie sich der nächsten spielenden (anderen) Gruppe zu
+function einsatzPruefen(sek) {
+  const jetzt = performance.now(), pause = Math.max(1200, DIR.dauer * 2);
+  for (const s of sek) {
+    const vorher = DIR.still[s] || 0; DIR.still[s] = jetzt;
+    const wechsel = jetzt - DIR.letzterEinsatz > DIR.dauer * 8 && s !== DIR.einsatzSek; // lange kein Einsatz → einer anderen Gruppe zuwenden
+    if ((jetzt - vorher < pause && !wechsel) || jetzt - DIR.letzterEinsatz < DIR.dauer * 1.5 || !DIR.raf) continue;
+    const ri = einsatzRichtung(s); if (!ri || Math.abs(ri.r) < 0.12 && ri.hoch < 0.5) continue; // direkt vor ihr: kein Extra-Zeigen
+    DIR.einsatz = { ...ri, sek: s, zeit: jetzt, dauer: Math.max(700, DIR.dauer * 1.6) }; DIR.letzterEinsatz = jetzt; DIR.einsatzSek = s; break;
+  }
+}
 function dirigentZeichnen(jetzt) {
   const armR = document.getElementById("dirArmR"); if (!armR) { DIR.raf = 0; return; }
   const seit = jetzt - DIR.zeit, aus = seit > DIR.dauer * 2.5;
@@ -215,6 +228,12 @@ function dirigentZeichnen(jetzt) {
     const lu = Math.max(0, u - 0.06), lh = handPosition(DIR.takte, DIR.schlag, lu); // links: Spiegel, kleiner, etwas später
     l = [-(SCHULTER + (lh[0] - SCHULTER) * 0.75), -19 + (lh[1] + 19) * 0.8 + 0.5];
   }
+  let dreh = 0, kopfX = 0;
+  if (DIR.einsatz && !aus) {
+    const e = einsatzStaerke((jetzt - DIR.einsatz.zeit) / DIR.einsatz.dauer);
+    if (e <= 0 && jetzt > DIR.einsatz.zeit) DIR.einsatz = null;
+    else ({ r, l, dreh, kopf: kopfX } = mitEinsatz(r, l, DIR.einsatz, e));
+  }
   armR.setAttribute("d", armPfad(1, r));
   document.getElementById("dirArmL")?.setAttribute("d", armPfad(-1, l));
   for (const [id, [x, y]] of [["dirHandR", r], ["dirHandL", l]]) { const h = document.getElementById(id); if (h) { h.setAttribute("cx", x.toFixed(2)); h.setAttribute("cy", y.toFixed(2)); } }
@@ -222,8 +241,8 @@ function dirigentZeichnen(jetzt) {
   if (stab) { const w = (-55 + (r[0] - 10) * 2 + (r[1] + 16) * 2.5) * Math.PI / 180; stab.setAttribute("x1", r[0].toFixed(2)); stab.setAttribute("y1", r[1].toFixed(2)); stab.setAttribute("x2", (r[0] + 11.5 * Math.cos(w)).toFixed(2)); stab.setAttribute("y2", (r[1] + 11.5 * Math.sin(w)).toFixed(2)); }
   const k = document.getElementById("dirKoerper"), kopf = document.getElementById("dirKopf");
   const eins = !aus && DIR.schlag === 0 ? Math.max(0, 1 - seit / (DIR.dauer * 0.5)) : 0;
-  if (k) k.setAttribute("transform", aus ? "" : `rotate(${((r[0] - 9) * 0.35).toFixed(2)})`);
-  if (kopf) kopf.setAttribute("transform", `translate(0 ${(eins * 0.9).toFixed(2)})`);
+  if (k) k.setAttribute("transform", aus ? "" : `rotate(${((r[0] - 9) * 0.35 + dreh).toFixed(2)})`);
+  if (kopf) kopf.setAttribute("transform", `translate(${kopfX.toFixed(2)} ${(eins * 0.9).toFixed(2)})`);
   DIR.raf = aus ? 0 : requestAnimationFrame(dirigentZeichnen);
 }
 export function takt(schlag, takte, dauer = 0) {

@@ -1,12 +1,19 @@
 {
-  "version": "0.72.0",
+  "version": "0.73.0",
   "datum": "17.11.2026",
   "stufe": "DEV",
   "neu": [
-    "🪄 Bühne: die Dirigentin dirigiert mit beiden Händen echte Schlagfiguren – genau im Takt der Musik",
-    "🔍 Lupe mit zwei Fingern: Bachkreis-Echo und Noten/PDF im Pult vergrößern, verschieben, doppelt tippen"
+    "👉 Bühne: die Dirigentin gibt Einsätze – dreht sich zur Gruppe (z. B. Geigen) und zeigt mit der linken Hand hin"
   ],
   "verlauf": [
+    {
+      "version": "0.72.0",
+      "datum": "17.11.2026",
+      "neu": [
+        "🪄 Bühne: die Dirigentin dirigiert mit beiden Händen echte Schlagfiguren – genau im Takt der Musik",
+        "🔍 Lupe mit zwei Fingern: Bachkreis-Echo und Noten/PDF im Pult vergrößern, verschieben, doppelt tippen"
+      ]
+    },
     {
       "version": "0.71.1",
       "datum": "17.11.2026",

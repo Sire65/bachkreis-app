@@ -35,3 +35,18 @@ test("🎧 Tempo aus der Aufnahme: regelmäßige Einsätze → Schlagdauer erkan
   assert.match(b, /takt\(s, st\.takt, 60000 \/ \(st\.tempo \* B\.tempo\)\)/, "Melodien: Schlagdauer genau aus dem Tempo");
   assert.match(b, /takt: 2 \}/, "Badinerie im 2er-Takt");
 });
+
+test("👉 0.73.0 Einsätze: Richtung je Gruppe, Hand zeigt hin, Körper dreht sich, Geste kommt und geht", async () => {
+  const { einsatzRichtung, einsatzStaerke, mitEinsatz } = await import("../js/kern/dirigat.js");
+  const v1 = einsatzRichtung("v1"), vc = einsatzRichtung("vc"), hr = einsatzRichtung("hr");
+  assert.ok(v1.r < -0.4 && v1.hoch === 0, "1. Violinen: links vorne"); assert.ok(vc.r > 0.4, "Celli: rechts"); assert.ok(hr.hoch > 0.9, "Hörner: ganz hinten");
+  assert.equal(einsatzRichtung("xyz"), null);
+  assert.equal(einsatzStaerke(0), 0); assert.equal(einsatzStaerke(0.5), 1); assert.equal(einsatzStaerke(1), 0);
+  const ruhe = { r: [10, -15], l: [-10, -15] };
+  const a = mitEinsatz(ruhe.r, ruhe.l, v1, 1); assert.ok(a.l[0] < -12 && a.dreh < 0 && a.kopf < 0, "links: Hand, Körper und Kopf nach links");
+  const b = mitEinsatz(ruhe.r, ruhe.l, vc, 1); assert.ok(b.dreh > 0 && b.r[0] > ruhe.r[0], "rechts: Schlagfigur und Körper nach rechts");
+  const c = mitEinsatz(ruhe.r, ruhe.l, hr, 1); assert.ok(c.l[1] < -24, "hinten: Hand höher");
+  assert.deepEqual(mitEinsatz(ruhe.r, ruhe.l, v1, 0), { ...ruhe, dreh: 0, kopf: 0 }, "ohne Einsatz: normale Schlagfigur");
+  const src = readFileSync(new URL("../js/app/buehne.js", import.meta.url), "utf8");
+  assert.match(src, /einsatzPruefen\(sek\)/, "jede einsetzende Gruppe wird geprüft (Melodien und Aufnahmen)");
+});

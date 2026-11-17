@@ -58,6 +58,7 @@ export const TEILE_KARTE = {
   "adAdminNeu": "adminbereich.js",
   "adAdminWeg": "adminbereich.js",
   "adFehlerErledigt": "adminbereich.js",
+  "adKatalog": "adminbereich.js",
   "adMessen": "adminbereich.js",
   "adModul": "adminbereich.js",
   "adTeil": "adminbereich.js",

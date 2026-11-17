@@ -284,3 +284,14 @@ body.einfach .statusleiste, :root.einfach .statusleiste { background: none; }
 .kp-eins.dreh span.kp-dots { transform: none; }
 .kp-eins .kp-dots { display: flex; gap: 3px; margin: 0; } .kp-eins .kp-dots i { display: block; width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .35); transition: background .3s; } .kp-eins .kp-dots i.an { background: #fff; }
 .kp-eins.kp-neu .kp-dots i { background: rgba(58, 29, 0, .3); } .kp-eins.kp-neu .kp-dots i.an { background: #3a1d00; }
+/* 🎚️ 0.75.0 Datenverkehr-Säulen (nur Admin): 8 Stufen je Säule, 5 grün · 2 gelb · 1 rot; grau = nicht gemessen */
+.puls { display: inline-flex; align-items: flex-end; gap: 3px; height: 26px; padding: 3px 6px; border: none; border-radius: 9px; background: rgba(0, 0, 0, .25); cursor: pointer; flex: none; }
+.puls[hidden] { display: none; }
+.pu-saeule { display: flex; flex-direction: column-reverse; gap: 1px; }
+.pu-seg { display: block; width: 7px; height: 1.6px; border-radius: 1px; opacity: .22; }
+.pu-seg.gruen { background: #39d353; } .pu-seg.gelb { background: #f5c518; } .pu-seg.rot { background: #ff3b30; }
+.pu-seg.an { opacity: 1; box-shadow: 0 0 3px currentColor; } .pu-seg.spitze { opacity: .75; }
+.pu-saeule.grau .pu-seg { background: #9e9e9e; opacity: .35; box-shadow: none; }
+.pu-gross { display: flex; justify-content: center; gap: 28px; margin: 8px 0; } .pu-gross figure { margin: 0; display: grid; justify-items: center; gap: 4px; }
+.pu-gross .pu-saeule { gap: 3px; } .pu-gross .pu-seg { width: 34px; height: 9px; border-radius: 3px; }
+.pu-kurve { width: 100%; height: 70px; background: rgba(0, 0, 0, .06); border-radius: 8px; }

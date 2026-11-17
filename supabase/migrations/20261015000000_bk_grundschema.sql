@@ -1383,6 +1383,8 @@ create table if not exists bk_fehlerberichte (
   anzahl integer,
   zuletzt timestamptz,
   erledigt boolean,
+  fehler_id text,
+  messung jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),

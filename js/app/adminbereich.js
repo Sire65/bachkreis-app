@@ -4,13 +4,17 @@
 // ernannt werden – das darf nur der Entwickler (Server prüft: NUR_ENTWICKLER). Den Entwickler kann niemand löschen oder austragen.
 // Grau heißt immer „unbekannt / nicht gemessen“ – nie „in Ordnung“. Es werden nur Zahlen und Namen gezeigt, keine Inhalte (keine Nachrichten).
 import { S, VIEWS, zeichne, kopf, name, hatRolle, istEntwickler, fehlerListe } from "./zustand.js";
-import { esc, AKTIONEN, toast, vorZeit } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, vorZeit, blatt } from "../kern/ui.js";
+import { katalogEintrag, katalogVonId, katalogZaehlen, FEHLER_KATALOG } from "../kern/haenger.js";
 import { liste, hole, speichere, konfig, konfigSetzen, istEchtbetrieb, serverAktion, serverAktionStill, datenInfo } from "../kern/daten.js";
 import { MODULE, ROLLEN, TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
 import { APP_VERSION } from "../kern/version.js";
 import { adminLedsVerbinden } from "./start.js";
 
 export const istAdmin = () => hatRolle("admin");
+// 🧊 0.75.0 Hänger-Bericht: Ursache, Lösung und Messwerte (Lücke, davon App gerechnet, Speicher, Gerät)
+const haengerZeile = (f) => { const k = katalogEintrag(katalogVonId(f.fehler_id)), m = f.messung || {};
+  return `<div class="zeile-unter">🔎 ${esc(k.ursache || "")}${k.loesung ? ` · 💡 ${esc(k.loesung)}` : ""}</div><div class="zeile-unter">📏 ${m.ms != null ? `${(m.ms / 1000).toFixed(1)} s` : "–"}${m.messbar ? ` · App rechnete ${((m.app_ms || 0) / 1000).toFixed(1)} s` : " · nicht messbar"}${m.speicher_pct != null ? ` · Speicher ${m.speicher_pct} %` : ""}${m.geraet_gb ? ` · ${m.geraet_gb} GB` : ""}${m.kerne ? ` · ${m.kerne} Kerne` : ""}</div>`; };
 const AL = { lage: null, laedt: false, fehler: null, am: 0 };
 const mb = (b) => (b == null ? "–" : b >= 1073741824 ? `${(b / 1073741824).toFixed(2)} GB` : `${(b / 1048576).toFixed(1)} MB`);
 const zahl = (n) => (n == null ? "–" : Number(n).toLocaleString("de-DE"));
@@ -126,7 +130,7 @@ const R = {
     return `<div class="karte"><h3>📈 Wer nutzt die App?</h3>${kopfInfo(l)}${n ? `<div class="ad-zahlen"><div><b>${zahl(n.heute)}</b><small>heute</small></div><div><b>${zahl(n.woche)}</b><small>7 Tage</small></div><div><b>${zahl(n.monat)}</b><small>30 Tage</small></div><div><b>${zahl(n.personen)}</b><small>aktive Personen</small></div></div>` : leer("nicht gemessen")}
       <p class="hinweis">Gezählt wird nur „zuletzt gesehen“ je Person – keine Wege, keine Inhalte.</p></div>
       <div class="karte"><h3>📱 Versionen auf den Geräten (30 Tage)</h3>${l?.versionen ? `<ul class="liste">${l.versionen.map((v) => `<li>${led(v.v === APP_VERSION ? "gruen" : v.v === "?" ? "grau" : "gelb")}<div class="fl">v${esc(v.v)}${v.v === APP_VERSION ? " (aktuell)" : ""}</div><b>${v.n}</b></li>`).join("")}</ul>` : '<p class="hinweis">⚪ nicht gemessen</p>'}<p class="hinweis">Diese App: v${APP_VERSION}</p></div>
-      <div class="karte"><h3>🩺 Fehlerberichte der Geräte</h3><ul class="liste">${fb.map((f) => `<li>${led(f.erledigt ? "gruen" : "gelb")}<div class="fl"><b>${esc(f.text)}</b><div class="zeile-unter">${esc(f.ansicht || "")} · v${esc(f.app_version || "?")} · ${esc(f.geraet || "")} · ${f.anzahl || 1}× · ${vorZeit(f.zuletzt)}${f.person_id ? " · " + esc(name(f.person_id)) : ""}</div></div>${f.erledigt ? "" : `<button type="button" class="knopf klein" data-a="adFehlerErledigt" data-x="${esc(f.id)}">✅ erledigt</button>`}</li>`).join("") || "<li>Keine Fehler gemeldet.</li>"}</ul>
+      <div class="karte"><h3>🩺 Fehlerberichte der Geräte</h3><button type="button" class="knopf klein" data-a="adKatalog" data-x="30">📖 Fehlerkatalog</button><ul class="liste">${fb.map((f) => `<li>${led(f.erledigt ? "gruen" : "gelb")}<div class="fl"><b>${esc(f.text)}</b>${f.fehler_id ? haengerZeile(f) : ""}<div class="zeile-unter">${esc(f.ansicht || "")} · v${esc(f.app_version || "?")} · ${esc(f.geraet || "")} · ${f.anzahl || 1}× · ${vorZeit(f.zuletzt)}${f.person_id ? " · " + esc(name(f.person_id)) : ""}</div></div>${f.erledigt ? "" : `<button type="button" class="knopf klein" data-a="adFehlerErledigt" data-x="${esc(f.id)}">✅ erledigt</button>`}</li>`).join("") || "<li>Keine Fehler gemeldet.</li>"}</ul>
       <p class="hinweis">Die App meldet Fehler automatisch (nur Fehlertext, Ansicht, Version, Gerät-Art). Dieses Gerät: ${fehlerListe().length} gemerkt.</p></div>`;
   },
   wartung() {
@@ -184,6 +188,14 @@ async function setzen(k, v, ok = "💾 Gespeichert") {
 AKTIONEN.adWartung = (_, el) => setzen("wartung", !!el.checked, el.checked ? "🚧 Wartungsmodus AN" : "✅ Wartungsmodus aus");
 AKTIONEN.adWartungText = () => setzen("wartung_text", String(document.getElementById("adWartungText")?.value || "").trim().slice(0, 160) || null);
 AKTIONEN.adModul = (_, el) => { const s = new Set(konfig().module_aus || []); if (el.checked) s.delete(el.dataset.x); else s.add(el.dataset.x); setzen("module_aus", [...s]); };
+// 📖 0.75.0 Fehlerkatalog: alle Fehler-IDs mit Ursache und Lösung – gezählt im Zeitraum (wie oft, bei wie vielen Personen), die häufigsten oben
+AKTIONEN.adKatalog = (tage) => {
+  const t = Number(tage) || 30, seit = new Date(Date.now() - t * 86400000).toISOString(), z = katalogZaehlen(liste("fehlerberichte"), { seit }), mal = new Map(z.map((x) => [x.id, x]));
+  const reihen = Object.values(FEHLER_KATALOG).sort((a, b) => (mal.get(b.id)?.mal || 0) - (mal.get(a.id)?.mal || 0));
+  blatt("📖 Fehlerkatalog", `<div class="wahlen" role="group" aria-label="Zeitraum">${[7, 30, 90].map((d) => `<button type="button" class="chip-wahl${d === t ? " an" : ""}" aria-pressed="${d === t}" data-a="adKatalog" data-x="${d}">${d} Tage</button>`).join("")}</div>
+    <ul class="liste">${reihen.map((k) => { const c = mal.get(k.id); return `<li><div class="fl"><b>${esc(k.sym)} ${esc(k.id)} · ${esc(k.name)}</b><div class="zeile-unter">🔎 ${esc(k.ursache)}</div>${k.loesung ? `<div class="zeile-unter">💡 ${esc(k.loesung)}</div>` : '<div class="zeile-unter">kein Fehler – wird nicht gemeldet</div>'}</div><b>${c ? `${c.mal}× · ${c.personen} ${c.personen === 1 ? "Person" : "Personen"}` : "–"}</b></li>`; }).join("")}</ul>
+    <p class="hinweis">Gezählt aus den Fehlerberichten der Geräte (nur Fehler-ID, Zahlen und Gerät-Art – keine Inhalte). „–“ = im Zeitraum nicht vorgekommen.</p>`);
+};
 AKTIONEN.adFehlerErledigt = async (id) => { const f = hole("fehlerberichte", id); if (!f || !nurAdmin()) return; await speichere("fehlerberichte", { ...f, erledigt: true }); toast("✅ erledigt"); zeichne(); };
 // 👑 Rollen: nur der Entwickler ernennt/entzieht Admins (Server: NUR_ENTWICKLER); den Entwickler selbst ändert hier niemand
 AKTIONEN.adAdminNeu = async () => {
@@ -213,6 +225,24 @@ document.addEventListener("bk-ansicht", wartungsHinweis);
 
 // ---------- 🩺 Fehler automatisch melden (gleicher Text → Anzahl hoch; höchstens 5 je Sitzung, je Text einmal) ----------
 const gemeldet = new Set();
+const geraetText = () => { const ua = navigator.userAgent; return `${/iPhone|iPad/.test(ua) ? "iPhone/iPad" : /Android/.test(ua) ? "Android" : /Windows/.test(ua) ? "Windows" : /Mac/.test(ua) ? "Mac" : "anderes"} · ${/Edg\//.test(ua) ? "Edge" : /Firefox/.test(ua) ? "Firefox" : /Chrome/.test(ua) ? "Chrome" : /Safari/.test(ua) ? "Safari" : "Browser"}`; };
+// 🧊 0.75.0 Hänger mit Ursache (js/kern/haenger.js): Bericht mit Fehler-ID und Messwerten (nur Zahlen); das erklärende Fenster nur für den Admin,
+// höchstens 1× in 10 Minuten und nur ab 10 s
+let haengerFenster = 0;
+export function haengerMelden({ eintrag, sekunden, messung }) {
+  try {
+    if (!S.ich || !eintrag?.id) return;
+    const text = `${eintrag.sym} App reagierte ${sekunden} s nicht – ${eintrag.name} (${eintrag.id})`;
+    const alt = liste("fehlerberichte", (f) => f.fehler_id === eintrag.id && f.person_id === S.ich.id && !f.erledigt)[0]; // nur der Admin sieht eigene alte Berichte
+    speichere("fehlerberichte", { ...(alt || {}), text, fehler_id: eintrag.id, messung: { ...messung, sekunden }, ansicht: S.view, app_version: APP_VERSION, geraet: geraetText(),
+      anzahl: (alt?.anzahl || 0) + 1, zuletzt: new Date().toISOString(), person_id: S.ich.id, erledigt: false }, { still: true }).catch(() => {});
+    if (istAdmin() && sekunden > 10 && Date.now() - haengerFenster > 600000 && eintrag.loesung) {
+      haengerFenster = Date.now();
+      blatt(`${eintrag.sym} ${eintrag.name}`, `<p>Die App hat ${sekunden} Sekunden lang nicht reagiert – sie läuft wieder.</p><p><b>Ursache:</b> ${esc(eintrag.ursache)}</p><p><b>Lösung:</b> ${esc(eintrag.loesung)}</p>
+        <p class="hinweis">Fehler-ID <b>${esc(eintrag.id)}</b> · ist im Fehlerprotokoll (🛡️ Admin → Nutzung). Dieses Fenster sehen nur Admins.</p><button type="button" class="knopf haupt breit" data-a="blattZu">OK, verstanden</button>`);
+    }
+  } catch {}
+}
 export function fehlerMelden(e) {
   try {
     const text = String(e?.message || e || "").slice(0, 300);

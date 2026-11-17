@@ -912,11 +912,14 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
     }
     case "fehlerberichte": {
       // 🩺 jedes Gerät meldet eigene Fehler (gleicher Text → Anzahl hoch); erledigt setzt der Admin
-      if (alt && hatRolle(ctx, ["admin"])) return { ok: true, zeile: { ...alt, erledigt: !!neu.erledigt } };
+      // 🧊 0.75.0 Hänger: Fehler-ID aus dem Katalog und nur Zahlen als Messwerte (keine Inhalte)
+      if (alt && hatRolle(ctx, ["admin"]) && (alt.person_id !== ctx.ich || neu.erledigt === true)) return { ok: true, zeile: { ...alt, erledigt: !!neu.erledigt } };
       if (alt && alt.person_id !== ctx.ich) return { ok: false, grund: "NUR_EIGENE" };
       const text = String(neu.text ?? "").slice(0, 300); if (!text) return { ok: false, grund: "TEXT_FEHLT" };
+      const fid = /^BK-F-\d{3}$/.test(String(neu.fehler_id || "")) ? neu.fehler_id : null, mw = neu.messung && typeof neu.messung === "object" ? neu.messung : null;
+      const messung = mw ? Object.fromEntries(["ms", "app_ms", "speicher_pct", "geraet_gb", "kerne", "sekunden"].filter((k) => Number.isFinite(Number(mw[k])) && mw[k] !== null).map((k) => [k, Math.round(Number(mw[k]) * 10) / 10]).concat("messbar" in mw ? [["messbar", mw.messbar === true]] : [])) : null;
       return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id"]), text, ansicht: String(neu.ansicht ?? "").slice(0, 40) || null, app_version: String(neu.app_version ?? "").slice(0, 20) || null,
-        geraet: String(neu.geraet ?? "").slice(0, 120) || null, person_id: ctx.ich, anzahl: Math.min(9999, (alt?.anzahl || 0) + 1), zuletzt: jetzt, erledigt: false } };
+        geraet: String(neu.geraet ?? "").slice(0, 120) || null, person_id: ctx.ich, anzahl: Math.min(9999, (alt?.anzahl || 0) + 1), zuletzt: jetzt, erledigt: false, fehler_id: fid, messung } };
     }
     case "rueckmeldungen": {
       // 🆘 jede/r meldet (eigener Name); antworten und Status: Leitung/Admin. Eigene Meldung ändern nur, solange keine Antwort da ist.

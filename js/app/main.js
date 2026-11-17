@@ -1,5 +1,6 @@
 // Start der Bachkreis-App: Datenquelle starten, Person bestimmen (Zugangscode ?k= / gemerkte Person / Demo-Rolle),
 // Ansichten laden, Service Worker mit atomarem Update (AGENTS.md Regel 16).
+import { haengerWaechter } from "../kern/haenger.js";
 import { datenStarten, liste, hole, abonnieren, konfig, speichere, datenInfo, istEchtbetrieb, anmelden, abmelden, beiHinweis } from "../kern/daten.js";
 import { AKTIONEN, aktionenStarten, nachladenSetzen, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
 import { fehlerHookSetzen, S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
@@ -141,6 +142,8 @@ async function starten() {
   setzeEmpfaengerGeraet(S.ich.id);
   // 🛡️ 0.43.0 Fehlerberichte und Wartungshinweis – Admin-Teil wird erst geladen, wenn er gebraucht wird (📦 0.60.0)
   fehlerHookSetzen((...a) => teilLaden("adminbereich.js").then((m) => m.fehlerMelden(...a)).catch(() => {}));
+  // 🧊 0.75.0 Hänger-Messung (KC-CLUB-HAENGER-URSACHE): misst still mit, meldet mit Fehler-ID; das Fenster sieht nur der Admin
+  haengerWaechter((x) => teilLaden("adminbereich.js").then((m) => m.haengerMelden(x)).catch(() => {}));
   if (konfig().wartung === true) teilLaden("adminbereich.js").then((m) => m.wartungsHinweis()).catch(() => {});
   if (!istEchtbetrieb()) demoLeiste();
   // Echtbetrieb: Push-Abo dieses Geräts auffrischen, wenn Benachrichtigungen schon erlaubt sind (still im Hintergrund)

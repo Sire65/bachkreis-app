@@ -1311,6 +1311,8 @@ export const TABELLEN = {
       { k: "anzahl", t: "Anzahl", typ: "zahl" },
       { k: "zuletzt", t: "zuletzt", typ: "zeit" },
       { k: "erledigt", t: "erledigt", typ: "ja" },
+      { k: "fehler_id", t: "Fehler-ID (Katalog)", typ: "text" }, // 🧊 0.75.0 Hänger-Messung (js/kern/haenger.js)
+      { k: "messung", t: "Messwerte", typ: "json" },
     ],
     liste: ["text", "ansicht", "version", "anzahl", "zuletzt"],
   },

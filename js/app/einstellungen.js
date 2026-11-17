@@ -90,6 +90,7 @@ const AK = [["express_max_tag", "🏎️ Express-Nachrichten je Person und Tag",
 function adminEinst() {
   const k = konfig();
   return `${knoepfe([["adTeilOeffnen", "lage", "🛡️ Leitstand"], ["adTeilOeffnen", "wartung", `🚧 Wartung${k.wartung === true ? " (AN)" : ""}`], ["adTeilOeffnen", "module", "🧩 Module"], ["adTeilOeffnen", "rollen", "👑 Rollen"]])}
+    ${schalter("puls", "🎚️ Datenverkehr-Anzeige im Kopf", "Zwei LED-Säulen neben den Lämpchen: L = Lesen, S = Schreiben (nur für dich als Admin, nur auf diesem Gerät)", einst().puls !== false)}
     <p class="hinweis">Gilt für <b>alle</b> in der App. Leer = Standard.</p>
     ${AK.map(([key, t, typ, std]) => typ === "ja" ? `<label class="schalter"><span><b>${t}</b><div class="hinweis">Standard: ${std ? "ja" : "nein"}</div></span><input type="checkbox" data-c="akSetzen" data-x="${key}" ${k[key] !== false ? "checked" : ""}></label>`
       : `<div class="feld ak-feld"><label for="ak-${key}">${t}</label><input id="ak-${key}" type="number" inputmode="decimal" min="0" step="any" value="${esc(k[key] ?? "")}" placeholder="Standard ${esc(std)}" data-c="akSetzen" data-x="${key}"></div>`).join("")}`;

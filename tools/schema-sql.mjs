@@ -93,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261203000000_bk_haenger_puls.sql": { titel: "🧊 Hänger-Messung mit Fehler-ID (0.75.0)", tabellen: [], extra: ["alter table bk_fehlerberichte add column if not exists fehler_id text;", "alter table bk_fehlerberichte add column if not exists messung jsonb;"] },
   "20261202000000_bk_whatsapp_lieber.sql": { titel: "📱 Liest lieber WhatsApp (0.75.0)", tabellen: [], extra: ["alter table bk_personen add column if not exists whatsapp_lieber boolean;"] },
   "20261201000000_bk_echo.sql": { titel: "📰 Bachkreis-Echo: Hefte und Beiträge (0.70.0)", tabellen: ["echo_hefte", "echo_beitraege"], extra: ["create index if not exists bk_echo_beitraege_heft on bk_echo_beitraege (heft_id);"] },
   "20261130000000_bk_gegenvorschlag.sql": { titel: "↔️ Gegenvorschlag bei Vorschlägen (0.70.0)", tabellen: ["vorschlaege"] },

@@ -351,6 +351,22 @@ async function laden(db, s, body) {
   return { status: 200, json: { ok: true, jetzt: new Date(jetzt).toISOString(), komplett: !seit, daten, konfig, ich: s.person.id } };
 }
 
+// ---------- 🎚️ Datenverkehr-Säulen (0.75.0, wie KC-CLUB-PULS – Wunsch Hansi „LED-Ausschlag für Admin“) ----------
+// Zählerstände, die Postgres ohnehin führt (pg_stat_user_tables – keine Erweiterung, nichts wird gespeichert): Lesezugriffe (Tabellen- und
+// Index-Scans) und geschriebene Zeilen (neu, geändert, gelöscht) – nur Bachkreis-Tabellen (bk_*), keine Inhalte, keine Namen. Dazu, wie viele
+// gerade in der App sind. Die App rechnet aus zwei Ständen „je Sekunde“. Nicht messbar → null (grau, nie „in Ordnung“).
+async function betriebPuls(db, s) {
+  if (!rollenMit(s.person.rollen || []).includes("admin")) return fehler(403, "NUR_ADMIN");
+  let lesen = null, schreiben = null;
+  try {
+    const r = (await db.q(`select coalesce(sum(seq_scan + coalesce(idx_scan, 0)), 0)::bigint as lesen, coalesce(sum(n_tup_ins + n_tup_upd + n_tup_del), 0)::bigint as schreiben
+      from pg_stat_user_tables where relname like 'bk\\_%'`))[0];
+    lesen = Number(r.lesen); schreiben = Number(r.schreiben);
+  } catch { /* Statistik nicht lesbar → grau */ }
+  const online = (await db.q(`select count(*)::int as n from bk_online where zuletzt > now() - interval '3 minutes'`))[0]?.n ?? null;
+  return { status: 200, json: { ok: true, t: Date.now(), lesen, schreiben, online } };
+}
+
 // ---------- Speichern ----------
 async function speichern(db, s, body) {
   const tab = String(body.tab || "");
@@ -711,6 +727,7 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
       if (w === true || w === "true") return fehler(503, "WARTUNG");
     }
     if (aktion === "admin_lage") return await adminLage(db, s);
+    if (aktion === "betrieb_puls") return await betriebPuls(db, s); // 🎚️ 0.75.0 LED-Säulen im Kopf (nur Admin)
     if (aktion === "speichern") return await speichern(db, s, body);
     if (aktion === "versenden") return await versenden(db, s, body, dienste);
     if (aktion === "nachricht_zustellung") return await nachrichtZustellung(db, s, body);

@@ -11,6 +11,8 @@ create table if not exists bk_fehlerberichte (
   anzahl integer,
   zuletzt timestamptz,
   erledigt boolean,
+  fehler_id text,
+  messung jsonb,
   version integer not null default 1,
   erstellt_am timestamptz not null default now(),
   geaendert_am timestamptz not null default now(),
@@ -32,6 +34,8 @@ alter table bk_fehlerberichte add column if not exists person_id text;
 alter table bk_fehlerberichte add column if not exists anzahl integer;
 alter table bk_fehlerberichte add column if not exists zuletzt timestamptz;
 alter table bk_fehlerberichte add column if not exists erledigt boolean;
+alter table bk_fehlerberichte add column if not exists fehler_id text;
+alter table bk_fehlerberichte add column if not exists messung jsonb;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_fehlerberichte_person_id_fk') then alter table bk_fehlerberichte add constraint bk_fehlerberichte_person_id_fk foreign key (person_id) references bk_personen(id) on delete restrict; end if; end $$;
 
 alter table bk_online add column if not exists version text;

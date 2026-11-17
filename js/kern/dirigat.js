@@ -6,10 +6,12 @@
 // Koordinaten: Figur von hinten gesehen, rechte Hand rechts; y nach unten. Schultern bei (±6, -19).
 export const SCHULTER = 6;
 const OBERARM = 7, UNTERARM = 7;
+// Schlag 2 im 4er („innen“) bleibt auf der eigenen Seite (x ≥ 6,5) – die Hände treffen sich nie in der Mitte (Wunsch Hansi:
+// „die Hände berühren sich hinter dem Rücken – das geht nicht“). Vor der Brust verdeckt der Rücken die Hand, wie im echten Konzert.
 export const SCHLAGFIGUR = {
   2: [[10, -12.5], [11.5, -21]],
   3: [[10, -12.5], [17, -15.5], [11.5, -22]],
-  4: [[10, -12.5], [1.5, -15], [17, -15.5], [11.5, -22]],
+  4: [[10, -12.5], [6.5, -16], [17, -15.5], [11.5, -22]],
 };
 export const RUHE = { r: [11, -17], l: [-11, -17] };
 // Ellenbogen per Zwei-Glieder-Rechnung: von beiden möglichen Lagen die, die tiefer und weiter außen liegt (wie ein echter Arm –
@@ -48,13 +50,15 @@ export function einsatzRichtung(sek) {
 }
 // Verlauf einer Einsatz-Geste: schnell hin (erstes Viertel), halten, sanft zurück (letztes Drittel)
 export const einsatzStaerke = (p) => (p <= 0 || p >= 1 ? 0 : p < 0.25 ? p / 0.25 : p > 0.67 ? (1 - p) / 0.33 : 1);
-// Hände und Haltung während eines Einsatzes: die linke Hand zeigt zur Gruppe (offene Hand, bei rechts sitzenden Gruppen vor dem
-// Körper hinüber), die Schlagfigur wandert ein Stück zur Gruppe, Oberkörper und Kopf drehen sich hin.
+// Hände und Haltung während eines Einsatzes: eine Hand zeigt zur Gruppe, die Schlagfigur wandert ein Stück zur Gruppe,
+// Oberkörper und Kopf drehen sich hin.
 export function mitEinsatz(r, l, einsatz, e) {
   if (!einsatz || e <= 0) return { r, l, dreh: 0, kopf: 0 };
-  const { r: rr, hoch } = einsatz, ziel = [rr < 0 ? -6 + rr * 14 : -2 + rr * 11, -21 - hoch * 5.5];
+  // links sitzende Gruppe: linke Hand zeigt hin · rechts sitzende: die rechte Hand mit dem Taktstock zeigt hin, die linke hebt sich
+  // auf ihrer eigenen Seite (nie über Kreuz vor dem Körper – von hinten sähe das aus wie Hände auf dem Rücken)
+  const { r: rr, hoch } = einsatz, ziel = rr < 0 ? [-6 + rr * 14, -21 - hoch * 5.5] : [-8, -20 - hoch * 4];
   return {
-    r: [r[0] + rr * 4 * e, r[1] - hoch * 2 * e],
+    r: [Math.max(6.5, r[0] + rr * (rr > 0 ? 6 : 3) * e), r[1] - hoch * (rr > 0 ? 3.5 : 2) * e], // nie zur Mitte hin
     l: [l[0] + (ziel[0] - l[0]) * e, l[1] + (ziel[1] - l[1]) * e],
     dreh: rr * 7 * e, kopf: rr * 1.8 * e,
   };

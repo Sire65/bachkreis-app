@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.75.0 DEV – 17.11.2026
+🙌 **Dirigentin: Hände nicht mehr hinter dem Rücken** (Meldung Hansi „die Hände berühren sich hinter seinem Rücken – das geht nicht“):
+- Wir sehen die Dirigentin von hinten – die **Arme arbeiten jetzt vor ihrem Körper**: was vor der Brust passiert, verdeckt der Rücken; sichtbar sind Arme, Hände und Taktstock seitlich und oben, wie im echten Konzert
+- **Die Hände treffen sich nie** und kreuzen nie: der Schlag „nach innen“ bleibt auf der eigenen Seite, zwischen den Händen ist immer Abstand
+- Einsatz nach rechts: die rechte Hand mit dem Taktstock zeigt zur Gruppe, die linke hebt sich auf ihrer Seite (nicht mehr über Kreuz); nach links zeigt die linke Hand
+- Test: in allen Takten, Schlägen und Einsätzen bleiben die Hände getrennt
+
 ## 0.74.0 DEV – 17.11.2026
 🎻 **Fünf Bach-Stücke auf der Bühne** (Wunsch Hansi): zur Badinerie kommen **Air** (Orchestersuite Nr. 3, US Air Force Strings), **Jesus bleibet meine Freude** (BWV 147, Orchestra Gli Armonici), **Violinkonzert a-Moll, 1. Satz** (BWV 1041, Kammerorchester der US Marine Band) und **Wachet auf** (Choral aus BWV 140, Stellar Brass) – alle gemeinfrei bzw. CC0, Quellen in `audio/bach/QUELLEN.md`
 - Die Dirigentin schlägt je Stück den passenden Takt (Air und Wachet auf im 4er, Jesus bleibet meine Freude im 3er, Badinerie und Violinkonzert im 2er) und gibt Einsätze

@@ -50,3 +50,17 @@ test("👉 0.73.0 Einsätze: Richtung je Gruppe, Hand zeigt hin, Körper dreht s
   const src = readFileSync(new URL("../js/app/buehne.js", import.meta.url), "utf8");
   assert.match(src, /einsatzPruefen\(sek\)/, "jede einsetzende Gruppe wird geprüft (Melodien und Aufnahmen)");
 });
+
+test("🙌 0.75.0 Hände nie zusammen, nie über Kreuz (von hinten sähe das aus wie Hände auf dem Rücken) – auch nicht bei Einsätzen", async () => {
+  const { einsatzRichtung, mitEinsatz, SEK_ORT, SCHULTER } = await import("../js/kern/dirigat.js");
+  const links = (h) => [-(SCHULTER + (h[0] - SCHULTER) * 0.75), -19 + (h[1] + 19) * 0.8 + 0.5]; // wie buehne.js
+  for (const t of [2, 3, 4]) for (let s = 0; s < t; s++) for (let u = 0; u <= 1; u += 0.05) {
+    const r = handPosition(t, s, u), l = links(handPosition(t, s, Math.max(0, u - 0.06)));
+    for (const sek of [null, ...Object.keys(SEK_ORT)]) {
+      const m = sek ? mitEinsatz(r, l, einsatzRichtung(sek), 1) : { r, l };
+      assert.ok(m.r[0] >= 6 && m.l[0] <= -6, `Takt ${t}/${s + 1} u=${u.toFixed(2)} ${sek || ""}: rechts ${m.r[0].toFixed(1)}, links ${m.l[0].toFixed(1)}`);
+      assert.ok(Math.hypot(m.r[0] - m.l[0], m.r[1] - m.l[1]) >= 12, "Abstand zwischen den Händen");
+    }
+  }
+  assert.match(readFileSync(new URL("../js/app/buehne.js", import.meta.url), "utf8"), /id="dirArmL"[\s\S]*<path d="M-7 -1 L-7\.4 -19/, "Arme vor dem Rücken-Körper gezeichnet (werden verdeckt)");
+});

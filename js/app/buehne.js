@@ -100,12 +100,14 @@ function dirigent() {
   const lang = [1, 2, 4, 8].includes(mm.frisur % 9);
   return `<g class="dirigent" transform="translate(200 250) scale(1.95)"><title>${esc(lp ? `${lp.vorname} ${lp.nachname} – Dirigentin` : "Dirigent")}</title><rect x="-13" y="-1" width="26" height="6" rx="1.5" fill="#3b2a1a"/><rect x="-11" y="-3" width="22" height="2.5" fill="#5e3a19"/>
     <path d="M-4 -1 L-5 6 M4 -1 L5 6" stroke="#0d0d0d" stroke-width="3"/>
-    <g class="koerper" id="dirKoerper" style="transform-origin:0px 0px"><path d="M-7 -1 L-7.4 -19 Q0 -23 7.4 -19 L7 -1 Z" fill="#0d0d0d"/>
-    <g id="dirKopf"><rect x="-1.8" y="-22.6" width="3.6" height="3" fill="${haut}"/><circle cx="0" cy="-27" r="5.6" fill="${haar}"/>${lang ? `<path d="M-5.4 -26 Q-6 -18 -2 -19 L2 -19 Q6 -18 5.4 -26 Z" fill="${haar}"/>` : ""}
-    <circle cx="-5.5" cy="-26.6" r="1" fill="${haut}"/><circle cx="5.5" cy="-26.6" r="1" fill="${haut}"/></g>
+    <g class="koerper" id="dirKoerper" style="transform-origin:0px 0px">
+    <!-- Arme zuerst: was vor der Brust geschieht, verdeckt der Rücken (wir sehen die Dirigentin von hinten) -->
     <path id="dirArmL" d="${armPfad(-1, RUHE.l)}" fill="none" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle id="dirHandL" cx="${RUHE.l[0]}" cy="${RUHE.l[1]}" r="1.4" fill="${haut}"/>
     <path id="dirArmR" d="${armPfad(1, RUHE.r)}" fill="none" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    <line id="dirStab" x1="${RUHE.r[0]}" y1="${RUHE.r[1]}" x2="${RUHE.r[0] + 7}" y2="${RUHE.r[1] - 9}" stroke="#f5f5f5" stroke-width=".9" stroke-linecap="round"/><circle id="dirHandR" cx="${RUHE.r[0]}" cy="${RUHE.r[1]}" r="1.4" fill="${haut}"/></g></g>`;
+    <line id="dirStab" x1="${RUHE.r[0]}" y1="${RUHE.r[1]}" x2="${RUHE.r[0] + 7}" y2="${RUHE.r[1] - 9}" stroke="#f5f5f5" stroke-width=".9" stroke-linecap="round"/><circle id="dirHandR" cx="${RUHE.r[0]}" cy="${RUHE.r[1]}" r="1.4" fill="${haut}"/>
+    <path d="M-7 -1 L-7.4 -19 Q0 -23 7.4 -19 L7 -1 Z" fill="#0d0d0d"/>
+    <g id="dirKopf"><rect x="-1.8" y="-22.6" width="3.6" height="3" fill="${haut}"/><circle cx="0" cy="-27" r="5.6" fill="${haar}"/>${lang ? `<path d="M-5.4 -26 Q-6 -18 -2 -19 L2 -19 Q6 -18 5.4 -26 Z" fill="${haar}"/>` : ""}
+    <circle cx="-5.5" cy="-26.6" r="1" fill="${haut}"/><circle cx="5.5" cy="-26.6" r="1" fill="${haut}"/></g></g></g>`;
 }
 // 🎭 Übe-Bühne (0.26.0): eigener Avatar vorne als Solist (Instrument nach Notensatz-Schlüssel)
 const SOLO_INST = { v1: ["v1", "geige"], v2: ["v2", "geige"], va: ["va", "bratsche"], vc: ["vc", "cello"], kb: ["kb", "bass"], fl: ["fl", "floete"], ob: ["ob", "oboe"], kl: ["kl", "klarinette"],

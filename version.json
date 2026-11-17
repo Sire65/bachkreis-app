@@ -1,11 +1,18 @@
 {
-  "version": "0.74.0",
+  "version": "0.75.0",
   "datum": "17.11.2026",
   "stufe": "DEV",
   "neu": [
-    "🎻 Bühne → Bach: jetzt fünf Stücke – Air, Jesus bleibet meine Freude, Badinerie, Violinkonzert a-Moll, Wachet auf"
+    "🙌 Dirigentin: Hände nicht mehr hinter dem Rücken – die Arme arbeiten vor dem Körper"
   ],
   "verlauf": [
+    {
+      "version": "0.74.0",
+      "datum": "17.11.2026",
+      "neu": [
+        "🎻 Bühne → Bach: jetzt fünf Stücke – Air, Jesus bleibet meine Freude, Badinerie, Violinkonzert a-Moll, Wachet auf"
+      ]
+    },
     {
       "version": "0.73.0",
       "datum": "17.11.2026",

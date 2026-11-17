@@ -12,6 +12,7 @@ import { echoPruefung, heftAusschiessen, heftSeitenZahl } from "../kern/logik.js
 import { hochladen, dateiUrl, bildVerkleinern } from "../kern/dateien.js";
 import { pdfAusJpegs } from "../kern/pdf.js";
 import { LEHRE, lehreKlang } from "./instrumentenkunde.js";
+import { lupeAnbinden } from "../kern/lupe.js";
 import { laden as html2canvasLaden, farbenGlaetten } from "./bildschirmfoto.js";
 
 export const echoRedaktion = () => hatRolle(...ECHO_REDAKTION);
@@ -286,7 +287,9 @@ function buchZeichnen(h) {
   // Doppelseite wie im gedruckten Heft: 1 allein (Titel), dann 2|3, 4|5 … , die Rückseite allein
   const paar = !doppel || E.seite === 0 || E.seite === n - 1 ? [E.seite] : E.seite % 2 ? [E.seite, E.seite + 1].filter((i) => i < n - 1) : [E.seite - 1, E.seite];
   const breite = paar.length * SEITE.b + (paar.length - 1) * 8, platz = w.clientWidth || 360, skala = Math.min(1.2, platz / breite), links = Math.max(0, Math.round((platz - breite * skala) / 2));
-  w.innerHTML = `<div class="echo-buehne" style="height:${Math.round(SEITE.h * skala) + 4}px"><div class="echo-doppel" style="transform:scale(${skala.toFixed(4)});width:${breite}px;left:${links}px">${paar.map((i) => s[i]).join("")}</div></div>`;
+  w.innerHTML = `<div class="echo-buehne" style="height:${Math.round(SEITE.h * skala) + 4}px"><div class="echo-lupe"><div class="echo-doppel" style="transform:scale(${skala.toFixed(4)});width:${breite}px;left:${links}px">${paar.map((i) => s[i]).join("")}</div></div></div>`;
+  // 🔍 0.72.0 Lupe: zwei Finger vergrößern, ein Finger verschiebt, doppelt tippen; nicht vergrößert blättert Wischen
+  E.lupe = lupeAnbinden(w.querySelector(".echo-buehne"), w.querySelector(".echo-lupe"), { wisch: (r) => AKTIONEN.echoBlaettern(String(r)) });
   w.dataset.seite = String(E.seite);
   const zeig = document.getElementById("echoZaehler"); if (zeig) zeig.textContent = `Seite ${paar.map((i) => i + 1).join("–")} von ${n}`;
   const z = document.getElementById("echoZurueck"), v = document.getElementById("echoWeiter");
@@ -302,21 +305,19 @@ VIEWS.echoHeft = {
       <div class="echo-leiste" role="toolbar" aria-label="Blättern">
         <button type="button" class="knopf klein" id="echoZurueck" data-a="echoBlaettern" data-x="-1" aria-label="Vorige Seite">‹ zurück</button>
         <span id="echoZaehler" aria-live="polite"></span>
+        <span class="echo-lupe-knopf"><button type="button" class="knopf klein" data-a="echoLupe" data-x="-1" aria-label="Verkleinern">🔍−</button><button type="button" class="knopf klein" data-a="echoLupe" data-x="1" aria-label="Vergrößern">🔍+</button></span>
         <button type="button" class="knopf klein" id="echoWeiter" data-a="echoBlaettern" data-x="1" aria-label="Nächste Seite">weiter ›</button></div>
       <div id="echoBuch" class="echo-buch" data-heft="${esc(h.id)}"><p class="hinweis">⏳ Das Heft wird gesetzt …</p></div>
       <div class="echo-leiste unten"><button type="button" class="knopf" data-a="echoInhalt" data-x="${esc(h.id)}">📖 Inhalt</button>
         <button type="button" class="knopf" data-a="echoPdf" data-x="${esc(h.id)}|a5">📄 PDF (A5)</button>
         <button type="button" class="knopf" data-a="echoPdf" data-x="${esc(h.id)}|heft">🖨️ Heftdruck</button></div>
-      <p class="hinweis">Tipp: wischen oder ‹ › zum Blättern. 🖨️ Heftdruck: A4 quer, beidseitig über die kurze Kante drucken, in der Mitte falzen, heften – fertig ist das A5-Heft.</p>`;
+      <p class="hinweis">Tipp: wischen oder ‹ › zum Blättern · 🔍 mit zwei Fingern vergrößern, mit einem Finger verschieben, doppelt tippen (am PC: Strg + Mausrad). 🖨️ Heftdruck: A4 quer, beidseitig über die kurze Kante drucken, in der Mitte falzen, heften – fertig ist das A5-Heft.</p>`;
   },
   nach(w) {
     const b = w.querySelector("#echoBuch"); if (!b) return;
     const h = hole("echo_hefte", b.dataset.heft); if (!h) return;
     if (S.params?.seite != null) E.seite = Number(S.params.seite) || 0;
     requestAnimationFrame(() => buchZeichnen(h));
-    let x0 = null;
-    b.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
-    b.addEventListener("touchend", (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 60) AKTIONEN.echoBlaettern(dx < 0 ? "1" : "-1"); });
   },
 };
 AKTIONEN.echoLesen = (id) => { E.seite = 0; zeige("echoHeft", { id }); };
@@ -333,6 +334,7 @@ AKTIONEN.echoInhalt = (id) => {
   const toc = [...new DOMParser().parseFromString(seitenVon(h)[1] || "", "text/html").querySelectorAll(".echo-toc li")].map((li) => [li.querySelector("span")?.textContent, Number(li.querySelector("b")?.textContent)]);
   blatt("📖 Inhalt", `<ul class="liste">${[["Titelseite", 1], ...toc].map(([t, n]) => `<li><button type="button" class="knopf breit links" data-a="echoSprung" data-x="${n}">${esc(t)} <span class="echo-seitenzahl">S. ${n}</span></button></li>`).join("")}</ul>`);
 };
+AKTIONEN.echoLupe = (d) => (Number(d) > 0 ? E.lupe?.plus() : E.lupe?.minus());
 AKTIONEN.echoSprung = (n) => { blattZu(); E.seite = Number(n) - 1; const h = hole("echo_hefte", document.getElementById("echoBuch")?.dataset.heft); if (h) buchZeichnen(h); };
 AKTIONEN.echoKlang = (id) => lehreKlang(id);
 AKTIONEN.echoBach = () => zeige("buehne", { modus: "bach" });

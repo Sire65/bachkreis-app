@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.72.0 DEV – 17.11.2026
+🔍 **Lupe mit zwei Fingern** (Wunsch Hansi „an bestimmten Stellen Textzoom mit 2 Fingern, z. B. Bachkreis-Echo“):
+- Für Stellen mit festem Seitenbild, an denen der Schrift-Zoom nicht greift: **📰 Bachkreis-Echo** (Blätterheft) und **🎼 Pult-Modus** für PDFs und Noten
+- **Zwei Finger** auseinander/zusammen = vergrößern bis 400 % · vergrößert mit **einem Finger verschieben** · **doppelt tippen** = 220 % ↔ 100 % · Anzeige „🔍 200 % ✕“ oben rechts (antippen = zurück)
+- Am PC: **Strg + Mausrad** (auch Trackpad) und im Echo die Knöpfe 🔍− / 🔍+
+- Unvergrößert blättert Wischen wie gewohnt; vergrößert wird nicht aus Versehen geblättert. Neue Seite = wieder 100 %. Text bleibt auch vergrößert scharf
+- Überall sonst bleibt der Schrift-Zoom mit zwei Fingern (70–200 %) wie bisher
+
 ## 0.71.1 DEV – 17.11.2026
 🛠️ **Korrektur: Badinerie spielt nicht** (Meldung Hansi): Der Ordner `audio/` fehlte in der Liste der Dateien, die auf die Webseite kommen – die MP3 gab es dort gar nicht (404). Jetzt dabei; Musik läuft außerdem am Offline-Speicher (Service Worker) vorbei direkt vom Server (Abruf in Stücken, wichtig für Safari/iPhone). Neuer Test: jeder Ordner, den die App lädt, wird auch veröffentlicht.
 

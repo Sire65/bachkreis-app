@@ -112,6 +112,7 @@ export const TEILE_KARTE = {
   "echoInhalt": "echo.js",
   "echoKlang": "echo.js",
   "echoLesen": "echo.js",
+  "echoLupe": "echo.js",
   "echoPdf": "echo.js",
   "echoPruefen": "echo.js",
   "echoSchieben": "echo.js",

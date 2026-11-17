@@ -1,11 +1,18 @@
 {
-  "version": "0.71.1",
+  "version": "0.72.0",
   "datum": "17.11.2026",
   "stufe": "DEV",
   "neu": [
-    "🎻 Bach auf der Bühne: die Badinerie spielt jetzt (die Musikdatei kam in 0.71.0 nicht mit auf die Webseite)"
+    "🔍 Lupe mit zwei Fingern: Bachkreis-Echo und Noten/PDF im Pult vergrößern, verschieben, doppelt tippen"
   ],
   "verlauf": [
+    {
+      "version": "0.71.1",
+      "datum": "17.11.2026",
+      "neu": [
+        "🎻 Bach auf der Bühne: die Badinerie spielt jetzt (die Musikdatei kam in 0.71.0 nicht mit auf die Webseite)"
+      ]
+    },
     {
       "version": "0.71.0",
       "datum": "16.11.2026",

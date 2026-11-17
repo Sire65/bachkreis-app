@@ -96,3 +96,13 @@
 .echo-reihe-knopf { display: flex; gap: 4px; flex: none; }
 .echo-probleme { background: #fff4e5; border-left: 4px solid #f59e0b; padding: 8px 10px; border-radius: 0 8px 8px 0; color: #4a2d00; margin: 8px 0; }
 .echo-ok { color: var(--gruen-text, #1b5e20); }
+/* 🔍 0.72.0 Lupe (js/kern/lupe.js) – gilt auch für den PDF-Pult */
+.lupe { touch-action: pan-y; } /* Rahmen ist selbst positioniert (Echo-Bühne relativ, Pult fixiert) und schneidet ab */
+.lupe.lupe-an { touch-action: none; }
+.lupe-ziel { transform-origin: 0 0; } /* ohne will-change: der Browser zeichnet nach der Geste scharf neu */
+.echo-lupe { position: absolute; inset: 0; }
+.lupe-stufe { position: absolute; top: 8px; right: 8px; z-index: 5; border: 0; border-radius: 999px; padding: 6px 10px; background: rgba(26, 21, 0, .82); color: #ffd23f; font: 800 .85rem/1 system-ui, sans-serif; cursor: pointer; }
+.lupe-stufe[hidden] { display: none; }
+.lupe-an .pdf-pult-zone { pointer-events: none; }
+.echo-lupe-knopf { display: inline-flex; gap: 4px; }
+.pdf-pult.lupe { overflow: hidden; }

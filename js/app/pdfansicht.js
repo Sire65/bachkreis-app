@@ -5,6 +5,7 @@
 import { S, VIEWS, zeige, kopf } from "./zustand.js";
 import { esc, AKTIONEN, toast } from "../kern/ui.js";
 import { dateiUrl, pdfAnzeigerSetzen } from "../kern/dateien.js";
+import { lupeAnbinden } from "../kern/lupe.js";
 
 const BIB = "lib/pdfjs/pdf.min.js?v=4.10.38", WORKER = "lib/pdfjs/pdf.worker.min.js?v=4.10.38", LANG = 30;
 let laden = null;
@@ -80,12 +81,12 @@ async function pultZeigen() {
       <div class="pdf-pult-leiste"><button type="button" data-p="zu" aria-label="Pult-Modus beenden">✕</button><span id="pdfPultSeite" aria-live="polite"></span><button type="button" data-p="-1" aria-label="Seite zurück">‹</button><button type="button" data-p="1" aria-label="Seite weiter">›</button></div>`;
     o.querySelector(".links").onclick = () => blaettern(-1); o.querySelector(".rechts").onclick = () => blaettern(1);
     o.querySelectorAll("[data-p]").forEach((b) => (b.onclick = () => (b.dataset.p === "zu" ? pultZu() : blaettern(+b.dataset.p))));
-    let x0 = null; o.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; }, { passive: true });
-    o.addEventListener("touchend", (e) => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 60) blaettern(dx < 0 ? 1 : -1); });
+    P.lupe = lupeAnbinden(o, o.querySelector("#pdfPultBilder"), { wisch: (r) => blaettern(r) }); // 🔍 0.72.0 Noten mit zwei Fingern vergrößern
     document.body.appendChild(o); document.addEventListener("keydown", taste);
     try { await o.requestFullscreen?.(); } catch {}
     try { P.wach = await navigator.wakeLock?.request("screen"); } catch {} // Bildschirm bleibt an, solange das Pult offen ist
   }
+  P.lupe?.zuruecksetzen();
   const n = P.seite, zwei = quer(), box = document.getElementById("pdfPultBilder");
   const seiten = zwei ? [n, n + 1].filter((x) => x <= P.seiten) : [n];
   box.className = `pdf-pult-bilder${zwei ? " zwei" : ""}`;

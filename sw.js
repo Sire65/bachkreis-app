@@ -1,7 +1,7 @@
 // Service Worker der Bachkreis-App – atomares Update (AGENTS.md Regel 16):
 // Eine Version = ein Cache mit ALLEN Dateien. Die neue Version wird erst aktiv, wenn die App „jetzt-aktivieren“ sendet
 // (Knopf „Jetzt aktualisieren“). Bis dahin liefert der alte Worker ausschließlich Dateien der alten Version – kein Mischstand.
-const VERSION = "0.71.0";
+const VERSION = "0.71.1";
 const CACHE = "bk-" + VERSION;
 const DATEIEN = [
   "./", "index.html", "verwaltung.html", "manifest.webmanifest",
@@ -41,6 +41,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method === "POST" && new URL(req.url).origin === location.origin && new URL(req.url).pathname.endsWith("/teilen")) return e.respondWith(teilenAnnehmen(req));
   if (req.method !== "GET" || new URL(req.url).origin !== location.origin) return;
+  if (/\/audio\//.test(new URL(req.url).pathname)) return; // 🎻 0.71.1 Musik direkt vom Server (Range-Abrufe, Safari) – nicht über den Cache
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const treffer = await c.match(req, { ignoreSearch: true }) || (req.mode === "navigate" ? await c.match(new URL(req.url).pathname.endsWith("verwaltung.html") ? "verwaltung.html" : "index.html") : null);

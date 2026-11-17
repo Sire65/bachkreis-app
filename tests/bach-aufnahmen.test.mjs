@@ -26,3 +26,12 @@ test("🎭 Bühne hat den Reiter 🎻 Bach; Musik wird von der eigenen Seite gel
   assert.doesNotMatch(lies("sw.js"), /audio\/bach/, "MP3s nicht vorab laden (Datenvolumen)");
   assert.match(lies("js/app/echo.js"), /data-a="echoBach"/, "Echo: Komponist Bach → Bühne");
 });
+
+test("🚚 0.71.1 Alles, was die App lädt, wird auch veröffentlicht (Pages-Liste) – sonst 404 wie bei der Badinerie in 0.71.0", () => {
+  const web = (lies(".github/workflows/pages.yml").match(/WEB="([^"]+)"/) || [])[1]?.split(/\s+/) || [];
+  for (const d of ["audio", "css", "js", "lib", "icons"]) assert.ok(web.includes(d), `${d} fehlt in der Pages-Liste`);
+  // jeder Ordner, auf den der Code mit festem Pfad zeigt, steht in der Liste
+  const quellen = ["js/app/buehne.js", "js/app/echo.js", "index.html", "sw.js"].map(lies).join("\n");
+  for (const m of quellen.matchAll(/["`(]((?:audio|ton|bilder|schriften|icons|lib)\/)[\w$./{}-]+/g)) assert.ok(web.includes(m[1].slice(0, -1)), `${m[1]} wird nicht veröffentlicht`);
+  assert.match(lies("sw.js"), /\\\/audio\\\//, "Audio läuft am Service Worker vorbei");
+});

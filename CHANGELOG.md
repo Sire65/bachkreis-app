@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.71.1 DEV – 17.11.2026
+🛠️ **Korrektur: Badinerie spielt nicht** (Meldung Hansi): Der Ordner `audio/` fehlte in der Liste der Dateien, die auf die Webseite kommen – die MP3 gab es dort gar nicht (404). Jetzt dabei; Musik läuft außerdem am Offline-Speicher (Service Worker) vorbei direkt vom Server (Abruf in Stücken, wichtig für Safari/iPhone). Neuer Test: jeder Ordner, den die App lädt, wird auch veröffentlicht.
+
 ## 0.71.0 DEV – 16.11.2026
 🎻 **Bach zum Anhören** (Wunsch Hansi „weil es ja ein Bachkreis ist“):
 - **🎭 Bühne → neuer Reiter „🎻 Bach“:** Stück antippen – der Vorhang geht auf und das Orchester bewegt sich zur echten Aufnahme. Zum Start die **Badinerie** aus der Orchestersuite Nr. 2 (BWV 1067)

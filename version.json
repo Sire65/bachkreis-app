@@ -1,12 +1,19 @@
 {
-  "version": "0.71.0",
-  "datum": "16.11.2026",
+  "version": "0.71.1",
+  "datum": "17.11.2026",
   "stufe": "DEV",
   "neu": [
-    "🎻 Bühne: neuer Reiter „Bach“ – echte Orchesteraufnahme (Badinerie), frei von Rechten; weitere Stücke folgen",
-    "📰 Echo: beim Komponisten Bach direkt zur Bühne zum Anhören"
+    "🎻 Bach auf der Bühne: die Badinerie spielt jetzt (die Musikdatei kam in 0.71.0 nicht mit auf die Webseite)"
   ],
   "verlauf": [
+    {
+      "version": "0.71.0",
+      "datum": "16.11.2026",
+      "neu": [
+        "🎻 Bühne: neuer Reiter „Bach“ – echte Orchesteraufnahme (Badinerie), frei von Rechten; weitere Stücke folgen",
+        "📰 Echo: beim Komponisten Bach direkt zur Bühne zum Anhören"
+      ]
+    },
     {
       "version": "0.70.0",
       "datum": "16.11.2026",

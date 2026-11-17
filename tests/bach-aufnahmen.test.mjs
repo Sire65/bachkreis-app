@@ -6,7 +6,7 @@ import { readFileSync, statSync } from "node:fs";
 
 const lies = (f) => readFileSync(new URL("../" + f, import.meta.url), "utf8");
 const src = lies("js/app/buehne.js"), quellen = lies("audio/bach/QUELLEN.md");
-const ids = [...src.slice(src.indexOf("export const BACH_AUFNAHMEN")).matchAll(/\{ id: "(\w+)", titel: "[^"]+", werk: "[^"]+", wer: "[^"]+", lizenz: "(gemeinfrei|CC0)" \}/g)].map((m) => m[1]);
+const ids = [...src.slice(src.indexOf("export const BACH_AUFNAHMEN")).matchAll(/\{ id: "(\w+)", titel: "[^"]+", werk: "[^"]+", wer: "[^"]+", lizenz: "(gemeinfrei|CC0)"(?:, takt: \d)? \}/g)].map((m) => m[1]);
 
 test("🎻 Bach-Aufnahmen, alle gemeinfrei/CC0, als MP3 vorhanden und nicht zu groß", () => {
   assert.ok(ids.length >= 1);

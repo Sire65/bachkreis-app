@@ -6,6 +6,7 @@ import { esc, AKTIONEN, toast, datumKurz } from "../kern/ui.js";
 import { liste, hole } from "../kern/daten.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
+import { SCHLAGFIGUR, SCHULTER, RUHE, armPfad, handPosition, tempoSchaetzen } from "../kern/dirigat.js";
 
 const B = { ctx: null, lauf: null, audio: null, quelle: null, analyser: null, raf: 0, modus: "melodien", stueck: STUECKE[0].id, tempo: 1, laut: 0.8, applaus: true, mitschnitt: null, blobUrl: null, tipp: 0 };
 
@@ -98,11 +99,13 @@ function dirigent() {
   const lp = liste("personen", (p) => (p.rollen || []).includes("leitung"))[0], mm = merkmale(lp || "leitung"), haar = HAARFARBE[mm.haar % HAARFARBE.length], haut = HAUT[mm.haut % HAUT.length];
   const lang = [1, 2, 4, 8].includes(mm.frisur % 9);
   return `<g class="dirigent" transform="translate(200 250) scale(1.95)"><title>${esc(lp ? `${lp.vorname} ${lp.nachname} – Dirigentin` : "Dirigent")}</title><rect x="-13" y="-1" width="26" height="6" rx="1.5" fill="#3b2a1a"/><rect x="-11" y="-3" width="22" height="2.5" fill="#5e3a19"/>
-    <g class="koerper"><path d="M-7 -1 L-7.4 -19 Q0 -23 7.4 -19 L7 -1 Z" fill="#0d0d0d"/><path d="M-4 -1 L-5 6 M4 -1 L5 6" stroke="#0d0d0d" stroke-width="3"/>
-    <rect x="-1.8" y="-22.6" width="3.6" height="3" fill="${haut}"/><circle cx="0" cy="-27" r="5.6" fill="${haar}"/>${lang ? `<path d="M-5.4 -26 Q-6 -18 -2 -19 L2 -19 Q6 -18 5.4 -26 Z" fill="${haar}"/>` : ""}
-    <circle cx="-5.5" cy="-26.6" r="1" fill="${haut}"/><circle cx="5.5" cy="-26.6" r="1" fill="${haut}"/>
-    <path d="M-6 -19 L-14 -27" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/><circle cx="-14.4" cy="-27.4" r="1.4" fill="${haut}"/>
-    <g class="taktstock" id="taktstock" style="transform-origin:6px -19px"><path d="M6 -19 L14 -28" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round"/><circle cx="14.4" cy="-28.4" r="1.4" fill="${haut}"/><line x1="14" y1="-28" x2="24" y2="-36" stroke="#f5f5f5" stroke-width=".9"/></g></g></g>`;
+    <path d="M-4 -1 L-5 6 M4 -1 L5 6" stroke="#0d0d0d" stroke-width="3"/>
+    <g class="koerper" id="dirKoerper" style="transform-origin:0px 0px"><path d="M-7 -1 L-7.4 -19 Q0 -23 7.4 -19 L7 -1 Z" fill="#0d0d0d"/>
+    <g id="dirKopf"><rect x="-1.8" y="-22.6" width="3.6" height="3" fill="${haut}"/><circle cx="0" cy="-27" r="5.6" fill="${haar}"/>${lang ? `<path d="M-5.4 -26 Q-6 -18 -2 -19 L2 -19 Q6 -18 5.4 -26 Z" fill="${haar}"/>` : ""}
+    <circle cx="-5.5" cy="-26.6" r="1" fill="${haut}"/><circle cx="5.5" cy="-26.6" r="1" fill="${haut}"/></g>
+    <path id="dirArmL" d="${armPfad(-1, RUHE.l)}" fill="none" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle id="dirHandL" cx="${RUHE.l[0]}" cy="${RUHE.l[1]}" r="1.4" fill="${haut}"/>
+    <path id="dirArmR" d="${armPfad(1, RUHE.r)}" fill="none" stroke="#0d0d0d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <line id="dirStab" x1="${RUHE.r[0]}" y1="${RUHE.r[1]}" x2="${RUHE.r[0] + 7}" y2="${RUHE.r[1] - 9}" stroke="#f5f5f5" stroke-width=".9" stroke-linecap="round"/><circle id="dirHandR" cx="${RUHE.r[0]}" cy="${RUHE.r[1]}" r="1.4" fill="${haut}"/></g></g>`;
 }
 // 🎭 Übe-Bühne (0.26.0): eigener Avatar vorne als Solist (Instrument nach Notensatz-Schlüssel)
 const SOLO_INST = { v1: ["v1", "geige"], v2: ["v2", "geige"], va: ["va", "bratsche"], vc: ["vc", "cello"], kb: ["kb", "bass"], fl: ["fl", "floete"], ob: ["ob", "oboe"], kl: ["kl", "klarinette"],
@@ -114,7 +117,7 @@ export const BUEHNE_MODI = {};
 // Public Domain) bzw. CC0, von Wikimedia Commons – liegen in audio/bach/ (eigene Seite, kein fremder Server, kein Internet-Abruf beim Hören).
 // Quellen und Lizenzen: audio/bach/QUELLEN.md
 export const BACH_AUFNAHMEN = [
-  { id: "badinerie", titel: "Badinerie", werk: "Orchestersuite Nr. 2 h-Moll, BWV 1067", wer: "historische Aufnahme (European Archive)", lizenz: "CC0" },
+  { id: "badinerie", titel: "Badinerie", werk: "Orchestersuite Nr. 2 h-Moll, BWV 1067", wer: "historische Aufnahme (European Archive)", lizenz: "CC0", takt: 2 },
 ];
 // folgen, sobald Wikimedia den Abruf wieder zulässt (alle gemeinfrei/CC0, Quellen geprüft): Air BWV 1068 (US Air Force Strings),
 // Jesus bleibet meine Freude BWV 147 (Orchestra Gli Armonici), Violinkonzert a-Moll BWV 1041 (US Marine Band), Wachet auf BWV 140 (Stellar Brass)
@@ -200,10 +203,34 @@ function note(sek) {
   t.setAttribute("class", "notenzeichen"); t.textContent = Math.random() < 0.5 ? "♪" : "♫";
   g.appendChild(t); setTimeout(() => t.remove(), 1800);
 }
-const SCHLAG_WINKEL = { 2: [40, -20], 3: [45, -35, -10], 4: [45, -30, 15, -40] };
-export function takt(schlag, takte) {
-  const st = document.getElementById("taktstock"); if (!st) return;
-  st.style.transform = `rotate(${(SCHLAG_WINKEL[takte] || SCHLAG_WINKEL[4])[schlag] ?? 0}deg)`;
+const DIR = { schlag: 0, takte: 4, dauer: 600, zeit: 0, raf: 0, ruhe: true };
+function dirigentZeichnen(jetzt) {
+  const armR = document.getElementById("dirArmR"); if (!armR) { DIR.raf = 0; return; }
+  const seit = jetzt - DIR.zeit, aus = seit > DIR.dauer * 2.5;
+  let r, l;
+  if (aus) { r = RUHE.r; l = RUHE.l; } // keine Schläge mehr → Hände in Bereitschaft
+  else {
+    const u = Math.min(1, seit / DIR.dauer);
+    r = handPosition(DIR.takte, DIR.schlag, u);
+    const lu = Math.max(0, u - 0.06), lh = handPosition(DIR.takte, DIR.schlag, lu); // links: Spiegel, kleiner, etwas später
+    l = [-(SCHULTER + (lh[0] - SCHULTER) * 0.75), -19 + (lh[1] + 19) * 0.8 + 0.5];
+  }
+  armR.setAttribute("d", armPfad(1, r));
+  document.getElementById("dirArmL")?.setAttribute("d", armPfad(-1, l));
+  for (const [id, [x, y]] of [["dirHandR", r], ["dirHandL", l]]) { const h = document.getElementById(id); if (h) { h.setAttribute("cx", x.toFixed(2)); h.setAttribute("cy", y.toFixed(2)); } }
+  const stab = document.getElementById("dirStab"); // Taktstock zeigt nach vorn-oben, kippt mit der Bewegung
+  if (stab) { const w = (-55 + (r[0] - 10) * 2 + (r[1] + 16) * 2.5) * Math.PI / 180; stab.setAttribute("x1", r[0].toFixed(2)); stab.setAttribute("y1", r[1].toFixed(2)); stab.setAttribute("x2", (r[0] + 11.5 * Math.cos(w)).toFixed(2)); stab.setAttribute("y2", (r[1] + 11.5 * Math.sin(w)).toFixed(2)); }
+  const k = document.getElementById("dirKoerper"), kopf = document.getElementById("dirKopf");
+  const eins = !aus && DIR.schlag === 0 ? Math.max(0, 1 - seit / (DIR.dauer * 0.5)) : 0;
+  if (k) k.setAttribute("transform", aus ? "" : `rotate(${((r[0] - 9) * 0.35).toFixed(2)})`);
+  if (kopf) kopf.setAttribute("transform", `translate(0 ${(eins * 0.9).toFixed(2)})`);
+  DIR.raf = aus ? 0 : requestAnimationFrame(dirigentZeichnen);
+}
+export function takt(schlag, takte, dauer = 0) {
+  const jetzt = performance.now(), gemessen = jetzt - DIR.zeit;
+  DIR.dauer = dauer > 0 ? dauer : gemessen > 250 && gemessen < 1600 ? DIR.dauer * 0.6 + gemessen * 0.4 : DIR.dauer;
+  Object.assign(DIR, { schlag, takte: SCHLAGFIGUR[takte] ? takte : 4, zeit: jetzt });
+  if (!DIR.raf) DIR.raf = requestAnimationFrame(dirigentZeichnen);
 }
 function vorhang(auf) { document.getElementById("bwRahmen")?.classList.toggle("offen", auf); }
 function titel(t) { const e = document.getElementById("bwTitel"); if (e) e.textContent = t; }
@@ -238,13 +265,13 @@ AKTIONEN.bwSpielen = async () => {
   B.lauf = spielen(ctx, st, {
     tempoFaktor: B.tempo, lautstaerke: B.laut, mitApplaus: B.applaus,
     onEreignis: (e) => { sekAn(e.sek, e.dauer); if (e.sek.some((s) => st.melodieSek.includes(s)) && Math.random() < 0.45) note(e.sek[0]); },
-    onTakt: (s) => takt(s, st.takt),
+    onTakt: (s) => takt(s, st.takt, 60000 / (st.tempo * B.tempo)),
     onEnde: () => { B.lauf = null; titel("👏 Bravo! – Verbeugung"); document.getElementById("bwRahmen")?.classList.add("verbeugung"); setTimeout(() => { document.getElementById("bwRahmen")?.classList.remove("verbeugung"); vorhang(false); }, 2600); },
   });
 };
 
 // Aufnahmen: Pegel je Band treibt die Sektionen
-function aufnahmeSpielen(url, name) {
+function aufnahmeSpielen(url, name, taktArt = 4) {
   buehneStopp(true);
   const ctx = kontext();
   const a = new Audio(); a.src = url; a.volume = B.laut; a.crossOrigin = "anonymous";
@@ -252,14 +279,27 @@ function aufnahmeSpielen(url, name) {
   if (!B.analyser) { B.analyser = ctx.createAnalyser(); B.analyser.fftSize = 1024; B.analyser.connect(ctx.destination); }
   try { const q = ctx.createMediaElementSource(a); q.connect(B.analyser); } catch (e) { console.warn(e); }
   const daten = new Uint8Array(B.analyser.frequencyBinCount);
-  let schlag = 0, letzter = 0;
+  // 🪄 0.72.0 Takt aus der Aufnahme: Einsatz-Stärke (Energie-Anstiege) in 10-ms-Fächern sammeln; jede Sekunde per Autokorrelation
+  // über die letzten 6 s das Tempo schätzen (380–1000 ms je Schlag) und gleichmäßig weiterschlagen. Starke Einsätze kurz vor oder
+  // nach einem Schlag ziehen die Phase sanft heran – so bleibt die Dirigentin im Takt der Musik.
+  let schlag = 0, mittel = 0, vorher = 0, takt0 = 0, per = 600, letzteSchaetzung = 0, start = 0, letztesFach = 0;
+  const faecher = new Float32Array(600);
   const schleife = (zeit) => {
     if (B.audio !== a) return;
     const p = baender(B.analyser, daten, ctx.sampleRate);
     if (p.tief > 0.32) sekAn(["vc", "kb"], 0.25); if (p.tief > 0.55) sekAn(["pk"], 0.2);
     if (p.mitte > 0.25) sekAn(["va", "v2", "kl", "fg", "hr"], 0.25);
     if (p.hoch > 0.12) sekAn(["v1", "fl", "ob", "tr", "pos"], 0.25);
-    if (zeit - letzter > 520 && p.tief + p.mitte > 0.4) { takt(schlag++ % 4, 4); letzter = zeit; if (Math.random() < 0.3) note("v1"); }
+    const e = p.tief * 1.2 + p.mitte + p.hoch * 0.5, auf = Math.max(0, e - vorher); mittel = mittel * 0.95 + e * 0.05;
+    if (!start) start = zeit;
+    const fach = Math.floor((zeit - start) / 10); for (; letztesFach < fach; ) faecher[++letztesFach % 600] = 0; faecher[fach % 600] += auf;
+    if (zeit - letzteSchaetzung > 1000 && fach > 400) { letzteSchaetzung = zeit; const g = tempoSchaetzen(faecher, fach); if (g) per = per * 0.6 + g * 0.4; }
+    if (takt0 && auf > 0.06 && Math.abs(zeit - takt0) < per * 0.25) takt0 += (zeit - takt0) * 0.3; // Phase nachziehen
+    vorher = e;
+    if (mittel > 0.04) {
+      if (!takt0 || zeit - takt0 > per * 2) takt0 = zeit; // Start bzw. nach Pause (Tab im Hintergrund) nicht nachholen
+      if (zeit >= takt0) { takt(schlag++ % taktArt, taktArt, per); takt0 += per; if (Math.random() < 0.3) note("v1"); }
+    } else takt0 = 0; // Stille: Hände in Bereitschaft
     B.raf = requestAnimationFrame(schleife);
   };
   a.onplay = () => { vorhang(true); titel(name); B.raf = requestAnimationFrame(schleife); };
@@ -272,7 +312,7 @@ AKTIONEN.bwAufnahme = (id) => {
   if (!a?.datei) { toast("🎧 Vorführversion: Die Datei liegt später im geschützten Speicher. Zum Ausprobieren: „Aufnahme vom Gerät abspielen“."); return; }
   aufnahmeSpielen(a.datei, a.titel);
 };
-AKTIONEN.bwBach = (id) => { const x = BACH_AUFNAHMEN.find((y) => y.id === id); if (x) aufnahmeSpielen(`audio/bach/${x.id}.mp3`, `${x.titel} – J. S. Bach`); };
+AKTIONEN.bwBach = (id) => { const x = BACH_AUFNAHMEN.find((y) => y.id === id); if (x) aufnahmeSpielen(`audio/bach/${x.id}.mp3`, `${x.titel} – J. S. Bach`, x.takt || 4); };
 AKTIONEN.bwDatei = (_, el) => {
   const f = el.files?.[0]; if (!f) return;
   if (B.blobUrl) URL.revokeObjectURL(B.blobUrl);

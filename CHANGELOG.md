@@ -1,6 +1,12 @@
 # Änderungen
 
 ## 0.72.0 DEV – 17.11.2026
+🪄 **Dirigentin wie echt** (Wunsch Hansi „realitätsnäher, nicht nur eine Hand, im Takt“):
+- **Beide Arme mit Ellenbogen** (Schulter – Ellenbogen – Hand); die rechte Hand führt den Taktstock, die linke spiegelt die Bewegung etwas kleiner
+- **Echte Schlagfiguren** je Takt: 2er ab–auf · 3er ab–außen–auf · 4er ab–innen–außen–auf; jeder Schlag landet genau auf seinem Schlagpunkt und federt zurück, die Eins ist der tiefste Schlag
+- **Im Takt:** bei den Melodien kommt jeder Schlag genau aus dem Tempo des Stücks; bei Aufnahmen (z. B. 🎻 Badinerie) erkennt die App das Tempo aus der Musik und schlägt gleichmäßig mit (Badinerie im 2er-Takt)
+- Körper wiegt leicht mit, Kopf nickt auf der Eins; Taktstock kippt mit der Bewegung; ohne Musik Hände in Bereitschaft
+
 🔍 **Lupe mit zwei Fingern** (Wunsch Hansi „an bestimmten Stellen Textzoom mit 2 Fingern, z. B. Bachkreis-Echo“):
 - Für Stellen mit festem Seitenbild, an denen der Schrift-Zoom nicht greift: **📰 Bachkreis-Echo** (Blätterheft) und **🎼 Pult-Modus** für PDFs und Noten
 - **Zwei Finger** auseinander/zusammen = vergrößern bis 400 % · vergrößert mit **einem Finger verschieben** · **doppelt tippen** = 220 % ↔ 100 % · Anzeige „🔍 200 % ✕“ oben rechts (antippen = zurück)

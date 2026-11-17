@@ -33,7 +33,6 @@
 @keyframes bwBlas { from { transform: rotate(-2deg); } to { transform: rotate(2.5deg) translateY(-.6px); } }
 @keyframes bwZug { from { transform: translateX(0); } to { transform: translateX(6px); } }
 @keyframes bwSchlag { from { transform: rotate(-18deg); } to { transform: rotate(8deg); } }
-.taktstock { transition: transform .22s ease-out; transform-box: view-box; }
 .dirigent .koerper { transition: transform .3s; }
 .verbeugung .dirigent .koerper { transform: rotate(18deg) translateY(4px); transform-origin: 0 0; }
 .verbeugung .mus .koerper { animation: bwVerbeugen 1.2s ease-in-out 2 alternate; transform-origin: 50% 100%; }

@@ -179,6 +179,7 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F169 | ✏️ Änderung erbitten: Leitung bittet, Mitglied meldet „Sofort“ (wie KC 2.957.0) | ✅ | clubapp-neu.test, Rundgang |
 | BK-F170 | 🎨 Bildschirmfoto/PDF/Fernhilfe mit modernen Farben (wie KC 2.952.0) | ✅ | Rundgang |
 | BK-F171 | ↔️ Gegenvorschlag bei Vorschlägen: bis 3 je Thema, eine Karte, Stimme wandert, Abstimmung daraus (wie KC 2.956.0) | ✅ | gegenvorschlag.test |
+| BK-F175 | 🪄 Dirigentin mit beiden Armen, echten Schlagfiguren (2/3/4) und Tempo-Erkennung bei Aufnahmen | ✅ | dirigent.test |
 | BK-F174 | 🔍 Lupe mit zwei Fingern (Echo, PDF-Pult): vergrößern, verschieben, Doppeltipp, Strg+Mausrad | ✅ | lupe.test |
 | BK-F173 | 🎻 Bühne „Bach“: gemeinfreie/CC0-Orchesteraufnahmen von J. S. Bach (Badinerie; weitere folgen) | ✅ | bach-aufnahmen.test |
 | BK-F172 | 📰 Bachkreis-Echo: Heft zum Blättern, A5-PDF und Heftdruck (ausgeschossen), Beiträge von allen, Redaktion, Vier-Augen-Freigabe, Datenschutz-Prüfung | ✅ | echo.test |

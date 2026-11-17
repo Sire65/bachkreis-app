@@ -855,5 +855,56 @@ export function erzeugeDemodaten(heute = new Date()) {
       b("eb-11", null, "witz", "Witz", "Warum können Geister so schlecht lügen? – Weil man durch sie hindurchsieht. (Hat nichts mit Musik zu tun, ist aber lustig.)", demoKindB?.id || "p-leitung", "Leo", 8),
     ];
   }
+  // 📈 0.77.0 Vorgeschichte für die Auswertungen (Vorstands-Vorführung, Wunsch Hansi): drei Schuljahre zurück – frühere Orchester-Jahre der
+  // heutigen Kinder, die Orchesterzeit der Ehemaligen (Abgänge je Schuljahr), monatliche Gesamtproben mit Anwesenheit (18 Monate, im Sommer und
+  // im Dezember etwas weniger), zurückgegebene Leihinstrumente. Nur abgeschlossene Einträge – der heutige Stand bleibt genau wie bisher.
+  { const v = zufall(4242), sj0 = new Date(schuljahrStart + "T12:00"), jahrVor = (n) => isoTag(new Date(sj0.getFullYear() - n, 7, 15)), ende = (n) => isoTag(new Date(sj0.getFullYear() - n + 1, 6, 31));
+    const heutige = d.gruppe_zuordnung.filter((z) => z.art === "stamm" && !z.bis && z.gruppe_id !== "g-d");
+    for (const z of heutige) {
+      const p = d.personen.find((x) => x.id === z.person_id); if (!p || p.typ !== "schueler") continue;
+      const jahre = v() < 0.12 ? 0 : Math.max(0, (Number(p.jahrgang) || 5) - 5); // dabei seit Klasse 5, ein paar Quereinsteiger
+      for (let n = jahre; n >= 1; n--) {
+        const gruppe = z.gruppe_id === "g-a" && (Number(p.jahrgang) || 0) - n < 9 ? "g-b" : z.gruppe_id === "g-b" && (Number(p.jahrgang) || 0) - n < 6 ? "g-c" : z.gruppe_id;
+        d.gruppe_zuordnung.push({ id: `gz-h${d.gruppe_zuordnung.length + 1}`, person_id: p.id, gruppe_id: gruppe, art: "stamm", von: jahrVor(n), bis: ende(n), grund: "Schuljahr (Vorgeschichte)" });
+      }
+    }
+    // Ehemalige: ihre letzten Jahre im A-Orchester, Abschluss am Ende eines der letzten drei Schuljahre (die nicht schon ausgetreten sind)
+    d.personen.filter((p) => p.typ === "ehemalig").forEach((p, k) => {
+      const ab = 1 + (k % 4), dabei = 2 + Math.floor(v() * 3);
+      d.gruppe_zuordnung.push({ id: `gz-h${d.gruppe_zuordnung.length + 1}`, person_id: p.id, gruppe_id: "g-a", art: "stamm", von: jahrVor(ab + dabei - 1), bis: ende(ab), grund: "Abitur (Vorgeschichte)" });
+    });
+    // frühere Abiturientinnen und Abiturienten (ausgetreten): je Schuljahr etwa 9, vorher 4–7 Jahre im Bachkreis – nur mit Vorname, Nachname, Instrument
+    const VN = ["Lea", "Jonas", "Marie", "Paul", "Hannah", "Felix", "Lena", "Tim", "Clara", "Noah", "Sophie", "Ben", "Emma", "Luis", "Mia", "Elias", "Johanna", "Jan"], NN = ["Becker", "Wagner", "Schulz", "Hoffmann", "Koch", "Richter", "Klein", "Wolf", "Neumann", "Schwarz", "Braun", "Zimmermann"];
+    const REG = Object.keys(BES_A);
+    for (let n = 1; n <= 5; n++) for (let k = 0; k < 8 + Math.floor(v() * 4); k++) {
+      const id = `p-abi${n}-${k}`, dabei = 4 + Math.floor(v() * 4), reg = REG[Math.floor(v() * REG.length)];
+      const anonym = new Date(ende(n)) < tag(jetzt, -730); // nach 24 Monaten anonymisiert (Löschkonzept) – zählt nur noch als Zahl
+      d.personen.push({ id, vorname: anonym ? "Ehemalige/r" : VN[Math.floor(v() * VN.length)], nachname: anonym ? "(anonymisiert)" : NN[Math.floor(v() * NN.length)], typ: "ehemalig", status: "ausgetreten", ausgetreten_am: ende(n), rollen: [], kontakt_ok: false, notiz: "Vorgeschichte (Beispiel)", ...(anonym ? { anonymisiert: true } : {}) });
+      d.person_instrument.push({ id: `pi-${id}`, person_id: id, typ_id: TYP_VON_REGISTER[reg], register_id: reg, haupt: true, eigenes: true });
+      d.gruppe_zuordnung.push({ id: `gz-${id}a`, person_id: id, gruppe_id: "g-b", art: "stamm", von: jahrVor(n + dabei - 1), bis: ende(n + 3), grund: "Vorgeschichte" });
+      d.gruppe_zuordnung.push({ id: `gz-${id}b`, person_id: id, gruppe_id: "g-a", art: "stamm", von: jahrVor(n + 2), bis: ende(n), grund: "Abitur (Vorgeschichte)" });
+    }
+    // Gesamtprobe je Monat (18 Monate zurück, nur Vergangenes) mit Anwesenheit der damaligen Mitglieder
+    const aktivAm = (t) => [...new Set(d.gruppe_zuordnung.filter((z) => z.art === "stamm" && z.gruppe_id !== "g-d" && z.von <= t && (!z.bis || z.bis >= t)).map((z) => z.person_id))];
+    for (let m = 18; m >= 1; m--) {
+      const tg = new Date(jetzt.getFullYear(), jetzt.getMonth() - m, 12, 10, 0); if (tg.getMonth() === 7) continue; // August: Sommerferien
+      if (tag(tg, 0) >= tag(jetzt, -21)) continue; // die echten Proben der letzten Wochen gibt es schon
+      const t = { id: `th-${m}`, status: "geplant", titel: "Gesamtprobe (Vorgeschichte)", art_id: "ta-probe", beginn: iso(tg), ende: iso(tag(tg, 0, 13, 0)), ort: "PZ / Musiksaal", gruppen: ["g-a", "g-b"], teilnahme: "pflicht" };
+      d.termine.push(t);
+      const quote = [6, 11].includes(tg.getMonth()) ? 0.74 : [8, 9].includes(tg.getMonth()) ? 0.9 : 0.84;
+      for (const pid of aktivAm(isoTag(tg))) {
+        if (v() < 0.25) continue; // nicht für jede/n erfasst
+        const y = v(), anw = y < quote ? (v() < 0.93 ? "ja" : "spaet") : v() < 0.7 ? "entschuldigt" : "nein";
+        d.antworten.push({ id: `an-h${d.antworten.length + 1}`, termin_id: t.id, person_id: pid, antwort: anw === "ja" || anw === "spaet" ? "ja" : "nein", notiz: "", anwesend: anw });
+      }
+    }
+    // zurückgegebene Leihinstrumente (vorher an andere verliehen)
+    const leihbar = d.inventar.filter((x) => !["t-pk", "t-sw", "t-kla"].includes(x.typ_id) && ["verfuegbar", "verliehen"].includes(x.status)), kinder = d.personen.filter((p) => p.typ === "schueler");
+    for (let k = 0; k < Math.min(18, leihbar.length); k++) {
+      const von = tag(jetzt, -(120 + Math.floor(v() * 480))), bis = tag(von, 90 + Math.floor(v() * 240));
+      if (bis >= tag(jetzt, -30)) continue;
+      d.ausleihen.push({ id: `al-h${k + 1}`, inventar_id: leihbar[k].id, person_id: kinder[Math.floor(v() * kinder.length)].id, von: isoTag(von), bis: isoTag(bis), status: "zurueck", zustand_ausgabe: "gut", zustand_rueckgabe: "gut" });
+    }
+  }
   return d;
 }

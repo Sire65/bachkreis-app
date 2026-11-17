@@ -1,14 +1,21 @@
 {
-  "version": "0.76.0",
+  "version": "0.77.0",
   "datum": "17.11.2026",
   "stufe": "DEV",
   "neu": [
-    "📚 Hilfe auf dem neuesten Stand: 34 neue Hilfen mit „Zeig mir wo“",
-    "🧰 Technik aufgeräumt: nur noch 5 Kacheln, Seltenes unter „Weitere Technik“",
-    "❓ Rückfragen als App-Fenster statt grauer Browser-Fenster",
-    "📈 Auswertungen mit Verläufen, Probenbesuch, Besetzung und Kachel-Nutzung"
+    "📈 Vorführversion: Beispieldaten mit Vorgeschichte – die Auswertungen zeigen jetzt echte Verläufe"
   ],
   "verlauf": [
+    {
+      "version": "0.76.0",
+      "datum": "17.11.2026",
+      "neu": [
+        "📚 Hilfe auf dem neuesten Stand: 34 neue Hilfen mit „Zeig mir wo“",
+        "🧰 Technik aufgeräumt: nur noch 5 Kacheln, Seltenes unter „Weitere Technik“",
+        "❓ Rückfragen als App-Fenster statt grauer Browser-Fenster",
+        "📈 Auswertungen mit Verläufen, Probenbesuch, Besetzung und Kachel-Nutzung"
+      ]
+    },
     {
       "version": "0.75.0",
       "datum": "17.11.2026",

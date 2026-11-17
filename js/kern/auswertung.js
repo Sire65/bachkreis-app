@@ -12,8 +12,9 @@ export const MONAT_KURZ = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Au
 export function monate(n, heute = new Date()) {
   const h = new Date(heute); return Array.from({ length: n }, (_, i) => { const d = new Date(h.getFullYear(), h.getMonth() - (n - 1 - i), 15); return { j: d.getFullYear(), m: d.getMonth(), label: `${MONAT_KURZ[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`, ende: monatsEnde(d.getFullYear(), d.getMonth()) }; });
 }
-const stamm = (db) => db.liste("gruppe_zuordnung", (z) => !z.geloescht_am && z.art !== "temporaer");
-const schuelerIds = (db) => new Set(db.liste("personen", (p) => p.typ === "schueler" && !p.geloescht_am).map((p) => p.id));
+// Orchester-Zeit: Stamm-Zuordnungen außer im Ehemaligen-Orchester; gezählt werden Schüler/innen und Ehemalige (für ihre frühere Orchesterzeit)
+const stamm = (db) => { const ehem = new Set(db.liste("gruppen", (g) => g.ehemalige).map((g) => g.id)); return db.liste("gruppe_zuordnung", (z) => !z.geloescht_am && z.art !== "temporaer" && !ehem.has(z.gruppe_id)); };
+const schuelerIds = (db) => new Set(db.liste("personen", (p) => ["schueler", "ehemalig"].includes(p.typ) && !p.geloescht_am).map((p) => p.id));
 
 // 👥 Mitglieder (Schülerinnen und Schüler in einem Orchester) am Monatsende
 export function mitgliederVerlauf(db, { n = 24, heute = new Date() } = {}) {

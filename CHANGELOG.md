@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.77.0 DEV – 17.11.2026
+📈 **Vorführversion mit Vorgeschichte** (Vorbereitung der Vorstands-Präsentation, Wunsch Hansi): die Auswertungen zeigten in der Vorführung kaum Verläufe, weil alle Beispieldaten erst mit diesem Schuljahr begannen. Jetzt gibt es:
+- **frühere Orchester-Jahre** der heutigen Kinder (dabei seit Klasse 5, ein paar Quereinsteiger; früher im B-Orchester bzw. in der Orchesterklasse)
+- **frühere Abiturientinnen und Abiturienten** (je Schuljahr etwa 9–12, vorher 4–7 Jahre dabei) – wer vor über 24 Monaten ausgetreten ist, ist wie im Löschkonzept **anonymisiert** und zählt nur noch als Zahl
+- **monatliche Gesamtproben mit Anwesenheit** der letzten 18 Monate (im Sommer und Dezember etwas weniger, August Ferien) und **zurückgegebene Leihinstrumente**
+- Nur abgeschlossene Einträge – der heutige Stand der Vorführung bleibt genau wie bisher; Geräte, die die Vorführung schon kennen, bekommen die Vorgeschichte beim Update dazu
+- Auswertungen zählen Ehemalige jetzt für ihre frühere Orchesterzeit mit (das Ehemaligen-Orchester selbst zählt nicht als Mitgliedschaft)
+- Gilt nur für die Vorführversion – im Echtbetrieb zeigen die Auswertungen die echten Daten
+
 ## 0.76.0 DEV – 17.11.2026
 🧭 **Umsetzung der Bewertung vom 17.11.** (Wunsch Hansi „mach die Punkte in deiner Reihenfolge … gut, sorgfältig, bedienerfreundlich, übersichtlich“; Punkt 1 – Anbindung an Supabase und Neon – bleibt offen, bis das Team das Vorgehen abgestimmt hat):
 - **📚 Hilfe auf dem neuesten Stand** (Punkt 2): sie war bei 0.42 stehen geblieben – jetzt **84 statt 50 Hilfen**, 34 neue (mit „neu“-Zeichen), jeweils mit „👉 Zeig mir wo“ und nur für die Rollen, die es betrifft: Einführung, Kopf, Einfach/Erweitert, Zoom mit zwei Fingern, Anmelden ohne Code, Mein Status, Runde schon vorhanden, lieber WhatsApp, Gegenvorschlag, Gute-Besserung-Karte, Eingangskorb, Echo lesen/mitschreiben/Redaktion, Jahrbuch, Bach, Börse, **Schutz & Einwilligungen, Pausieren/Kündigen**, Leihvertrag, Unterlagen, Notfallpass, Schutz & Fotos (Leitung), Kündigungen, Inventur, Leihverträge, Sitzungen, Konzertkarten, Jahresbericht, Anwesenheit, Zugänge verteilen, Hänger/Datenverkehr (Admin), Bildschirmfoto, Nutzung. Ein Test prüft, dass jedes „Zeig mir wo“ ein Ziel hat

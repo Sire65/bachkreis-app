@@ -8,6 +8,10 @@ const BASIS = process.env.BASIS || "http://localhost:8080";
 const VIEWS = "buero buerodok quiz kindich zahlen zugang startnachricht impressum start termine nachrichten pinnwand instrumente noten orchester einstellungen meinedaten kinder kalender ueben cockpit genehmigungen meingesicht instrumentenkunde buehne mitfahrboerse projekte foerderverein einkauf meininstrument meinenoten meinegenehmigungen hilfe ueber sicherheit sos anwesenheit fotoliste gesundheit meinregister uebefortschritt chronik dokumente austausch anfragen partner".split(" ");
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const ctx = await b.newContext({ viewport: { width: 400, height: 860 }, bypassCSP: true });
+// ❓ 0.76.0 Rückfragen sind App-Fenster (js/kern/ui.js dialog) – wie früher die Browser-Dialoge automatisch beantworten: window.__frage = "ja" | "nein"
+const FRAGE_AUTO = (std) => { window.__frage ??= std; new MutationObserver(() => { const hg = document.getElementById("frageHg"); if (!hg || hg.dataset.auto) return; hg.dataset.auto = "1";
+  setTimeout(() => (hg.querySelector(window.__frage === "ja" ? '[data-f="ja"]' : '[data-f="nein"]') || hg.querySelector('[data-f="ja"]'))?.click(), 30); }).observe(document, { childList: true, subtree: true }); };
+await ctx.addInitScript(FRAGE_AUTO, "nein");
 const p = await ctx.newPage(); p.on("dialog", (d) => d.dismiss());
 await p.route("https://api.open-meteo.com/**", (r) => r.abort());
 const funde = new Map();

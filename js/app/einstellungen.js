@@ -2,7 +2,7 @@
 // Privatsphäre · Termine im Handy-Kalender · Darstellung (Farbdesign, Themen, Tag/Nacht, Schrift, Chat-Farben, Sparmodus) · Effekte ·
 // Startseite & Ansicht · App-Installation · App-Info. Fast alles gilt nur für dieses Gerät; die Privatsphäre wird beim Server gemerkt.
 import { S, VIEWS, kopf, einst, einstSetzen, zeige, istEltern, istLehrkraft, istVorstand, rollen, name, db } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, frage } from "../kern/ui.js";
 import { speichere, datenInfo, serverAktion, konfig, konfigSetzen } from "../kern/daten.js";
 import { einstStufe, CHAT, ER_KM_SATZ, erwachsen } from "../kern/schema.js";
 import { klappenAlleKnopf } from "../kern/klappen.js";
@@ -308,7 +308,7 @@ AKTIONEN.waLieber = async (_, el) => { // 📱 0.75.0 wie KC-CLUB-WA-LIEBER
   toast(el.checked ? (S.ich.freigaben?.mobil || ["leitung", "lehrkraft"].includes(S.ich.typ) ? "📱 Wer dir schreibt, bekommt WhatsApp gleich mit geöffnet" : "📱 Gemerkt – damit es klappt, bitte unter Privatsphäre die Handynummer freigeben") : "💬 Nachrichten kommen nur in der App");
 };
 AKTIONEN.alleGeraeteAb = async () => {
-  if (!confirm("Alle anderen Geräte abmelden? Dort braucht es danach wieder den persönlichen Link.")) return;
+  if (!(await frage("Alle anderen Geräte abmelden?\nDort braucht es danach wieder den persönlichen Link."))) return;
   const r = await serverAktion("abmelden_andere", {}).catch(() => null);
   toast(r?.ok ? `🔒 ${r.anzahl} andere Geräte abgemeldet` : "Gerade nicht möglich – bitte Internet prüfen");
 };

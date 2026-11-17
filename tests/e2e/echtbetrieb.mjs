@@ -12,9 +12,13 @@ const info = await new Promise((ok, f) => { srv.stdout.once("data", (d) => ok(JS
 const fehler = [];
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 // 🎓 0.65.0 Einführung: nur die erste Eltern-Seite geht sie durch, alle anderen haben sie „schon gesehen“
+// ❓ 0.76.0 Rückfragen sind App-Fenster (js/kern/ui.js dialog) – wie früher die Browser-Dialoge automatisch beantworten: window.__frage = "ja" | "nein"
+const FRAGE_AUTO = (std) => { window.__frage ??= std; new MutationObserver(() => { const hg = document.getElementById("frageHg"); if (!hg || hg.dataset.auto) return; hg.dataset.auto = "1";
+  setTimeout(() => (hg.querySelector(window.__frage === "ja" ? '[data-f="ja"]' : '[data-f="nein"]') || hg.querySelector('[data-f="ja"]'))?.click(), 30); }).observe(document, { childList: true, subtree: true }); };
 const seite = async (breite = 400, tour = false) => {
   const ctx = await b.newContext({ viewport: { width: breite, height: 860 }, serviceWorkers: "block" });
   if (!tour) await ctx.addInitScript(() => { try { const e = JSON.parse(localStorage.getItem("bk_einstellungen") || "{}"); if (!e.einfuehrung) localStorage.setItem("bk_einstellungen", JSON.stringify({ ...e, einfuehrung: 1 })); } catch { /* ohne Speicher */ } });
+  await ctx.addInitScript(FRAGE_AUTO, "ja");
   const p = await ctx.newPage();
   p.on("pageerror", (e) => fehler.push(e.message)); p.on("dialog", (d) => d.accept()); return p;
 };

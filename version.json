@@ -1,15 +1,25 @@
 {
-  "version": "0.75.0",
+  "version": "0.76.0",
   "datum": "17.11.2026",
   "stufe": "DEV",
   "neu": [
-    "💬 Neue Nachricht an Leute, mit denen es schon eine Runde gibt? Die App fragt, ob sie dort hinein soll",
-    "📱 „Ich lese lieber WhatsApp“: dann öffnet sich beim Absender WhatsApp gleich mit",
-    "💐 Gute-Besserung-Karte mit gemaltem Motiv – auf der Personenseite",
-    "🙌 Dirigentin: Hände nicht mehr hinter dem Rücken – die Arme arbeiten vor dem Körper",
-    "🧊🎚️ Für den Admin: Hänger-Messung mit Ursache und Fehlerkatalog, LED-Säulen für den Datenverkehr"
+    "📚 Hilfe auf dem neuesten Stand: 34 neue Hilfen mit „Zeig mir wo“",
+    "🧰 Technik aufgeräumt: nur noch 5 Kacheln, Seltenes unter „Weitere Technik“",
+    "❓ Rückfragen als App-Fenster statt grauer Browser-Fenster",
+    "📈 Auswertungen mit Verläufen, Probenbesuch, Besetzung und Kachel-Nutzung"
   ],
   "verlauf": [
+    {
+      "version": "0.75.0",
+      "datum": "17.11.2026",
+      "neu": [
+        "💬 Neue Nachricht an Leute, mit denen es schon eine Runde gibt? Die App fragt, ob sie dort hinein soll",
+        "📱 „Ich lese lieber WhatsApp“: dann öffnet sich beim Absender WhatsApp gleich mit",
+        "💐 Gute-Besserung-Karte mit gemaltem Motiv – auf der Personenseite",
+        "🙌 Dirigentin: Hände nicht mehr hinter dem Rücken – die Arme arbeiten vor dem Körper",
+        "🧊🎚️ Für den Admin: Hänger-Messung mit Ursache und Fehlerkatalog, LED-Säulen für den Datenverkehr"
+      ]
+    },
     {
       "version": "0.74.0",
       "datum": "17.11.2026",

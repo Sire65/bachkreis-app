@@ -4,7 +4,7 @@
 import { werkzeugeRegistrieren, WERKZEUG_ANSICHTEN } from "./werkzeuge.js";
 import { datenStarten, serverAktion, jetztAbgleichen, istEchtbetrieb, anmelden as serverAnmelden, abmelden as serverAbmelden, beiHinweis, liste, listeMitGeloeschten, hole, speichere, speichereViele, loesche, konfig, konfigSetzen, abonnieren, setzeWer, datenInfo } from "../kern/daten.js";
 import { AENDERUNG_ARTEN, TABELLEN, TABELLEN_NAMEN, ROLLEN, anzeigeName, INVENTAR_STATUS, INVENTAR_ABGANG, INVENTAR_PROBLEM, AUSSTATTUNG_KATEGORIEN, EIGENTUEMER, AFA_ARTEN, rollenMit } from "../kern/schema.js";
-import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
+import { esc, $, $$, AKTIONEN, aktionenStarten, toast, formWerte, herunterladen, frage, eingabe, datumKurz, vorZeit, zuLokal, vonLokal, BACHKREIS_LOGO, beschriftungenVerknuepfen } from "../kern/ui.js";
 import { KOM_STATUS, KOM_KANAELE } from "../kern/schema.js";
 import { communicatorZustand, testAnMich, KOM_ZUSTAND, senden } from "../kern/versand.js";
 import { loeschKandidaten, ANONYM_LEEREN, ANONYM_LOESCHEN, schuljahrVorschlaege, einkaufInventar, eingeladene, personenDaten, cockpit, csvAus, csvEin, stammgruppe, generellerWechselPlan, tagIso, instrumenteVon, elternVon, kinderVon, einwilligung, abschreibung, inventarBestand, naechsteInventarNr, fehlzeiten, gruppenMitglieder } from "../kern/logik.js";
@@ -562,7 +562,7 @@ AKTIONEN.zugNieNeu = async () => {
   gespeichert.forEach((z, i) => FRISCH.set(z.id, neu[i].code));
   toast(`🔄 ${nie.length} neue Codes – jetzt ${typ === "eltern" ? "Elternbriefe oder " : ""}QR-Karten drucken`); zeichne();
 };
-AKTIONEN.zugLink = async (code) => { try { await navigator.clipboard.writeText(appLink(code)); toast("🔗 Link kopiert"); } catch { prompt("Link:", appLink(code)); } };
+AKTIONEN.zugLink = async (code) => { try { await navigator.clipboard.writeText(appLink(code)); toast("🔗 Link kopiert"); } catch { await eingabe("Link zum Kopieren:", appLink(code), { nurLesen: true }); } };
 function qrBild(text) {
   if (typeof globalThis.qrcode !== "function") return "";
   const q = globalThis.qrcode(0, "M"); q.addData(text); q.make();

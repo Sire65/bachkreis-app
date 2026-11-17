@@ -4,7 +4,7 @@
 // ernannt werden – das darf nur der Entwickler (Server prüft: NUR_ENTWICKLER). Den Entwickler kann niemand löschen oder austragen.
 // Grau heißt immer „unbekannt / nicht gemessen“ – nie „in Ordnung“. Es werden nur Zahlen und Namen gezeigt, keine Inhalte (keine Nachrichten).
 import { S, VIEWS, zeichne, kopf, name, hatRolle, istEntwickler, fehlerListe } from "./zustand.js";
-import { esc, AKTIONEN, toast, vorZeit, blatt } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, vorZeit, blatt, frage } from "../kern/ui.js";
 import { katalogEintrag, katalogVonId, katalogZaehlen, FEHLER_KATALOG } from "../kern/haenger.js";
 import { liste, hole, speichere, konfig, konfigSetzen, istEchtbetrieb, serverAktion, serverAktionStill, datenInfo } from "../kern/daten.js";
 import { MODULE, ROLLEN, TABELLEN, TABELLEN_NAMEN } from "../kern/schema.js";
@@ -142,7 +142,11 @@ const R = {
   },
   module() {
     const aus = new Set(konfig().module_aus || []);
-    return `<div class="karte"><h3>🧩 Module freigeben</h3><p class="hinweis">Abgeschaltete Module verschwinden für alle von der Startseite. Admin und Entwickler sehen sie weiter (mit 🚫), um sie zu prüfen.</p>
+    const pilot = PILOT_AUS.every((k) => aus.has(k));
+    return `<div class="karte"><h3>🎯 Grundausstattung für den Pilot</h3><p class="hinweis">Für den Start mit wenigen Familien: Anrufe & Video, Runder Tisch, Fernhilfe und Geheim schreiben sind aus – die App bleibt übersichtlich, und das Team schaltet nach der Abstimmung frei, was gewünscht ist. Alles andere bleibt an. Jederzeit umkehrbar.</p>
+      <div class="knopfreihe"><button type="button" class="knopf${pilot ? "" : " haupt"}" data-a="adPilot" data-x="an" ${pilot ? "disabled" : ""}>🎯 Grundausstattung einschalten</button><button type="button" class="knopf" data-a="adPilot" data-x="aus" ${aus.size ? "" : "disabled"}>✅ Alle Module wieder an</button></div>
+      ${pilot ? '<p class="hinweis">🎯 Grundausstattung ist aktiv.</p>' : ""}</div>
+      <div class="karte"><h3>🧩 Module freigeben</h3><p class="hinweis">Abgeschaltete Module verschwinden für alle von der Startseite. Admin und Entwickler sehen sie weiter (mit 🚫), um sie zu prüfen.</p>
       ${Object.entries(MODULE).map(([k, t]) => `<label class="schalter"><span><b>${esc(t)}</b><div class="hinweis">${aus.has(k) ? "🚫 abgeschaltet" : "✅ an"}</div></span><input type="checkbox" data-c="adModul" data-x="${k}" ${aus.has(k) ? "" : "checked"}></label>`).join("")}</div>`;
   },
   rollen() {
@@ -187,6 +191,12 @@ async function setzen(k, v, ok = "💾 Gespeichert") {
 }
 AKTIONEN.adWartung = (_, el) => setzen("wartung", !!el.checked, el.checked ? "🚧 Wartungsmodus AN" : "✅ Wartungsmodus aus");
 AKTIONEN.adWartungText = () => setzen("wartung_text", String(document.getElementById("adWartungText")?.value || "").trim().slice(0, 160) || null);
+// 🎯 0.76.0 Pilot-Grundausstattung (Bewertung 17.11.: „für den Pilot erst einmal aus, später nach Abstimmung im Team zuschalten“)
+export const PILOT_AUS = ["anrufe", "tisch", "fernhilfe", "geheim"];
+AKTIONEN.adPilot = async (x) => {
+  if (x === "an") { if (!(await frage("Grundausstattung einschalten? Anrufe & Video, Runder Tisch, Fernhilfe und Geheim schreiben werden für alle ausgeblendet (umkehrbar)."))) return; setzen("module_aus", [...new Set([...(konfig().module_aus || []), ...PILOT_AUS])]); }
+  else { if (!(await frage("Alle Module wieder für alle einschalten?"))) return; setzen("module_aus", []); }
+};
 AKTIONEN.adModul = (_, el) => { const s = new Set(konfig().module_aus || []); if (el.checked) s.delete(el.dataset.x); else s.add(el.dataset.x); setzen("module_aus", [...s]); };
 // 📖 0.75.0 Fehlerkatalog: alle Fehler-IDs mit Ursache und Lösung – gezählt im Zeitraum (wie oft, bei wie vielen Personen), die häufigsten oben
 AKTIONEN.adKatalog = (tage) => {
@@ -201,14 +211,14 @@ AKTIONEN.adFehlerErledigt = async (id) => { const f = hole("fehlerberichte", id)
 AKTIONEN.adAdminNeu = async () => {
   if (!istEntwickler()) return toast("🔒 Nur der Entwickler");
   const p = hole("personen", document.getElementById("adNeuAdmin")?.value); if (!p) return toast("Bitte eine Person wählen");
-  if (!confirm(`${name(p)} zum Admin der Bachkreis-App machen?`)) return;
+  if (!(await frage(`${name(p)} zum Admin der Bachkreis-App machen?`, { ja: "🛠️ Zum Admin machen" }))) return;
   try { await speichere("personen", { ...p, rollen: [...new Set([...(p.rollen || []), "admin"])] }); toast(`👑 ${name(p)} ist jetzt Admin`); } catch (e) { toast("⚠️ " + e.message); }
   zeichne();
 };
 AKTIONEN.adAdminWeg = async (id) => {
   if (!istEntwickler()) return toast("🔒 Nur der Entwickler");
   const p = hole("personen", id); if (!p || (p.rollen || []).includes("entwickler")) return;
-  if (!confirm(`${name(p)} die Admin-Rolle entziehen?`)) return;
+  if (!(await frage(`${name(p)} die Admin-Rolle entziehen?`))) return;
   try { await speichere("personen", { ...p, rollen: (p.rollen || []).filter((r) => r !== "admin") }); toast("Admin-Rolle entzogen"); } catch (e) { toast("⚠️ " + e.message); }
   zeichne();
 };

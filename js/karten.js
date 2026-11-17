@@ -3,6 +3,7 @@
 // für die Abendkasse; mit der Nr. lässt sich die Reservierung auch wieder stornieren. Keine Cookies, kein Tracking.
 // In der Vorführversion (ohne Server) läuft alles nur in diesem Browser-Tab.
 import { UMGEBUNG } from "./kern/umgebung.js";
+import { frage } from "./kern/ui.js";
 
 const SERVER_AKTION = "karten"; // Server-Aktion ohne Anmeldung (nur mit Karten-Link)
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -88,7 +89,7 @@ async function reservieren(e) {
 async function stornieren(e) {
   e.preventDefault();
   const code = String(new FormData(e.target).get("code") || "").toUpperCase().trim();
-  if (!confirm(`Reservierung ${code} wirklich stornieren?`)) return;
+  if (!(await frage(`Reservierung ${code} wirklich stornieren?`, { ja: "Ja, stornieren", nein: "Nein" }))) return; // 0.76.0 App-Fenster statt Browser-Fenster
   try { const r = await api("stornieren", { code }); K.konzert = r.konzert; K.meine = K.meine.filter((m) => m.code !== code); merken(); zeigen(hinweis(`Reservierung <b>${esc(code)}</b> ist storniert. Die Plätze sind wieder frei.`, "ok")); }
   catch (err) { zeigen(hinweis(FEHLER[err.code] || "Das hat nicht geklappt.")); }
 }

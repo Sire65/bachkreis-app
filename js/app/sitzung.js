@@ -4,7 +4,7 @@
 // Notiz und Beschluss) · 6 🗒️ Protokoll (fertiger Text im Büro-Ordner „Protokolle“, danach wie gewohnt freigeben). Planen dürfen Leitung, Vorstand, Admin;
 // Eingeladene sehen die Tagesordnung, sobald eingeladen ist.
 import { S, VIEWS, zeige, zeichne, kopf, name, hatRolle } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datum, uhr, zuLokal, vonLokal } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datum, uhr, zuLokal, vonLokal, frage } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
 import { SITZUNG_ARTEN, SITZUNG_FUER, SITZUNG_STATUS, SITZUNG_PLANER, sitzungFuerMich, rollenMit, VS_AN } from "../kern/schema.js";
 import { senden } from "../kern/versand.js";
@@ -126,7 +126,7 @@ export const letzteSitzung = (art, vor = null) => liste("versammlungen", (x) => 
 const toText = (s) => (s.tagesordnung || []).map((p, i) => `${i + 1}. ${p.titel}${p.minuten ? ` (${p.minuten} Min.)` : ""}`).join("\n");
 AKTIONEN.sitzEinladen = async (id) => {
   const s = hole("versammlungen", id); if (!s) return; const an = empfaenger(s).filter((p) => p !== S.ich.id);
-  if (!confirm(`Einladung mit Tagesordnung an ${an.length} Personen senden?`)) return;
+  if (!(await frage(`Einladung mit Tagesordnung an ${an.length} Personen senden?`, { ja: "📨 Senden" }))) return;
   senden({ an, betreff: `📨 Einladung: ${s.titel}`, text: `${SITZUNG_ARTEN[s.art] || "Sitzung"} am ${datum(s.beginn)}, ${uhr(s.beginn)} Uhr${s.ort ? ` – ${s.ort}` : ""}\n\nTagesordnung:\n${toText(s)}\n\nIn der Bachkreis-App unter 🎬 Sitzungen.`, ereignis: "rundschreiben" }).catch(() => {});
   await sichern(s, { eingeladen_am: new Date().toISOString(), status: s.status === "planung" ? "eingeladen" : s.status }, `📨 ${an.length} eingeladen`);
 };

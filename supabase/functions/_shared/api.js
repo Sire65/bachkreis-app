@@ -367,6 +367,27 @@ async function betriebPuls(db, s) {
   return { status: 200, json: { ok: true, t: Date.now(), lesen, schreiben, online } };
 }
 
+// ---------- 🧭 Kachel-Nutzung (0.76.0, Auswertungen): welche Funktionen werden geöffnet? Anonym – je Tag und Kachel nur eine Zahl,
+// nie eine Person. Geräte schicken ihre Zählung gesammelt (höchstens alle 10 Min.); nur die letzten 3 Tage, je Eintrag höchstens 500. ----------
+export async function kachelNutzung(db, body) {
+  const heute = new Date(), frueh = new Date(heute.getTime() - 3 * 86400000).toISOString().slice(0, 10), bis = heute.toISOString().slice(0, 10);
+  let n = 0;
+  for (const [t, je] of Object.entries(body?.tage || {}).slice(0, 4)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(t) || t < frueh || t > bis || !je || typeof je !== "object") continue;
+    for (const [k, v] of Object.entries(je).slice(0, 120)) {
+      const anzahl = Math.min(500, Math.round(Number(v) || 0)); if (!/^[a-z0-9_-]{1,40}$/.test(k) || anzahl < 1) continue;
+      await db.q(`insert into bk_kachel_nutzung (tag, kachel, anzahl) values ($1, $2, $3) on conflict (tag, kachel) do update set anzahl = bk_kachel_nutzung.anzahl + excluded.anzahl`, [t, k, anzahl]); n++;
+    }
+  }
+  return { status: 200, json: { ok: true, gezaehlt: n } };
+}
+async function kachelNutzungLesen(db, s, body) {
+  if (!rollenMit(s.person.rollen || []).some((r) => ["admin", "leitung", "vorstand"].includes(r))) return fehler(403, "NUR_LEITUNG");
+  const tage = [7, 30, 90, 365].includes(Number(body.tage)) ? Number(body.tage) : 30;
+  const r = await db.q(`select kachel, sum(anzahl)::int as n from bk_kachel_nutzung where tag > current_date - $1::int group by kachel order by 2 desc`, [tage]);
+  return { status: 200, json: { ok: true, tage, zaehlung: Object.fromEntries(r.map((x) => [x.kachel, x.n])) } };
+}
+
 // ---------- Speichern ----------
 async function speichern(db, s, body) {
   const tab = String(body.tab || "");
@@ -728,6 +749,8 @@ async function verarbeitenRoh(db, body, meta = {}, dienste = {}) {
     }
     if (aktion === "admin_lage") return await adminLage(db, s);
     if (aktion === "betrieb_puls") return await betriebPuls(db, s); // 🎚️ 0.75.0 LED-Säulen im Kopf (nur Admin)
+    if (aktion === "kachel_nutzung") return await kachelNutzung(db, body); // 🧭 0.76.0 anonym zählen (jedes Gerät)
+    if (aktion === "kachel_nutzung_lesen") return await kachelNutzungLesen(db, s, body); // 🧭 0.76.0 Auswertung (Leitung/Vorstand/Admin)
     if (aktion === "speichern") return await speichern(db, s, body);
     if (aktion === "versenden") return await versenden(db, s, body, dienste);
     if (aktion === "nachricht_zustellung") return await nachrichtZustellung(db, s, body);

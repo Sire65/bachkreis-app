@@ -2,7 +2,7 @@
 // Kinder. Darin: was die Leitung ablegt (Bescheinigungen, unterschriebene Verträge, Urkunden) und was Eltern selbst hochladen (Attest, Quittung …),
 // dazu Abkürzungen zu dem, was die App ohnehin führt (Genehmigungen, Leihinstrument, Einwilligungen). Sichtbar nur für die Familie und die Leitung.
 import { S, VIEWS, db, zeichne, kopf, name, hatRolle, istEltern } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
 import { UNTERLAGEN_ARTEN, istMinderjaehrig } from "../kern/schema.js";
 import { kinderVon } from "../kern/logik.js";
@@ -60,4 +60,4 @@ AKTIONEN.ulAuf = async (id) => {
   if (u.datei.startsWith("bild:")) return window.open(u.datei.slice(5), "_blank", "noopener");
   try { await dateiOeffnen(u.datei.replace(/^datei:/, ""), u.titel, ""); } catch (e) { toast("⚠️ " + e.message); }
 };
-AKTIONEN.ulWeg = async (id) => { if (!confirm("Diese Unterlage löschen?")) return; const u = hole("unterlagen", id); if (u) await speichere("unterlagen", { ...u, geloescht_am: new Date().toISOString() }); zeichne(); };
+AKTIONEN.ulWeg = async (id) => { if (!(await frage("Diese Unterlage löschen?"))) return; const u = hole("unterlagen", id); if (u) await speichere("unterlagen", { ...u, geloescht_am: new Date().toISOString() }); zeichne(); };

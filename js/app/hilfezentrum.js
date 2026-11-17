@@ -16,7 +16,7 @@ import { chatTitel } from "./nachrichten.js";
 
 const GESEHEN = "bk_hz_gesehen";
 const LS = (k, d = null) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
-const darf = (fuer) => ({ eltern: istEltern(), kinder: istSchueler(), verwalter: istVerwalter(), leitung: hatRolle("admin", "leitung"), buero: hatRolle("admin", "leitung", "lehrkraft", "vorstand"), planer: hatRolle(...TU_PLANER), advent: adventSichtbar(new Date(), hatRolle("admin", "leitung")), erwachsen: !istSchueler() })[fuer] ?? true;
+const darf = (fuer) => ({ eltern: istEltern(), kinder: istSchueler(), verwalter: istVerwalter(), leitung: hatRolle("admin", "leitung"), buero: hatRolle("admin", "leitung", "lehrkraft", "vorstand"), planer: hatRolle(...TU_PLANER), advent: adventSichtbar(new Date(), hatRolle("admin", "leitung")), erwachsen: !istSchueler(), redaktion: hatRolle("admin", "leitung", "redaktion"), admin: hatRolle("admin") })[fuer] ?? true; // 0.76.0 redaktion, admin
 const HZ = { thema: null, q: "", vorher: null, unterwegs: null, behalten: false };
 const eintraege = () => hilfeFuer(darf);
 

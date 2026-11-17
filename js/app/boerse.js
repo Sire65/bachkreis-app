@@ -3,7 +3,7 @@
 // Kontakt über eine Nachricht in der App – Telefonnummern stehen nicht in der Anzeige. Der Server prüft: ändern nur eigene Anzeigen,
 // als Helfer nur sich selbst ein- oder austragen; Leitung kann aufräumen.
 import { S, VIEWS, zeichne, kopf, name, hatRolle } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, datumKurz, frage } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
 import { BOERSE_ARTEN, BOERSE_KAT, BOERSE_STATUS, boerseDarf } from "../kern/schema.js";
 import { klappe } from "../kern/klappen.js";
@@ -85,5 +85,5 @@ AKTIONEN.boHelfen = async (id) => {
   try { await speichere("boerse", { ...b, helfer: [...s] }); toast(dabei ? "Ausgetragen" : "🙋 Danke! Du bist eingetragen."); } catch (e) { toast("⚠️ " + e.message); }
   zeichne();
 };
-AKTIONEN.boLoeschen = async (id) => { if (!confirm("Anzeige löschen?")) return; const b = hole("boerse", id); if (b) await speichere("boerse", { ...b, geloescht_am: new Date().toISOString() }); blattZu(); zeichne(); };
-AKTIONEN.boEntfernen = async (id) => { if (!confirm("Diese Anzeige für alle entfernen?")) return; const b = hole("boerse", id); if (b) await speichere("boerse", { ...b, geloescht_am: new Date().toISOString() }); zeichne(); };
+AKTIONEN.boLoeschen = async (id) => { if (!(await frage("Anzeige löschen?"))) return; const b = hole("boerse", id); if (b) await speichere("boerse", { ...b, geloescht_am: new Date().toISOString() }); blattZu(); zeichne(); };
+AKTIONEN.boEntfernen = async (id) => { if (!(await frage("Diese Anzeige für alle entfernen?"))) return; const b = hole("boerse", id); if (b) await speichere("boerse", { ...b, geloescht_am: new Date().toISOString() }); zeichne(); };

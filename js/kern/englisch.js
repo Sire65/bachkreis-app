@@ -11,7 +11,7 @@ export const EN = {
   // Kacheln
   "Abmelden": "Log out", "Abwesenheit": "Absence", "Adventskalender": "Advent calendar", "Alles auf einen Blick": "Everything at a glance",
   "Anmelden ohne Code": "Sign in without code", "Anrufe": "Calls", "Anwesenheit": "Attendance", "App installieren": "Install app",
-  "Auftrittsanfragen": "Performance requests", "Austausch & Gastfamilien": "Exchange & host families", "Bachkreis in Zahlen": "Bachkreis in numbers",
+  "Auftrittsanfragen": "Performance requests", "Austausch & Gastfamilien": "Exchange & host families", "Bachkreis in Zahlen": "Bachkreis in numbers", "Auswertungen": "Reports & trends", "Weitere Technik": "More technical",
   "Bildschirmfoto": "Screenshot", "Börse & Helfer": "Marketplace & helpers", "Bühne": "Stage", "Büro": "Office", "Chronik & Repertoire": "History & repertoire",
   "Cockpit": "Cockpit", "Datenschutz": "Privacy", "Demo zurücksetzen": "Reset demo", "Dokumente": "Documents", "Eingangskorb": "Inbox",
   "Erstattung": "Reimbursement", "Fernhilfe": "Remote help", "Foto-Liste": "Photo list", "Fotoalbum": "Photo album", "Förderverein": "Friends' association",

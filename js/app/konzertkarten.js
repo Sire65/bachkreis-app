@@ -2,7 +2,7 @@
 // Reservierung, Hinweis), teilen den Karten-Link (karten.html#k=…), sehen die Reservierungen und haken an der Abendkasse ab.
 // Reservierung von Hand (Telefon, Kasse), Liste drucken/PDF. Besucherdaten löscht der Server 30 Tage nach dem Konzert.
 import { VIEWS, zeichne, kopf, hatRolle } from "./zustand.js";
-import { esc, AKTIONEN, toast } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, frage, eingabe } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
 import { KARTEN_ROLLEN, KARTEN_STATUS, KARTEN_JE_STANDARD } from "../kern/schema.js";
 
@@ -64,10 +64,10 @@ AKTIONEN.kkHinweis = (v) => terminSetzen({ karten_hinweis: String(v).slice(0, 20
 AKTIONEN.kkSuche = (v) => { suche = v; zeichne(); };
 AKTIONEN.kkAbholen = (id) => reservierungSetzen(id, { status: "abgeholt" });
 AKTIONEN.kkZurueck = (id) => reservierungSetzen(id, { status: "reserviert" });
-AKTIONEN.kkStorno = (id) => { if (confirm("Diese Reservierung stornieren?")) reservierungSetzen(id, { status: "storniert" }); };
+AKTIONEN.kkStorno = async (id) => { if (await frage("Diese Reservierung stornieren?")) reservierungSetzen(id, { status: "storniert" }); };
 AKTIONEN.kkHand = async () => {
-  const name = prompt("Name für die Reservierung (Telefon, Abendkasse):"); if (!name?.trim()) return;
-  const n = Math.round(Number(prompt("Wie viele Karten?", "2"))); if (!(n >= 1)) return;
+  const name = await eingabe("Name für die Reservierung (Telefon, Abendkasse):", "", { ja: "Weiter" }); if (!name?.trim()) return;
+  const n = Math.round(Number(await eingabe("Wie viele Karten?", "2", { typ: "number", ja: "🎟️ Reservieren" }))); if (!(n >= 1)) return;
   await speichere("kartenreservierungen", { id: neueId(), termin_id: offen, name: name.trim(), anzahl: n, status: "reserviert", quelle: "kasse", zeit: new Date().toISOString() });
   toast("🎟️ Reserviert"); zeichne();
 };

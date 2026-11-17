@@ -2,7 +2,7 @@
 // der Server kennt nur den öffentlichen. Einrichten unter Technik › „Anmelden ohne Code“; anmelden auf der Anmeldeseite.
 // Wird der Zugang gesperrt (Handy verloren), sind auch die Passkeys gesperrt. Nur im Echtbetrieb.
 import { S, VIEWS, zeichne, kopf } from "./zustand.js";
-import { esc, AKTIONEN, toast } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, frage } from "../kern/ui.js";
 import { liste, hole, loesche, serverAktion, istEchtbetrieb, anmelden } from "../kern/daten.js";
 
 const b64u = (b) => btoa(String.fromCharCode(...new Uint8Array(b))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -54,6 +54,6 @@ AKTIONEN.pkEinrichten = async () => {
   } catch (e) { if (e?.name === "InvalidStateError") toast(FEHLER.SCHON_EINGERICHTET); else if (e?.name !== "NotAllowedError") toast("🔑 Einrichten ging nicht: " + (e?.message || e)); }
 };
 AKTIONEN.pkEntfernen = async (id) => {
-  const p = hole("passkeys", id); if (!p || !confirm(`„${p.name || "Gerät"}“ entfernen? Danach meldest du dich dort wieder mit dem Code an.`)) return;
+  const p = hole("passkeys", id); if (!p || !(await frage(`„${p.name || "Gerät"}“ entfernen? Danach meldest du dich dort wieder mit dem Code an.`))) return;
   await loesche("passkeys", id); toast("Entfernt"); zeichne();
 };

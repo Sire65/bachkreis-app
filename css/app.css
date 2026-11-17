@@ -556,3 +556,29 @@ body.dv-offen .blatt-hg { z-index: 8900; } /* Auswahl aus der Druckvorschau lieg
 .vs-buchst { flex: none; width: 30px; height: 30px; border-radius: 50%; background: #1a1500; color: #f2b705; display: grid; place-items: center; }
 .vs-gegen-wahl { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
 .vs-gegen-zu { background: var(--karte2); border-radius: 10px; padding: 8px 10px; }
+
+/* ❓ 0.76.0 Rückfrage-/Eingabe-Fenster (js/kern/ui.js dialog) – über allen Fenstern, auch über Druckvorschau und Pult */
+.frage-hg { position: fixed; inset: 0; z-index: 9800; background: rgba(0, 0, 0, .5); display: flex; align-items: center; justify-content: center; padding: 16px; animation: frageRein .15s ease; }
+.frage-fenster { background: var(--bg); color: var(--text); width: 100%; max-width: 420px; border-radius: 18px; padding: 18px 18px 14px; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); border-top: 5px solid #f2b705; }
+.frage-text { margin: 0 0 14px; line-height: 1.45; } .frage-text b { display: block; font-size: 1.05rem; } .frage-text span { display: block; margin-top: 6px; color: var(--text2, inherit); }
+.frage-feld { width: 100%; box-sizing: border-box; font: inherit; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--linie, #ccc); background: var(--karte, #fff); color: inherit; margin-bottom: 14px; }
+.frage-knoepfe { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; } .frage-knoepfe .knopf { min-width: 110px; }
+.knopf.haupt.gefahr { background: #c62828; border-color: #c62828; color: #fff; }
+@keyframes frageRein { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .frage-hg { animation: none; } }
+
+/* 📈 0.76.0 Auswertungen: Diagramme (js/app/auswertungen.js) – Farben per Dataviz-Prüfung (hell #a8780a/#3d6fb6, dunkel #b5860a/#5f8bd6) */
+:root { --dv1: #a8780a; --dv2: #3d6fb6; }
+:root.dunkel { --dv1: #b5860a; --dv2: #5f8bd6; }
+.dv { width: 100%; height: auto; display: block; margin: 6px 0; overflow: visible; }
+.dv-gitter { stroke: var(--linie, #ddd); stroke-width: 1; opacity: .7; }
+.dv-achse { font: 500 9px system-ui, sans-serif; fill: var(--text2, #666); }
+.dv-wert { font: 700 10px system-ui, sans-serif; fill: var(--text, #222); } .dv-klein { font: 500 8px system-ui, sans-serif; fill: var(--text2, #666); }
+.dv-linie { fill: none; stroke: var(--dv1); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.dv-punkt circle { fill: var(--dv1); stroke: var(--karte, #fff); stroke-width: 2; } .dv-punkt:hover circle { r: 5; }
+.dv-balken.dv-s1 { fill: var(--dv1); } .dv-balken.dv-s2 { fill: var(--dv2); } .dv-balken:hover { opacity: .8; }
+.dv-soll { stroke: var(--text, #222); stroke-width: 2.5; stroke-linecap: round; }
+.dv-legende { display: flex; gap: 14px; font-size: .85rem; margin: 4px 0; } .dv-legende i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.dv-legende i.dv-s1 { background: var(--dv1); } .dv-legende i.dv-s2 { background: var(--dv2); }
+.dv-tabelle summary { cursor: pointer; font-size: .9rem; margin: 4px 0; } .dv-tabelle table { margin: 6px 0; }
+.aw-kenn { margin-bottom: 8px; }

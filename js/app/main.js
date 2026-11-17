@@ -1,8 +1,9 @@
 // Start der Bachkreis-App: Datenquelle starten, Person bestimmen (Zugangscode ?k= / gemerkte Person / Demo-Rolle),
 // Ansichten laden, Service Worker mit atomarem Update (AGENTS.md Regel 16).
 import { haengerWaechter } from "../kern/haenger.js";
+import "./kachelzaehler.js"; // 🧭 0.76.0 Kachel-Nutzung anonym zählen
 import { datenStarten, liste, hole, abonnieren, konfig, speichere, datenInfo, istEchtbetrieb, anmelden, abmelden, beiHinweis } from "../kern/daten.js";
-import { AKTIONEN, aktionenStarten, nachladenSetzen, toast, esc, $, BACHKREIS_LOGO } from "../kern/ui.js";
+import { AKTIONEN, aktionenStarten, nachladenSetzen, toast, esc, $, BACHKREIS_LOGO, frage } from "../kern/ui.js";
 import { fehlerHookSetzen, S, zeige, zurueck, zeichne, alsPerson, einst, einstAnwenden, ANSICHTEN, fehlerMerken } from "./zustand.js";
 import { setzeEmpfaengerGeraet, pushAbonnieren } from "../kern/versand.js";
 import "./start.js";
@@ -109,7 +110,7 @@ AKTIONEN.anmeldenCode = async () => {
   if (!r.ok) { anmeldeSeite(FEHLERTEXT[r.fehler] || "Anmeldung nicht möglich – bitte Internetverbindung prüfen.", r.fehler || "OFFLINE"); return; }
   location.reload();
 };
-AKTIONEN.abmeldenApp = async () => { if (!confirm("Von diesem Gerät abmelden?")) return; await abmelden(); location.reload(); };
+AKTIONEN.abmeldenApp = async () => { if (!(await frage("Von diesem Gerät abmelden?\nDanach brauchst du wieder deinen persönlichen Link."))) return; await abmelden(); location.reload(); };
 
 async function starten() {
   einstAnwenden(); anwendenDesign();

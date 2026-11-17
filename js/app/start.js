@@ -1,5 +1,5 @@
 // Startseite nach Club-Vorbild: Kopf mit Statusleiste/LEDs, Register (Bachkreis · Meins · Technik · Admin), Kacheln.
-import { S, VIEWS, db, einst, zeige, istLeitung, istLehrkraft, istVerwalter, istVorstand, istEltern, istSchueler, hatRolle, vorname, fehlerListe } from "./zustand.js";
+import { S, VIEWS, db, einst, zeige, istLeitung, istLehrkraft, istVerwalter, istVorstand, istEltern, istSchueler, hatRolle, vorname, fehlerListe, kopf } from "./zustand.js";
 import { esc, AKTIONEN, blatt, datum, uhr } from "../kern/ui.js";
 import { liste, hole, datenInfo, konfig } from "../kern/daten.js";
 import { nsId, nachrichtFrei, MODULE } from "../kern/schema.js";
@@ -133,7 +133,7 @@ export const KACHELN = {
     { id: "konzertkarten", sym: "🎟️", t: "Konzertkarten", u: "Online reservieren · Abendkasse", v: "konzertkarten", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "verein" },
     { id: "partner", sym: "🤝", t: "Partner & Kontakte", u: "Musikschule · Partnerorchester · Austausch", v: "partner", nur: () => istLehrkraft() || istVorstand(), abs: "verein" },
     { id: "jahresbericht", sym: "📊", t: "Jahresbericht", u: "Das Jahr in Zahlen · für Vorstand & Versammlung", v: "jahresbericht", nur: () => hatRolle("admin", "leitung", "vorstand"), abs: "verein" },
-    { id: "zahlen", sym: "📊", t: "Bachkreis in Zahlen", u: "Mitglieder · Termine · Zusagen · Übezeit", v: "zahlen", nur: () => istVerwalter(), abs: "verein" },
+    { id: "auswertungen", sym: "📈", t: "Auswertungen", u: "Verläufe · Probenbesuch · Besetzung · Nutzung", v: "auswertungen", nur: () => istVerwalter(), abs: "verein" }, // 0.76.0 ersetzt „Bachkreis in Zahlen“ (dort verlinkt)
     { id: "verwaltung", sym: "💻", t: "PC-Verwaltung", u: "Stammdaten am PC/Notebook pflegen", aktion: "verwaltungOeffnen", nur: () => istVerwalter(), abs: "verein" },
   ],
   // 🎈 Entdecken (0.63.0): Freizeit, Spiele, Erinnerungen – für alle
@@ -177,23 +177,25 @@ export const KACHELN = {
     { id: "einstellungen", sym: "⚙️", t: "Meine Einstellungen", u: "Benachrichtigung · Schrift · Ansicht", v: "einstellungen" },
   ],
   // ⚙️ Technik (0.63.0): nur Technik – „Alles auf einen Blick“ steckt in „Hilfe & Tipps“
+  // 🧰 0.76.0 Technik ausgedünnt (Bewertung „Technik: Schüler 12, Eltern 15 Kacheln – zu viel“): direkt sichtbar nur, was alle brauchen;
+  // Selteneres (mehr: true) steckt in „🧰 Weitere Technik“ – nichts entfernt, alles auch über die Lupe 🔍 und „Alles auf einen Blick“
   technik: [
     { id: "update", sym: "🔄", t: "Update prüfen", u: () => `Installiert: v${APP_VERSION} ${APP_STUFE}`, aktion: "updatePruefen" },
     { id: "installieren", sym: "📲", t: "App installieren", u: "Auf den Startbildschirm – startet schneller", aktion: "installieren" },
-    { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung", nur: () => hatRolle("admin", "leitung", "vorstand") },
-    { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit" },
+    { id: "nutzung", sym: "📈", t: "So nutzen wir die App", u: "Wann ist am meisten los?", v: "nutzung", nur: () => hatRolle("admin", "leitung", "vorstand"), mehr: true },
+    { id: "sicherheit", sym: "🛡️", t: "Sicherheits-Check", u: "Läuft alles sicher? Jetzt prüfen", v: "sicherheit", mehr: true },
     { id: "kalender", sym: "📆", t: "Kalender", u: "Apple · Google · Outlook – automatisch aktuell", v: "kalender" },
-    { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto" },
-    { id: "anrufe", sym: "📞", t: "Anrufe", u: "📞 Anruf · 🎥 Video – im Einzelchat", v: "anrufe", nur: () => anrufAn(), zahl: () => verpassteAnrufe() },
-    { id: "tisch", sym: "🪑", t: "Runder Tisch", u: "Online-Treffen mit Bild und Ton", v: "tisch", nur: () => tischDa() },
-    { id: "passkeys", sym: "👆", t: "Anmelden ohne Code", u: "Fingerabdruck / Gesicht (Passkey)", v: "passkeys" },
-    { id: "schluesselbund", sym: "🔑", t: "Schlüsselbund", u: "🔒 Geheime Nachrichten auf jedem Gerät lesen", v: "schluesselbund", nur: () => geheimTechnik() && erwachsenIch() },
-    { id: "fernhilfe", sym: "🛟", t: "Fernhilfe", u: "Jemand schaut mit auf deinen Bildschirm", v: "fernhilfe", nur: () => fernhilfeKachelDa() },
+    { id: "bildschirmfoto", sym: "📸", t: "Bildschirmfoto", u: "Einkreisen · an die Leitung schicken", aktion: "bildschirmfoto", mehr: true },
+    { id: "anrufe", sym: "📞", t: "Anrufe", u: "📞 Anruf · 🎥 Video – im Einzelchat", v: "anrufe", nur: () => anrufAn(), zahl: () => verpassteAnrufe(), mehr: true },
+    { id: "tisch", sym: "🪑", t: "Runder Tisch", u: "Online-Treffen mit Bild und Ton", v: "tisch", nur: () => tischDa(), mehr: true },
+    { id: "passkeys", sym: "👆", t: "Anmelden ohne Code", u: "Fingerabdruck / Gesicht (Passkey)", v: "passkeys", mehr: true },
+    { id: "schluesselbund", sym: "🔑", t: "Schlüsselbund", u: "🔒 Geheime Nachrichten auf jedem Gerät lesen", v: "schluesselbund", nur: () => geheimTechnik() && erwachsenIch(), mehr: true },
+    { id: "fernhilfe", sym: "🛟", t: "Fernhilfe", u: "Jemand schaut mit auf deinen Bildschirm", v: "fernhilfe", nur: () => fernhilfeKachelDa(), mehr: true },
     { id: "datenschutz", sym: "⚖️", t: "Datenschutz", u: "Was mit deinen Daten passiert · Regeln", v: "datenschutz" },
     { id: "hilfe", sym: "❓", t: "Hilfe & Tipps", u: "Kurz erklärt · 🗺️ Alles auf einen Blick", v: "hilfe" },
-    { id: "test", sym: "🧪", t: "Test an mich", u: "Push & Mail ausprobieren", v: "test" },
-    { id: "ueber", sym: "ℹ️", t: "Über die App", u: "Version · Datenquelle · Lizenzen", v: "ueber" },
-    { id: "abmelden", sym: "🚪", t: "Abmelden", u: "Von diesem Gerät abmelden", aktion: "abmeldenApp", nur: () => datenInfo().server === true },
+    { id: "test", sym: "🧪", t: "Test an mich", u: "Push & Mail ausprobieren", v: "test", mehr: true },
+    { id: "ueber", sym: "ℹ️", t: "Über die App", u: "Version · Datenquelle · Lizenzen", v: "ueber", mehr: true },
+    { id: "abmelden", sym: "🚪", t: "Abmelden", u: "Von diesem Gerät abmelden", aktion: "abmeldenApp", nur: () => datenInfo().server === true, mehr: true },
     { id: "demo", sym: "♻️", t: "Demo zurücksetzen", u: "Alle Demodaten neu erzeugen", aktion: "demoReset", nur: () => datenInfo().art === "lokal-demo" },
   ],
   admin: [],
@@ -241,8 +243,12 @@ const sortiert = (k, reihe) => (reihe ? [...k].sort((a, b) => (reihe.indexOf(a.i
 export const modulAus = (id) => MODULE[id] !== undefined && (konfig().module_aus || []).includes(id);
 const modulFrei = (x) => !modulAus(x.id) || hatRolle("admin");
 // Wer kein Register „Leitung“ hat, sieht dort erlaubte Kacheln (Protokolle, Sitzungen …) unter „Bachkreis“
-const roh = (reg) => (reg === "bachkreis" && !leitungRegister() ? [...KACHELN.bachkreis, ...KACHELN.leitung] : reg === "leitung" && !leitungRegister() ? [] : KACHELN[reg] || []);
-export const kachelnAlle = (reg) => sortiert(roh(reg).filter((x) => (!x.nur || x.nur()) && modulFrei(x)), (einst().reihenfolge || {})[reg]);
+const rohAlle = (reg) => (reg === "bachkreis" && !leitungRegister() ? [...KACHELN.bachkreis, ...KACHELN.leitung] : reg === "leitung" && !leitungRegister() ? [] : KACHELN[reg] || []);
+const sichtbarK = (x) => (!x.nur || x.nur()) && modulFrei(x);
+export const kachelnMehr = (reg) => rohAlle(reg).filter((x) => x.mehr && sichtbarK(x));
+const MEHR_KACHEL = { id: "technikmehr", sym: "🧰", t: "Weitere Technik", u: "Anmelden ohne Code · Bildschirmfoto · Test · Über die App …", v: "technikMehr", zahl: () => kachelnMehr("technik").reduce((n, k) => n + (Number(k.zahl?.()) || 0), 0) };
+const roh = (reg) => { const l = rohAlle(reg); return l.some((x) => x.mehr) ? [...l.filter((x) => !x.mehr), ...(kachelnMehr(reg).length ? [MEHR_KACHEL] : [])] : l; };
+export const kachelnAlle = (reg) => sortiert(roh(reg).filter(sichtbarK), (einst().reihenfolge || {})[reg]);
 export const kachelnFuer = (reg) => kachelnAlle(reg).filter((x) => !einst().kachelnAus.includes(x.id));
 export function einfachKacheln() {
   const alle = [...KACHELN.bachkreis, ...KACHELN.leitung, ...KACHELN.meins].filter((x) => EINFACH.includes(x.id) && (!x.nur || x.nur()) && modulFrei(x));
@@ -304,6 +310,11 @@ export function kaKopfPasst() {
 }
 function kaKopfNeu() { const k = document.getElementById("kaKopfKnoepfe"); if (k) { k.innerHTML = kaKopfHtml(); kaKopfPasst(); } }
 addEventListener("resize", () => { try { kaKopfPasst(); } catch { /* ohne Startseite */ } }, { passive: true });
+// 🧰 0.76.0 Weitere Technik: die selten gebrauchten Technik-Kacheln (Ausblenden/Anordnen gilt hier nicht – sie sind schon „weiter hinten“)
+VIEWS.technikMehr = {
+  render: () => kopf("🧰 Weitere Technik") + `<div class="raster" id="rasterMehr">${kachelnMehr("technik").map(kachelHtml).join("")}</div>
+    <p class="hinweis">Seltener gebraucht – darum hier gesammelt. Alles lässt sich auch mit der Lupe 🔍 unten rechts finden.</p>`,
+};
 VIEWS.start = {
   render() {
     if (kindAnsicht()) return kinderStartHtml(); // 🧒 0.32.0 eigene Kinder-Startseite
@@ -385,7 +396,7 @@ AKTIONEN.register = (r) => {
   registerWechseln(r, regs.indexOf(r) >= regs.indexOf(S.register) ? 1 : -1);
 };
 AKTIONEN.kachel = (id) => {
-  const k = Object.values(KACHELN).flat().find((x) => x.id === id);
+  const k = [...Object.values(KACHELN).flat(), MEHR_KACHEL].find((x) => x.id === id);
   if (!k) return zeige(id);
   if (k.aktion) return AKTIONEN[k.aktion]();
   zeige(k.v, k.p || {});

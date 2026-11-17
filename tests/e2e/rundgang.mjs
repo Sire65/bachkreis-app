@@ -9,11 +9,15 @@ const BASIS = process.env.BASIS || "http://localhost:8080";
 const BILDER = new URL("./bilder/", import.meta.url).pathname;
 fs.mkdirSync(BILDER, { recursive: true });
 const fehler = [];
+// ❓ 0.76.0 Rückfragen sind App-Fenster (js/kern/ui.js dialog) – wie früher die Browser-Dialoge automatisch beantworten: window.__frage = "ja" | "nein"
+const FRAGE_AUTO = (std) => { window.__frage ??= std; new MutationObserver(() => { const hg = document.getElementById("frageHg"); if (!hg || hg.dataset.auto) return; hg.dataset.auto = "1";
+  setTimeout(() => (hg.querySelector(window.__frage === "ja" ? '[data-f="ja"]' : '[data-f="nein"]') || hg.querySelector('[data-f="ja"]'))?.click(), 30); }).observe(document, { childList: true, subtree: true }); };
 const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const p = await (await b.newContext({ viewport: { width: 400, height: 860 } })).newPage();
 p.on("pageerror", (e) => fehler.push("Seitenfehler: " + e.message));
 p.on("console", (m) => { if (m.type() === "error") fehler.push("Konsole: " + m.text()); });
 p.on("dialog", (d) => d.dismiss());
+await p.addInitScript(FRAGE_AUTO, "nein");
 // Wetter: nachgebildete Open-Meteo-Antwort (Test ohne Internet und immer gleich)
 await p.route("https://api.open-meteo.com/**", (r) => {
   const t0 = new Date(), iso = (i) => new Date(t0.getTime() + i * 86400000).toISOString().slice(0, 10), n = 16, a = (f) => Array.from({ length: n }, (_, i) => f(i));
@@ -74,7 +78,7 @@ await p.fill(".uf-frei-eingabe input >> nth=-1", "Mittwoch wäre super"); await 
 await p.screenshot({ path: `${BILDER}umfrage-frei.png` });
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("startnachricht")); await p.waitForSelector("#snText");
 await p.fill("#snText", "Rundgang: bitte das Gesicht aussuchen 🙂"); await p.click('[data-a="snWahl"][data-x="1"]'); await p.fill("#snText", "Rundgang: bitte das Gesicht aussuchen 🙂");
-const jaSagen = (d) => d.accept(), neinSagen = (d) => d.dismiss(); p.removeAllListeners("dialog"); p.on("dialog", jaSagen);
+const jaSagen = (d) => d.accept(), neinSagen = (d) => d.dismiss(); p.removeAllListeners("dialog"); p.on("dialog", jaSagen); await p.evaluate(() => { window.__frage = "ja"; });
 await p.click('[data-a="snSenden"]'); await p.waitForTimeout(500);
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForSelector("#snHg", { timeout: 4000 }).catch(() => fehler.push("Startnachricht: Fenster kommt bei den Eltern nicht"));
 await p.screenshot({ path: `${BILDER}startnachricht.png` });
@@ -82,7 +86,7 @@ if (await p.$("#snHg")) { await p.click('#snHg [data-a="snAntwort"][data-x$="|sp
 await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(400);
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("startnachricht")); await p.waitForSelector("details.karte");
 if (!/⏰ 1/.test(await p.textContent("details.karte >> nth=0"))) fehler.push("Startnachricht: Leitung sieht die Antwort „später“ nicht");
-await p.click("details.karte >> nth=0"); await p.click('[data-a="snLoeschen"] >> nth=0'); await p.waitForTimeout(300); p.removeAllListeners("dialog"); p.on("dialog", neinSagen); // zurückziehen – sonst käme sie bei den anderen Rollen unten
+await p.click("details.karte >> nth=0"); await p.click('[data-a="snLoeschen"] >> nth=0'); await p.waitForTimeout(300); p.removeAllListeners("dialog"); p.on("dialog", neinSagen); await p.evaluate(() => { window.__frage = "nein"; }); // zurückziehen – sonst käme sie bei den anderen Rollen unten
 await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start", {}, { ersetzen: true })); await p.waitForSelector("#raster .kachel");
 await p.evaluate(() => document.querySelector("#raster > .kachel").scrollIntoView({ block: "center" })); await p.waitForTimeout(150);
 { const b0 = await (await p.$("#raster > .kachel:nth-child(1)")).boundingBox(), erste = await p.$eval("#raster > .kachel:nth-child(1)", (e) => e.dataset.id);
@@ -269,8 +273,20 @@ for (const rolle of ["leitung", "lehrkraft", "vorstand", "schueler", "eltern"]) 
       await p.waitForTimeout(120);
       const t = await p.$eval("#inhalt", (e) => e.innerText);
       if (t.includes("Fehler beim Anzeigen")) fehler.push(`${rolle}/${id}: ${t.slice(0, 200)}`);
-      await p.evaluate(() => { document.getElementById("blattHg")?.remove(); document.querySelector('[data-a="zurueck"]')?.click(); }); // Kacheln mit Fenster (⏱️ Uhr & Takt) schließen
+      await p.evaluate(() => { document.getElementById("blattHg")?.remove(); document.getElementById("frageHg")?.remove(); document.querySelector('[data-a="zurueck"]')?.click(); }); // Kacheln mit Fenster (⏱️ Uhr & Takt) schließen
       await p.waitForTimeout(80);
+      await p.evaluate((r) => document.querySelector(`#register button[data-x="${r}"]`)?.click(), r);
+    }
+    if (ids.includes("technikmehr")) { // 🧰 0.76.0 auch jede Kachel unter „Weitere Technik“
+      const zeigeMehr = async () => { await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("technikMehr")); await p.waitForSelector("#rasterMehr"); };
+      await zeigeMehr(); const mehr = await p.$$eval("#rasterMehr .kachel", (ks) => ks.map((k) => k.dataset.id));
+      if (!mehr.length) fehler.push(`${rolle}: „Weitere Technik“ ist leer`);
+      for (const id of mehr) {
+        await zeigeMehr(); await p.evaluate((id) => document.querySelector(`#rasterMehr .kachel[data-id="${id}"]`)?.click(), id); await p.waitForTimeout(150);
+        const t = await p.$eval("#inhalt", (e) => e.innerText); if (t.includes("Fehler beim Anzeigen")) fehler.push(`${rolle}/technikmehr/${id}: ${t.slice(0, 200)}`);
+        await p.evaluate(() => { document.getElementById("blattHg")?.remove(); document.getElementById("frageHg")?.dispatchEvent(new Event("abbrechen")); document.getElementById("bfAusloeserRahmen")?.remove(); });
+      }
+      await p.evaluate(async () => (await import("/js/app/zustand.js")).zeige("start", {}, { ersetzen: true })); await p.waitForSelector("#register");
       await p.evaluate((r) => document.querySelector(`#register button[data-x="${r}"]`)?.click(), r);
     }
   }

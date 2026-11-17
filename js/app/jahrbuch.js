@@ -2,7 +2,7 @@
 // in der App steht – Zahlen, Konzerte & Auftritte, Fahrten, Fotos – dazu 💛 „Mein schönster Moment“ von Kindern, Eltern und Lehrkräften.
 // Ins Buch kommen Momente erst nach Freigabe durch die Leitung (Kinderschutz). Fotos nur aus dem Fotoalbum (dort gilt die Foto-Einwilligung).
 import { S, VIEWS, zeige, zeichne, kopf, name, hatRolle } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, datumKurz } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, datumKurz, frage } from "../kern/ui.js";
 import { liste, hole, speichere, neueId } from "../kern/daten.js";
 import { schuljahrVon } from "../kern/schema.js";
 import { dateiUrl } from "../kern/dateien.js";
@@ -70,4 +70,4 @@ AKTIONEN.jbMomentSpeichern = async (sj) => {
   blattZu(); toast(moderation() ? "💛 Steht im Jahrbuch" : "💛 Danke! Die Leitung gibt ihn bald frei."); zeichne();
 };
 AKTIONEN.jbFrei = async (id) => { const m = hole("jahrbuch_momente", id); if (!m) return; await speichere("jahrbuch_momente", { ...m, freigegeben: true, freigegeben_von: S.ich.id }); toast("✅ Im Jahrbuch"); zeichne(); };
-AKTIONEN.jbWeg = async (id) => { if (!confirm("Diesen Moment löschen?")) return; const m = hole("jahrbuch_momente", id); if (m) await speichere("jahrbuch_momente", { ...m, geloescht_am: new Date().toISOString() }); zeichne(); };
+AKTIONEN.jbWeg = async (id) => { if (!(await frage("Diesen Moment löschen?"))) return; const m = hole("jahrbuch_momente", id); if (m) await speichere("jahrbuch_momente", { ...m, geloescht_am: new Date().toISOString() }); zeichne(); };

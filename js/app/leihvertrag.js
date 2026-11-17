@@ -3,7 +3,7 @@
 // für den Bachkreis. Unterschrieben wird mit dem Finger – vor Ort auf einem Gerät oder jede/r auf dem eigenen Handy. Drucken/PDF und leeres Formular.
 // Der Server prüft: jede/r setzt nur die eigene Unterschrift; was unterschrieben ist, ändert niemand mehr.
 import { S, VIEWS, db, zeige, zeichne, kopf, name, hatRolle } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, eingabe } from "../kern/ui.js";
 import { liste, hole, speichere, konfig, neueId } from "../kern/daten.js";
 import { LEIH_ZUBEHOER, LV_STATUS, LV_VERWALTER, LV_ROLLEN, LV_KLAUSEL, istMinderjaehrig } from "../kern/schema.js";
 import { elternVon } from "../kern/logik.js";
@@ -196,7 +196,7 @@ AKTIONEN.lvAusgeben = async (id) => {
 };
 AKTIONEN.lvRueckgabe = async (id) => {
   const v = hole("leihvertraege", id); if (!v) return;
-  const zustand = prompt("Zustand bei Rückgabe:", "gut"); if (zustand == null) return;
+  const zustand = await eingabe("Zustand bei Rückgabe:", "gut", { ja: "↩️ Zurücknehmen" }); if (zustand == null) return;
   for (const a of liste("ausleihen", (x) => x.leihvertrag_id === v.id && x.status === "aktiv")) {
     await speichere("ausleihen", { ...a, status: "zurueck", zustand_rueckgabe: zustand, bis: tagIso(new Date()) });
     const i = a.inventar_id && hole("inventar", a.inventar_id); if (i) await speichere("inventar", { ...i, status: "verfuegbar" });

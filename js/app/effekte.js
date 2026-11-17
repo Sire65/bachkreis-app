@@ -3,7 +3,7 @@
 // die kleine Fee schwebt ab und zu durchs Startbild; Gelöschtes läuft durch einen Reißwolf; neue Zettel werden angepinnt; Zahlen zählen hoch.
 // Alles nur im Gerät, abschaltbar (⚙️ Mehr › ✨ Effekte), ruhig im Sparmodus. Kommentare mit Versionsnummern stammen aus der KC Club App.
 import { S, einst as bkEinst, einstSetzen } from "./zustand.js";
-import { toast, blatt } from "../kern/ui.js";
+import { toast, blatt, frage } from "../kern/ui.js";
 import { themaWert, themaEigenSetzen, SPAR, sparSetzen } from "./darstellung.js";
 
 const EINST_NAME = { animiert: "effekte" };
@@ -14,10 +14,10 @@ export const fxAn = () => einst("animiert", true) && !SPAR?.an && typeof documen
 // Effekte sind aus → Grund nennen und mit einem Tipp einschalten (KC-CLUB-EFFEKTE-GRUND)
 async function fxAusHinweis(nochmal) {
   if (!einst("animiert", true)) {
-    if (!window.confirm("✨ Effekte sind aus\n\n„Animierte Knöpfe“ ist ausgeschaltet – dann ruhen alle Effekte und die Jahreszeiten im Kopf.\n\nJetzt einschalten?")) return;
+    if (!(await frage("✨ Effekte sind aus – jetzt einschalten?\n„Animierte Knöpfe“ ist ausgeschaltet – dann ruhen alle Effekte und die Jahreszeiten im Kopf.", { ja: "✨ Einschalten" }))) return;
     einstellung("animiert", true);
   } else if (SPAR?.an) {
-    if (!window.confirm(`🐢 Der Sparmodus ist an (${SPAR.grund}).\nIm Sparmodus ruhen alle Effekte.\n\nSparmodus ausschalten?`)) return;
+    if (!(await frage(`🐢 Der Sparmodus ist an – ausschalten?\nGrund: ${SPAR.grund}. Im Sparmodus ruhen alle Effekte.`, { ja: "Sparmodus aus" }))) return;
     sparSetzen("aus");
   } else return melde("Dieser Browser kann die Effekte leider nicht zeigen – bitte Chrome, Safari oder Firefox aktualisieren.");
   if (fxAn() && typeof nochmal === "function") setTimeout(nochmal, 200);

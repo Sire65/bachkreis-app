@@ -183,6 +183,10 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F178 | 📱 „Ich lese lieber WhatsApp“ – WhatsApp öffnet sich beim Senden (nur Erwachsene, wie KC 2.969) | ✅ | clubapp-2972.test |
 | BK-F179 | 💐 Gute-Besserung-Karte mit 4 Motiven in den Chat (wie KC 2.965/2.967) | ✅ | clubapp-2972.test |
 | BK-F180 | 🖨️ Nie eine fast leere letzte PDF-Seite (wie KC 2.968) | ✅ | clubapp-2972.test |
+| BK-F183 | 📚 Hilfe aktuell (84 Hilfen, „Zeig mir wo“ geprüft) | ✅ | hilfe-aktuell.test |
+| BK-F184 | 🧰 Technik ausgedünnt + „Weitere Technik“; 🎯 Pilot-Grundausstattung | ✅ | bewertung-umsetzung.test |
+| BK-F185 | ❓ Rückfragen und Eingaben als App-Fenster (kein confirm/prompt) | ✅ | bewertung-umsetzung.test |
+| BK-F186 | 📈 Auswertungen mit Verläufen, Ist/Soll, CSV; 🧭 Kachel-Nutzung anonym | ✅ | bewertung-umsetzung.test |
 | BK-F181 | 🧊 Hänger-Messung mit Ursache, Fehler-ID und 📖 Fehlerkatalog (Admin, wie KC 2.966) | ✅ | haenger-puls.test |
 | BK-F182 | 🎚️ Datenverkehr-Säulen L/S im Kopf (Admin, wie KC 2.964) | ✅ | haenger-puls.test |
 | BK-F176 | 👉 Dirigentin gibt Einsätze: dreht sich zur Gruppe, linke Hand zeigt hin | ✅ | dirigent.test |

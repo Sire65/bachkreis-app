@@ -45,7 +45,31 @@ export function blatt(titel, inhalt) {
 }
 export function blattZu() { $("#blattHg")?.remove(); }
 
-export async function frage(text) { return window.confirm(text); }
+// ❓ 0.76.0 Rückfragen und Eingaben als App-Fenster statt grauer Browser-Fenster (Bewertung „73 Rückfragen als Browser-Fenster – wirkt fremd,
+// am Handy unpraktisch“): im Bachkreis-Design, über allen anderen Fenstern, Enter = Ja/OK, Esc oder Hintergrund = Abbrechen.
+// Löschen/Entfernen/Abmelden … wird automatisch rot. frage() → true/false · eingabe() → Text oder null
+const GEFAHR = /lösch|entfern|entzieh|stornier|abmelden|zurückzieh|widerruf|kündig/i;
+function dialog({ text, ja = "Ja", nein = "Abbrechen", feld = null, gefahr = null }) {
+  return new Promise((fertig) => {
+    document.getElementById("frageHg")?.dispatchEvent(new Event("abbrechen")); // nie zwei zugleich
+    const hg = document.createElement("div"); hg.className = "frage-hg"; hg.id = "frageHg";
+    const rot = gefahr ?? GEFAHR.test(text), [kopf, ...rest] = String(text).split(/\n+/);
+    hg.innerHTML = `<div class="frage-fenster" role="alertdialog" aria-modal="true" aria-labelledby="frageText"><p class="frage-text" id="frageText"><b>${esc(kopf)}</b>${rest.length ? `<span>${rest.map(esc).join("<br>")}</span>` : ""}</p>
+      ${feld ? `<input class="frage-feld" id="frageFeld" type="${feld.typ || "text"}" value="${esc(feld.wert ?? "")}" aria-label="${esc(kopf)}"${feld.nurLesen ? " readonly" : ""}>` : ""}
+      <div class="frage-knoepfe">${nein ? `<button type="button" class="knopf" data-f="nein">${esc(nein)}</button>` : ""}<button type="button" class="knopf haupt${rot ? " gefahr" : ""}" data-f="ja">${esc(ja)}</button></div></div>`;
+    const vorher = document.activeElement, f = hg.querySelector("#frageFeld");
+    const ende = (wert) => { hg.remove(); document.removeEventListener("keydown", taste, true); try { vorher?.focus?.(); } catch {} fertig(wert); };
+    const ok = () => ende(feld ? (feld.nurLesen ? null : f.value) : true), weg = () => ende(feld ? null : false);
+    const taste = (e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); weg(); } else if (e.key === "Enter" && (!f || e.target === f)) { e.preventDefault(); e.stopPropagation(); ok(); } };
+    hg.addEventListener("click", (e) => { if (e.target === hg) weg(); const b = e.target.closest("[data-f]"); if (b) { e.stopPropagation(); b.dataset.f === "ja" ? ok() : weg(); } });
+    hg.addEventListener("abbrechen", weg);
+    document.addEventListener("keydown", taste, true);
+    document.body.appendChild(hg);
+    setTimeout(() => { if (f) { f.focus(); f.select?.(); } else hg.querySelector('[data-f="ja"]')?.focus(); }, 30);
+  });
+}
+export const frage = (text, { ja = "Ja", nein = "Abbrechen", gefahr = null } = {}) => dialog({ text, ja, nein, gefahr });
+export const eingabe = (text, wert = "", { typ = "text", ja = "OK", nein = "Abbrechen", nurLesen = false } = {}) => dialog({ text, ja: nurLesen ? "Fertig" : ja, nein: nurLesen ? null : nein, feld: { wert, typ, nurLesen }, gefahr: false });
 
 export function herunterladen(name, inhalt, typ = "text/plain") {
   const url = URL.createObjectURL(new Blob([inhalt], { type: typ + ";charset=utf-8" }));

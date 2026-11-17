@@ -4,7 +4,7 @@
 //  - 📥 Einmal übertragen: Kalenderdatei (.ics) – Stand von jetzt, danach keine Änderungen.
 // Der Link zeigt nur die eigenen Termine (Eltern: die ihrer Kinder). „Neuer Link“ macht den alten sofort ungültig.
 import { S, VIEWS, db, zeichne, kopf, istEltern, vorname } from "./zustand.js";
-import { esc, AKTIONEN, toast, herunterladen, frage } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, herunterladen, frage, eingabe } from "../kern/ui.js";
 import { hole, speichere, istEchtbetrieb, serverAktion } from "../kern/daten.js";
 import { termineFuer, kinderVon, ics, eigeneVorkommen } from "../kern/logik.js";
 import { liste } from "../kern/daten.js";
@@ -58,7 +58,7 @@ AKTIONEN.kalNeu = async () => {
   await linkHolen(true); toast(KAL.link ? "♻️ Neuer Link – bitte im Kalender neu abonnieren" : "⚠️ " + KAL.fehler, 4000); zeichne();
 };
 AKTIONEN.kalKopieren = async () => {
-  try { await navigator.clipboard.writeText(KAL.link.url); toast("📋 Link kopiert"); } catch { prompt("Link zum Kopieren:", KAL.link.url); }
+  try { await navigator.clipboard.writeText(KAL.link.url); toast("📋 Link kopiert"); } catch { await eingabe("Link zum Kopieren (gedrückt halten → Kopieren):", KAL.link.url, { nurLesen: true }); }
 };
 AKTIONEN.kalAlarm = async (v) => { await speichere("personen", { ...ich(), kalender_alarm: Number(v) }); toast("⏰ Gespeichert – das Abo übernimmt es beim nächsten Abruf"); zeichne(); };
 AKTIONEN.alleIcs = () => {

@@ -1,7 +1,7 @@
 // Instrumente: Inventar, Verleih (Ausgabe/Rückgabe mit Zustand), Reparatur (Meldung → Kostenvoranschlag → Freigabe →
 // Werkstatt → erledigt), Einkauf, Förderverein (Spenden & Freigaben), „Mein Leihinstrument“. Vorbild: KC Club Leihmodul.
 import { S, VIEWS, db, zeige, zeichne, kopf, name, vorname, einst, einstSetzen, istLeitung, istVorstand, istVerwalter, istEltern } from "./zustand.js";
-import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
+import { esc, AKTIONEN, datumKurz, geld, toast, blatt, blattZu, formWerte, frage, eingabe } from "../kern/ui.js";
 import { liste, hole, speichere, konfig } from "../kern/daten.js";
 import { aktiveAusleihe, ausleihenVon, kinderVon, tagIso, elternVon, einkaufInventar } from "../kern/logik.js";
 import { senden } from "../kern/versand.js";
@@ -218,10 +218,10 @@ AKTIONEN.ausgabeSpeichern = async (id) => {
   zeige("instrument", { id }, { ersetzen: true });
 };
 AKTIONEN.rueckgabe = async (aid) => {
-  const zustand = prompt("Zustand bei Rückgabe:", "gut");
+  const zustand = await eingabe("Zustand bei Rückgabe:", "gut", { ja: "↩️ Zurücknehmen" });
   if (zustand == null) return;
   const a = hole("ausleihen", aid);
-  const kaution = a.kaution_status === "bezahlt" ? (confirm(`Kaution ${geld(a.kaution)} zurückzahlen? (Abbrechen = einbehalten wegen Schaden)`) ? "zurueck" : "einbehalten") : a.kaution_status;
+  const kaution = a.kaution_status === "bezahlt" ? ((await frage(`Kaution ${geld(a.kaution)} zurückzahlen?\nNur bei einem Schaden einbehalten.`, { ja: "💶 Zurückzahlen", nein: "Einbehalten (Schaden)", gefahr: false })) ? "zurueck" : "einbehalten") : a.kaution_status;
   await speichere("ausleihen", { ...a, status: "zurueck", bis: tagIso(new Date()), zustand_rueckgabe: zustand, kaution_status: kaution || null });
   await speichere("inventar", { ...hole("inventar", a.inventar_id), status: "verfuegbar" });
   toast("↩️ Rückgabe erfasst" + (kaution === "zurueck" ? " – Kaution zurückzahlen" : ""));

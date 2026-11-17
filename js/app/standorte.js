@@ -2,7 +2,7 @@
 // 🧭 Anfahrt (Karten-App), 🗺️ Karte (OpenStreetMap) und 📏 Entfernung von hier. Die Liste pflegt die Leitung (konfig standorte, kein neues Schema).
 // Die eigene Position bleibt auf dem Gerät – sie wird nur für die Entfernung benutzt und nie gespeichert oder verschickt.
 import { VIEWS, zeige, zeichne, kopf, istLeitung } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, formWerte } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, formWerte, frage } from "../kern/ui.js";
 import { konfig, konfigSetzen } from "../kern/daten.js";
 
 export const STANDORT_ARTEN = { probe: "🎻 Probenort", auftritt: "🎭 Auftrittsort", treffpunkt: "🚌 Treffpunkt", unterkunft: "🛏️ Unterkunft", sonst: "📍 Sonstiges" };
@@ -65,7 +65,7 @@ AKTIONEN.soSpeichern = async (i) => {
   try { await konfigSetzen("standorte", l); toast("💾 Gespeichert"); blattZu(); zeichne(); } catch (e) { toast("⚠️ " + e.message); }
 };
 AKTIONEN.soLoeschen = async (i) => {
-  if (!confirm("Diesen Ort löschen?")) return;
+  if (!(await frage("Diesen Ort löschen?"))) return;
   try { await konfigSetzen("standorte", standorte().filter((_, k) => k !== Number(i))); blattZu(); zeichne(); } catch (e) { toast("⚠️ " + e.message); }
 };
 AKTIONEN.soAnfahrt = (ort) => { const s = standortZuOrt(ort); if (s) window.open(routeLink(s), "_blank", "noopener"); else zeige("standorte"); };

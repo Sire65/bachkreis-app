@@ -117,13 +117,15 @@ export const BUEHNE_MODI = {};
 // Public Domain) bzw. CC0, von Wikimedia Commons – liegen in audio/bach/ (eigene Seite, kein fremder Server, kein Internet-Abruf beim Hören).
 // Quellen und Lizenzen: audio/bach/QUELLEN.md
 export const BACH_AUFNAHMEN = [
+  { id: "air", titel: "Air", werk: "Orchestersuite Nr. 3 D-Dur, BWV 1068", wer: "Air Force Strings · United States Air Force Band", lizenz: "gemeinfrei", takt: 4 },
+  { id: "jesus", titel: "Jesus bleibet meine Freude", werk: "Kantate BWV 147", wer: "Orchestra Gli Armonici", lizenz: "CC0", takt: 3 },
   { id: "badinerie", titel: "Badinerie", werk: "Orchestersuite Nr. 2 h-Moll, BWV 1067", wer: "historische Aufnahme (European Archive)", lizenz: "CC0", takt: 2 },
+  { id: "violinkonzert", titel: "Violinkonzert a-Moll – 1. Satz", werk: "BWV 1041", wer: "Chamber Orchestra · United States Marine Band", lizenz: "gemeinfrei", takt: 2 },
+  { id: "wachet", titel: "Wachet auf, ruft uns die Stimme", werk: "Choral aus BWV 140", wer: "Stellar Brass · US Air Force Band of the Rockies", lizenz: "gemeinfrei", takt: 4 },
 ];
-// folgen, sobald Wikimedia den Abruf wieder zulässt (alle gemeinfrei/CC0, Quellen geprüft): Air BWV 1068 (US Air Force Strings),
-// Jesus bleibet meine Freude BWV 147 (Orchestra Gli Armonici), Violinkonzert a-Moll BWV 1041 (US Marine Band), Wachet auf BWV 140 (Stellar Brass)
 const bachHtml = () => `<div class="bw-stuecke">${BACH_AUFNAHMEN.map((x) => `<button type="button" data-a="bwBach" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.werk)} · ${esc(x.wer)}</small></button>`).join("")}</div>
   <div class="knopfreihe"><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div><div class="bw-regler"><label>🔊 Lautstärke <input type="range" min="0" max="1" step="0.05" value="${B.laut}" data-c="bwLaut"></label></div>
-  <p class="hinweis">🎻 Johann Sebastian Bach (1685–1750) – unser Namensgeber. Echte Orchesteraufnahmen (weitere folgen), frei von Rechten (gemeinfrei bzw. CC0, über Wikimedia Commons). Stück antippen – der Vorhang geht auf.</p>`;
+  <p class="hinweis">🎻 Johann Sebastian Bach (1685–1750) – unser Namensgeber. Echte Orchesteraufnahmen, frei von Rechten (gemeinfrei bzw. CC0, über Wikimedia Commons). Stück antippen – der Vorhang geht auf.</p>`;
 export function orchesterSvg(opt = {}) {
   const m = [], bes = besetzungFuerBuehne();
   let nr = 0;

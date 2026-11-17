@@ -1,11 +1,18 @@
 {
-  "version": "0.73.0",
+  "version": "0.74.0",
   "datum": "17.11.2026",
   "stufe": "DEV",
   "neu": [
-    "👉 Bühne: die Dirigentin gibt Einsätze – dreht sich zur Gruppe (z. B. Geigen) und zeigt mit der linken Hand hin"
+    "🎻 Bühne → Bach: jetzt fünf Stücke – Air, Jesus bleibet meine Freude, Badinerie, Violinkonzert a-Moll, Wachet auf"
   ],
   "verlauf": [
+    {
+      "version": "0.73.0",
+      "datum": "17.11.2026",
+      "neu": [
+        "👉 Bühne: die Dirigentin gibt Einsätze – dreht sich zur Gruppe (z. B. Geigen) und zeigt mit der linken Hand hin"
+      ]
+    },
     {
       "version": "0.72.0",
       "datum": "17.11.2026",

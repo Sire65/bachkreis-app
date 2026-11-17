@@ -9,7 +9,7 @@ const src = lies("js/app/buehne.js"), quellen = lies("audio/bach/QUELLEN.md");
 const ids = [...src.slice(src.indexOf("export const BACH_AUFNAHMEN")).matchAll(/\{ id: "(\w+)", titel: "[^"]+", werk: "[^"]+", wer: "[^"]+", lizenz: "(gemeinfrei|CC0)"(?:, takt: \d)? \}/g)].map((m) => m[1]);
 
 test("🎻 Bach-Aufnahmen, alle gemeinfrei/CC0, als MP3 vorhanden und nicht zu groß", () => {
-  assert.ok(ids.length >= 1);
+  assert.equal(ids.length, 5);
   for (const id of ids) {
     const st = statSync(new URL(`../audio/bach/${id}.mp3`, import.meta.url));
     assert.ok(st.size > 200_000 && st.size < 8_000_000, `${id}.mp3: ${st.size} Byte`);

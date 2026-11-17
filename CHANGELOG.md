@@ -1,5 +1,10 @@
 # Änderungen
 
+## 0.74.0 DEV – 17.11.2026
+🎻 **Fünf Bach-Stücke auf der Bühne** (Wunsch Hansi): zur Badinerie kommen **Air** (Orchestersuite Nr. 3, US Air Force Strings), **Jesus bleibet meine Freude** (BWV 147, Orchestra Gli Armonici), **Violinkonzert a-Moll, 1. Satz** (BWV 1041, Kammerorchester der US Marine Band) und **Wachet auf** (Choral aus BWV 140, Stellar Brass) – alle gemeinfrei bzw. CC0, Quellen in `audio/bach/QUELLEN.md`
+- Die Dirigentin schlägt je Stück den passenden Takt (Air und Wachet auf im 4er, Jesus bleibet meine Freude im 3er, Badinerie und Violinkonzert im 2er) und gibt Einsätze
+- Geholt hat sie ein eigener GitHub-Ablauf (je Datei eine Anfrage, auf einem Nebenzweig) – Wikimedia hatte die Cloud-Umgebung gesperrt; leise Aufnahmen in der Lautstärke angeglichen
+
 ## 0.73.0 DEV – 17.11.2026
 👉 **Die Dirigentin gibt Einsätze** (Wunsch Hansi „zur Seite und den Einsatz z. B. der Geigen anzeigen, nicht nur rauf und runter“):
 - Setzt eine Gruppe nach einer Pause wieder ein, **dreht sich die Dirigentin zu ihr** (Oberkörper und Kopf), **zeigt mit der linken Hand hin** – nach hinten (Hörner, Pauke, Blech) höher – und ihre Schlagfigur wandert ein Stück zur Gruppe

@@ -1,9 +1,10 @@
 // Meins (Daten, Änderung melden, Einstellungen, Test an mich), Technik (Sicherheits-Check, Hilfe, Über, Update, Demo)
 // und Admin-Blätter (Leitstand). Vorbild: KC Club „Meins“/„Technik“/„Admin“.
-import { S, VIEWS, db, zeige, zurueck, kopf, name, einst, einstSetzen, istEltern, fehlerListe } from "./zustand.js";
-import { kachelnFuer, adminZustaende } from "./start.js";
+import { S, VIEWS, db, zeige, zurueck, kopf, name, einst, einstSetzen, istEltern, fehlerListe, hatRolle } from "./zustand.js";
+import { kachelnFuer, adminZustaende, KACHELN } from "./start.js";
 import { esc, AKTIONEN, vorZeit, toast, formWerte, herunterladen, frage, blatt, blattZu } from "../kern/ui.js";
-import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb, konfig } from "../kern/daten.js";
+import { liste, hole, speichere, datenInfo, zuruecksetzen, ADAPTER, istEchtbetrieb, konfig, konfigSetzen } from "../kern/daten.js";
+import { MUSIK_STANDARD, musikBasisPruefen } from "../kern/musikort.js";
 import { TABELLEN, TABELLEN_NAMEN, AENDERUNG_ARTEN } from "../kern/schema.js";
 import { kinderVon, wirksameGruppen, instrumenteVon, tagIso, personenDaten } from "../kern/logik.js";
 import { KANAELE, STATUS, wahlVon, versandStatistik, adapterInfo, testAnMich, pushAbonnieren, communicatorZustand } from "../kern/versand.js";
@@ -193,14 +194,19 @@ VIEWS.admin = {
       const f = fehlerListe().reverse();
       inhalt = `<ul class="liste">${f.map((x) => `<li><div class="fl"><div class="zeile-titel">${esc(x.text)}</div><div class="zeile-unter">${esc(x.view)} · ${vorZeit(x.zeit)}</div></div></li>`).join("") || "<li>Keine Fehler protokolliert.</li>"}</ul>`;
     } else if (b === "speicher") {
-      inhalt = `<p id="speicherWert">wird gemessen …</p>`;
+      const mb = konfig().musik_basis || "";
+      inhalt = `<p id="speicherWert">wird gemessen …</p></div>
+      <div class="karte"><h3>🎵 Speicherort der Musik</h3><p class="hinweis">Die Bach-Aufnahmen (16 MB) liegen bei der App-Seite – nicht in der Datenbank und nicht auf den Geräten. Zieht die Musik zu Noten und Fotos um (Cloudflare, Schulserver, IT der Stadt), hier die neue Adresse eintragen. Leer = bei der App-Seite (${esc(MUSIK_STANDARD)}).</p><p class="hinweis">⚠️ Eine fremde https-Adresse muss beim Umzug einmal in der Sicherheitsregel der App freigegeben werden (Entwickler) – sonst spielt die Musik nicht.</p>
+      <div class="feld"><label for="adMusikBasis">Adresse des Musik-Ordners</label><input id="adMusikBasis" inputmode="url" maxlength="200" value="${esc(mb)}" placeholder="${esc(MUSIK_STANDARD)} oder https://…"></div>
+      <div class="knopfreihe"><button type="button" class="knopf haupt" data-a="adMusikBasis">💾 Speichern</button>${mb ? '<button type="button" class="knopf" data-a="adMusikBasis" data-x="leer">↩️ Zurück zum Standard</button>' : ""}</div>`;
     } else if (b === "backup") {
       inhalt = `<p>Kompletter Export aller Tabellen als Datei (Vorführversion). Im Echtbetrieb: tägliche Sicherung nach Backblaze B2 und Spiegel nach Neon.</p><button class="knopf haupt" data-a="exportAlles">💾 Alles exportieren</button>`;
     } else if (b === "daten") {
       const i = datenInfo();
       inhalt = `<p>Adapter: <b>${esc(i.art)}</b> · Speicher: ${esc(i.speicher || "")}</p><ul class="liste">${TABELLEN_NAMEN.map((t) => `<li><div class="fl">${TABELLEN[t].sym} ${esc(TABELLEN[t].titel)}</div><b>${liste(t).length}</b></li>`).join("")}</ul>`;
     } else inhalt = `<p>${esc(z[1])}</p>`;
-    return kopf(`<span class="punkt ${z[0]}"></span> ${esc(b)}`) + `<div class="karte">${inhalt}</div>`;
+    const kt = KACHELN.admin.find((k) => k.id === "ad-" + b); // 0.78.0 richtiger Titel statt „speicher“
+    return kopf(`<span class="punkt ${z[0]}"></span> ${kt ? `${kt.sym} ${esc(kt.t)}` : esc(b)}`) + `<div class="karte">${inhalt}</div>`;
   },
   async nach(_, { blatt: b }) {
     if (b === "speicher" && navigator.storage?.estimate) {
@@ -209,6 +215,13 @@ VIEWS.admin = {
       if (el) el.textContent = `${(e.usage / 1048576).toFixed(1)} MB von ${(e.quota / 1048576).toFixed(0)} MB belegt`;
     }
   },
+};
+// 🎵 0.78.0 Speicherort der Musik (nur Admin; Server prüft ADMIN_KONFIG)
+AKTIONEN.adMusikBasis = async (x) => {
+  if (!hatRolle("admin")) return;
+  const p = musikBasisPruefen(x === "leer" ? "" : document.getElementById("adMusikBasis")?.value);
+  if (!p.ok) return toast("⚠️ " + p.grund);
+  try { await konfigSetzen("musik_basis", p.wert); toast(p.wert ? "💾 Musik kommt jetzt von: " + p.wert : "💾 Musik wieder bei der App-Seite"); zeige("admin", { blatt: "speicher" }, { ersetzen: true }); } catch (e) { toast("⚠️ " + e.message); }
 };
 AKTIONEN.exportAlles = () => {
   const d = Object.fromEntries(TABELLEN_NAMEN.map((t) => [t, liste(t)]));

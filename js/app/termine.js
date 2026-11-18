@@ -114,7 +114,7 @@ VIEWS.termine = {
       : ts.length ? ((ab) => (ab.length > 2 ? klappenAlleKnopf("inhalt") : "") + ab.map((a, i) => klappe(`tm_${a.k.replace(/[^a-z0-9]/gi, "_")}`, `<span class="t-abschnitt">${esc(a.k)}</span>`, a.l.map((t) => terminKarte(t)).join(""), { offen: i < 4, zahl: a.l.length, klasse: "t-klappe", ohneUnten: a.l.length < 4 })).join(""))(abschnitte(ts))
       : `<div class="leer">${f === "eigene" ? "Noch keine eigenen Termine.<br><button class=\"knopf haupt\" data-a=\"eigenNeu\">＋ Eigenen Termin eintragen</button>" : f === "offen" ? "🎉 Alles beantwortet!" : "Keine Termine."}</div>`;
     const tu = offeneFuerMich(); // 🗳️ 0.39.0 offene Terminumfragen für mich
-    const tuHinweis = tu.length ? `<button type="button" class="karte t-hinweis tu-hinweis" data-a="${tu.length === 1 ? "oeffne" : "kachel"}" data-x="${tu.length === 1 ? `terminumfrage|${esc(tu[0].id)}` : "terminumfragen"}">🗳️ <b>${tu.length === 1 ? `Wann passt es? „${esc(tu[0].titel)}“` : `${tu.length} Terminumfragen warten`}</b> – bitte abstimmen ›</button>` : "";
+    const tuHinweis = tu.length ? `<button type="button" class="karte t-hinweis tu-hinweis" data-a="${tu.length === 1 ? "oeffne" : "kachel"}" data-x="${tu.length === 1 ? `terminumfrage|${esc(tu[0].id)}` : "terminumfragen"}">🗳️ <b>${tu.length === 1 ? `Wann passt es? „${esc(tu[0].titel)}“` : `${tu.length} Terminumfragen warten`}</b><span>bitte abstimmen ›</span></button>` : "";
     return kopf("📅 Termine", knoepfe) + modusKn + tuHinweis + chips + hinweis + inhalt;
   },
 };

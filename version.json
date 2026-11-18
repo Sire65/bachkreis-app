@@ -1,11 +1,19 @@
 {
-  "version": "0.77.0",
-  "datum": "17.11.2026",
+  "version": "0.78.0",
+  "datum": "2026-11-18",
   "stufe": "DEV",
   "neu": [
-    "📈 Vorführversion: Beispieldaten mit Vorgeschichte – die Auswertungen zeigen jetzt echte Verläufe"
+    "🧹 Aufgeräumte Anordnung: Titel nicht mehr abgeschnitten, Knöpfe fingergerecht, Filter übersichtlich",
+    "🎵 Speicherort der Musik ist eine Einstellung (Admin › Speicher)"
   ],
   "verlauf": [
+    {
+      "version": "0.77.0",
+      "datum": "17.11.2026",
+      "neu": [
+        "📈 Vorführversion: Beispieldaten mit Vorgeschichte – die Auswertungen zeigen jetzt echte Verläufe"
+      ]
+    },
     {
       "version": "0.76.0",
       "datum": "17.11.2026",

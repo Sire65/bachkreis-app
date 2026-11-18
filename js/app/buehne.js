@@ -3,7 +3,8 @@
 // Erreichbar über das Eselsohr am Kopf (doppelt tippen = Kopf umdrehen) und über die Kachel „Bühne“.
 import { S, VIEWS, kopf, istLehrkraft, zeige } from "./zustand.js";
 import { esc, AKTIONEN, toast, datumKurz } from "../kern/ui.js";
-import { liste, hole } from "../kern/daten.js";
+import { liste, hole, konfig } from "../kern/daten.js";
+import { musikAdresse } from "../kern/musikort.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
 import { SCHLAGFIGUR, SCHULTER, RUHE, armPfad, handPosition, tempoSchaetzen, einsatzRichtung, einsatzStaerke, mitEinsatz } from "../kern/dirigat.js";
@@ -335,7 +336,7 @@ AKTIONEN.bwAufnahme = (id) => {
   if (!a?.datei) { toast("🎧 Vorführversion: Die Datei liegt später im geschützten Speicher. Zum Ausprobieren: „Aufnahme vom Gerät abspielen“."); return; }
   aufnahmeSpielen(a.datei, a.titel);
 };
-AKTIONEN.bwBach = (id) => { const x = BACH_AUFNAHMEN.find((y) => y.id === id); if (x) aufnahmeSpielen(`audio/bach/${x.id}.mp3`, `${x.titel} – J. S. Bach`, x.takt || 4); };
+AKTIONEN.bwBach = (id) => { const x = BACH_AUFNAHMEN.find((y) => y.id === id); if (x) aufnahmeSpielen(musikAdresse(`${x.id}.mp3`, konfig().musik_basis), `${x.titel} – J. S. Bach`, x.takt || 4); };
 AKTIONEN.bwDatei = (_, el) => {
   const f = el.files?.[0]; if (!f) return;
   if (B.blobUrl) URL.revokeObjectURL(B.blobUrl);

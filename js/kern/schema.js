@@ -35,7 +35,7 @@ export function einstStufe(person, rollen = person?.rollen || [], kindAnsicht = 
 }
 // 🛠️ App-weite Einstellungen, die nur Admin/Entwickler ändern (Server prüft in konfig_setzen); alles andere darf weiter die Leitung
 export const ADMIN_KONFIG = ["wartung", "wartung_text", "module_aus", "express_max_tag", "bearbeiten_minuten", "chat_schueler_untereinander", "ansicht_kind_ab_klasse",
-  "freigabe_grenze_eur", "km_satz", "grenze_db_mb", "grenze_dateien_mb", "grenze_volumen_gb", "aenderungen_monate", "loeschfrist_monate"];
+  "freigabe_grenze_eur", "km_satz", "grenze_db_mb", "grenze_dateien_mb", "grenze_volumen_gb", "aenderungen_monate", "loeschfrist_monate", "musik_basis"];
 // 🚦 Module, die der Admin für alle abschalten kann (wie KC „Freigaben“): abgeschaltet sehen sie nur noch Admin/Entwickler (zum Prüfen)
 export const MODULE = { fotoalbum: "📷 Fotoalbum", advent: "🎄 Adventskalender", vorschlaege: "💡 Vorschläge & Abstimmungen", erstattung: "💶 Erstattung",
   anrufe: "📞 Anrufe & Video", tisch: "🪑 Runder Tisch", fernhilfe: "🛟 Fernhilfe", geheim: "🔒 Geheim schreiben", protokolle: "🗒️ Protokolle", quiz: "🧠 Quiz", buehne: "🎭 Bühne", uebebuehne: "🎤 Übe-Bühne", chronik: "📜 Chronik", mitfahrboerse: "🚗 Mitfahrbörse", austausch: "🏠 Austausch & Gastfamilien" };

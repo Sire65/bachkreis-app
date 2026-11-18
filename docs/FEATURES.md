@@ -187,6 +187,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F184 | 🧰 Technik ausgedünnt + „Weitere Technik“; 🎯 Pilot-Grundausstattung | ✅ | bewertung-umsetzung.test |
 | BK-F185 | ❓ Rückfragen und Eingaben als App-Fenster (kein confirm/prompt) | ✅ | bewertung-umsetzung.test |
 | BK-F186 | 📈 Auswertungen mit Verläufen, Ist/Soll, CSV; 🧭 Kachel-Nutzung anonym | ✅ | bewertung-umsetzung.test |
+| BK-F187 | 🧹 Aufgeräumte Anordnung aller Seiten (Kopf, Filter, Knopfreihen, Fingergröße) + Prüfwerkzeug | ✅ | ordnung.test |
+| BK-F188 | 🎵 Speicherort der Musik als Admin-Einstellung (Ordner oder https) | ✅ | musikort.test |
 | BK-F181 | 🧊 Hänger-Messung mit Ursache, Fehler-ID und 📖 Fehlerkatalog (Admin, wie KC 2.966) | ✅ | haenger-puls.test |
 | BK-F182 | 🎚️ Datenverkehr-Säulen L/S im Kopf (Admin, wie KC 2.964) | ✅ | haenger-puls.test |
 | BK-F176 | 👉 Dirigentin gibt Einsätze: dreht sich zur Gruppe, linke Hand zeigt hin | ✅ | dirigent.test |

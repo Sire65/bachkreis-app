@@ -1,5 +1,17 @@
 # Änderungen
 
+## 0.78.0 DEV – 18.11.2026
+🧹 **Aufgeräumte Anordnung** (Wunsch Hansi „Buttons und Knöpfe … voll und unübersichtlich – aufgeräumter, an die Größen angepasst, nicht überladen“). Geprüft wurden alle 98 Seiten in allen 6 Rollen auf Handy (390 px) und Tablet (820 px) mit dem neuen Werkzeug `tools/anordnung-pruefen.mjs`; die Regeln stehen gesammelt in `css/ordnung.css`:
+- **Seitenkopf**: der Titel wird nicht mehr abgeschnitten („N…“ bei Nachrichten) – passen die Knöpfe nicht daneben, stehen sie rechtsbündig in einer zweiten Zeile
+- **Filter**: kurze Filter-Reihen brechen um, statt rechts unsichtbar weiterzulaufen; lange (ab 7) bleiben wischbar und laufen rechts sichtbar aus
+- **Fingergerecht**: Filter- und kleine Knöpfe mindestens 36 px hoch (vorher 28 px), normale Knöpfe 42 px
+- **Knopfreihen auf dem Handy**: ab 3 Knöpfen ordentlich in zwei gleich breiten Spalten statt Flattersatz (z. B. Rückmeldungen, Über die App, Leitstand)
+- **🔍 und ? am Rand**: schmal übereinander und halb durchsichtig – sie verdecken weniger; unten mehr Platz, damit nichts dahinter verschwindet
+- **Nichts mehr zu breit**: lange Hinweise (Datenschutz, Passkeys, Fernhilfe) brechen um; breite Tabellen wischen in ihrer Karte (auch per Tastatur)
+- Termine: „Wann passt es? …“ mit „bitte abstimmen ›“ darunter statt in einer schmalen Spalte; Admin-Blätter mit richtigem Titel („💾 Speicher“ statt „speicher“)
+
+🎵 **Speicherort der Musik als Einstellung** (Wunsch Hansi „MP3 auslagern wie Bilder und Noten“): die Bach-Aufnahmen (16 MB) liegen weiter bei der App-Seite – nicht in der Datenbank, nicht auf den Geräten. Zieht die Musik später an den Ort, den das Team für Noten und Fotos wählt, trägt der Admin unter ⚙️ Admin › 💾 Speicher nur die neue Adresse ein (erlaubt: Ordner der App oder https; alles andere wird abgelehnt). Eine fremde https-Adresse muss einmal in der Sicherheitsregel der App freigegeben werden (Hinweis steht dabei). Test `musikort.test`, `ordnung.test`
+
 ## 0.77.0 DEV – 17.11.2026
 📈 **Vorführversion mit Vorgeschichte** (Vorbereitung der Vorstands-Präsentation, Wunsch Hansi): die Auswertungen zeigten in der Vorführung kaum Verläufe, weil alle Beispieldaten erst mit diesem Schuljahr begannen. Jetzt gibt es:
 - **frühere Orchester-Jahre** der heutigen Kinder (dabei seit Klasse 5, ein paar Quereinsteiger; früher im B-Orchester bzw. in der Orchesterklasse)

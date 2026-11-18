@@ -62,6 +62,7 @@ export const TEILE_KARTE = {
   "adKatalog": "adminbereich.js",
   "adMessen": "adminbereich.js",
   "adModul": "adminbereich.js",
+  "adMusikBasis": "meins.js",
   "adPilot": "adminbereich.js",
   "adTeil": "adminbereich.js",
   "adTeilOeffnen": "einstellungen.js",

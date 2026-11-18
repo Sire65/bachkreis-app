@@ -21,7 +21,7 @@ test("🎻 Bach-Aufnahmen, alle gemeinfrei/CC0, als MP3 vorhanden und nicht zu g
 });
 
 test("🎭 Bühne hat den Reiter 🎻 Bach; Musik wird von der eigenen Seite geladen (CSP media-src 'self')", () => {
-  assert.match(src, /\["bach", "🎻 Bach"\]/); assert.match(src, /audio\/bach\/\$\{x\.id\}\.mp3/);
+  assert.match(src, /\["bach", "🎻 Bach"\]/); assert.match(src, /musikAdresse\(`\$\{x\.id\}\.mp3`/); assert.match(lies("js/kern/musikort.js"), /"audio\/bach\/"/);
   assert.match(lies("index.html"), /media-src 'self'/);
   assert.doesNotMatch(lies("sw.js"), /audio\/bach/, "MP3s nicht vorab laden (Datenvolumen)");
   assert.match(lies("js/app/echo.js"), /data-a="echoBach"/, "Echo: Komponist Bach → Bühne");

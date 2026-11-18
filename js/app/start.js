@@ -36,6 +36,8 @@ import { erwachsen, ab16 } from "../kern/schema.js";
 const erwachsenIch = () => erwachsen(S.ich);
 // 📰 0.70.0 Bachkreis-Echo: neues Heft (noch nicht geöffnet) + für die Redaktion neue Beiträge im Eingang
 export const echoNeuesHeft = () => { const h = liste("echo_hefte", (x) => !x.geloescht_am && x.status === "erschienen").sort((a, b) => (b.jahr || 0) - (a.jahr || 0) || (b.nr || 0) - (a.nr || 0))[0]; return h && (Number(h.nr) || 0) > (Number(einst().echoGelesen) || 0) ? h : null; };
+// 🎙️ 0.79.0 Vorspiele an mich, die ich noch nicht gehört habe
+const vorspielNeu = () => { const ich = S.ich?.id, h = new Date().toISOString().slice(0, 10); return liste("vorspiele", (v) => !v.geloescht_am && (v.an || []).includes(ich) && (!v.loeschen_am || v.loeschen_am >= h) && !liste("vorspiel_antworten", (a) => a.vorspiel_id === v.id && a.von === ich && !a.geloescht_am).length).length; };
 const echoZahl = () => (echoNeuesHeft() ? 1 : 0) + (hatRolle("admin", "leitung", "redaktion") ? liste("echo_beitraege", (b) => !b.geloescht_am && b.status === "eingereicht").length : 0);
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";
@@ -101,6 +103,7 @@ export const KACHELN = {
     { id: "projekte", sym: "🎭", t: "Konzerte & Projekte", u: "Programm · Ablauf · Checkliste", v: "projekte" },
     { id: "noten", sym: "📚", t: "Notenarchiv", u: "Orchester › Stücke › Noten je Instrument", v: "noten", nur: () => istVerwalter() },
     { id: "fotoalbum", sym: "📷", t: "Fotoalbum", u: "Konzerte · Fahrten · Proben", v: "fotoalbum" },
+    { id: "vorspiel", sym: "🎙️", t: "Vorspiel", u: "Aufnehmen · senden · anhören · live", v: "vorspiel", zahl: () => vorspielNeu() }, // 0.79.0
     { id: "echo", sym: "📰", t: "Bachkreis-Echo", u: "Unser Heft · blättern · mitschreiben", v: "echo", zahl: () => echoZahl() },
     { id: "vorschlaege", sym: "💡", t: "Vorschläge & Abstimmungen", u: "Ideen · abstimmen · Ergebnisse", v: "vorschlaege", zahl: () => offeneAbstimmungen().length },
     { id: "austausch", sym: "🏠", t: "Austausch & Gastfamilien", u: "Gäste aufnehmen · Zuordnung", v: "austausch", nur: () => austauschProjekte().length > 0 && (istEltern() || istLehrkraft()), zahl: () => (istLehrkraft() ? austauschProjekte().reduce((s, p) => s + liste("gaeste", (g) => g.projekt_id === p.id && !g.gastgeber_id).length, 0) : 0) },
@@ -235,7 +238,7 @@ const adZustand = (id) => (ADMIN_TEILE.includes(id) ? adminLeds()[id] || ["grau"
 KACHELN.admin = AD_KACHELN.map(([id, sym, t, nur]) => ({ id: "ad-" + id, sym, t, v: ADMIN_TEILE.includes(id) ? "adminbereich" : "admin", p: ADMIN_TEILE.includes(id) ? { teil: id } : { blatt: id }, u: () => adZustand(id)[1], klasse: () => `ad l-${adZustand(id)[0]}`, nur: () => hatRolle("admin") && (!nur || nur()) }));
 
 // 🟢 Einfache Ansicht (wie KC): wenige große Kacheln je nach Rolle – Reihenfolge änderbar (▲▼), es wird nichts gelöscht
-const EINFACH = ["cockpit", "termine", "meinetermine", "nachrichten", "kinder", "meinegenehmigungen", "uebebuehne", "ueben", "meinenoten", "pinnwand", "sos"];
+const EINFACH = ["cockpit", "termine", "meinetermine", "nachrichten", "kinder", "meinegenehmigungen", "uebebuehne", "ueben", "vorspiel", "meinenoten", "pinnwand", "sos"];
 const wert = (x) => (typeof x === "function" ? x() : x);
 const sortiert = (k, reihe) => (reihe ? [...k].sort((a, b) => (reihe.indexOf(a.id) + 1 || 999) - (reihe.indexOf(b.id) + 1 || 999)) : k);
 // alle Kacheln, die man sehen darf (auch ausgeblendete) – in eigener Reihenfolge

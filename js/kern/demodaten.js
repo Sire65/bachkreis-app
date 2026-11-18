@@ -410,7 +410,7 @@ export function erzeugeDemodaten(heute = new Date()) {
     { id: "gv-zugang", titel: "Eigener App-Zugang für mein Kind", zweck: "eigener_zugang", text: "Mein Kind bekommt einen eigenen Zugang zur Bachkreis-App (eigene Zusagen, Nachrichten mit Leitung und Lehrkräften, Üben). Ohne Zugang erledige ich das für mein Kind. Widerruf jederzeit möglich – dann wird der Zugang gesperrt.", fassung: 1, gueltig_monate: null },
     { id: "gv-7", titel: "Fotos Social Media", zweck: "foto_social", text: "Fotos von Konzerten mit meinem Kind dürfen auf den Social-Media-Kanälen des Bachkreises gezeigt werden. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
     { id: "gv-3", titel: "Probenfreizeit", text: "Mein Kind darf an der Probenfreizeit teilnehmen. Die Begleitpersonen dürfen im Notfall die nötigen Entscheidungen treffen. Gesundheitsangaben habe ich in der App hinterlegt.", fassung: 1, gueltig_monate: null, zweck: "reise" },
-    { id: "gv-8", titel: "Übe-Aufnahmen an die Lehrkraft", zweck: "uebeaufnahmen", text: "Mein Kind darf sich in der Übe-Bühne beim Vorspielen aufnehmen und die Aufnahme an seine Lehrkraft schicken. Nur die Lehrkräfte und die Leitung hören sie; sie wird nach 30 Tagen automatisch gelöscht. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
+    { id: "gv-8", titel: "Übe-Aufnahmen an die Lehrkraft", zweck: "uebeaufnahmen", text: "Mein Kind darf sich beim Vorspielen aufnehmen und die Aufnahme an seine Lehrkraft, sein Register oder sein Orchester schicken. Hören dürfen sie nur die Empfänger, die mein Kind auswählt; sie wird nach der eingestellten Zeit (30 Tage) automatisch gelöscht. Widerruf jederzeit möglich.", fassung: 1, gueltig_monate: 12 },
     { id: "gv-4", titel: "Instrumenten-Leihvertrag", text: "Das Leihinstrument wird pfleglich behandelt und bei Beschädigung sofort gemeldet. Rückgabe zum vereinbarten Datum.", fassung: 1, gueltig_monate: 12, zweck: "leihvertrag" },
   ];
   d.genehmigungen = [];
@@ -459,6 +459,22 @@ export function erzeugeDemodaten(heute = new Date()) {
     d.genehmigungen.push({ id: `ge-${d.genehmigungen.length + 1}`, vorlage_id: "gv-8", kind_id: kid, frist: isoTag(tag(jetzt, 14)), status: ja ? "erteilt" : "ausstehend", vorlage_version: 1,
       ...(ja ? { beantwortet_am: iso(tag(jetzt, -3 - (i % 9), 19)), beantwortet_von: d.eltern_kind.find((e) => e.kind_id === kid)?.eltern_id || null } : {}) });
   });
+  // 🎙️ Vorspiele (0.79.0): drei Beispiele an Frau Jacka (Leitung) – eins schon gehört und beantwortet, zwei neu; eins an das ganze Cello-Register
+  if (demoSchueler && demoKindB) {
+    const cellos = d.person_instrument.filter((x) => x.register_id === "r-vc" && !x.geloescht_am && x.person_id !== demoSchueler.id).map((x) => x.person_id);
+    const zweiterCello = cellos.find((pid) => d.gruppe_zuordnung.some((z) => z.person_id === pid && z.gruppe_id === "g-a")) || cellos[0];
+    const bis = (n) => isoTag(tag(jetzt, 30 - n));
+    d.vorspiele = [
+      { id: "vs-1", von: demoSchueler.id, stueck: "Menuett G-Dur (Petzold) · Takt 1–16", notiz: "Takt 9 klappt noch nicht ganz", aufnahme: "datei:demo-vorspiel-1", dauer_sek: 84, an_art: "lehrkraft", an: ["p-leitung"], loeschen_am: bis(3), erstellt_am: iso(tag(jetzt, -3, 18, 12)) },
+      { id: "vs-2", von: demoKindB.id, stueck: "Air (J. S. Bach)", notiz: null, aufnahme: "datei:demo-vorspiel-2", dauer_sek: 112, an_art: "lehrkraft", an: ["p-leitung"], loeschen_am: bis(1), erstellt_am: iso(tag(jetzt, -1, 17, 40)) },
+      zweiterCello && { id: "vs-3", von: zweiterCello, stueck: "Tonleiter G-Dur, 2 Oktaven", notiz: "Zum ersten Mal ganz ohne Fehler!", aufnahme: "datei:demo-vorspiel-3", dauer_sek: 48, an_art: "register", an: ["p-leitung", demoSchueler.id, ...cellos.filter((x) => x !== zweiterCello)], loeschen_am: bis(0), erstellt_am: iso(tag(jetzt, 0, 7, 55)) },
+    ].filter(Boolean);
+    d.vorspiel_antworten = [
+      { id: "va-1", vorspiel_id: "vs-1", von: "p-leitung", art: "gehoert", text: null, aufnahme: null, erstellt_am: iso(tag(jetzt, -2, 20, 5)) },
+      { id: "va-2", vorspiel_id: "vs-1", von: "p-leitung", art: "tipp", text: "🎯 Diese Stelle noch üben", aufnahme: null, erstellt_am: iso(tag(jetzt, -2, 20, 6)) },
+      { id: "va-3", vorspiel_id: "vs-1", von: "p-leitung", art: "text", text: "Schon viel besser als letzte Woche – Takt 9 erst langsam mit Metronom (♩ = 72), dann steigern.", aufnahme: null, erstellt_am: iso(tag(jetzt, -2, 20, 8)) },
+    ];
+  }
   // 🩺 Gesundheit & Notfall (0.20.0): Angaben für einen Teil der Kinder, eins davon abgelaufen; Begleitpersonen der Probenfreizeit
   d.gesundheit = [];
   const ALLERG = ["Erdnüsse (Notfallset im Rucksack)", "Heuschnupfen", "Wespenstich", "", "", "", "Laktose", ""];

@@ -86,7 +86,7 @@ const AK = [["express_max_tag", "🏎️ Express-Nachrichten je Person und Tag",
   ["chat_schueler_untereinander", "🧒💬 Schüler dürfen sich privat schreiben", "ja", true], ["ansicht_kind_ab_klasse", "🧒 Große Kinder-Ansicht ab Klasse", "zahl", 9],
   ["freigabe_grenze_eur", "💶 Freigabe durch Vorstand ab (€)", "zahl", 0], ["km_satz", "🚗 Kilometer-Satz (€ je km)", "zahl", ER_KM_SATZ],
   ["grenze_db_mb", "🗄️ Grenze Datenbank (MB)", "zahl", 500], ["grenze_dateien_mb", "📁 Grenze Dateien (MB)", "zahl", 1024], ["grenze_volumen_gb", "📏 Grenze Datenvolumen im Monat (GB)", "zahl", 5],
-  ["aenderungen_monate", "🧾 Änderungsprotokoll aufheben (Monate)", "zahl", 12], ["loeschfrist_monate", "🧹 Löschfrist nach Austritt (Monate)", "zahl", 24]];
+  ["aenderungen_monate", "🧾 Änderungsprotokoll aufheben (Monate)", "zahl", 12], ["loeschfrist_monate", "🧹 Löschfrist nach Austritt (Monate)", "zahl", 24], ["vorspiel_tage", "🎙️ Vorspiele aufbewahren (Tage)", "zahl", 30]];
 function adminEinst() {
   const k = konfig();
   return `${knoepfe([["adTeilOeffnen", "lage", "🛡️ Leitstand"], ["adTeilOeffnen", "wartung", `🚧 Wartung${k.wartung === true ? " (AN)" : ""}`], ["adTeilOeffnen", "module", "🧩 Module"], ["adTeilOeffnen", "rollen", "👑 Rollen"]])}

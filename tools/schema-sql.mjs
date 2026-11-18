@@ -93,6 +93,7 @@ const ONLINE_SQL = [
 // Nachträge für schon eingespielte Datenbanken (das Grundschema legt nur fehlende Tabellen an): neue Tabellen, neue Spalten,
 // geänderte Wahl-Prüfungen und neue Communicator-Startwerte – alles wiederholbar. Neue Datenbanken bekommen es doppelt, schadet nicht.
 export const NACHTRAEGE = {
+  "20261205000000_bk_vorspiele.sql": { titel: "🎙️ Vorspiele: aufnehmen und an Lehrkraft, Register, Orchester oder Auswahl senden (0.79.0)", tabellen: ["vorspiele", "vorspiel_antworten"], extra: ["create index if not exists bk_vorspiele_von on bk_vorspiele (von);", "create index if not exists bk_vorspiel_antworten_vs on bk_vorspiel_antworten (vorspiel_id);"] },
   "20261204000000_bk_kachel_nutzung.sql": { titel: "🧭 Kachel-Nutzung – anonym gezählt (0.76.0)", tabellen: [], extra: [
     "create table if not exists bk_kachel_nutzung (tag date not null, kachel text not null, anzahl integer not null default 0, primary key (tag, kachel));",
     "comment on table bk_kachel_nutzung is 'Wie oft wurde welche Kachel geöffnet – je Tag, ohne Person (0.76.0, Auswertungen)';",

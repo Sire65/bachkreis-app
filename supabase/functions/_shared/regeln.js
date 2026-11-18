@@ -7,13 +7,13 @@
 //    dazu allgemeine Stammdaten (Gruppen, Register, Termine ihrer Gruppen, Pinnwand …).
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
-import { ECHO_RUBRIKEN, ECHO_AUSGABEN, ECHO_REDAKTION, ECHO_FREIGABE, ECHO_TEXT_MAX, VS_GEGEN_MAX, vsGruppe, KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT } from "./schema.js";
+import { ECHO_RUBRIKEN, ECHO_AUSGABEN, ECHO_REDAKTION, ECHO_FREIGABE, ECHO_TEXT_MAX, VS_GEGEN_MAX, vsGruppe, KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT, VORSPIEL_TAGE_MAX, VORSPIEL_MAX_SEK, VORSPIEL_MAX_AN, vorspielTage } from "./schema.js";
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["passkeys", "zustimmungen", "eingangskorb", "leihvertraege", "tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["vorspiele", "vorspiel_antworten", "passkeys", "zustimmungen", "eingangskorb", "leihvertraege", "tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -63,6 +63,9 @@ export function kontext(person, alle) {
   for (const g of alle.genehmigungen || []) if (!g.geloescht_am && uaV.has(g.vorlage_id) && meine.has(g.kind_id) && g.status !== "ausstehend" && String(g.beantwortet_am || "") >= String(uaLetzte.get(g.kind_id)?.beantwortet_am || "")) uaLetzte.set(g.kind_id, g);
   ctx.uebeAufnahmeOk = new Set([...uaLetzte].filter(([, g]) => g.status === "erteilt").map(([k]) => k));
   ctx.uaMap = new Map((alle.uebeaufgaben || []).map((u) => [u.id, u]));
+  // 🎙️ 0.79.0 Vorspiele: wem darf ich (bzw. mein Kind) vorspielen? Lehrkräfte/Leitung, das eigene Register, das eigene Orchester
+  ctx.vpMap = new Map((alle.vorspiele || []).map((v) => [v.id, v]));
+  ctx.vpEmpfaenger = vorspielEmpfaenger(alle, ctx.meine, gruppen, register);
   // 🏠 Austausch: eigene Gastfamilien-Angebote (für die Gäste-Zuordnung)
   ctx.meineGastgeber = new Set((alle.gastgeber || []).filter((g) => !g.geloescht_am && g.person_id === ich && g.status !== "abgesagt").map((g) => g.id));
   ctx.prMap = new Map((alle.projekte || []).map((p) => [p.id, p]));
@@ -116,6 +119,8 @@ function zeileSichtbar(tab, z, ctx) {
     case "mitfahrten": return ctx.termine.has(z.termin_id); // 🚗 wer zum Termin eingeladen ist
     case "uebeaufgaben": return z.person_id ? ctx.meine.has(z.person_id) : (!z.register_id || ctx.register.has(z.register_id)) && (!z.gruppe_id || ctx.gruppen.has(z.gruppe_id)) && !!(z.register_id || z.gruppe_id);
     case "uebe_ergebnisse": return ctx.meine.has(z.person_id); // ⭐ eigene bzw. die der Kinder
+    case "vorspiele": return vorspielSichtbar(z, ctx); // 🎙️ 0.79.0 Kind, Eltern, gewählte Empfänger – sonst niemand
+    case "vorspiel_antworten": { const v = ctx.vpMap?.get(z.vorspiel_id); return !!v && vorspielSichtbar(v, ctx) && (z.von === ctx.ich || ctx.meine.has(v.von)); } // Antwort: Schreiber/in und das Kind (+ Eltern)
     case "gastgeber": return z.person_id === ctx.ich; // 🏠 eigenes Angebot
     case "gaeste": return ctx.meineGastgeber.has(z.gastgeber_id); // 🧳 nur die eigenen Gäste
     case "dokumente": return z.sichtbar === "alle" || !z.sichtbar || (z.sichtbar === "eltern" && ctx.person?.typ === "eltern") || (z.sichtbar === "schueler" && ctx.person?.typ === "schueler") || (z.sichtbar === "verwaltung" && ctx.istVerwalter) || ((z.sichtbar === "leitung" || z.sichtbar === "vorstand") && bueroDarf(z.sichtbar, ctx.rollen));
@@ -537,6 +542,43 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       if (!Number.isInteger(pl) || pl < 1 || pl > 6) return { ok: false, grund: "PLAETZE_UNGUELTIG" };
       const status = neu.status === "abgesagt" ? "abgesagt" : alt?.status === "bestaetigt" ? "bestaetigt" : "angeboten";
       return { ok: true, zeile: { ...(alt || {}), ...nur(neu, ["id", "projekt_id", "person_id", "geloescht_am"]), plaetze: pl, schlafplatz: String(neu.schlafplatz || "").slice(0, 200), hinweise: String(neu.hinweise || "").slice(0, 1000), status, notiz: alt?.notiz || null } };
+    }
+    case "vorspiele": {
+      // 🎙️ 0.79.0 Vorspiel senden: für sich oder das eigene Kind; Minderjährige nur mit Einwilligung „Übe-Aufnahmen“; nur eigene Aufnahme;
+      // Empfänger nur Lehrkräfte/Leitung, eigenes Register, eigenes Orchester. Danach nichts mehr ändern – nur zurückziehen (löschen).
+      if (alt) {
+        if (!ctx.meine.has(alt.von)) return { ok: false, grund: "NUR_EIGENE" };
+        return neu.geloescht_am ? { ok: true, zeile: { ...alt, geloescht_am: jetzt } } : { ok: false, grund: "NICHT_AENDERBAR" };
+      }
+      if (!ctx.meine.has(neu.von)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+      const p = ctx.pMap?.get(neu.von);
+      if (istMinderjaehrig(p) && !ctx.uebeAufnahmeOk.has(neu.von)) return { ok: false, grund: "KEINE_EINWILLIGUNG_AUFNAHME" };
+      const id = String(neu.aufnahme || "").replace(/^datei:/, "");
+      if (!/^[\w-]{6,64}$/.test(id)) return { ok: false, grund: "AUFNAHME_UNGUELTIG" };
+      if (ctx.dateien?.get(id)?.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_DATEI" };
+      const an = [...new Set((Array.isArray(neu.an) ? neu.an : []).map(String))].filter((x) => x !== neu.von && ctx.vpEmpfaenger.has(x)).slice(0, VORSPIEL_MAX_AN);
+      if (!an.length) return { ok: false, grund: "KEINE_EMPFAENGER" };
+      const heute = jetzt.slice(0, 10), bis = String(neu.loeschen_am || ""), maxBis = new Date(Date.parse(jetzt) + VORSPIEL_TAGE_MAX * 86400000).toISOString().slice(0, 10);
+      const loeschen = /^\d{4}-\d{2}-\d{2}$/.test(bis) && bis > heute && bis <= maxBis ? bis : new Date(Date.parse(jetzt) + vorspielTage(ctx.konfig) * 86400000).toISOString().slice(0, 10);
+      const dauer = Math.round(Number(neu.dauer_sek));
+      return { ok: true, zeile: { id: neu.id, von: neu.von, stueck: String(neu.stueck || "").trim().slice(0, 80) || null, notiz: String(neu.notiz || "").trim().slice(0, 300) || null,
+        aufnahme: "datei:" + id, dauer_sek: Number.isFinite(dauer) && dauer > 0 ? Math.min(dauer, VORSPIEL_MAX_SEK + 30) : null,
+        an_art: ["lehrkraft", "register", "orchester", "auswahl"].includes(neu.an_art) ? neu.an_art : "auswahl", an, loeschen_am: loeschen, geloescht_am: null } };
+    }
+    case "vorspiel_antworten": {
+      // 🎙️ Antwort/„gehört“: nur Empfänger (und das Kind bzw. seine Eltern auf Antworten), immer als man selbst; Sprachantwort nur eigene Datei
+      const v = ctx.vpMap?.get(neu.vorspiel_id ?? alt?.vorspiel_id);
+      if (!v || v.geloescht_am || !vorspielSichtbar(v, ctx)) return { ok: false, grund: "VORSPIEL_FEHLT" };
+      if (alt) return alt.von === ctx.ich && neu.geloescht_am ? { ok: true, zeile: { ...alt, geloescht_am: jetzt } } : { ok: false, grund: "NICHT_AENDERBAR" };
+      if (!(v.an || []).includes(ctx.ich) && !ctx.meine.has(v.von)) return { ok: false, grund: "NICHT_EMPFAENGER" };
+      const art = ["gehoert", "tipp", "text", "sprache"].includes(neu.art) ? neu.art : "text", text = String(neu.text || "").trim().slice(0, 500);
+      let aufnahme = null;
+      if (art === "sprache") {
+        const id = String(neu.aufnahme || "").replace(/^datei:/, "");
+        if (!/^[\w-]{6,64}$/.test(id) || ctx.dateien?.get(id)?.von !== ctx.ich) return { ok: false, grund: "NUR_EIGENE_DATEI" };
+        aufnahme = "datei:" + id;
+      } else if (art !== "gehoert" && !text) return { ok: false, grund: "TEXT_FEHLT" };
+      return { ok: true, zeile: { id: neu.id, vorspiel_id: v.id, von: ctx.ich, art, text: art === "gehoert" ? null : text || null, aufnahme, geloescht_am: null } };
     }
     case "uebe_ergebnisse": {
       // ⭐ Übe-Bühne: nur Zahlen für sich bzw. die eigenen Kinder; Rückmeldung schreibt nur die Lehrkraft;
@@ -1129,4 +1171,16 @@ export function uebePlanPruefen(p) {
   const zeit = /^([01]\d|2[0-3]):[0-5]\d$/.test(String(p.zeit || "")) ? p.zeit : "17:00";
   const zahl = (v, min, max, std) => (Number.isInteger(Number(v)) && Number(v) >= min && Number(v) <= max ? Number(v) : std);
   return { an: p.an === true, tage, zeit, dauer: zahl(p.dauer, 5, 240, 30), ziel: zahl(p.ziel, 0, 3000, 120), alarm: zahl(p.alarm, 0, 120, 10) };
+}
+
+// 🎙️ 0.79.0 Vorspiele
+export function vorspielSichtbar(v, ctx) { return v.von === ctx.ich || ctx.meine.has(v.von) || (v.an || []).includes(ctx.ich); }
+// Mögliche Empfänger: Lehrkräfte/Leitung, wer im eigenen Register (Hauptinstrument egal) bzw. im eigenen Orchester ist (aktuell)
+export function vorspielEmpfaenger(alle, meine, gruppen, register, heute = new Date().toISOString().slice(0, 10)) {
+  const s = new Set();
+  for (const p of alle.personen || []) if (!p.geloescht_am && p.status !== "ausgetreten" && (rollenMit(p.rollen || []).some((r) => ["leitung", "lehrkraft", "admin"].includes(r)) || ["leitung", "lehrkraft"].includes(p.typ))) s.add(p.id);
+  for (const x of alle.person_instrument || []) if (!x.geloescht_am && x.register_id && register.has(x.register_id)) s.add(x.person_id);
+  for (const z of alle.gruppe_zuordnung || []) if (!z.geloescht_am && gruppen.has(z.gruppe_id) && (!z.bis || String(z.bis).slice(0, 10) >= heute)) s.add(z.person_id);
+  for (const m of meine) s.delete(m);
+  return s;
 }

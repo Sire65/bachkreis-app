@@ -1,5 +1,24 @@
 # Änderungen
 
+## 0.79.0 DEV – 18.11.2026
+🎙️ **Vorspiel** – zuhause spielen, aufnehmen, senden (Wunsch Hansi „ein Stück spielen und aufnehmen und die Aufnahme z. B. zu Frau Jacka schicken … an eine Gruppe, Auswahl … einfache Bedienung“; Entscheidungen: Kinder dürfen auch an Register und Orchester senden, 30 Tage aufbewahren und einstellbar, alle Freigegebenen hören zu, Live-Vorspiel mit einplanen):
+- **Aufnehmen mit einem Knopf** (Bachkreis › 🎙️ Vorspiel): großer roter Knopf, Zeit und Pegel, auf Wunsch ⏱ Vorzähler; **Musik-Modus** – Mikrofon ohne Sprachfilter, 64 kbit/s (≈ 0,5 MB je Minute), höchstens 5 Minuten. Eltern nehmen für ihr Kind auf
+- **„An wen?“** mit großen Feldern: 👩‍🏫 **meine Lehrkraft** (vorgeschlagen: zuletzt gewählt bzw. wer die letzte Übe-Aufgabe gab) · 🎻 **mein Register** · 🎼 **mein Orchester** (jeweils mit der Lehrkraft) · ☑️ **Auswahl** (Lehrkräfte, Register, Orchester zum Ankreuzen); Stück und Notiz freiwillig; erst anhören, dann 📨 Senden oder 🔁 Nochmal
+- **🎧 Für mich** (Zahl „neu“ an der Kachel): anhören – das Kind sieht „✔ gehört von …“ –, **🎭 Auf der Bühne anhören** (das Orchester spielt sichtbar mit), antworten mit **Ein-Tipp** (👍 Super! · 🎯 Diese Stelle noch üben · 🐢 Langsamer üben …), eigenen Worten oder **🎙️ Sprachantwort**
+- **📤 Gesendet**: wer gehört hat, Antworten, „🗑️ Zurückziehen“
+- **🔴 Live vorspielen**: ruft die Lehrkraft im Musik-Modus an (nichts wird gespeichert) – sobald „📞 Anrufe & Video“ freigeschaltet ist (in der Pilot-Grundausstattung aus)
+- **Datenschutz/Kinderschutz** (Server erzwingt): sehen und hören dürfen nur das Kind, seine Eltern und die gewählten Empfänger – auch die Leitung nicht, wenn sie nicht gewählt wurde; Antworten sieht nur das Kind (nicht die anderen Empfänger). Kinder nur mit Einwilligung „Übe-Aufnahmen“ (Text um Register/Orchester erweitert – im Echtbetrieb neue Fassung einholen); nur eigene Aufnahmen; erlaubte Empfänger prüft der Server
+- **Automatisch gelöscht** nach der eingestellten Zeit (Standard **30 Tage**, 1–365; Leitung unter Vorspiel › ⚙️ Aufbewahrung, Admin unter ⚙️ Einstellungen) samt Antworten und Dateien; bei Kündigung mit. **Dabei behoben:** auch die älteren Übe-Aufnahmen wurden bisher nicht automatisch nach 30 Tagen gelöscht – jetzt schon
+- Neue Tabellen `bk_vorspiele`, `bk_vorspiel_antworten` (Migration 20261205 mit Rechten nur für den Server), Programmteil `js/app/vorspiel.js` (nachgeladen), 4 Hilfen, Beispiel-Vorspiele in der Vorführversion; Tests `vorspiel.test` (6 Abläufe am Server)
+
+🎻 **Orchester auf der Bühne realistischer** (Wunsch Hansi „die Streicher muss man besser spielen sehen – dass sich der Bogen auf und ab bewegt; die anderen Musiker sollen mehr Bewegungen machen“):
+- **Echte Bogenstriche**: jeder Ton ist ein eigener Strich, abwechselnd Ab- und Aufstrich; der Bogen gleitet entlang seiner Achse über die Saiten (bleibt auf den Saiten), kurze Töne mit wenig Bogen, lange mit dem ganzen. Die Schulter bleibt fest, **Ellbogen und Hand folgen** (Zwei-Gelenk-Arm) – bei Violinen, Bratschen, Celli und Kontrabässen. In der Pause sinkt der Bogen weich ab. Bei Aufnahmen (Bach, eigene Mitschnitte) ein Strich je Schlag statt Zittern
+- **Linke Hand mit Vibrato** bei den Streichern
+- **Jeder Musiker im eigenen Rhythmus** (versetzt, unterschiedlich schnell) statt alle gleichzeitig wie Roboter; **Köpfe nicken im Takt** der Dirigentin
+- **Bläser je Instrument**: Flöte schwingt seitlich, Oboe/Klarinette mit dem Schalltrichter, Trompete/Posaune heben das Instrument, Fagott wiegt
+- „Bewegung reduzieren“ des Geräts wird beachtet (dann kein Streichen und Wiegen)
+- Neu: `js/kern/streicher.js` (reine Rechnung), Test `streicher.test`
+
 ## 0.78.0 DEV – 18.11.2026
 🧹 **Aufgeräumte Anordnung** (Wunsch Hansi „Buttons und Knöpfe … voll und unübersichtlich – aufgeräumter, an die Größen angepasst, nicht überladen“). Geprüft wurden alle 98 Seiten in allen 6 Rollen auf Handy (390 px) und Tablet (820 px) mit dem neuen Werkzeug `tools/anordnung-pruefen.mjs`; die Regeln stehen gesammelt in `css/ordnung.css`:
 - **Seitenkopf**: der Titel wird nicht mehr abgeschnitten („N…“ bei Nachrichten) – passen die Knöpfe nicht daneben, stehen sie rechtsbündig in einer zweiten Zeile

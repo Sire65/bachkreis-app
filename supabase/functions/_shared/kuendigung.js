@@ -5,7 +5,7 @@ import { TABELLEN, KUENDIGUNG_NACHWEIS_JAHRE } from "./schema.js";
 import { kuendigungFolgen, kuendigungenFaellig, pausenEnde } from "./logik.js";
 import { speicherDb } from "./nachrichten.js";
 
-const TABS = ["personen", "zugaenge", "gruppe_zuordnung", "gruppen", "gesundheit", "uebe_ergebnisse", "fv_mitglieder", "genehmigung_vorlagen", "genehmigungen", "kuendigungen"];
+const TABS = ["personen", "zugaenge", "gruppe_zuordnung", "gruppen", "gesundheit", "uebe_ergebnisse", "vorspiele", "fv_mitglieder", "genehmigung_vorlagen", "genehmigungen", "kuendigungen"];
 const spalten = (tab) => [...new Set(["id", ...[...TABELLEN[tab].felder, ...(TABELLEN[tab].intern || [])].map((f) => f.k), "geaendert_von", "geloescht_am"])];
 
 async function schreiben(db, tab, zeile, wer) {

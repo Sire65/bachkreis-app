@@ -62,6 +62,10 @@ export async function nachrichtenAufraeumen(db, ablage, { limit = 200 } = {}) {
       anlagen = '[]'::jsonb, geaendert_von = 'Selbstlöschen'
     where id in (select id from bk_nachrichten where loescht_am is not null and loescht_am <= now() and zurueckgezogen_am is null and geloescht_am is null limit $1)
     returning id`, [limit]));
+  // 🎙️ 0.79.0 Vorspiele nach ihrer Aufbewahrungszeit löschen (samt Antworten); Übe-Aufnahmen ebenso (stand schon so in der Regel, fehlte hier)
+  await db.q(`update bk_vorspiele set geloescht_am = now(), geaendert_von = 'Aufbewahrung' where loeschen_am is not null and loeschen_am < current_date and geloescht_am is null`);
+  await db.q(`update bk_vorspiel_antworten a set geloescht_am = now(), geaendert_von = 'Aufbewahrung' where a.geloescht_am is null and exists (select 1 from bk_vorspiele v where v.id = a.vorspiel_id and v.geloescht_am is not null)`);
+  await db.q(`update bk_uebe_ergebnisse set aufnahme = null, geaendert_von = 'Aufbewahrung' where aufnahme is not null and loeschen_am is not null and loeschen_am < current_date and geloescht_am is null`);
   // Dateien, auf die keine sichtbare Nachricht und keine Stimme mehr zeigt, nach 1 Tag aufräumen (auch abgebrochene Uploads)
   const verwaist = await db.q(`select d.id from bk_dateien d where d.geloescht_am is null and d.erstellt_am < now() - interval '1 day'
     and not exists (select 1 from bk_nachrichten n where n.anlagen @> jsonb_build_array(jsonb_build_object('id', d.id)) and n.geloescht_am is null)
@@ -70,6 +74,8 @@ export async function nachrichtenAufraeumen(db, ablage, { limit = 200 } = {}) {
     and not exists (select 1 from bk_dokumente x where x.datei = 'datei:' || d.id and x.geloescht_am is null)
     and not exists (select 1 from bk_uebeaufgaben x where (x.datei = 'datei:' || d.id or x.vorspiel = 'datei:' || d.id) and x.geloescht_am is null)
     and not exists (select 1 from bk_uebe_ergebnisse x where x.aufnahme = 'datei:' || d.id and x.geloescht_am is null)
+    and not exists (select 1 from bk_vorspiele x where x.aufnahme = 'datei:' || d.id and x.geloescht_am is null)
+    and not exists (select 1 from bk_vorspiel_antworten x where x.aufnahme = 'datei:' || d.id and x.geloescht_am is null)
     and not exists (select 1 from bk_aufnahmen x where x.datei = 'datei:' || d.id and x.geloescht_am is null)
     and not exists (select 1 from bk_erstattungen x where x.beleg = 'datei:' || d.id and x.geloescht_am is null)
     and not exists (select 1 from bk_rueckmeldungen x where x.bild = 'datei:' || d.id and x.geloescht_am is null)

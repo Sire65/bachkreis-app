@@ -189,6 +189,9 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F186 | 📈 Auswertungen mit Verläufen, Ist/Soll, CSV; 🧭 Kachel-Nutzung anonym | ✅ | bewertung-umsetzung.test |
 | BK-F187 | 🧹 Aufgeräumte Anordnung aller Seiten (Kopf, Filter, Knopfreihen, Fingergröße) + Prüfwerkzeug | ✅ | ordnung.test |
 | BK-F188 | 🎵 Speicherort der Musik als Admin-Einstellung (Ordner oder https) | ✅ | musikort.test |
+| BK-F189 | 🎻 Bühne: echte Bogenstriche mit Arm, Vibrato, versetztes Wiegen, Nicken im Takt, Bläser je Instrument | ✅ | streicher.test |
+| BK-F190 | 🎙️ Vorspiel: aufnehmen (Musik-Modus), an Lehrkraft/Register/Orchester/Auswahl senden, anhören, antworten, Aufbewahrung einstellbar | ✅ | vorspiel.test |
+| BK-F191 | 🔴 Live-Vorspiel über Anrufe im Musik-Modus | ✅ | vorspiel.test |
 | BK-F181 | 🧊 Hänger-Messung mit Ursache, Fehler-ID und 📖 Fehlerkatalog (Admin, wie KC 2.966) | ✅ | haenger-puls.test |
 | BK-F182 | 🎚️ Datenverkehr-Säulen L/S im Kopf (Admin, wie KC 2.964) | ✅ | haenger-puls.test |
 | BK-F176 | 👉 Dirigentin gibt Einsätze: dreht sich zur Gruppe, linke Hand zeigt hin | ✅ | dirigent.test |

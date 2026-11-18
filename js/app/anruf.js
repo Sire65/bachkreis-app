@@ -49,21 +49,22 @@ function pcEinrichten(pc) {
   pc.ondatachannel = (e) => kanalEinrichten(e.channel);
 }
 function kanalEinrichten(k) { G.kanal = k; k.onmessage = datenEmpfang((m) => { if (m.auflegen) { toast("📞 Aufgelegt"); ende(false); } }); }
-async function medien(art) {
-  try { return await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: art === "video" ? { facingMode: "user", width: { ideal: 640 } } : false }); }
+// 🎻 0.79.0 Live-Vorspiel: Musik-Modus – Mikrofon ohne Sprachfilter, damit Instrumente nicht „weggefiltert“ werden
+async function medien(art, musik = false) {
+  try { return await navigator.mediaDevices.getUserMedia({ audio: musik ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true }, video: art === "video" ? { facingMode: "user", width: { ideal: 640 } } : false }); }
   catch { throw new Error(art === "video" ? "Kamera/Mikrofon nicht freigegeben" : "Mikrofon nicht freigegeben"); }
 }
 // ---------- Anrufen ----------
-export async function anrufen(pid, art = "audio") {
+export async function anrufen(pid, art = "audio", { musik = false } = {}) {
   if (G.pc) return toast("Du telefonierst schon.");
   if (!darfAnrufen(pid)) return toast(ANRUF_FEHLER.ANRUF_NICHT_ERLAUBT);
   try {
-    G.art = art; G.mit = pid; G.rolle = "ruf"; G.strom = await medien(art);
-    fenster(`📳 Es klingelt bei ${name(pid).split(" ")[0]} …`); G.klingel = ton(FREIZEICHEN);
+    G.art = art; G.mit = pid; G.rolle = "ruf"; G.strom = await medien(art, musik);
+    fenster(musik ? `🎻 Live-Vorspiel – es klingelt bei ${name(pid).split(" ")[0]} …` : `📳 Es klingelt bei ${name(pid).split(" ")[0]} …`); G.klingel = ton(FREIZEICHEN);
     const pc = (G.pc = neueVerbindung()); pcEinrichten(pc); G.strom.getTracks().forEach((t) => pc.addTrack(t, G.strom)); kanalEinrichten(pc.createDataChannel("bk"));
     const angebot = await angebotMachen(pc);
     const z = await vermittlung.senden({ art, an: [pid], angebot, status: "klingelt" }); G.id = z.id;
-    if (istEchtbetrieb()) senden({ an: [pid], betreff: `${art === "video" ? "🎥" : "📞"} ${name(S.ich)} ruft dich an`, text: "Jetzt in der Bachkreis-App annehmen.", ereignis: "nachricht" }).catch(() => {});
+    if (istEchtbetrieb()) senden({ an: [pid], betreff: musik ? `🎻 ${name(S.ich)} möchte dir live vorspielen` : `${art === "video" ? "🎥" : "📞"} ${name(S.ich)} ruft dich an`, text: "Jetzt in der Bachkreis-App annehmen.", ereignis: "nachricht" }).catch(() => {});
     const t0 = Date.now();
     G.poll = setInterval(async () => {
       const r = await vermittlung.holen(G.id).catch(() => null);

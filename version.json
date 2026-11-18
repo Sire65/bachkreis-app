@@ -1,12 +1,23 @@
 {
-  "version": "0.78.0",
+  "version": "0.79.0",
   "datum": "2026-11-18",
   "stufe": "DEV",
   "neu": [
-    "🧹 Aufgeräumte Anordnung: Titel nicht mehr abgeschnitten, Knöpfe fingergerecht, Filter übersichtlich",
-    "🎵 Speicherort der Musik ist eine Einstellung (Admin › Speicher)"
+    "🎻 Streicher streichen sichtbar: jeder Ton ein Bogenstrich, Arm mit Ellbogen",
+    "🎭 Lebendigeres Orchester: jeder im eigenen Rhythmus, Nicken im Takt, Bläser je Instrument, Vibrato",
+    "🎙️ Vorspiel: zuhause aufnehmen und an Lehrkraft, Register, Orchester oder Auswahl senden",
+    "🎧 Anhören, auf der Bühne mitspielen lassen, mit Tipp, Text oder Sprachantwort antworten",
+    "🔴 Live vorspielen im Musik-Modus (wenn Anrufe freigeschaltet)"
   ],
   "verlauf": [
+    {
+      "version": "0.78.0",
+      "datum": "2026-11-18",
+      "neu": [
+        "🧹 Aufgeräumte Anordnung: Titel nicht mehr abgeschnitten, Knöpfe fingergerecht, Filter übersichtlich",
+        "🎵 Speicherort der Musik ist eine Einstellung (Admin › Speicher)"
+      ]
+    },
     {
       "version": "0.77.0",
       "datum": "17.11.2026",

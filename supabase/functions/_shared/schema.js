@@ -67,6 +67,10 @@ export const UEBE_TONARTEN = { C: "C-Dur", G: "G-Dur", D: "D-Dur", A: "A-Dur", E
 export const UEBE_SPIELE = { hoehe: "Höher oder tiefer?", durmoll: "Dur oder Moll?", nachklatschen: "Rhythmus nachklatschen" };
 export const UEBE_MODI = { mitspielen: "Mitspielen", griffe: "Noten & Griffe", rhythmus: "Rhythmus", stimmen: "Stimmgerät", gehoer: "Ohr-Spiele" };
 export const UEBE_AUFNAHME_TAGE = 30;
+// 🎙️ 0.79.0 Vorspiele: Aufbewahrung in Tagen (Leitung stellt ein: ⚙️ Mehr › Leitung › „Vorspiele aufbewahren“), Grenzen, Ein-Tipp-Antworten
+export const VORSPIEL_TAGE = 30, VORSPIEL_TAGE_MIN = 1, VORSPIEL_TAGE_MAX = 365, VORSPIEL_MAX_SEK = 300, VORSPIEL_MAX_AN = 120;
+export const vorspielTage = (k) => { const n = Math.round(Number(k?.vorspiel_tage)); return Number.isFinite(n) && n >= VORSPIEL_TAGE_MIN && n <= VORSPIEL_TAGE_MAX ? n : VORSPIEL_TAGE; };
+export const VORSPIEL_TIPPS = ["👍 Super!", "🌱 Weiter so", "🎯 Diese Stelle noch üben", "🐢 Langsamer üben", "🎵 Schöner Ton!", "⏱ Mit Metronom üben"];
 // 🏫 Abgleich mit der Internetseite (0.27.0): Austausch & Gastfamilien, Auftrittsanfragen, Chronik, Dokumente, Partner
 export const GASTGEBER_STATUS = { angeboten: "angeboten", bestaetigt: "✅ bestätigt", abgesagt: "abgesagt" };
 export const ANFRAGE_STATUS = { neu: "🆕 neu", pruefung: "🔎 in Prüfung", zugesagt: "✅ zugesagt", abgesagt: "❌ abgesagt", erledigt: "🏁 erledigt" };
@@ -1490,6 +1494,35 @@ export const TABELLEN = {
       { k: "redaktion_notiz", t: "Hinweis der Redaktion", typ: "lang" },
     ],
     liste: ["titel", "rubrik", "von", "status"],
+  },
+  // 🎙️ Vorspiel (0.79.0, Wunsch Hansi „zuhause spielen, aufnehmen und z. B. Frau Jacka schicken … an Gruppe, Auswahl“): Aufnahme an
+  // Lehrkraft, Register, Orchester oder eine Auswahl. Sehen und hören dürfen nur die Absenderin, ihre Eltern und die gewählten Empfänger
+  // (keine Rolle liest alles). Kinder nur mit Einwilligung „Übe-Aufnahmen“; gelöscht nach VORSPIEL_TAGE (Leitung stellt ein).
+  vorspiele: {
+    titel: "Vorspiele", sym: "🎙️", gruppe: "Orchester", lesen: [], schreiben: [],
+    felder: [
+      { k: "von", t: "gespielt von", typ: "ref", ref: "personen", pflicht: true },
+      { k: "stueck", t: "Stück", typ: "text" },
+      { k: "notiz", t: "Notiz", typ: "lang" },
+      { k: "aufnahme", t: "Aufnahme", typ: "text", pflicht: true },
+      { k: "dauer_sek", t: "Dauer (Sekunden)", typ: "zahl" },
+      { k: "an_art", t: "an", typ: "wahl", werte: { lehrkraft: "👩‍🏫 Lehrkraft", register: "🎻 Register", orchester: "🎼 Orchester", auswahl: "☑️ Auswahl" } },
+      { k: "an", t: "Empfänger", typ: "refs", ref: "personen" },
+      { k: "loeschen_am", t: "wird gelöscht am", typ: "datum" },
+    ],
+    liste: ["von", "stueck", "an_art", "loeschen_am"],
+    anzeige: (z) => z.stueck || "Vorspiel",
+  },
+  vorspiel_antworten: {
+    titel: "Vorspiele: Antworten", sym: "💬", gruppe: "Orchester", lesen: [], schreiben: [],
+    felder: [
+      { k: "vorspiel_id", t: "Vorspiel", typ: "ref", ref: "vorspiele", pflicht: true },
+      { k: "von", t: "von", typ: "ref", ref: "personen", pflicht: true },
+      { k: "art", t: "Art", typ: "wahl", werte: { gehoert: "✔ gehört", tipp: "👍 Tipp", text: "💬 Text", sprache: "🎙️ Sprachantwort" } },
+      { k: "text", t: "Text", typ: "lang" },
+      { k: "aufnahme", t: "Sprachantwort", typ: "text" },
+    ],
+    liste: ["vorspiel_id", "von", "art"],
   },
   vorschlaege: {
     titel: "Vorschläge & Abstimmungen", sym: "💡", gruppe: "Kommunikation", lesen: L, schreiben: [],

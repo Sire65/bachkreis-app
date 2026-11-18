@@ -518,6 +518,7 @@ export function kuendigungFolgen(db, k, heute = new Date()) {
   const gesundheitWeg = () => {
     db.liste("gesundheit", (g) => g.person_id === p.id && !g.geloescht_am).forEach((g) => setze("gesundheit", g, { geloescht_am: jetzt, ...Object.fromEntries(GESUNDHEIT_LEEREN.map((f) => [f, null])) }));
     db.liste("uebe_ergebnisse", (u) => u.person_id === p.id && u.aufnahme).forEach((u) => setze("uebe_ergebnisse", u, { aufnahme: null, loeschen_am: null }, { datei: u.aufnahme }));
+    db.liste("vorspiele", (v) => v.von === p.id && !v.geloescht_am).forEach((v) => setze("vorspiele", v, { geloescht_am: jetzt }, { datei: v.aufnahme })); // 🎙️ 0.79.0
   };
   const fvAus = () => db.liste("fv_mitglieder", (f) => f.person_id === p.id && !f.austritt && !f.geloescht_am).forEach((f) => setze("fv_mitglieder", f, { austritt: zum }));
   const bereiche = new Set(k.bereiche || []);

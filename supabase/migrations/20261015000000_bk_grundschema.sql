@@ -1683,6 +1683,51 @@ grant select, insert, update, delete on bk_echo_beitraege to service_role;
 drop trigger if exists bk_echo_beitraege_stempel on bk_echo_beitraege;
 create trigger bk_echo_beitraege_stempel before update on bk_echo_beitraege for each row execute function bk_abgleich_stempel();
 
+-- Vorspiele
+create table if not exists bk_vorspiele (
+  id text primary key default gen_random_uuid()::text,
+  von text not null,
+  stueck text,
+  notiz text,
+  aufnahme text not null,
+  dauer_sek integer,
+  an_art text check (an_art is null or an_art in ('lehrkraft', 'register', 'orchester', 'auswahl')),
+  an text[],
+  loeschen_am date,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_vorspiele_geaendert on bk_vorspiele (geaendert_am);
+alter table bk_vorspiele enable row level security;
+revoke all on bk_vorspiele from public, anon, authenticated;
+grant select, insert, update, delete on bk_vorspiele to service_role;
+drop trigger if exists bk_vorspiele_stempel on bk_vorspiele;
+create trigger bk_vorspiele_stempel before update on bk_vorspiele for each row execute function bk_abgleich_stempel();
+
+-- Vorspiele: Antworten
+create table if not exists bk_vorspiel_antworten (
+  id text primary key default gen_random_uuid()::text,
+  vorspiel_id text not null,
+  von text not null,
+  art text check (art is null or art in ('gehoert', 'tipp', 'text', 'sprache')),
+  text text,
+  aufnahme text,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_vorspiel_antworten_geaendert on bk_vorspiel_antworten (geaendert_am);
+alter table bk_vorspiel_antworten enable row level security;
+revoke all on bk_vorspiel_antworten from public, anon, authenticated;
+grant select, insert, update, delete on bk_vorspiel_antworten to service_role;
+drop trigger if exists bk_vorspiel_antworten_stempel on bk_vorspiel_antworten;
+create trigger bk_vorspiel_antworten_stempel before update on bk_vorspiel_antworten for each row execute function bk_abgleich_stempel();
+
 -- Vorschläge & Abstimmungen
 create table if not exists bk_vorschlaege (
   id text primary key default gen_random_uuid()::text,
@@ -2550,6 +2595,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_jahrb
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_hefte_vorwort_von_fk') then alter table bk_echo_hefte add constraint bk_echo_hefte_vorwort_von_fk foreign key (vorwort_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_beitraege_heft_id_fk') then alter table bk_echo_beitraege add constraint bk_echo_beitraege_heft_id_fk foreign key (heft_id) references bk_echo_hefte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_beitraege_von_fk') then alter table bk_echo_beitraege add constraint bk_echo_beitraege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiele_von_fk') then alter table bk_vorspiele add constraint bk_vorspiele_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiel_antworten_vorspiel_id_fk') then alter table bk_vorspiel_antworten add constraint bk_vorspiel_antworten_vorspiel_id_fk foreign key (vorspiel_id) references bk_vorspiele(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiel_antworten_von_fk') then alter table bk_vorspiel_antworten add constraint bk_vorspiel_antworten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_von_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_gegen_zu_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_gegen_zu_fk foreign key (gegen_zu) references bk_vorschlaege(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlag_stimmen_vorschlag_id_fk') then alter table bk_vorschlag_stimmen add constraint bk_vorschlag_stimmen_vorschlag_id_fk foreign key (vorschlag_id) references bk_vorschlaege(id) on delete restrict; end if; end $$;

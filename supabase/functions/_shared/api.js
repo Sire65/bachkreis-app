@@ -239,7 +239,7 @@ async function alleZeilen(db, tab) {
 }
 async function kontextLaden(db, person) {
   // Alles, was die Regeln brauchen (regeln.js kontext): Begleitpersonen/Anmeldung (projekte, reise_anmeldungen), Textfassung (genehmigung_vorlagen)
-  const noetig = ["kinderschutz", "eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben", "vorschlaege", "echo_hefte"];
+  const noetig = ["vorspiele", "kinderschutz", "eltern_kind", "gruppe_zuordnung", "person_instrument", "ausleihen", "termine", "terminarten", "unterhaltungen", "pinnwand", "personen", "projekte", "genehmigung_vorlagen", "reise_anmeldungen", "uebeaufgaben", "mitfahrten", "genehmigungen", "gastgeber", "startnachrichten", "terminumfragen", "fotoalben", "vorschlaege", "echo_hefte"];
   const alle = {};
   for (const t of noetig) alle[t] = await alleZeilen(db, t);
   const ctx = kontext(person, alle);
@@ -403,6 +403,10 @@ async function speichern(db, s, body) {
   if (tab === "anrufe" && zeilen.some((z) => (z?.an || []).some?.((x) => /^gast-/.test(String(x))))) ctx.tischGaeste = await tischGaesteGueltig(db);
   if (tab === "eingangskorb") { // 📥 0.53.0 nur eigene Dateien dürfen in einen Korb
     const ids = [...new Set(zeilen.map((z) => String(z?.datei || "").replace(/^datei:/, "")).filter(Boolean))];
+    ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
+  }
+  if (tab === "vorspiele" || tab === "vorspiel_antworten") { // 🎙️ 0.79.0 nur eigene Aufnahmen
+    const ids = [...new Set(zeilen.map((z) => String(z?.aufnahme || "").replace(/^datei:/, "")).filter(Boolean))];
     ctx.dateien = new Map((ids.length ? await db.q(`select id, von, mime from bk_dateien where id = any($1::text[]) and geloescht_am is null`, [ids]) : []).map((d) => [d.id, d]));
   }
   if (tab === "erstattungen") {
@@ -577,6 +581,8 @@ async function dateiHolen(db, s, body, ablage) {
     if (!darf) darf = filtern("eingangskorb", (await db.q(`select to_jsonb(k) as z from bk_eingangskorb k where datei = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📥 0.53.0
     if (!darf) darf = filtern("echo_beitraege", (await db.q(`select to_jsonb(b) as z from bk_echo_beitraege b where bild = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 📰 0.70.0
     if (!darf) darf = filtern("echo_hefte", (await db.q(`select to_jsonb(h) as z from bk_echo_hefte h where titelbild = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
+    if (!darf) darf = filtern("vorspiele", (await db.q(`select to_jsonb(v) as z from bk_vorspiele v where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0; // 🎙️ 0.79.0
+    if (!darf) darf = filtern("vorspiel_antworten", (await db.q(`select to_jsonb(a) as z from bk_vorspiel_antworten a where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
     if (!darf) darf = filtern("uebe_ergebnisse", (await db.q(`select to_jsonb(e) as z from bk_uebe_ergebnisse e where aufnahme = $1 and geloescht_am is null`, ["datei:" + id])).map((r) => r.z), ctx).length > 0;
   }
   if (!darf) return fehler(403, "KEIN_ZUGRIFF");

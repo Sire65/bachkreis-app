@@ -5,6 +5,7 @@ import { S, VIEWS, kopf, istLehrkraft, zeige } from "./zustand.js";
 import { esc, AKTIONEN, toast, datumKurz } from "../kern/ui.js";
 import { liste, hole, konfig } from "../kern/daten.js";
 import { musikAdresse } from "../kern/musikort.js";
+import { STRICH, strichNeu, bogenStand, armD, handBei, bogenTransform } from "../kern/streicher.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
 import { SCHLAGFIGUR, SCHULTER, RUHE, armPfad, handPosition, tempoSchaetzen, einsatzRichtung, einsatzStaerke, mitEinsatz } from "../kern/dirigat.js";
@@ -29,7 +30,10 @@ function besetzungFuerBuehne() {
   return m;
 }
 const ARM = (d, farbe) => `<path d="${d}" fill="none" stroke="${farbe}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>`;
-const HAND = (x, y, haut) => `<circle cx="${x}" cy="${y}" r="1.25" fill="${haut}"/>`;
+const HAND = (x, y, haut, k = "") => `<circle${k ? ` class="${k}"` : ""} cx="${x}" cy="${y}" r="1.25" fill="${haut}"/>`;
+// 🎻 0.79.0 Bogenarm: Schulter fest, Ellbogen/Hand werden beim Streichen neu gerechnet (js/kern/streicher.js)
+const BOGENARM = (inst, farbe) => ARM(armD(STRICH[inst], handBei(STRICH[inst], 0, 1)), farbe).replace("<path ", '<path class="rarm" ');
+const BOGEN_START = (inst) => `transform="${bogenTransform(STRICH[inst], 0, 1)}"`;
 function figur(x, y, s, sek, inst, pid, nr) {
   const mm = merkmale(pid || `gast-${sek}-${nr}`), haut = HAUT[mm.haut % HAUT.length];
   const kleid = "#121216", lang = [1, 2, 4, 8].includes(mm.frisur % 9);
@@ -45,20 +49,20 @@ function figur(x, y, s, sek, inst, pid, nr) {
       const g = inst === "bratsche" ? 1.12 : 1;
       i = `<g transform="scale(${g})"><g class="geige"><ellipse cx="-9" cy="-17" rx="4.7" ry="2.7" fill="#a4561f" stroke="#5e2c0b" stroke-width=".4" transform="rotate(-24 -9 -17)"/>
           <path d="M-10.6 -16.4 l-.4 .9 M-7.6 -17.8 l-.4 .9" stroke="#2b1506" stroke-width=".35"/><line x1="-5.6" y1="-18.4" x2="-19.4" y2="-23.4" stroke="#151515" stroke-width=".9"/><circle cx="-19.9" cy="-23.6" r=".95" fill="#6b3410"/></g>
-        ${ARM("M-5.6 -16.6 Q-11 -11.5 -15.6 -20.4", kleid)}${HAND(-16, -21.2, haut)}
-        ${ARM("M5.6 -16.6 Q9 -12 8.4 -10.2", kleid)}
-        <g class="bogen">${ARM("M8.4 -10.2 L3 -10.6", kleid)}${HAND(2.6, -10.8, haut)}<line x1="3" y1="-10.4" x2="-12.4" y2="-27.2" stroke="#d9c49a" stroke-width=".7"/><line x1="2.4" y1="-11.2" x2="-12.8" y2="-27.8" stroke="#3a2412" stroke-width=".55"/></g></g>`; break;
+        ${ARM("M-5.6 -16.6 Q-11 -11.5 -15.6 -20.4", kleid)}${HAND(-16, -21.2, haut, "lh")}
+        ${BOGENARM("geige", kleid)}
+        <g class="bogen" ${BOGEN_START("geige")}>${HAND(2.6, -10.8, haut)}<line x1="3" y1="-10.4" x2="-12.4" y2="-27.2" stroke="#d9c49a" stroke-width=".7"/><line x1="2.4" y1="-11.2" x2="-12.8" y2="-27.8" stroke="#3a2412" stroke-width=".55"/></g></g>`; break;
     }
     case "cello":
       i = `<line x1="0" y1="4" x2="0.4" y2="8" stroke="#888" stroke-width=".6"/><ellipse cx="0" cy="-3.5" rx="5.8" ry="8.8" fill="#8f4716" stroke="#4e2307" stroke-width=".5"/><path d="M-3 -6 q1 2 0 4 M3 -6 q-1 2 0 4" stroke="#2b1506" stroke-width=".45" fill="none"/>
         <line x1="0" y1="-11.5" x2="-3.2" y2="-27.5" stroke="#151515" stroke-width="1.1"/><circle cx="-3.4" cy="-28.4" r="1.1" fill="#5e2c0b"/><line x1="-1.8" y1="0" x2="1.8" y2="0" stroke="#e8d6a8" stroke-width=".6"/>
-        ${ARM("M-5.6 -16.6 Q-10.5 -14 -2.8 -21", kleid)}${HAND(-2.6, -21.4, haut)}${ARM("M5.6 -16.6 Q11 -12.5 10.6 -7", kleid)}
-        <g class="bogen-quer">${ARM("M10.6 -7 L11.4 -2.8", kleid)}${HAND(11.4, -2.6, haut)}<line x1="12" y1="-2.4" x2="-11" y2="-3.6" stroke="#d9c49a" stroke-width=".8"/></g>`; break;
+        ${ARM("M-5.6 -16.6 Q-10.5 -14 -2.8 -21", kleid)}${HAND(-2.6, -21.4, haut, "lh")}${BOGENARM("cello", kleid)}
+        <g class="bogen-quer" ${BOGEN_START("cello")}>${HAND(11.4, -2.6, haut)}<line x1="12" y1="-2.4" x2="-11" y2="-3.6" stroke="#d9c49a" stroke-width=".8"/></g>`; break;
     case "bass":
       i = `<line x1="5" y1="13" x2="5" y2="16" stroke="#888" stroke-width=".7"/><ellipse cx="5" cy="1" rx="7.6" ry="12" fill="#7a3a10" stroke="#3e1a05" stroke-width=".6"/><path d="M1.6 -2 q1.4 3 0 6 M8.4 -2 q-1.4 3 0 6" stroke="#2b1506" stroke-width=".5" fill="none"/>
         <line x1="4.6" y1="-11" x2="1.4" y2="-37" stroke="#151515" stroke-width="1.4"/><circle cx="1.2" cy="-38" r="1.4" fill="#4e2307"/>
-        ${ARM("M-5.6 -16.6 Q-8 -24 1.6 -27", kleid)}${HAND(1.8, -27.4, haut)}${ARM("M5.6 -16.6 Q13 -10 13 -2", kleid)}
-        <g class="bogen-quer">${HAND(13.2, 1.6, haut)}<line x1="15" y1="2.2" x2="-6" y2="1" stroke="#d9c49a" stroke-width=".9"/></g>`; break;
+        ${ARM("M-5.6 -16.6 Q-8 -24 1.6 -27", kleid)}${HAND(1.8, -27.4, haut, "lh")}${BOGENARM("bass", kleid)}
+        <g class="bogen-quer" ${BOGEN_START("bass")}>${HAND(13.2, 1.6, haut)}<line x1="15" y1="2.2" x2="-6" y2="1" stroke="#d9c49a" stroke-width=".9"/></g>`; break;
     case "floete":
       i = `<g class="blas">${ARM("M-5.6 -16.6 Q-3 -13 1.4 -20.6", kleid)}${ARM("M5.6 -16.6 Q12 -14 11.6 -22.8", kleid)}
         <line x1="-2" y1="-21.4" x2="18" y2="-25.2" stroke="#dfe3ea" stroke-width="1.15"/><circle cx="6" cy="-22.6" r=".35" fill="#888"/><circle cx="9" cy="-23.2" r=".35" fill="#888"/><circle cx="13" cy="-24" r=".35" fill="#888"/>
@@ -92,7 +96,9 @@ function figur(x, y, s, sek, inst, pid, nr) {
   }
   const stuhl = steht ? "" : `<path d="M-7 1 H7 L6 2.6 H-6 Z" fill="#2a1d12"/><path d="M-5.6 2.6 V8.4 M5.6 2.6 V8.4" stroke="#2a1d12" stroke-width=".9"/>`;
   const pult = ["pauke", "bass", "cello"].includes(inst) ? "" : `<line x1="-14" y1="8" x2="-14" y2="-10" stroke="#1d1d1d" stroke-width=".8"/><g transform="rotate(-10 -14 -13)"><rect x="-19.5" y="-16" width="11" height="6.6" fill="#22201c"/><rect x="-19" y="-15.6" width="10" height="5.8" fill="#f6f1e2"/><path d="M-18 -14.4 h8 M-18 -13 h8 M-18 -11.6 h8" stroke="#9a9182" stroke-width=".25"/></g>`;
-  return `<g class="mus sek-${sek}" transform="translate(${x} ${y}) scale(${s})"><title>${esc(nm ? `${nm} – ${INST_NAME[sek] || ""}` : INST_NAME[sek] || "")}</title><ellipse class="licht" cx="0" cy="7" rx="17" ry="5"/>${stuhl}${beine}
+  // 0.79.0 jeder Musiker wiegt im eigenen Tempo und versetzt (nicht alle wie Roboter gleichzeitig)
+  const zz = ((nr + 1) * 2654435761 % 1000) / 1000, eigen = `--v:${(0.82 + zz * 0.4).toFixed(2)};--d:-${(zz * 1.3).toFixed(2)}s`;
+  return `<g class="mus sek-${sek} inst-${inst}" data-strich="${STRICH[inst] ? inst : ""}" style="${eigen}" transform="translate(${x} ${y}) scale(${s})"><title>${esc(nm ? `${nm} – ${INST_NAME[sek] || ""}` : INST_NAME[sek] || "")}</title><ellipse class="licht" cx="0" cy="7" rx="17" ry="5"/>${stuhl}${beine}
     <g class="koerper">${rumpf}${kopf}${i}</g>${pult}</g>`;
 }
 function dirigent() {
@@ -161,7 +167,7 @@ export function orchesterSvg(opt = {}) {
 
 function solistSvg({ pid, key }) {
   const [sek, inst] = SOLO_INST[key] || SOLO_INST.v1;
-  return `<g class="solist-podest"><ellipse cx="200" cy="246" rx="46" ry="7" fill="rgba(255,230,160,.28)"/></g>` + figur(200, inst === "bass" ? 214 : 232, inst === "bass" ? 1.75 : 2.05, sek, inst, pid, 99).replace(`class="mus sek-${sek}"`, 'class="mus solist sek-solo"');
+  return `<g class="solist-podest"><ellipse cx="200" cy="246" rx="46" ry="7" fill="rgba(255,230,160,.28)"/></g>` + figur(200, inst === "bass" ? 214 : 232, inst === "bass" ? 1.75 : 2.05, sek, inst, pid, 99).replace(`class="mus sek-${sek} inst-${inst}"`, `class="mus solist sek-solo inst-${inst}"`);
 }
 
 // ---------- Oberfläche ----------
@@ -197,9 +203,29 @@ export function sekAn(sek, dauer = 0.4) {
   const r = document.getElementById("bwRahmen"); if (!r) return;
   einsatzPruefen(sek);
   for (const s of sek) for (const el of r.querySelectorAll(`.sek-${s}`)) {
-    el.classList.add("aktiv");
+    el.classList.add("aktiv"); if (el.dataset.strich) strichStarten(el, dauer * 1000);
     clearTimeout(el._aus); el._aus = setTimeout(() => el.classList.remove("aktiv"), Math.max(250, dauer * 1000 + 120));
   }
+}
+// 🎻 0.79.0 Bogenstriche: jeder Ton ein Strich (Ab/Auf im Wechsel), Arm folgt; in der Pause sinkt der Bogen weich ab.
+// Eine gemeinsame Schleife für alle Streicher, läuft nur solange sich etwas bewegt. „Bewegung reduzieren“ → kein Streichen.
+const STR = { el: new Set(), raf: 0, ruhig: typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches };
+function strichStarten(el, dauerMs) {
+  el._strich = strichNeu(el._strich, dauerMs, performance.now()); STR.el.add(el);
+  if (!STR.raf) STR.raf = requestAnimationFrame(striche);
+}
+function striche(jetzt) {
+  for (const el of STR.el) {
+    if (!el.isConnected) { STR.el.delete(el); continue; }
+    const d = STRICH[el.dataset.strich], ziel = el.classList.contains("aktiv") ? 0 : 1;
+    el._ruhe = el._ruhe ?? 1; el._ruhe += (ziel - el._ruhe) * 0.14; if (Math.abs(ziel - el._ruhe) < 0.01) el._ruhe = ziel;
+    const p = STR.ruhig ? 0 : bogenStand(el._strich, jetzt) * (1 - el._ruhe);
+    el._bogen ||= el.querySelector(".bogen,.bogen-quer"); el._arm ||= el.querySelector(".rarm");
+    el._bogen?.setAttribute("transform", bogenTransform(d, p, el._ruhe));
+    el._arm?.setAttribute("d", armD(d, handBei(d, p, el._ruhe)));
+    if (el._ruhe === 1 && (!el._strich || jetzt > el._strich.start + el._strich.dauer)) STR.el.delete(el);
+  }
+  STR.raf = STR.el.size ? requestAnimationFrame(striche) : 0;
 }
 function note(sek) {
   const g = document.getElementById("bwNoten"); if (!g || g.childElementCount > 14) return;
@@ -254,6 +280,7 @@ export function takt(schlag, takte, dauer = 0) {
   const jetzt = performance.now(), gemessen = jetzt - DIR.zeit;
   DIR.dauer = dauer > 0 ? dauer : gemessen > 250 && gemessen < 1600 ? DIR.dauer * 0.6 + gemessen * 0.4 : DIR.dauer;
   Object.assign(DIR, { schlag, takte: SCHLAGFIGUR[takte] ? takte : 4, zeit: jetzt });
+  document.getElementById("bwRahmen")?.style.setProperty("--schlag", `${Math.round(DIR.dauer)}ms`); // 0.79.0 Musiker nicken im Takt
   if (!DIR.raf) DIR.raf = requestAnimationFrame(dirigentZeichnen);
 }
 function vorhang(auf) { document.getElementById("bwRahmen")?.classList.toggle("offen", auf); }
@@ -311,9 +338,10 @@ function aufnahmeSpielen(url, name, taktArt = 4) {
   const schleife = (zeit) => {
     if (B.audio !== a) return;
     const p = baender(B.analyser, daten, ctx.sampleRate);
-    if (p.tief > 0.32) sekAn(["vc", "kb"], 0.25); if (p.tief > 0.55) sekAn(["pk"], 0.2);
-    if (p.mitte > 0.25) sekAn(["va", "v2", "kl", "fg", "hr"], 0.25);
-    if (p.hoch > 0.12) sekAn(["v1", "fl", "ob", "tr", "pos"], 0.25);
+    const schlagS = Math.max(0.3, per / 1000); // 🎻 0.79.0 Streicher: ein Bogenstrich je Schlag (vorher Zittern alle 0,25 s)
+    if (p.tief > 0.32) sekAn(["vc", "kb"], schlagS); if (p.tief > 0.55) sekAn(["pk"], 0.2);
+    if (p.mitte > 0.25) sekAn(["va", "v2", "kl", "fg", "hr"], schlagS);
+    if (p.hoch > 0.12) sekAn(["v1", "fl", "ob", "tr", "pos"], schlagS);
     const e = p.tief * 1.2 + p.mitte + p.hoch * 0.5, auf = Math.max(0, e - vorher); mittel = mittel * 0.95 + e * 0.05;
     if (!start) start = zeit;
     const fach = Math.floor((zeit - start) / 10); for (; letztesFach < fach; ) faecher[++letztesFach % 600] = 0; faecher[fach % 600] += auf;
@@ -330,6 +358,11 @@ function aufnahmeSpielen(url, name, taktArt = 4) {
   a.onended = () => { titel("👏 Bravo!"); setTimeout(() => vorhang(false), 1500); B.audio = null; };
   a.onerror = () => { toast("Diese Aufnahme kann hier nicht abgespielt werden"); buehneStopp(); };
   a.play().catch(() => toast("Bitte noch einmal ▶ antippen"));
+}
+// 🎙️ 0.79.0 Vorspiel „auf der Bühne anhören“: das Orchester spielt sichtbar mit (Bewegung aus dem Pegel der Aufnahme)
+export function aufnahmeAufBuehne(url, name) {
+  if (BUEHNE_MODI[B.modus]) B.modus = "melodien"; // Üben zeigt kein ganzes Orchester
+  zeige("buehne", {}); setTimeout(() => aufnahmeSpielen(url, name), 600);
 }
 AKTIONEN.bwAufnahme = (id) => {
   const a = hole("aufnahmen", id);

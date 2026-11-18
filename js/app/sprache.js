@@ -24,10 +24,11 @@ export function zuhoeren({ zwischen = () => {}, fertig = () => {}, fehler = () =
 export const SPRACHE_FEHLER = { NICHT_MOEGLICH: "Dieses Gerät/dieser Browser kann keine Sprache erkennen (am besten Chrome oder Safari).", KEIN_MIKROFON: "Das Mikrofon ist nicht erlaubt – bitte in den Browser-Einstellungen freigeben.", NICHTS_GEHOERT: "Ich habe nichts gehört – bitte nochmal.", FEHLER: "Die Spracherkennung hat gerade nicht geklappt." };
 
 // 🎙️ Sprachnachricht aufnehmen. Rückgabe: { stopp() → Promise<{blob, dauer}>, abbrechen(), sekunden() }
-export async function aufnahme({ maxSek = 180, beiEnde = () => {} } = {}) {
-  const strom = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+// 🎵 0.79.0 musik: Mikrofon ohne Sprachfilter (Geige, Flöte klingen natürlich) und bessere Qualität (64 statt 32 kbit/s ≈ 0,5 MB je Minute)
+export async function aufnahme({ maxSek = 180, beiEnde = () => {}, musik = false } = {}) {
+  const strom = await navigator.mediaDevices.getUserMedia({ audio: musik ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : { echoCancellation: true, noiseSuppression: true } });
   const typ = ["audio/webm;codecs=opus", "audio/mp4", "audio/ogg;codecs=opus", "audio/webm"].find((t) => MediaRecorder.isTypeSupported?.(t)) || "";
-  const rec = new MediaRecorder(strom, typ ? { mimeType: typ, audioBitsPerSecond: 32000 } : {});
+  const rec = new MediaRecorder(strom, typ ? { mimeType: typ, audioBitsPerSecond: musik ? 64000 : 32000 } : {});
   const teile = [], start = Date.now();
   let fertig, abgebrochen = false;
   const ende = new Promise((ok) => { fertig = ok; });
@@ -37,6 +38,7 @@ export async function aufnahme({ maxSek = 180, beiEnde = () => {} } = {}) {
   const max = setTimeout(() => { if (rec.state === "recording") { rec.stop(); beiEnde(); } }, maxSek * 1000);
   return {
     sekunden: () => Math.round((Date.now() - start) / 1000),
+    strom, // 🎚️ für die Pegelanzeige
     stopp: () => { clearTimeout(max); if (rec.state === "recording") rec.stop(); return ende; },
     abbrechen: () => { clearTimeout(max); abgebrochen = true; if (rec.state === "recording") rec.stop(); },
   };

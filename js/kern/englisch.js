@@ -16,7 +16,7 @@ export const EN = {
   "Cockpit": "Cockpit", "Datenschutz": "Privacy", "Demo zurücksetzen": "Reset demo", "Dokumente": "Documents", "Eingangskorb": "Inbox",
   "Erstattung": "Reimbursement", "Fernhilfe": "Remote help", "Foto-Liste": "Photo list", "Fotoalbum": "Photo album", "Förderverein": "Friends' association",
   "Genehmigungen": "Permissions", "Gesundheit & Notfall": "Health & emergency", "Gruppenwechsel": "Group change", "Hilfe & Rückmeldung": "Help & feedback",
-  "Hilfe & Tipps": "Help & tips", "Instrumente": "Instruments", "Instrumentenkunde": "Instrument guide", "Jahrbuch": "Yearbook", "Bachkreis-Echo": "Bachkreis Echo (magazine)", "Jahresbericht": "Annual report",
+  "Hilfe & Tipps": "Help & tips", "Instrumente": "Instruments", "Instrumentenkunde": "Instrument guide", "Jahrbuch": "Yearbook", "Bachkreis-Echo": "Bachkreis Echo (magazine)", "Vorspiel": "Play for me (recording)", "Jahresbericht": "Annual report",
   "Kalender": "Calendar", "Konzerte & Projekte": "Concerts & projects", "Konzertkarten": "Concert tickets", "Leihverträge": "Loan agreements",
   "Mein Gesicht": "My face", "Mein Register": "My section", "Meine Daten": "My data", "Meine Einstellungen": "My settings", "Meine Kinder": "My children",
   "Meine Noten": "My sheet music", "Meine Unterlagen": "My documents", "Mitfahrbörse": "Ride sharing", "Musik-Spiele": "Music games", "Notenarchiv": "Sheet music archive",

@@ -7,6 +7,7 @@ import { liste, hole, konfig } from "../kern/daten.js";
 import { musikAdresse } from "../kern/musikort.js";
 import { STRICH, strichNeu, bogenStand, armD, handBei, bogenTransform, haltung } from "../kern/streicher.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
+import { stimmeErzeugen, notenSvg, zeigerX, taktUndPos } from "../kern/notensatz.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
 import { SCHLAGFIGUR, SCHULTER, RUHE, armPfad, handPosition, tempoSchaetzen, einsatzRichtung, einsatzStaerke, mitEinsatz } from "../kern/dirigat.js";
 
@@ -179,8 +180,14 @@ export function buehneHtml(kompakt = false) {
   if (BUEHNE_MODI[B.modus]) B.modus = "melodien";
   const aufnahmen = liste("aufnahmen").sort((a, b) => (b.datum || "").localeCompare(a.datum || ""));
   const st = STUECKE.find((x) => x.id === B.stueck) || STUECKE[0];
-  return `<div class="buehne ${kompakt ? "kompakt" : ""}" id="buehne">
-    <div class="buehne-rahmen ${B.lauf || B.audio ? "offen" : ""}" id="bwRahmen">${orchesterSvg()}</div><div class="bw-titel" id="bwTitel">${esc(B.lauf ? st.titel : "Vorhang auf für den Bachkreis!")}</div>
+  // 🎼 0.79.3 Schalter „Orchester | Noten“ (Wunsch Hansi): bei den Melodien statt des Orchesters die Noten mit mitlaufendem Zeiger
+  const noten = B.ansicht === "noten" && B.modus === "melodien" && !kompakt;
+  const ansicht = kompakt || !["melodien", "bach"].includes(B.modus) ? "" : `<div class="bw-ansicht" role="group" aria-label="Was auf der Bühne zu sehen ist">${[["orchester", "🎻 Orchester"], ["noten", "🎼 Noten"]].map(([k, t]) => `<button type="button" class="${(B.ansicht || "orchester") === k ? "an" : ""}" data-a="bwAnsicht" data-x="${k}" aria-pressed="${(B.ansicht || "orchester") === k}">${t}</button>`).join("")}</div>`;
+  return `<div class="buehne ${kompakt ? "kompakt" : ""}" id="buehne">${ansicht}
+    ${noten ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><div class="bw-blatt" id="bwBlatt">${notenSvg(stimmeErzeugen(st.id, B.stimme === "partitur" ? "Partitur" : "Violine"), { takteJeZeile: 4, zeiger: true, titel: st.titel })}</div></div>
+      <div class="bw-stimme">${[["melodie", "Melodie"], ["partitur", "Partitur (3 Stimmen)"]].map(([k, t]) => `<button type="button" class="chip-wahl${(B.stimme || "melodie") === k ? " an" : ""}" data-a="bwStimme" data-x="${k}">${t}</button>`).join("")}</div>`
+    : B.ansicht === "noten" && B.modus === "bach" && !kompakt ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><p class="bw-keine-noten">🎼 Zu den Bach-Aufnahmen gibt es noch keine mitlaufenden Noten – eine echte Aufnahme hält kein festes Tempo.<br>Mitlaufende Noten gibt es bei <b>🎼 Melodien</b>.</p></div>`
+    : `<div class="buehne-rahmen ${B.lauf || B.audio ? "offen" : ""}" id="bwRahmen">${orchesterSvg()}</div>`}<div class="bw-titel" id="bwTitel">${esc(B.lauf ? st.titel : "Vorhang auf für den Bachkreis!")}</div>
     ${umschalter()}
     ${B.modus === "bach" ? bachHtml() : B.modus === "melodien" ? `
       <div class="bw-stuecke">${STUECKE.map((x) => `<button class="${x.id === B.stueck ? "an" : ""}" data-a="bwStueck" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.komponist)}</small></button>`).join("")}</div>
@@ -296,7 +303,7 @@ function vorhang(auf) { document.getElementById("bwRahmen")?.classList.toggle("o
 function titel(t) { const e = document.getElementById("bwTitel"); if (e) e.textContent = t; }
 
 export function buehneStopp(ruhig = false) {
-  B.lauf?.stop(); B.lauf = null;
+  B.lauf?.stop(); B.lauf = null; cancelAnimationFrame(B.zeigerRaf);
   if (B.audio) { B.audio.pause(); B.audio = null; }
   cancelAnimationFrame(B.raf);
   for (const el of document.querySelectorAll(".mus.aktiv")) el.classList.remove("aktiv");
@@ -310,7 +317,36 @@ AKTIONEN.bwModus = (m) => {
   B.modus = m; neuZeichnen();
 };
 export const buehneModus = () => B.modus;
-AKTIONEN.bwStueck = (id) => { B.stueck = id; for (const b of document.querySelectorAll(".bw-stuecke button")) b.classList.toggle("an", b.dataset.x === id); if (B.lauf) AKTIONEN.bwSpielen(); };
+AKTIONEN.bwStueck = (id) => { B.stueck = id; if (B.ansicht === "noten") neuZeichnen(); for (const b of document.querySelectorAll(".bw-stuecke button")) b.classList.toggle("an", b.dataset.x === id); if (B.lauf) AKTIONEN.bwSpielen(); };
+AKTIONEN.bwAnsicht = (x) => { B.ansicht = x === "noten" ? "noten" : "orchester"; neuZeichnen(); if (B.lauf) zeigerStarten(); };
+AKTIONEN.bwStimme = (x) => { B.stimme = x === "partitur" ? "partitur" : "melodie"; neuZeichnen(); if (B.lauf) zeigerStarten(); };
+// 🎼 0.79.3 Zeiger in den Noten: aktueller Takt hell hinterlegt, Strich an der gespielten Stelle, Zeile rollt mit
+// 0.79.3 Nach „▶ Vorhang auf“ steht man am Handy unten bei den Knöpfen – Bühne bzw. Noten ins Bild holen (nur auf der Bühnen-Seite)
+function buehneZeigen() {
+  const r = document.getElementById("bwRahmen"); if (!r || r.closest(".kompakt")) return;
+  const oben = Math.max(0, ...[...document.querySelectorAll(".kopf2, .demoleiste, #demoleiste")].map((e) => e.getBoundingClientRect().bottom)) + 8; // feste Kopfzeilen
+  const box = r.getBoundingClientRect(), ziel = (document.querySelector(".bw-ansicht")?.getBoundingClientRect().top ?? box.top);
+  if (ziel < oben || box.bottom > innerHeight) scrollTo({ top: scrollY + ziel - oben, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+function zeigerStarten() {
+  cancelAnimationFrame(B.zeigerRaf);
+  const blatt = document.getElementById("bwBlatt"); if (!blatt || !B.lauf?.sb) return;
+  const st = STUECKE.find((x) => x.id === B.stueck) || STUECKE[0], felder = new Map([...blatt.querySelectorAll(".nb-takt")].map((r) => [Number(r.dataset.takt), r]));
+  const linie = blatt.querySelector(".nb-zeiger"), lauf = B.lauf; let vorher = null;
+  const schritt = () => {
+    if (B.lauf !== lauf || !blatt.isConnected) return;
+    const schlag = (B.ctx.currentTime - lauf.t0) / lauf.sb;
+    if (schlag >= 0) {
+      const { takt, pos } = taktUndPos(schlag, st.takt), r = felder.get(takt);
+      if (r !== vorher) { vorher?.classList.remove("an"); r?.classList.add("an"); vorher = r;
+        if (r) { const box = r.getBoundingClientRect(), b = blatt.getBoundingClientRect(); if (box.top < b.top || box.bottom > b.bottom) blatt.scrollTo({ top: blatt.scrollTop + box.top - b.top - 8, behavior: "smooth" }); } }
+      if (r && linie) { const xs = r.dataset.xs.split(" ").map((s) => s.split(":").map(Number)), x = zeigerX(xs, pos), y = Number(r.getAttribute("y"));
+        linie.setAttribute("x1", x.toFixed(1)); linie.setAttribute("x2", x.toFixed(1)); linie.setAttribute("y1", y + 4); linie.setAttribute("y2", y + Number(r.getAttribute("height")) - 4); }
+    }
+    B.zeigerRaf = requestAnimationFrame(schritt);
+  };
+  schritt();
+}
 AKTIONEN.bwTempo = (v) => { B.tempo = Number(v); };
 AKTIONEN.bwLaut = (v) => { B.laut = Number(v); B.lauf?.lautstaerke(B.laut); if (B.audio) B.audio.volume = B.laut; };
 AKTIONEN.bwApplaus = (_, el) => { B.applaus = el.checked; };
@@ -326,8 +362,10 @@ AKTIONEN.bwSpielen = async () => {
     tempoFaktor: B.tempo, lautstaerke: B.laut, mitApplaus: B.applaus,
     onEreignis: (e) => { sekAn(e.sek, e.dauer); if (e.sek.some((s) => st.melodieSek.includes(s)) && Math.random() < 0.45) note(e.sek[0]); },
     onTakt: (s) => takt(s, st.takt, 60000 / (st.tempo * B.tempo)),
-    onEnde: () => { B.lauf = null; titel("👏 Bravo! – Verbeugung"); document.getElementById("bwRahmen")?.classList.add("verbeugung"); setTimeout(() => { document.getElementById("bwRahmen")?.classList.remove("verbeugung"); vorhang(false); }, 2600); },
+    onEnde: () => { B.lauf = null; cancelAnimationFrame(B.zeigerRaf); titel("👏 Bravo! – Verbeugung"); document.getElementById("bwRahmen")?.classList.add("verbeugung"); setTimeout(() => { document.getElementById("bwRahmen")?.classList.remove("verbeugung"); vorhang(false); }, 2600); },
   });
+  zeigerStarten(); // 🎼 nur wenn die Noten zu sehen sind
+  buehneZeigen();
 };
 
 // Aufnahmen: Pegel je Band treibt die Sektionen
@@ -363,7 +401,7 @@ function aufnahmeSpielen(url, name, taktArt = 4) {
     } else takt0 = 0; // Stille: Hände in Bereitschaft
     B.raf = requestAnimationFrame(schleife);
   };
-  a.onplay = () => { vorhang(true); titel(name); B.raf = requestAnimationFrame(schleife); };
+  a.onplay = () => { vorhang(true); titel(name); buehneZeigen(); B.raf = requestAnimationFrame(schleife); };
   a.onended = () => { titel("👏 Bravo!"); setTimeout(() => vorhang(false), 1500); B.audio = null; };
   a.onerror = () => { toast("Diese Aufnahme kann hier nicht abgespielt werden"); buehneStopp(); };
   a.play().catch(() => toast("Bitte noch einmal ▶ antippen"));

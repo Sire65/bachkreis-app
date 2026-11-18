@@ -264,7 +264,7 @@ export function spielen(ctx, stueck, { tempoFaktor = 1, lautstaerke = 0.8, onEre
   if (mitApplaus) applaus(ctx, master, ende + 0.4);
   timer.push(setTimeout(() => onEnde(), (ende - ctx.currentTime + (mitApplaus ? 3.6 : 0.6)) * 1000));
   return {
-    dauer: ende - t0,
+    dauer: ende - t0, t0, sb, // 0.79.3 Start und Sekunden je Schlag: für die mitlaufenden Noten
     stop() {
       for (const x of timer) clearTimeout(x);
       try { master.gain.cancelScheduledValues(ctx.currentTime); master.gain.setTargetAtTime(0, ctx.currentTime, 0.05); } catch {}

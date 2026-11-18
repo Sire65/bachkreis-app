@@ -53,3 +53,15 @@
   .vorhang { transition: none; }
 }
 :root.dunkel .bw-titel { color: var(--marke2); }
+/* 🎼 0.79.3 Schalter „Orchester | Noten“ und mitlaufende Noten */
+.bw-ansicht { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--karte2); border-radius: 14px; padding: 4px; margin: 0 0 8px; }
+.bw-ansicht button { border: 0; border-radius: 11px; padding: 9px 8px; min-height: 42px; font: inherit; font-weight: 800; background: transparent; color: var(--text); cursor: pointer; }
+.bw-ansicht button.an { background: var(--haupt); color: var(--haupt-text); box-shadow: var(--schatten); }
+.bw-notenrahmen { background: #fbf8ef; color: #1a1500; border-radius: 14px; padding: 6px; }
+.bw-blatt { max-height: min(62vh, 520px); overflow-y: auto; scroll-behavior: smooth; }
+.bw-blatt .nb-svg { width: 100%; height: auto; display: block; }
+.bw-blatt .nb-takt { transition: fill .15s; } .bw-blatt .nb-takt.an { fill: rgba(242, 183, 5, .28); }
+.bw-blatt .nb-zeiger { stroke: #d32f2f; }
+.bw-stimme { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 8px 0; }
+.bw-keine-noten { text-align: center; padding: 30px 14px; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { .bw-blatt { scroll-behavior: auto; } }

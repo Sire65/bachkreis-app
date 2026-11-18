@@ -1,11 +1,18 @@
 {
-  "version": "0.79.2",
+  "version": "0.79.3",
   "datum": "2026-11-18",
   "stufe": "DEV",
   "neu": [
-    "🎭 Alle Musiker bewegen sich – auch auf iPhone/iPad und mit „Bewegung reduzieren“"
+    "🎼 Bühne: Schalter Orchester | Noten – die Noten laufen mit"
   ],
   "verlauf": [
+    {
+      "version": "0.79.2",
+      "datum": "2026-11-18",
+      "neu": [
+        "🎭 Alle Musiker bewegen sich – auch auf iPhone/iPad und mit „Bewegung reduzieren“"
+      ]
+    },
     {
       "version": "0.79.1",
       "datum": "2026-11-18",

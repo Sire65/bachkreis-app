@@ -165,7 +165,8 @@ function pause(e, x, y0) {
 }
 
 // Zeichnet eine Stimme (eine oder mehrere Notenzeilen) als SVG. takteJeZeile: wie viele Takte nebeneinander.
-export function notenSvg(st, { takteJeZeile = 4, titel = "" } = {}) {
+// zeiger: true → je Takt ein unsichtbares Feld (data-takt, data-xs = Schlag:x für den mitlaufenden Zeiger, 0.79.3 Bühne „🎼 Noten“) und der Zeiger
+export function notenSvg(st, { takteJeZeile = 4, titel = "", zeiger = false } = {}) {
   const T = Math.max(1, Math.min(8, takteJeZeile | 0)), mehr = st.zeilen.length > 1;
   const zl = st.zeilen.map((z) => {
     const vz = transVz(st.vorzeichen, z.trans);
@@ -194,6 +195,7 @@ export function notenSvg(st, { takteJeZeile = 4, titel = "" } = {}) {
       l.ende = x + l.w * f; x = l.ende;
     }
     const xEnde = lay[lay.length - 1].ende, yErst = ySys + OBEN, yLetzt = ySys + OBEN + (zl.length - 1) * ABST;
+    if (zeiger) for (const l of lay) out.push(`<rect class="nb-takt" data-takt="${l.b}" data-xs="${[...l.xs].map(([p, x]) => `${p}:${f1(x)}`).join(" ")} ${st.takt}:${f1(l.ende - 6)}" x="${f1(l.x)}" y="${f1(yErst - 16)}" width="${f1(l.ende - l.x)}" height="${f1(yLetzt - yErst + 4 * S + 32)}" rx="6" stroke="none" fill="transparent"/>`);
     if (!erst) out.push(`<text x="${LINKS + 2}" y="${f1(yErst - 12)}" font-size="9" stroke="none" font-style="italic">${b0 + 1}</text>`);
     if (mehr) out.push(`<path d="M${LINKS} ${yErst}V${yLetzt + 4 * S}" stroke-width="1"/><path d="M${LINKS - 4} ${yErst - 2}V${yLetzt + 4 * S + 2}" stroke-width="3"/>`);
     zl.forEach((z, zi) => {
@@ -277,5 +279,13 @@ export function notenSvg(st, { takteJeZeile = 4, titel = "" } = {}) {
     });
     ySys += sysH;
   }
-  return `<svg xmlns="http://www.w3.org/2000/svg" class="nb-svg" viewBox="0 0 ${W} ${f1(ySys)}" role="img" aria-label="${String(titel).replace(/[<&"]/g, "")}" fill="currentColor" stroke="currentColor" stroke-linecap="round">${out.join("")}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" class="nb-svg" viewBox="0 0 ${W} ${f1(ySys)}" role="img" aria-label="${String(titel).replace(/[<&"]/g, "")}" fill="currentColor" stroke="currentColor" stroke-linecap="round">${out.join("")}${zeiger ? '<line class="nb-zeiger" x1="-20" x2="-20" y1="0" y2="0" stroke-width="3"/>' : ""}</svg>`;
 }
+
+// 🎼 0.79.3 Wo steht der Zeiger? schlag = gespielte Schläge seit Beginn; xs = [[pos, x], …] des Takts (letzter Eintrag = Taktende)
+export function zeigerX(xs, pos) {
+  if (!xs.length) return null;
+  for (let i = 0; i < xs.length - 1; i++) if (pos >= xs[i][0] && pos <= xs[i + 1][0]) return xs[i][1] + ((pos - xs[i][0]) / ((xs[i + 1][0] - xs[i][0]) || 1)) * (xs[i + 1][1] - xs[i][1]);
+  return pos < xs[0][0] ? xs[0][1] : xs[xs.length - 1][1];
+}
+export const taktUndPos = (schlag, takt) => ({ takt: Math.floor(schlag / takt), pos: schlag - Math.floor(schlag / takt) * takt });

@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.79.3 DEV – 18.11.2026
+🎼 **Noten statt Orchester** (Wunsch Hansi „einen Schalter, anstatt Orchester die Noten anzeigen von dem Stück, das gerade läuft“):
+- Bühne › oben **„🎻 Orchester | 🎼 Noten“**: bei den **🎼 Melodien** stehen statt des Orchesters die Noten des Stücks auf hellem Papier – **der gespielte Takt leuchtet gelb, ein roter Strich zeigt die Stelle**, die Zeilen rollen mit; Wahl **Melodie** oder **Partitur (3 Stimmen: Melodie, Mitte, Bass)**. Tempo-Regler und Stückwechsel laufen mit
+- Bei den Bach-Aufnahmen ehrlich: noch keine mitlaufenden Noten (eine echte Aufnahme hält kein festes Tempo, und die Noten fehlen)
+- Nach „▶ Vorhang auf“ rollt die Seite zur Bühne – am Handy stand man vorher unten bei den Knöpfen und sah weder Orchester noch Noten
+- Notensatz: neue Option `zeiger` (Feld je Takt, Zeiger); Wiedergabe meldet Start und Tempo; Hilfe-Eintrag; Test `buehne-noten.test`
+
 ## 0.79.2 DEV – 18.11.2026
 🎭 **Alle Musiker bewegen sich – auf jedem Gerät** (Hansi: „Musiker haben sich bei mir nicht bewegt oder ganz wenig“). Ursache: die Musiker bewegten sich über CSS-Animationen – die stoppt das iPhone/iPad ganz, wenn „Bewegung reduzieren“ an ist, und Safari dreht SVG-Teile per CSS teils nur wenig oder um den falschen Punkt. Die Dirigentin wurde schon per Programm gezeichnet – deshalb bewegte nur sie sich.
 - Jetzt werden **alle Musiker wie die Dirigentin Bild für Bild per Programm** gezeichnet, fest an ihren Taktschlag gekoppelt: Körper wiegen und federn, Köpfe nicken auf jeden Schlag, Bläser heben und schwenken ihr Instrument (je Instrument anders), Posaunenzug, Paukenschlegel treffen auf dem Schlag, Streicher mit Bogenstrich und Vibrato; jede/r etwas versetzt

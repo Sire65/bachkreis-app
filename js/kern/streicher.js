@@ -5,9 +5,9 @@
 export const STRICH = {
   // hand = Bogenhand in Ruhe-Spielhaltung, achse = Richtung des Bogens (Einheitsvektor), weg = halber Strichweg,
   // oa/ua = Ober-/Unterarm, ruhe = Bogen in der Pause abgesenkt (Verschiebung + Drehung um die Hand)
-  geige: { schulter: [5.6, -16.6], hand: [2.6, -10.8], achse: [-0.675, -0.737], weg: 6, oa: 7, ua: 6.2, ruhe: [2, 4, 14] },
-  cello: { schulter: [5.6, -16.6], hand: [11.4, -2.6], achse: [-0.9986, -0.052], weg: 6, oa: 9.5, ua: 9, ruhe: [1, 2.5, 0] },
-  bass: { schulter: [5.6, -16.6], hand: [13.2, 1.6], achse: [-0.9984, -0.057], weg: 5.5, oa: 11.5, ua: 11.5, ruhe: [1, 2.5, 0] },
+  geige: { schulter: [5.6, -16.6], hand: [2.6, -10.8], achse: [-0.675, -0.737], weg: 8.5, oa: 7.6, ua: 7, ruhe: [2, 4, 14] },
+  cello: { schulter: [5.6, -16.6], hand: [11.4, -2.6], achse: [-0.9986, -0.052], weg: 8.5, oa: 10.5, ua: 10.5, ruhe: [1, 2.5, 0] },
+  bass: { schulter: [5.6, -16.6], hand: [13.2, 1.6], achse: [-0.9984, -0.057], weg: 7.5, oa: 12.5, ua: 12.5, ruhe: [1, 2.5, 0] },
 };
 STRICH.bratsche = STRICH.geige;
 export const strichArt = (inst) => STRICH[inst] || null;

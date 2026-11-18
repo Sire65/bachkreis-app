@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.79.1 DEV – 18.11.2026
+🎻 **Orchester sieht jetzt wie ein Orchester aus** (Hansi: „man sieht den Dirigenten und ab und an einen anderen bewegen, aber richtig wie ein Orchester sieht das nicht aus“). Gemessen: es spielten fast immer alle Gruppen – nur waren die Bewegungen auf dem Handy (ein Musiker ≈ 30 Pixel) zu klein, um aufzufallen, und das Orchester saß im unteren Drittel der Bühne:
+- **Bühne zeigt das Orchester groß** – die leere Wand oben ist weggeschnitten (Vorhang, Logo und Bühnenkante bleiben); alle Musiker sind etwa 1,5× so groß
+- **Wiegen im Takt** (2 Schläge, ±5° mit leichtem Federn statt ±2,5°), **Nicken auf jeden Schlag** (±7°), **längere Bogenstriche** (Geige/Bratsche, Cello, Kontrabass), **Bläser heben und schwenken deutlich** (Flöte seitlich, Oboe/Klarinette mit dem Schalltrichter, Blech nach oben), kräftigeres Vibrato und Posaunenzug
+- Test ergänzt (`streicher.test`)
+
 ## 0.79.0 DEV – 18.11.2026
 🎙️ **Vorspiel** – zuhause spielen, aufnehmen, senden (Wunsch Hansi „ein Stück spielen und aufnehmen und die Aufnahme z. B. zu Frau Jacka schicken … an eine Gruppe, Auswahl … einfache Bedienung“; Entscheidungen: Kinder dürfen auch an Register und Orchester senden, 30 Tage aufbewahren und einstellbar, alle Freigegebenen hören zu, Live-Vorspiel mit einplanen):
 - **Aufnehmen mit einem Knopf** (Bachkreis › 🎙️ Vorspiel): großer roter Knopf, Zeit und Pegel, auf Wunsch ⏱ Vorzähler; **Musik-Modus** – Mikrofon ohne Sprachfilter, 64 kbit/s (≈ 0,5 MB je Minute), höchstens 5 Minuten. Eltern nehmen für ihr Kind auf

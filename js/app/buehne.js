@@ -135,6 +135,8 @@ export const BACH_AUFNAHMEN = [
 const bachHtml = () => `<div class="bw-stuecke">${BACH_AUFNAHMEN.map((x) => `<button type="button" data-a="bwBach" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.werk)} · ${esc(x.wer)}</small></button>`).join("")}</div>
   <div class="knopfreihe"><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div><div class="bw-regler"><label>🔊 Lautstärke <input type="range" min="0" max="1" step="0.05" value="${B.laut}" data-c="bwLaut"></label></div>
   <p class="hinweis">🎻 Johann Sebastian Bach (1685–1750) – unser Namensgeber. Echte Orchesteraufnahmen, frei von Rechten (gemeinfrei bzw. CC0, über Wikimedia Commons). Stück antippen – der Vorhang geht auf.</p>`;
+// 0.79.1 Ausschnitt: oben war nur leere Wand (das Orchester saß im unteren Drittel und wirkte winzig) – jetzt füllt es die Bühne
+const OBEN = 82;
 export function orchesterSvg(opt = {}) {
   const m = [], bes = besetzungFuerBuehne();
   let nr = 0;
@@ -147,7 +149,7 @@ export function orchesterSvg(opt = {}) {
   reihe("v2", "geige", [52, 86, 120, 154], 200, 1.27); reihe("va", "bratsche", [256, 290, 324], 200, 1.27);
   reihe("v1", "geige", [50, 90, 130, 168], 236, 1.42); reihe("vc", "cello", [236, 274, 312, 350], 236, 1.42);
   const falten = (x0, b) => Array.from({ length: 7 }, (_, i) => `<rect x="${x0 + i * b / 7}" y="0" width="${b / 14}" height="250" fill="rgba(0,0,0,.18)"/>`).join("");
-  return `<svg class="buehne-svg" viewBox="0 0 400 250" role="img" aria-label="Bühne mit dem Bachkreis-Orchester">
+  return `<svg class="buehne-svg" viewBox="0 ${OBEN} 400 ${250 - OBEN}" role="img" aria-label="Bühne mit dem Bachkreis-Orchester">
     <defs><linearGradient id="bwWand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c120b"/><stop offset="1" stop-color="#3a2414"/></linearGradient>
       <linearGradient id="bwBoden" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6d4521"/><stop offset="1" stop-color="#a0662f"/></linearGradient>
       <linearGradient id="bwVorhang" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6e0a15"/><stop offset=".5" stop-color="#b5172b"/><stop offset="1" stop-color="#7c0c18"/></linearGradient>
@@ -161,8 +163,8 @@ export function orchesterSvg(opt = {}) {
     <g class="orchester">${m.join("")}</g><g id="bwNoten"></g>${opt.solist ? solistSvg(opt.solist) : dirigent()}
     <g class="vorhang vorhang-l"><rect x="-10" y="0" width="215" height="250" fill="url(#bwVorhang)"/>${falten(-10, 215)}</g>
     <g class="vorhang vorhang-r"><rect x="195" y="0" width="215" height="250" fill="url(#bwVorhang)"/>${falten(195, 215)}</g>
-    <rect x="0" y="0" width="400" height="22" fill="#7c0c18"/><path d="M0 22 Q25 32 50 22 T100 22 T150 22 T200 22 T250 22 T300 22 T350 22 T400 22 V18 H0 Z" fill="#9d1022"/>
-    <image href="icons/logo.png" x="186" y="2" width="28" height="28"/></svg>`;
+    <g transform="translate(0 ${OBEN})"><rect x="0" y="0" width="400" height="22" fill="#7c0c18"/><path d="M0 22 Q25 32 50 22 T100 22 T150 22 T200 22 T250 22 T300 22 T350 22 T400 22 V18 H0 Z" fill="#9d1022"/>
+    <image href="icons/logo.png" x="186" y="2" width="28" height="28"/></g></svg>`;
 }
 
 function solistSvg({ pid, key }) {

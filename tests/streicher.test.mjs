@@ -33,3 +33,9 @@ test("Solist auf der Übe-Bühne: Textersatz passt zur Klasse der Figur (sonst f
   const b = fs.readFileSync("js/app/buehne.js", "utf8"), klasse = 'class="mus sek-${sek} inst-${inst}"';
   assert.ok(b.includes(`<g ${klasse}`), "Figur-Klasse"); assert.ok(b.includes(`.replace(\`${klasse}\``), "Solist-Ersatz nutzt dieselbe Klasse");
 });
+test("0.79.1 Orchester füllt die Bühne (Ausschnitt ohne leere Wand) und bewegt sich sichtbar im Takt", () => {
+  const b = fs.readFileSync("js/app/buehne.js", "utf8"), css = fs.readFileSync("css/buehne.css", "utf8");
+  assert.match(b, /const OBEN = \d+;/); assert.match(b, /viewBox="0 \$\{OBEN\} 400 \$\{250 - OBEN\}"/);
+  assert.match(css, /bwWiegen calc\(var\(--schlag, \.65s\) \* 2/); assert.match(css, /@keyframes bwWiegen \{ 0% \{ transform: rotate\(-5deg\)/);
+  assert.ok(STRICH.geige.weg >= 8, "Bogenstrich lang genug, um auf dem Handy aufzufallen");
+});

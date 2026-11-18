@@ -1,15 +1,22 @@
 {
-  "version": "0.79.0",
+  "version": "0.79.1",
   "datum": "2026-11-18",
   "stufe": "DEV",
   "neu": [
-    "🎻 Streicher streichen sichtbar: jeder Ton ein Bogenstrich, Arm mit Ellbogen",
-    "🎭 Lebendigeres Orchester: jeder im eigenen Rhythmus, Nicken im Takt, Bläser je Instrument, Vibrato",
-    "🎙️ Vorspiel: zuhause aufnehmen und an Lehrkraft, Register, Orchester oder Auswahl senden",
-    "🎧 Anhören, auf der Bühne mitspielen lassen, mit Tipp, Text oder Sprachantwort antworten",
-    "🔴 Live vorspielen im Musik-Modus (wenn Anrufe freigeschaltet)"
+    "🎻 Orchester füllt die Bühne und bewegt sich sichtbar im Takt"
   ],
   "verlauf": [
+    {
+      "version": "0.79.0",
+      "datum": "2026-11-18",
+      "neu": [
+        "🎻 Streicher streichen sichtbar: jeder Ton ein Bogenstrich, Arm mit Ellbogen",
+        "🎭 Lebendigeres Orchester: jeder im eigenen Rhythmus, Nicken im Takt, Bläser je Instrument, Vibrato",
+        "🎙️ Vorspiel: zuhause aufnehmen und an Lehrkraft, Register, Orchester oder Auswahl senden",
+        "🎧 Anhören, auf der Bühne mitspielen lassen, mit Tipp, Text oder Sprachantwort antworten",
+        "🔴 Live vorspielen im Musik-Modus (wenn Anrufe freigeschaltet)"
+      ]
+    },
     {
       "version": "0.78.0",
       "datum": "2026-11-18",

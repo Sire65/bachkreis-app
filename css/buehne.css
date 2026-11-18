@@ -16,16 +16,17 @@
 .mus .blas { transform-origin: 0px -18px; } .mus .bogen { transform-origin: 2.6px -10.8px; } .mus .kopf { transform-origin: 0px -19px; }
 .mus:not(.aktiv) .blas { transform: rotate(24deg) translate(1px, 5px); }
 .mus .koerper, .mus .schlegel { transform-box: fill-box; }
-.mus.aktiv .koerper { animation: bwWiegen calc(1.3s * var(--v, 1)) ease-in-out var(--d, 0s) infinite alternate; transform-origin: 50% 100%; }
-.mus.aktiv .kopf { animation: bwNicken var(--schlag, .65s) ease-in-out infinite alternate; } /* 0.79.0 im Takt der Dirigentin */
+/* 0.79.1 größer und im Takt (Hansi: „sieht nicht richtig wie ein Orchester aus“ – auf dem Handy ist ein Musiker ~30 px groß, 2,5° sah man nicht) */
+.mus.aktiv .koerper { animation: bwWiegen calc(var(--schlag, .65s) * 2 * var(--v, 1)) ease-in-out var(--d, 0s) infinite alternate; transform-origin: 50% 100%; }
+.mus.aktiv .kopf { animation: bwNicken var(--schlag, .65s) ease-in-out calc(var(--d, 0s) * .2) infinite alternate; } /* 0.79.0 im Takt der Dirigentin */
 .mus.aktiv .blas { animation: bwBlas calc(1.2s * var(--v, 1)) ease-in-out var(--d, 0s) infinite alternate; }
 .mus.aktiv .zug { animation: bwZug .5s ease-in-out infinite alternate; }
 .mus.aktiv .schlegel { animation: bwSchlag .35s ease-in-out infinite alternate; transform-origin: 50% 0; }
 .mus.aktiv .schlegel.s2 { animation-delay: .17s; }
-@keyframes bwWiegen { from { transform: rotate(-2.5deg); } to { transform: rotate(2.5deg); } }
-@keyframes bwNicken { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
-@keyframes bwBlas { from { transform: rotate(-2deg); } to { transform: rotate(2.5deg) translateY(-.6px); } }
-@keyframes bwZug { from { transform: translateX(0); } to { transform: translateX(6px); } }
+@keyframes bwWiegen { 0% { transform: rotate(-5deg); } 50% { transform: rotate(0deg) translateY(1.2px); } 100% { transform: rotate(5deg); } }
+@keyframes bwNicken { from { transform: rotate(-8deg) translateY(.4px); } to { transform: rotate(6deg); } }
+@keyframes bwBlas { from { transform: rotate(-5deg); } to { transform: rotate(5deg) translateY(-1px); } }
+@keyframes bwZug { from { transform: translateX(0); } to { transform: translateX(9px); } }
 @keyframes bwSchlag { from { transform: rotate(-18deg); } to { transform: rotate(8deg); } }
 .dirigent .koerper { transition: transform .3s; }
 .verbeugung .dirigent .koerper { transform: rotate(18deg) translateY(4px); transform-origin: 0 0; }
@@ -67,13 +68,13 @@
 .mus.aktiv.inst-oboe .blas, .mus.aktiv.inst-klarinette .blas { animation-name: bwSchalltrichter; }
 .mus.aktiv.inst-trompete .blas, .mus.aktiv.inst-posaune .blas { animation-name: bwBlech; }
 .mus.aktiv.inst-fagott .blas { animation-name: bwFagott; }
-@keyframes bwFloete { from { transform: rotate(-3deg) translateX(-.6px); } to { transform: rotate(3deg) translate(.8px, -.5px); } }
-@keyframes bwSchalltrichter { from { transform: rotate(-5deg); } 60% { transform: rotate(4deg) translateY(-.6px); } to { transform: rotate(1deg); } }
-@keyframes bwBlech { from { transform: rotate(1deg); } to { transform: rotate(-5deg) translateY(-.8px); } }
-@keyframes bwFagott { from { transform: rotate(-2deg) translateX(-.5px); } to { transform: rotate(3deg) translateX(.6px); } }
+@keyframes bwFloete { from { transform: rotate(-7deg) translateX(-1.2px); } to { transform: rotate(6deg) translate(1.4px, -1px); } }
+@keyframes bwSchalltrichter { from { transform: rotate(-10deg); } 60% { transform: rotate(8deg) translateY(-1.2px); } to { transform: rotate(2deg); } }
+@keyframes bwBlech { from { transform: rotate(3deg); } to { transform: rotate(-11deg) translateY(-1.6px); } }
+@keyframes bwFagott { from { transform: rotate(-5deg) translateX(-1px); } to { transform: rotate(6deg) translateX(1.2px); } }
 .mus .lh { transform-box: fill-box; transform-origin: center; }
 .mus.aktiv .lh { animation: bwVibrato .16s ease-in-out infinite alternate; }
-@keyframes bwVibrato { from { transform: translate(-.35px, -.2px); } to { transform: translate(.35px, .2px); } }
+@keyframes bwVibrato { from { transform: translate(-.6px, -.35px); } to { transform: translate(.6px, .35px); } }
 @media (prefers-reduced-motion: reduce) {
   .mus.aktiv .koerper, .mus.aktiv .kopf, .mus.aktiv .lh, .mus.aktiv .blas, .mus.aktiv .zug, .mus.aktiv .schlegel, .notenzeichen, .dreh-weg, .dreh-her { animation: none; }
   .vorhang { transition: none; }

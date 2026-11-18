@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { STRICH, strichNeu, bogenStand, handBei, ellbogen, armD, bogenTransform } from "../js/kern/streicher.js";
+import { STRICH, strichNeu, bogenStand, handBei, ellbogen, armD, bogenTransform, haltung } from "../js/kern/streicher.js";
 
 test("jeder Ton ein Strich – Richtung wechselt, kurze Töne wenig Bogen, lange den ganzen", () => {
   const a = strichNeu(null, 900, 0); assert.equal(a.nach, 1);
@@ -25,8 +25,8 @@ test("Bogen gleitet entlang seiner Achse (Kontakt zu den Saiten bleibt), in der 
 });
 test("Bühne nutzt die Striche; Musiker wiegen versetzt und nicken im Takt", () => {
   const b = fs.readFileSync("js/app/buehne.js", "utf8"), css = fs.readFileSync("css/buehne.css", "utf8");
-  assert.match(b, /strichStarten\(el, dauer \* 1000\)/); assert.match(b, /--schlag/); assert.match(b, /--v:/);
-  assert.match(css, /var\(--schlag/); assert.match(css, /bwVibrato/); assert.match(css, /bwSchalltrichter/);
+  assert.match(b, /strichStarten\(el, dauer \* 1000\); else bewegen\(el\)/); assert.match(b, /n: \(DIR\.n \|\| 0\) \+ 1/); assert.match(b, /data-o="/);
+  assert.doesNotMatch(css, /\.mus\.aktiv \.(koerper|kopf|blas) \{ animation/, "Bewegung per Programm, nicht per CSS (iPhone: „Bewegung reduzieren“ stoppte alles)");
   assert.match(fs.readFileSync("sw.js", "utf8"), /js\/kern\/streicher\.js/);
 });
 test("Solist auf der Übe-Bühne: Textersatz passt zur Klasse der Figur (sonst fehlt der eigene Avatar)", () => {
@@ -34,8 +34,18 @@ test("Solist auf der Übe-Bühne: Textersatz passt zur Klasse der Figur (sonst f
   assert.ok(b.includes(`<g ${klasse}`), "Figur-Klasse"); assert.ok(b.includes(`.replace(\`${klasse}\``), "Solist-Ersatz nutzt dieselbe Klasse");
 });
 test("0.79.1 Orchester füllt die Bühne (Ausschnitt ohne leere Wand) und bewegt sich sichtbar im Takt", () => {
-  const b = fs.readFileSync("js/app/buehne.js", "utf8"), css = fs.readFileSync("css/buehne.css", "utf8");
+  const b = fs.readFileSync("js/app/buehne.js", "utf8");
   assert.match(b, /const OBEN = \d+;/); assert.match(b, /viewBox="0 \$\{OBEN\} 400 \$\{250 - OBEN\}"/);
-  assert.match(css, /bwWiegen calc\(var\(--schlag, \.65s\) \* 2/); assert.match(css, /@keyframes bwWiegen \{ 0% \{ transform: rotate\(-5deg\)/);
+  assert.match(b, /ruhig \? 0\.5 : 1/, "„Bewegung reduzieren“ → halb so stark, nicht Stillstand");
   assert.ok(STRICH.geige.weg >= 8, "Bogenstrich lang genug, um auf dem Handy aufzufallen");
+});
+
+test("0.79.2 Spielbewegung: im Takt, versetzt, in der Pause still, Instrument gesenkt", () => {
+  const winkel = (s) => Number(/rotate\((-?[\d.]+)/.exec(s)[1]);
+  const a = haltung("geige", 0.5, 0, 1), c = haltung("geige", 1.5, 0, 1), still = haltung("floete", 0.7, 0.3, 0);
+  assert.ok(Math.abs(winkel(a.koerper.split(") ")[1]) - winkel(c.koerper.split(") ")[1])) > 5, "wiegt über zwei Schläge hin und her");
+  assert.ok(winkel(haltung("geige", 0, 0, 1).kopf) < -5, "nickt auf dem Schlag");
+  assert.equal(winkel(still.kopf), 0); assert.match(still.blas, /rotate\(24\.00\)/, "Pause: Instrument gesenkt");
+  assert.notEqual(haltung("geige", 0.3, 0, 1).koerper, haltung("geige", 0.3, 0.4, 1).koerper, "jeder etwas versetzt");
+  assert.equal(haltung("pauke", 0, 0, 1).schlegel.length, 2);
 });

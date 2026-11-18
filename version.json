@@ -1,11 +1,18 @@
 {
-  "version": "0.79.1",
+  "version": "0.79.2",
   "datum": "2026-11-18",
   "stufe": "DEV",
   "neu": [
-    "🎻 Orchester füllt die Bühne und bewegt sich sichtbar im Takt"
+    "🎭 Alle Musiker bewegen sich – auch auf iPhone/iPad und mit „Bewegung reduzieren“"
   ],
   "verlauf": [
+    {
+      "version": "0.79.1",
+      "datum": "2026-11-18",
+      "neu": [
+        "🎻 Orchester füllt die Bühne und bewegt sich sichtbar im Takt"
+      ]
+    },
     {
       "version": "0.79.0",
       "datum": "2026-11-18",

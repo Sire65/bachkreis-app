@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.79.2 DEV – 18.11.2026
+🎭 **Alle Musiker bewegen sich – auf jedem Gerät** (Hansi: „Musiker haben sich bei mir nicht bewegt oder ganz wenig“). Ursache: die Musiker bewegten sich über CSS-Animationen – die stoppt das iPhone/iPad ganz, wenn „Bewegung reduzieren“ an ist, und Safari dreht SVG-Teile per CSS teils nur wenig oder um den falschen Punkt. Die Dirigentin wurde schon per Programm gezeichnet – deshalb bewegte nur sie sich.
+- Jetzt werden **alle Musiker wie die Dirigentin Bild für Bild per Programm** gezeichnet, fest an ihren Taktschlag gekoppelt: Körper wiegen und federn, Köpfe nicken auf jeden Schlag, Bläser heben und schwenken ihr Instrument (je Instrument anders), Posaunenzug, Paukenschlegel treffen auf dem Schlag, Streicher mit Bogenstrich und Vibrato; jede/r etwas versetzt
+- In der Pause sinken Instrumente und Bögen weich ab
+- Mit „Bewegung reduzieren“ halb so stark statt Stillstand
+- Gemessen (Handy-Breite, Badinerie): alle 27 Musiker bewegen sich, der Kopf im Mittel um gut 4 Pixel (mit „Bewegung reduzieren“ 2 Pixel; vorher 0)
+- `js/kern/streicher.js` `haltung()`, Tests in `streicher.test`
+
 ## 0.79.1 DEV – 18.11.2026
 🎻 **Orchester sieht jetzt wie ein Orchester aus** (Hansi: „man sieht den Dirigenten und ab und an einen anderen bewegen, aber richtig wie ein Orchester sieht das nicht aus“). Gemessen: es spielten fast immer alle Gruppen – nur waren die Bewegungen auf dem Handy (ein Musiker ≈ 30 Pixel) zu klein, um aufzufallen, und das Orchester saß im unteren Drittel der Bühne:
 - **Bühne zeigt das Orchester groß** – die leere Wand oben ist weggeschnitten (Vorhang, Logo und Bühnenkante bleiben); alle Musiker sind etwa 1,5× so groß

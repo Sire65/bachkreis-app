@@ -5,7 +5,7 @@ import { S, VIEWS, kopf, istLehrkraft, zeige } from "./zustand.js";
 import { esc, AKTIONEN, toast, datumKurz } from "../kern/ui.js";
 import { liste, hole, konfig } from "../kern/daten.js";
 import { musikAdresse } from "../kern/musikort.js";
-import { STRICH, strichNeu, bogenStand, armD, handBei, bogenTransform } from "../kern/streicher.js";
+import { STRICH, strichNeu, bogenStand, armD, handBei, bogenTransform, haltung } from "../kern/streicher.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { merkmale, gesichtSvg, HAUT, HAARFARBE } from "./gesichter.js";
 import { SCHLAGFIGUR, SCHULTER, RUHE, armPfad, handPosition, tempoSchaetzen, einsatzRichtung, einsatzStaerke, mitEinsatz } from "../kern/dirigat.js";
@@ -94,11 +94,12 @@ function figur(x, y, s, sek, inst, pid, nr) {
         <g class="schlegel">${ARM("M-5.6 -16.6 Q-11 -12 -9 -8", kleid)}${HAND(-9, -7.8, haut)}<line x1="-9" y1="-8" x2="-11" y2="-3.6" stroke="#5e3a19" stroke-width=".7"/><circle cx="-11.2" cy="-3.4" r="1.2" fill="#f2efe6"/></g>
         <g class="schlegel s2">${ARM("M5.6 -16.6 Q11 -12 9 -8", kleid)}${HAND(9, -7.8, haut)}<line x1="9" y1="-8" x2="11" y2="-3.6" stroke="#5e3a19" stroke-width=".7"/><circle cx="11.2" cy="-3.4" r="1.2" fill="#f2efe6"/></g>`; break;
   }
+  i = i.replace('<g class="blas">', `<g class="blas" transform="${haltung(inst, 0, 0, 0).blas}">`); // 0.79.2 Ruhehaltung: Instrument gesenkt
   const stuhl = steht ? "" : `<path d="M-7 1 H7 L6 2.6 H-6 Z" fill="#2a1d12"/><path d="M-5.6 2.6 V8.4 M5.6 2.6 V8.4" stroke="#2a1d12" stroke-width=".9"/>`;
   const pult = ["pauke", "bass", "cello"].includes(inst) ? "" : `<line x1="-14" y1="8" x2="-14" y2="-10" stroke="#1d1d1d" stroke-width=".8"/><g transform="rotate(-10 -14 -13)"><rect x="-19.5" y="-16" width="11" height="6.6" fill="#22201c"/><rect x="-19" y="-15.6" width="10" height="5.8" fill="#f6f1e2"/><path d="M-18 -14.4 h8 M-18 -13 h8 M-18 -11.6 h8" stroke="#9a9182" stroke-width=".25"/></g>`;
   // 0.79.0 jeder Musiker wiegt im eigenen Tempo und versetzt (nicht alle wie Roboter gleichzeitig)
   const zz = ((nr + 1) * 2654435761 % 1000) / 1000, eigen = `--v:${(0.82 + zz * 0.4).toFixed(2)};--d:-${(zz * 1.3).toFixed(2)}s`;
-  return `<g class="mus sek-${sek} inst-${inst}" data-strich="${STRICH[inst] ? inst : ""}" style="${eigen}" transform="translate(${x} ${y}) scale(${s})"><title>${esc(nm ? `${nm} – ${INST_NAME[sek] || ""}` : INST_NAME[sek] || "")}</title><ellipse class="licht" cx="0" cy="7" rx="17" ry="5"/>${stuhl}${beine}
+  return `<g class="mus sek-${sek} inst-${inst}" data-strich="${STRICH[inst] ? inst : ""}" data-inst="${inst}" data-o="${zz.toFixed(3)}" style="${eigen}" transform="translate(${x} ${y}) scale(${s})"><title>${esc(nm ? `${nm} – ${INST_NAME[sek] || ""}` : INST_NAME[sek] || "")}</title><ellipse class="licht" cx="0" cy="7" rx="17" ry="5"/>${stuhl}${beine}
     <g class="koerper">${rumpf}${kopf}${i}</g>${pult}</g>`;
 }
 function dirigent() {
@@ -205,26 +206,32 @@ export function sekAn(sek, dauer = 0.4) {
   const r = document.getElementById("bwRahmen"); if (!r) return;
   einsatzPruefen(sek);
   for (const s of sek) for (const el of r.querySelectorAll(`.sek-${s}`)) {
-    el.classList.add("aktiv"); if (el.dataset.strich) strichStarten(el, dauer * 1000);
+    el.classList.add("aktiv"); if (el.dataset.strich) strichStarten(el, dauer * 1000); else bewegen(el);
     clearTimeout(el._aus); el._aus = setTimeout(() => el.classList.remove("aktiv"), Math.max(250, dauer * 1000 + 120));
   }
 }
 // 🎻 0.79.0 Bogenstriche: jeder Ton ein Strich (Ab/Auf im Wechsel), Arm folgt; in der Pause sinkt der Bogen weich ab.
-// Eine gemeinsame Schleife für alle Streicher, läuft nur solange sich etwas bewegt. „Bewegung reduzieren“ → kein Streichen.
+// 🎭 0.79.2 Eine gemeinsame Schleife bewegt ALLE Musiker per Programm (wie die Dirigentin): Wiegen und Federn im Takt, Nicken auf jeden
+// Schlag, Instrument heben/schwenken, Posaunenzug, Paukenschlegel, Vibrato. Läuft nur, solange sich etwas bewegt.
+// „Bewegung reduzieren“ des Geräts → halb so stark (vorher stand das Orchester dann ganz still, nur die Dirigentin bewegte sich).
 const STR = { el: new Set(), raf: 0, ruhig: typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches };
-function strichStarten(el, dauerMs) {
-  el._strich = strichNeu(el._strich, dauerMs, performance.now()); STR.el.add(el);
-  if (!STR.raf) STR.raf = requestAnimationFrame(striche);
-}
+function strichStarten(el, dauerMs) { el._strich = strichNeu(el._strich, dauerMs, performance.now()); bewegen(el); }
+function bewegen(el) { STR.el.add(el); if (!STR.raf) STR.raf = requestAnimationFrame(striche); }
+const schlagJetzt = (jetzt) => (jetzt - DIR.zeit < DIR.dauer * 3 ? (DIR.n || 0) + (jetzt - DIR.zeit) / DIR.dauer : jetzt / 650);
 function striche(jetzt) {
+  const b = schlagJetzt(jetzt), staerke = STR.ruhig ? 0.5 : 1;
   for (const el of STR.el) {
     if (!el.isConnected) { STR.el.delete(el); continue; }
-    const d = STRICH[el.dataset.strich], ziel = el.classList.contains("aktiv") ? 0 : 1;
-    el._ruhe = el._ruhe ?? 1; el._ruhe += (ziel - el._ruhe) * 0.14; if (Math.abs(ziel - el._ruhe) < 0.01) el._ruhe = ziel;
-    const p = STR.ruhig ? 0 : bogenStand(el._strich, jetzt) * (1 - el._ruhe);
-    el._bogen ||= el.querySelector(".bogen,.bogen-quer"); el._arm ||= el.querySelector(".rarm");
-    el._bogen?.setAttribute("transform", bogenTransform(d, p, el._ruhe));
-    el._arm?.setAttribute("d", armD(d, handBei(d, p, el._ruhe)));
+    const ziel = el.classList.contains("aktiv") ? 0 : 1;
+    el._ruhe = el._ruhe ?? 1; el._ruhe += (ziel - el._ruhe) * 0.12; if (Math.abs(ziel - el._ruhe) < 0.01) el._ruhe = ziel;
+    if (!el._teile) el._teile = { k: el.querySelector(".koerper"), kopf: el.querySelector(".kopf"), blas: el.querySelector(".blas"), zug: el.querySelector(".zug"), schl: el.querySelectorAll(".schlegel"), lh: el.querySelector(".lh"), bogen: el.querySelector(".bogen,.bogen-quer"), arm: el.querySelector(".rarm"), off: Number(el.dataset.o) || 0 };
+    const T = el._teile, h = haltung(el.dataset.inst, b, T.off, (1 - el._ruhe) * staerke, jetzt);
+    T.k?.setAttribute("transform", h.koerper); T.kopf?.setAttribute("transform", h.kopf); T.blas?.setAttribute("transform", h.blas);
+    T.zug?.setAttribute("transform", h.zug); T.lh?.setAttribute("transform", h.lh); T.schl.forEach((s, i) => s.setAttribute("transform", h.schlegel[i % 2]));
+    if (el.dataset.strich) {
+      const d = STRICH[el.dataset.strich], p = bogenStand(el._strich, jetzt) * (1 - el._ruhe) * staerke;
+      T.bogen?.setAttribute("transform", bogenTransform(d, p, el._ruhe)); T.arm?.setAttribute("d", armD(d, handBei(d, p, el._ruhe)));
+    }
     if (el._ruhe === 1 && (!el._strich || jetzt > el._strich.start + el._strich.dauer)) STR.el.delete(el);
   }
   STR.raf = STR.el.size ? requestAnimationFrame(striche) : 0;
@@ -281,7 +288,7 @@ function dirigentZeichnen(jetzt) {
 export function takt(schlag, takte, dauer = 0) {
   const jetzt = performance.now(), gemessen = jetzt - DIR.zeit;
   DIR.dauer = dauer > 0 ? dauer : gemessen > 250 && gemessen < 1600 ? DIR.dauer * 0.6 + gemessen * 0.4 : DIR.dauer;
-  Object.assign(DIR, { schlag, takte: SCHLAGFIGUR[takte] ? takte : 4, zeit: jetzt });
+  Object.assign(DIR, { schlag, takte: SCHLAGFIGUR[takte] ? takte : 4, zeit: jetzt, n: (DIR.n || 0) + 1 });
   document.getElementById("bwRahmen")?.style.setProperty("--schlag", `${Math.round(DIR.dauer)}ms`); // 0.79.0 Musiker nicken im Takt
   if (!DIR.raf) DIR.raf = requestAnimationFrame(dirigentZeichnen);
 }

@@ -45,3 +45,21 @@ export function bogenTransform(d, p, ruhe = 0) {
   const [hx, hy] = handBei(d, p, ruhe);
   return `translate(${f(hx - d.hand[0])} ${f(hy - d.hand[1])}) rotate(${f(ruhe * d.ruhe[2])} ${d.hand[0]} ${d.hand[1]})`;
 }
+
+// 🎭 0.79.2 Spielbewegung aller Musiker – per Programm statt CSS-Animation (Hansi: „Musiker haben sich bei mir nicht bewegt oder ganz
+// wenig“ – auf iPhone/iPad stoppt „Bewegung reduzieren“ CSS-Animationen ganz, Safari dreht SVG-Teile per CSS teils um falsche Punkte;
+// die Dirigentin wird schon so gezeichnet und bewegte sich). b = Schlag (läuft im Takt der Dirigentin weiter), off = eigener Versatz 0…1,
+// s = Stärke 0 (Pause) … 1 (spielt). Liefert SVG-Transform-Texte (Drehpunkte in Figur-Koordinaten wie in figur()).
+const BLAS = { floete: [7, 0], oboe: [9, -2], klarinette: [9, -2], fagott: [6, 0], horn: [5, -1], trompete: [8, -5], posaune: [7, -4] };
+const g2 = (n) => n.toFixed(2), wel = (x) => Math.sin(2 * Math.PI * x);
+export function haltung(inst, b, off = 0, s = 1, t = 0) {
+  const koerper = `translate(0 ${g2(s * 1.1 * (1 - Math.cos(2 * Math.PI * b)) / 2)}) rotate(${g2(s * 5 * wel(b / 2 + off))} 0 1)`;
+  const kopf = `rotate(${g2(s * (2.5 - 9 * Math.max(0, Math.cos(2 * Math.PI * (b + off * 0.15)))))} 0 -19)`;
+  const [amp, neig] = BLAS[inst] || [5, 0], ruhe = 1 - s;
+  const blas = `translate(0 -18) rotate(${g2(24 * ruhe + s * (neig + amp * wel(b / 4 + off)))}) translate(${g2(ruhe)} ${g2(5 * ruhe)}) translate(0 18)`;
+  const zug = `translate(${g2(s * 9 * (0.5 + 0.5 * wel(b / 2 + off)))} 0)`;
+  const schlag = (x) => -18 + 26 * (1 - Math.abs(Math.sin(Math.PI * x))); // auf dem Schlag unten (trifft das Fell)
+  const schlegel = [`rotate(${g2(s * schlag(b))} -8 -16.6)`, `rotate(${g2(-s * schlag(b + 0.5))} 8 -16.6)`];
+  const lh = `translate(${g2(s * 0.6 * wel(t / 160))} ${g2(s * 0.35 * wel(t / 160))})`;
+  return { koerper, kopf, blas, zug, schlegel, lh };
+}

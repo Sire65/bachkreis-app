@@ -12,25 +12,10 @@
 .mus .licht { fill: rgba(255, 220, 120, 0); transition: fill .25s; }
 .mus.aktiv .licht { fill: rgba(255, 220, 120, .38); }
 /* 0.15.0: Spielhaltung – Instrument hoch, Bogen streicht, Kopf nickt; in der Pause sinken Instrument und Bogen */
-.mus .blas, .mus .zug, .mus .kopf { transform-box: view-box; transition: transform .5s ease; } /* 0.79.0 Bogen: per JS (streicher.js) */
-.mus .blas { transform-origin: 0px -18px; } .mus .bogen { transform-origin: 2.6px -10.8px; } .mus .kopf { transform-origin: 0px -19px; }
-.mus:not(.aktiv) .blas { transform: rotate(24deg) translate(1px, 5px); }
-.mus .koerper, .mus .schlegel { transform-box: fill-box; }
-/* 0.79.1 größer und im Takt (Hansi: „sieht nicht richtig wie ein Orchester aus“ – auf dem Handy ist ein Musiker ~30 px groß, 2,5° sah man nicht) */
-.mus.aktiv .koerper { animation: bwWiegen calc(var(--schlag, .65s) * 2 * var(--v, 1)) ease-in-out var(--d, 0s) infinite alternate; transform-origin: 50% 100%; }
-.mus.aktiv .kopf { animation: bwNicken var(--schlag, .65s) ease-in-out calc(var(--d, 0s) * .2) infinite alternate; } /* 0.79.0 im Takt der Dirigentin */
-.mus.aktiv .blas { animation: bwBlas calc(1.2s * var(--v, 1)) ease-in-out var(--d, 0s) infinite alternate; }
-.mus.aktiv .zug { animation: bwZug .5s ease-in-out infinite alternate; }
-.mus.aktiv .schlegel { animation: bwSchlag .35s ease-in-out infinite alternate; transform-origin: 50% 0; }
-.mus.aktiv .schlegel.s2 { animation-delay: .17s; }
-@keyframes bwWiegen { 0% { transform: rotate(-5deg); } 50% { transform: rotate(0deg) translateY(1.2px); } 100% { transform: rotate(5deg); } }
-@keyframes bwNicken { from { transform: rotate(-8deg) translateY(.4px); } to { transform: rotate(6deg); } }
-@keyframes bwBlas { from { transform: rotate(-5deg); } to { transform: rotate(5deg) translateY(-1px); } }
-@keyframes bwZug { from { transform: translateX(0); } to { transform: translateX(9px); } }
-@keyframes bwSchlag { from { transform: rotate(-18deg); } to { transform: rotate(8deg); } }
+/* 🎭 0.79.2 Bewegung der Musiker (Körper, Kopf, Instrument, Zug, Schlegel, Bogen, Vibrato) per Programm: buehne.js striche() + streicher.js haltung() */
 .dirigent .koerper { transition: transform .3s; }
 .verbeugung .dirigent .koerper { transform: rotate(18deg) translateY(4px); transform-origin: 0 0; }
-.verbeugung .mus .koerper { animation: bwVerbeugen 1.2s ease-in-out 2 alternate; transform-origin: 50% 100%; }
+.verbeugung .mus .koerper { animation: bwVerbeugen 1.2s ease-in-out 2 alternate; transform-box: fill-box; transform-origin: 50% 100%; }
 @keyframes bwVerbeugen { to { transform: rotate(10deg); } }
 .notenzeichen { fill: #ffe08a; font-size: 13px; font-weight: 900; animation: bwNote 1.8s ease-out forwards; }
 @keyframes bwNote { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-80px) rotate(-15deg); } }
@@ -63,20 +48,8 @@
 .dreh-weg { animation: drehWeg .23s ease-in forwards; } .dreh-her { animation: drehHer .3s ease-out; }
 @keyframes drehWeg { to { transform: perspective(900px) rotateY(80deg); opacity: .2; } }
 @keyframes drehHer { from { transform: perspective(900px) rotateY(-80deg); opacity: .2; } }
-/* 0.79.0 mehr Leben: Bläser je Instrument eigen, linke Hand der Streicher mit Vibrato */
-.mus.aktiv.inst-floete .blas { animation-name: bwFloete; }
-.mus.aktiv.inst-oboe .blas, .mus.aktiv.inst-klarinette .blas { animation-name: bwSchalltrichter; }
-.mus.aktiv.inst-trompete .blas, .mus.aktiv.inst-posaune .blas { animation-name: bwBlech; }
-.mus.aktiv.inst-fagott .blas { animation-name: bwFagott; }
-@keyframes bwFloete { from { transform: rotate(-7deg) translateX(-1.2px); } to { transform: rotate(6deg) translate(1.4px, -1px); } }
-@keyframes bwSchalltrichter { from { transform: rotate(-10deg); } 60% { transform: rotate(8deg) translateY(-1.2px); } to { transform: rotate(2deg); } }
-@keyframes bwBlech { from { transform: rotate(3deg); } to { transform: rotate(-11deg) translateY(-1.6px); } }
-@keyframes bwFagott { from { transform: rotate(-5deg) translateX(-1px); } to { transform: rotate(6deg) translateX(1.2px); } }
-.mus .lh { transform-box: fill-box; transform-origin: center; }
-.mus.aktiv .lh { animation: bwVibrato .16s ease-in-out infinite alternate; }
-@keyframes bwVibrato { from { transform: translate(-.6px, -.35px); } to { transform: translate(.6px, .35px); } }
 @media (prefers-reduced-motion: reduce) {
-  .mus.aktiv .koerper, .mus.aktiv .kopf, .mus.aktiv .lh, .mus.aktiv .blas, .mus.aktiv .zug, .mus.aktiv .schlegel, .notenzeichen, .dreh-weg, .dreh-her { animation: none; }
+  .notenzeichen, .dreh-weg, .dreh-her { animation: none; }
   .vorhang { transition: none; }
 }
 :root.dunkel .bw-titel { color: var(--marke2); }

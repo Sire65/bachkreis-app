@@ -1,5 +1,16 @@
 # Änderungen
 
+## 0.79.5 DEV – 18.11.2026
+🎼 **Noten zu den Bach-Aufnahmen** (Wunsch Hansi „Verknüpfung vorbereiten und gemeinfrei für die Lieder schon mal die Noten besorgen“):
+- Bühne › 🎻 Bach › **„🎼 Noten“**: zu jedem Bach-Stück die Noten zum Mitlesen (das gerade gespielte oben) – öffnen in der PDF-Ansicht mit Pult
+- **Freie Noten besorgt** (Mutopia Project, Creative Commons BY-SA – Namensnennung steht in der App und in `noten/bach/QUELLEN.md`):
+  **Air BWV 1068** als Partitur und Stimmen (Violine 1, Violine 2, Bratsche, Continuo – nach der Bach-Gesellschafts-Ausgabe, passt zur Orchesteraufnahme) ·
+  **Violinkonzert a-Moll BWV 1041** Solo-Violine (alle 3 Sätze) · **„Wachet auf“** als Bachs eigene Orgelfassung BWV 645
+- **Noch offen:** „Jesus bleibet meine Freude“ (BWV 147) und Badinerie (BWV 1067) gibt es bei Mutopia nicht; auf IMSLP liegen freie Ausgaben (CC BY-SA 4.0), dort muss man das Herunterladen aber per Klick bestätigen – die genauen Dateien stehen in `noten/bach/QUELLEN.md`
+- **Verknüpfung mit dem Notenarchiv:** ein Werk mit der passenden BWV-Nummer im Werkverzeichnis (z. B. „BWV 1067“) erscheint mit seinen PDF-Stimmen automatisch beim Bach-Stück (📚) – nur für alle, die es im Notenarchiv sehen dürfen
+- Kein mitlaufender Zeiger bei echten Aufnahmen (freies Tempo); mitlaufende Noten weiter bei 🎼 Melodien
+- Ordner `noten` wird veröffentlicht (Pages-Liste), Tests `bach-noten.test`
+
 ## 0.79.4 DEV – 18.11.2026
 🎼 **Schalter „Orchester | Noten“ überall sichtbar** (Hansi: „ich habe den Schalter Noten oder Orchester nicht“): er war nur auf der eigenen Bühnen-Seite (Kachel 🎭 Bühne) und dort oberhalb der Bühne – auf der **Bühne hinter dem Startbild** (Eselsohr) und bei **🎧 Aufnahmen** fehlte er. Jetzt überall, wo das Orchester spielt, und **direkt unter der Bühne** über „Melodien · Bach · Aufnahmen · Üben“. Test ergänzt.
 

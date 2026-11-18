@@ -1,11 +1,18 @@
 {
-  "version": "0.79.4",
+  "version": "0.79.5",
   "datum": "2026-11-18",
   "stufe": "DEV",
   "neu": [
-    "🎼 Schalter Orchester | Noten auch hinter dem Startbild – direkt unter der Bühne"
+    "🎼 Bach-Stücke mit freien Noten zum Mitlesen; eigene Noten aus dem Notenarchiv über die BWV-Nummer"
   ],
   "verlauf": [
+    {
+      "version": "0.79.4",
+      "datum": "2026-11-18",
+      "neu": [
+        "🎼 Schalter Orchester | Noten auch hinter dem Startbild – direkt unter der Bühne"
+      ]
+    },
     {
       "version": "0.79.3",
       "datum": "2026-11-18",

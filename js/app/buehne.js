@@ -5,6 +5,7 @@ import { S, VIEWS, kopf, istLehrkraft, zeige } from "./zustand.js";
 import { esc, AKTIONEN, toast, datumKurz } from "../kern/ui.js";
 import { liste, hole, konfig } from "../kern/daten.js";
 import { musikAdresse } from "../kern/musikort.js";
+import { BACH_NOTEN, bwvPasst } from "../kern/bachnoten.js";
 import { STRICH, strichNeu, bogenStand, armD, handBei, bogenTransform, haltung } from "../kern/streicher.js";
 import { STUECKE, spielen, baender, klaengeBereit, stueckKlaenge } from "../kern/musik.js";
 import { stimmeErzeugen, notenSvg, zeigerX, taktUndPos } from "../kern/notensatz.js";
@@ -128,12 +129,27 @@ export const BUEHNE_MODI = {};
 // Public Domain) bzw. CC0, von Wikimedia Commons – liegen in audio/bach/ (eigene Seite, kein fremder Server, kein Internet-Abruf beim Hören).
 // Quellen und Lizenzen: audio/bach/QUELLEN.md
 export const BACH_AUFNAHMEN = [
-  { id: "air", titel: "Air", werk: "Orchestersuite Nr. 3 D-Dur, BWV 1068", wer: "Air Force Strings · United States Air Force Band", lizenz: "gemeinfrei", takt: 4 },
-  { id: "jesus", titel: "Jesus bleibet meine Freude", werk: "Kantate BWV 147", wer: "Orchestra Gli Armonici", lizenz: "CC0", takt: 3 },
-  { id: "badinerie", titel: "Badinerie", werk: "Orchestersuite Nr. 2 h-Moll, BWV 1067", wer: "historische Aufnahme (European Archive)", lizenz: "CC0", takt: 2 },
-  { id: "violinkonzert", titel: "Violinkonzert a-Moll – 1. Satz", werk: "BWV 1041", wer: "Chamber Orchestra · United States Marine Band", lizenz: "gemeinfrei", takt: 2 },
-  { id: "wachet", titel: "Wachet auf, ruft uns die Stimme", werk: "Choral aus BWV 140", wer: "Stellar Brass · US Air Force Band of the Rockies", lizenz: "gemeinfrei", takt: 4 },
+  { id: "air", bwv: "1068", titel: "Air", werk: "Orchestersuite Nr. 3 D-Dur, BWV 1068", wer: "Air Force Strings · United States Air Force Band", lizenz: "gemeinfrei", takt: 4 },
+  { id: "jesus", bwv: "147", titel: "Jesus bleibet meine Freude", werk: "Kantate BWV 147", wer: "Orchestra Gli Armonici", lizenz: "CC0", takt: 3 },
+  { id: "badinerie", bwv: "1067", titel: "Badinerie", werk: "Orchestersuite Nr. 2 h-Moll, BWV 1067", wer: "historische Aufnahme (European Archive)", lizenz: "CC0", takt: 2 },
+  { id: "violinkonzert", bwv: "1041", titel: "Violinkonzert a-Moll – 1. Satz", werk: "BWV 1041", wer: "Chamber Orchestra · United States Marine Band", lizenz: "gemeinfrei", takt: 2 },
+  { id: "wachet", bwv: "140", titel: "Wachet auf, ruft uns die Stimme", werk: "Choral aus BWV 140", wer: "Stellar Brass · US Air Force Band of the Rockies", lizenz: "gemeinfrei", takt: 4 },
 ];
+function archivNoten(bwv) {
+  const werke = liste("werke", (w) => !w.geloescht_am && bwvPasst(w.werkverzeichnis, bwv)).map((w) => w.id);
+  return liste("stimmen", (s) => !s.geloescht_am && werke.includes(s.werk_id) && /^datei:/.test(String(s.datei || ""))).map((s) => ({ s, w: hole("werke", s.werk_id) }));
+}
+function bachNotenHtml() {
+  const vorn = B.bachId ? [BACH_AUFNAHMEN.find((x) => x.id === B.bachId), ...BACH_AUFNAHMEN.filter((x) => x.id !== B.bachId)] : BACH_AUFNAHMEN;
+  return `<div class="bw-bachnoten">${vorn.filter(Boolean).map((x) => {
+    const frei = BACH_NOTEN[x.id], eigene = archivNoten(x.bwv);
+    return `<div class="bw-bn${x.id === B.bachId ? " an" : ""}"><b>${esc(x.titel)}</b> <small>BWV ${esc(x.bwv)}</small>
+      <div class="bw-bn-k">${(frei?.teile || []).map(([t, d]) => `<button type="button" class="chip-wahl" data-a="pdfUrl" data-x="noten/bach/${d}|${esc(x.titel)} – ${esc(t)}">📄 ${esc(t)}</button>`).join("")}
+      ${eigene.map(({ s, w }) => `<button type="button" class="chip-wahl" data-a="bwArchivNoten" data-x="${esc(s.datei.slice(6))}|${esc((w?.titel || x.titel) + " – " + s.bezeichnung)}">📚 ${esc(s.bezeichnung)}</button>`).join("")}</div>
+      ${frei ? `<small class="bw-bn-q">${esc(frei.quelle)}</small>` : ""}${!frei && !eigene.length ? '<small class="bw-bn-q">Noch keine freien Noten in der App – die Leitung kann eigene im 📚 Notenarchiv hinterlegen (Werkverzeichnis „BWV ' + esc(x.bwv) + '“).</small>' : ""}</div>`;
+  }).join("")}<p class="hinweis">Zum Mitlesen beim Hören – ein mitlaufender Zeiger geht bei echten Aufnahmen nicht (freies Tempo). 📄 = freie Noten · 📚 = aus unserem Notenarchiv.</p></div>`;
+}
+AKTIONEN.bwArchivNoten = async (x) => { const [id, ...t] = String(x).split("|"); const { dateiOeffnen } = await import("../kern/dateien.js"); dateiOeffnen(id, t.join("|") + ".pdf", "application/pdf"); };
 const bachHtml = () => `<div class="bw-stuecke">${BACH_AUFNAHMEN.map((x) => `<button type="button" data-a="bwBach" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.werk)} · ${esc(x.wer)}</small></button>`).join("")}</div>
   <div class="knopfreihe"><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div><div class="bw-regler"><label>🔊 Lautstärke <input type="range" min="0" max="1" step="0.05" value="${B.laut}" data-c="bwLaut"></label></div>
   <p class="hinweis">🎻 Johann Sebastian Bach (1685–1750) – unser Namensgeber. Echte Orchesteraufnahmen, frei von Rechten (gemeinfrei bzw. CC0, über Wikimedia Commons). Stück antippen – der Vorhang geht auf.</p>`;
@@ -187,7 +203,8 @@ export function buehneHtml(kompakt = false) {
   return `<div class="buehne ${kompakt ? "kompakt" : ""}" id="buehne">
     ${noten ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><div class="bw-blatt" id="bwBlatt">${notenSvg(stimmeErzeugen(st.id, B.stimme === "partitur" ? "Partitur" : "Violine"), { takteJeZeile: 4, zeiger: true, titel: st.titel })}</div></div>
       <div class="bw-stimme">${[["melodie", "Melodie"], ["partitur", "Partitur (3 Stimmen)"]].map(([k, t]) => `<button type="button" class="chip-wahl${(B.stimme || "melodie") === k ? " an" : ""}" data-a="bwStimme" data-x="${k}">${t}</button>`).join("")}</div>`
-    : B.ansicht === "noten" ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><p class="bw-keine-noten">🎼 Zu ${B.modus === "bach" ? "den Bach-Aufnahmen" : "Aufnahmen"} gibt es noch keine mitlaufenden Noten – eine echte Aufnahme hält kein festes Tempo.<br>Mitlaufende Noten gibt es bei <b>🎼 Melodien</b>.</p></div>`
+    : B.ansicht === "noten" && B.modus === "bach" ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen">${bachNotenHtml()}</div>`
+    : B.ansicht === "noten" ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><p class="bw-keine-noten">🎼 Zu eigenen Aufnahmen gibt es keine mitlaufenden Noten – eine echte Aufnahme hält kein festes Tempo.<br>Mitlaufende Noten gibt es bei <b>🎼 Melodien</b>, Noten zum Mitlesen bei <b>🎻 Bach</b>.</p></div>`
     : `<div class="buehne-rahmen ${B.lauf || B.audio ? "offen" : ""}" id="bwRahmen">${orchesterSvg()}</div>`}<div class="bw-titel" id="bwTitel">${esc(B.lauf ? st.titel : "Vorhang auf für den Bachkreis!")}</div>
     ${ansicht}${umschalter()}
     ${B.modus === "bach" ? bachHtml() : B.modus === "melodien" ? `
@@ -417,7 +434,7 @@ AKTIONEN.bwAufnahme = (id) => {
   if (!a?.datei) { toast("🎧 Vorführversion: Die Datei liegt später im geschützten Speicher. Zum Ausprobieren: „Aufnahme vom Gerät abspielen“."); return; }
   aufnahmeSpielen(a.datei, a.titel);
 };
-AKTIONEN.bwBach = (id) => { const x = BACH_AUFNAHMEN.find((y) => y.id === id); if (x) aufnahmeSpielen(musikAdresse(`${x.id}.mp3`, konfig().musik_basis), `${x.titel} – J. S. Bach`, x.takt || 4); };
+AKTIONEN.bwBach = (id) => { const x = BACH_AUFNAHMEN.find((y) => y.id === id); B.bachId = id; if (B.ansicht === "noten") neuZeichnen(); if (x) aufnahmeSpielen(musikAdresse(`${x.id}.mp3`, konfig().musik_basis), `${x.titel} – J. S. Bach`, x.takt || 4); };
 AKTIONEN.bwDatei = (_, el) => {
   const f = el.files?.[0]; if (!f) return;
   if (B.blobUrl) URL.revokeObjectURL(B.blobUrl);

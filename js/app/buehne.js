@@ -181,14 +181,15 @@ export function buehneHtml(kompakt = false) {
   const aufnahmen = liste("aufnahmen").sort((a, b) => (b.datum || "").localeCompare(a.datum || ""));
   const st = STUECKE.find((x) => x.id === B.stueck) || STUECKE[0];
   // 🎼 0.79.3 Schalter „Orchester | Noten“ (Wunsch Hansi): bei den Melodien statt des Orchesters die Noten mit mitlaufendem Zeiger
-  const noten = B.ansicht === "noten" && B.modus === "melodien" && !kompakt;
-  const ansicht = kompakt || !["melodien", "bach"].includes(B.modus) ? "" : `<div class="bw-ansicht" role="group" aria-label="Was auf der Bühne zu sehen ist">${[["orchester", "🎻 Orchester"], ["noten", "🎼 Noten"]].map(([k, t]) => `<button type="button" class="${(B.ansicht || "orchester") === k ? "an" : ""}" data-a="bwAnsicht" data-x="${k}" aria-pressed="${(B.ansicht || "orchester") === k}">${t}</button>`).join("")}</div>`;
-  return `<div class="buehne ${kompakt ? "kompakt" : ""}" id="buehne">${ansicht}
+  // 0.79.4 auch auf der Bühne hinter dem Startbild (kompakt) und bei 🎧 Aufnahmen (Hansi: „ich habe den Schalter nicht“)
+  const noten = B.ansicht === "noten" && B.modus === "melodien";
+  const ansicht = !["melodien", "bach", "aufnahmen"].includes(B.modus) ? "" : `<div class="bw-ansicht" role="group" aria-label="Was auf der Bühne zu sehen ist">${[["orchester", "🎻 Orchester"], ["noten", "🎼 Noten"]].map(([k, t]) => `<button type="button" class="${(B.ansicht || "orchester") === k ? "an" : ""}" data-a="bwAnsicht" data-x="${k}" aria-pressed="${(B.ansicht || "orchester") === k}">${t}</button>`).join("")}</div>`;
+  return `<div class="buehne ${kompakt ? "kompakt" : ""}" id="buehne">
     ${noten ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><div class="bw-blatt" id="bwBlatt">${notenSvg(stimmeErzeugen(st.id, B.stimme === "partitur" ? "Partitur" : "Violine"), { takteJeZeile: 4, zeiger: true, titel: st.titel })}</div></div>
       <div class="bw-stimme">${[["melodie", "Melodie"], ["partitur", "Partitur (3 Stimmen)"]].map(([k, t]) => `<button type="button" class="chip-wahl${(B.stimme || "melodie") === k ? " an" : ""}" data-a="bwStimme" data-x="${k}">${t}</button>`).join("")}</div>`
-    : B.ansicht === "noten" && B.modus === "bach" && !kompakt ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><p class="bw-keine-noten">🎼 Zu den Bach-Aufnahmen gibt es noch keine mitlaufenden Noten – eine echte Aufnahme hält kein festes Tempo.<br>Mitlaufende Noten gibt es bei <b>🎼 Melodien</b>.</p></div>`
+    : B.ansicht === "noten" ? `<div class="buehne-rahmen bw-notenrahmen offen" id="bwRahmen"><p class="bw-keine-noten">🎼 Zu ${B.modus === "bach" ? "den Bach-Aufnahmen" : "Aufnahmen"} gibt es noch keine mitlaufenden Noten – eine echte Aufnahme hält kein festes Tempo.<br>Mitlaufende Noten gibt es bei <b>🎼 Melodien</b>.</p></div>`
     : `<div class="buehne-rahmen ${B.lauf || B.audio ? "offen" : ""}" id="bwRahmen">${orchesterSvg()}</div>`}<div class="bw-titel" id="bwTitel">${esc(B.lauf ? st.titel : "Vorhang auf für den Bachkreis!")}</div>
-    ${umschalter()}
+    ${ansicht}${umschalter()}
     ${B.modus === "bach" ? bachHtml() : B.modus === "melodien" ? `
       <div class="bw-stuecke">${STUECKE.map((x) => `<button class="${x.id === B.stueck ? "an" : ""}" data-a="bwStueck" data-x="${x.id}"><b>${esc(x.titel)}</b><small>${esc(x.komponist)}</small></button>`).join("")}</div>
       <div class="knopfreihe"><button class="knopf haupt" data-a="bwSpielen">▶ Vorhang auf</button><button class="knopf" data-a="bwStopp">⏹ Stopp</button></div>

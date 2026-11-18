@@ -29,3 +29,8 @@ test("Wiedergabe meldet Start und Tempo; Bühne hat den Schalter, Bach ehrlich o
   assert.match(b, /data-a="bwAnsicht"/); assert.match(b, /\["orchester", "🎻 Orchester"\], \["noten", "🎼 Noten"\]/);
   assert.match(b, /keine mitlaufenden Noten/); assert.match(b, /zeigerStarten\(\);/); assert.match(b, /function buehneZeigen/);
 });
+test("0.79.4 Schalter auch auf der Bühne hinter dem Startbild und bei Aufnahmen – direkt unter der Bühne", () => {
+  const b = fs.readFileSync("js/app/buehne.js", "utf8");
+  assert.match(b, /const ansicht = !\["melodien", "bach", "aufnahmen"\]\.includes\(B\.modus\) \? "" :/, "nicht mehr nur ohne „kompakt“");
+  assert.match(b, /\$\{ansicht\}\$\{umschalter\(\)\}/, "unter der Bühne, über den Reitern");
+});

@@ -1,11 +1,18 @@
 {
-  "version": "0.79.3",
+  "version": "0.79.4",
   "datum": "2026-11-18",
   "stufe": "DEV",
   "neu": [
-    "🎼 Bühne: Schalter Orchester | Noten – die Noten laufen mit"
+    "🎼 Schalter Orchester | Noten auch hinter dem Startbild – direkt unter der Bühne"
   ],
   "verlauf": [
+    {
+      "version": "0.79.3",
+      "datum": "2026-11-18",
+      "neu": [
+        "🎼 Bühne: Schalter Orchester | Noten – die Noten laufen mit"
+      ]
+    },
     {
       "version": "0.79.2",
       "datum": "2026-11-18",

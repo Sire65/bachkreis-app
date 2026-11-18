@@ -1,5 +1,8 @@
 # Änderungen
 
+## 0.79.4 DEV – 18.11.2026
+🎼 **Schalter „Orchester | Noten“ überall sichtbar** (Hansi: „ich habe den Schalter Noten oder Orchester nicht“): er war nur auf der eigenen Bühnen-Seite (Kachel 🎭 Bühne) und dort oberhalb der Bühne – auf der **Bühne hinter dem Startbild** (Eselsohr) und bei **🎧 Aufnahmen** fehlte er. Jetzt überall, wo das Orchester spielt, und **direkt unter der Bühne** über „Melodien · Bach · Aufnahmen · Üben“. Test ergänzt.
+
 ## 0.79.3 DEV – 18.11.2026
 🎼 **Noten statt Orchester** (Wunsch Hansi „einen Schalter, anstatt Orchester die Noten anzeigen von dem Stück, das gerade läuft“):
 - Bühne › oben **„🎻 Orchester | 🎼 Noten“**: bei den **🎼 Melodien** stehen statt des Orchesters die Noten des Stücks auf hellem Papier – **der gespielte Takt leuchtet gelb, ein roter Strich zeigt die Stelle**, die Zeilen rollen mit; Wahl **Melodie** oder **Partitur (3 Stimmen: Melodie, Mitte, Bass)**. Tempo-Regler und Stückwechsel laufen mit

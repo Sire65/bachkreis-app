@@ -1,0 +1,164 @@
+/* 🏠 Startseite wie KC (0.28.0): Kachel-Rückseite, Anordnen/Ziehen, Kachelgröße, Laufband, Fallblatt, Schnellstart, Tagesübersicht */
+.abschnitt { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.abschnitt .knopf { margin-top: 8px; }
+.karte h3 .knopf { float: right; margin-top: -4px; }
+
+/* 🔄 Rückseite */
+.raster > .kachel { transition: transform .16s ease-in, box-shadow .2s; transform-style: preserve-3d; }
+.raster > .kachel.kr-dreht { transform: perspective(600px) rotateY(90deg); }
+.raster > .kachel.kr-hinten { background: var(--haupt); color: var(--haupt-text); display: flex; flex-direction: column; gap: 6px; padding: 10px; cursor: default; }
+.kachel.kr-hinten::after { display: none; }
+.kr-titel { font-weight: 900; font-size: .9rem; opacity: .9; padding-right: 26px; }
+.kr-akt { display: block; background: rgba(255, 255, 255, .16); border-radius: 10px; padding: 7px 9px; font-weight: 800; font-size: .88rem; cursor: pointer; }
+.kr-akt:hover, .kr-akt:focus-visible { background: rgba(255, 255, 255, .28); outline: none; }
+.kr-zurueck { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .2); cursor: pointer; font-weight: 900; }
+:root.dunkel .kr-akt { background: rgba(0, 0, 0, .14); } :root.dunkel .kr-zurueck { background: rgba(0, 0, 0, .18); }
+
+/* ⭐ zuletzt gewählt · 🔢 hochzählen · lange drücken */
+.raster > .kachel.zuletzt { box-shadow: 0 0 0 2px var(--marke), var(--schatten); transform: scale(1.02); }
+.raster > .kachel.gedrueckt { transform: scale(.97); transition: transform .5s; }
+.kachel .zahl.hoch { animation: zahlHoch .7s ease-out; }
+@keyframes zahlHoch { 0% { transform: scale(1.4); } 100% { transform: scale(1); } }
+
+/* ✥ Anordnen */
+.ka-leiste { position: sticky; top: 4px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; background: var(--gelbbg); color: var(--text); border: 2px solid var(--marke); border-radius: 14px; padding: 8px 10px; margin: 8px 0; font-size: .88rem; }
+.ka-knoepfe { display: flex; gap: 6px; }
+.raster.anordnen > .kachel { cursor: grab; touch-action: none; animation: kaWackeln .35s ease-in-out infinite alternate; }
+.raster.anordnen > .kachel:nth-child(2n) { animation-delay: .17s; }
+@keyframes kaWackeln { from { transform: rotate(-.6deg); } to { transform: rotate(.6deg); } }
+.kachel.bearb { padding-bottom: 46px; }
+.kachel.bearb.aus { opacity: .45; filter: grayscale(1); }
+.kachel.bearb.frisch { box-shadow: 0 0 0 3px var(--marke), var(--schatten); }
+.kweg { position: absolute; right: 6px; top: 6px; z-index: 2; width: 28px; height: 28px; border-radius: 50%; border: none; background: var(--rot); color: #fff; font-weight: 900; cursor: pointer; }
+.kstrg { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; gap: 4px; justify-content: center; }
+.kstrg button { flex: 1; max-width: 44px; height: 32px; border: none; border-radius: 9px; background: var(--karte2); color: var(--text); font-weight: 900; cursor: pointer; }
+.kstrg button:disabled { opacity: .3; cursor: default; }
+.kstrg button.ein { max-width: none; flex: 1; font-size: .82rem; }
+.kachel.platzhalter { opacity: .25; outline: 2px dashed var(--marke); }
+.kachel.geist { box-shadow: 0 16px 34px rgba(0, 0, 0, .35); transform: scale(1.05) rotate(-1.5deg); opacity: .96; }
+.kpfeil4 { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.kpfeil4 b { font-size: 2rem; background: rgba(0, 0, 0, .55); color: #fff; width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; }
+.ka-aus-zeile { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 8px 0 0; }
+.ka-ausgeblendet { border: 2px dashed var(--linie); background: none; color: var(--grau); border-radius: 12px; padding: 7px 12px; font-weight: 800; cursor: pointer; }
+.raster.nur-aus > .kachel { outline: 2px dashed var(--grau); }
+.register button.zieht { transform: scale(1.08); box-shadow: 0 8px 18px rgba(0, 0, 0, .3); z-index: 3; }
+@media (prefers-reduced-motion: reduce) { .raster.anordnen > .kachel { animation: none; } .raster > .kachel { transition: none; } }
+:root.ohne-effekt .raster.anordnen > .kachel { animation: none; }
+
+/* 🔲 Kachelgröße */
+.raster.klein3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.raster.klein4 { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.raster.klein3 > .kachel { min-height: 84px; padding: 10px; } .raster.klein3 .kachel small { display: none; } .raster.klein3 .kachel b { font-size: .88rem; }
+.raster.klein4 > .kachel { min-height: 70px; padding: 8px 6px; text-align: center; } .raster.klein4 .kachel small { display: none; } .raster.klein4 .kachel b { font-size: .74rem; margin-top: 4px; } .raster.klein4 .kachel .sym { font-size: 1.4rem; }
+.raster.klein4 .kachel .zahl { right: 4px; top: 4px; padding: 0 6px; font-size: .72rem; }
+
+/* 📰 Info-Laufband */
+.il { margin: 10px 20px 0; border: 2px solid rgba(255, 255, 255, .45); border-radius: 16px; background: rgba(0, 0, 0, .18); padding: 7px 8px 5px; touch-action: pan-y; }
+.il-inhalt { min-height: 44px; transition: opacity .22s, transform .22s; }
+.il-inhalt.il-weg-anim { opacity: 0; transform: translateX(-12px); }
+.il-eintrag { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 4px 8px; }
+.il-knoepfe { grid-column: 2 / 4; display: flex; gap: 6px; }
+.il-sym { font-size: 1.4rem; flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(255, 255, 255, .16); }
+.il-rot .il-sym { background: #c0392b; } .il-orange .il-sym { background: #d35400; } .il-gold .il-sym { background: #b8860b; }
+.il-text { min-width: 0; display: grid; border: 0; background: none; color: inherit; font: inherit; text-align: left; padding: 0; cursor: pointer; } .il-text:disabled { cursor: default; opacity: 1; } .il-text b { font-size: .9rem; line-height: 1.2; } .il-text small { font-size: .74rem; opacity: .85; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.il-knopf { flex: none; border: none; border-radius: 10px; padding: 6px 9px; background: #fff; color: #1a1500; font-weight: 900; cursor: pointer; font-size: .8rem; }
+.il-weg { flex: none; border: none; background: none; color: inherit; opacity: .7; cursor: pointer; font-size: .9rem; padding: 4px; }
+.il-punkte { display: flex; gap: 4px; justify-content: center; margin-top: 4px; }
+.il-p { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .35); }
+.il-p.il-p-rot { background: rgba(255, 120, 100, .7); } .il-p.il-p-orange { background: rgba(255, 170, 80, .7); }
+.il-p.an { background: #fff; transform: scale(1.3); }
+
+/* 🔢 Fallblatt */
+.fb-reihe { display: inline-flex; gap: 2px; vertical-align: middle; }
+.fb-z { position: relative; display: inline-grid; place-items: center; width: .95em; height: 1.25em; border-radius: 4px; background: #1d1d1d; color: #fff; font-family: Georgia, serif; font-weight: 700; box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .15); perspective: 200px; }
+.fb-z::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, .7); }
+.fb-z.kippt span { animation: fbKipp .5s ease-in-out both; animation-delay: var(--v, 0ms); display: inline-block; }
+@keyframes fbKipp { 0% { transform: rotateX(0); } 45% { transform: rotateX(-90deg); } 55% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+.fb-einheit { font-size: .7rem; margin-left: 4px; font-weight: 800; }
+
+/* ⚡ Schnellstart */
+.schnell-kopf { display: flex; justify-content: space-between; align-items: center; }
+.schnell-kopf h2 { margin: 0; }
+.schnell-wahl-knopf { border: none; background: rgba(255, 255, 255, .18); color: inherit; border-radius: 10px; width: 34px; height: 34px; cursor: pointer; }
+.schnell-raster { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.schnell-raster .mini { border: none; border-radius: 14px; background: rgba(255, 255, 255, .16); color: inherit; padding: 8px 4px; display: grid; justify-items: center; gap: 2px; cursor: pointer; font: inherit; }
+.schnell-raster .mini b { font-size: 1.4rem; } .schnell-raster .mini span { font-size: .72rem; font-weight: 800; }
+.schnell-raster .mini:active { transform: scale(.95); }
+.schnell-wahl { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 6px; }
+.schnell-wahl button { position: relative; display: flex; gap: 6px; align-items: center; border: 2px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 12px; padding: 8px 10px; font-weight: 800; cursor: pointer; text-align: left; }
+.schnell-wahl button.an { border-color: var(--marke); background: var(--gelbbg); }
+.schnell-wahl button i { position: absolute; right: 6px; top: 4px; font-style: normal; font-size: .72rem; color: var(--marke-dunkel); }
+
+/* 🟢 Ansicht wählen · 📋 Tagesübersicht */
+.ansicht-wahl { display: grid; gap: 8px; margin: 10px 0; }
+.ansicht-wahl .knopf { display: grid; gap: 2px; text-align: left; padding: 12px 14px; }
+.ansicht-wahl .knopf small { font-weight: 600; opacity: .85; }
+.ti { display: grid; gap: 6px; margin: 8px 0; }
+.ti-zeile { display: flex; gap: 8px; align-items: center; width: 100%; border: 2px solid var(--linie); background: var(--karte); color: var(--text); border-radius: 12px; padding: 9px 10px; text-align: left; cursor: pointer; font: inherit; }
+.ti-zeile span { flex: 1; } .ti-zeile b:last-child { color: var(--grau); }
+
+/* ☑️ Kachel-Auswahl in den Einstellungen */
+.ka-wahl { border: 2px solid var(--linie); border-radius: 12px; padding: 6px 10px; margin: 6px 0; }
+.ka-wahl summary { cursor: pointer; font-weight: 800; display: flex; justify-content: space-between; }
+.ka-wahl-zahl { color: var(--grau); font-size: .82rem; }
+.ka-wahl-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; margin: 8px 0; }
+.ka-wahl-raster label { display: flex; gap: 6px; align-items: center; font-size: .88rem; }
+.ka-wahl-raster input { width: 18px; height: 18px; accent-color: var(--marke); flex: none; }
+/* Fallblatt in der kleinen Kopf-Kachel: die allgemeine Regel „.mini span“ darf die Klappkarten nicht verkleinern */
+.kacheln3 .mini .fb-reihe { display: inline-flex; font-size: 1.15rem; margin: 0; opacity: 1; line-height: 1; }
+.kacheln3 .mini .fb-z { display: inline-grid; font-size: inherit; margin: 0; opacity: 1; }
+.kacheln3 .mini .fb-z span { display: inline-block; font-size: inherit; margin: 0; opacity: 1; line-height: 1; }
+#v-start:has(.raster.anordnen) .wischhinweis { display: none; }
+/* ⚡🪪 0.61.0 Zeile über den Kacheln wie in der Club App: Schnellzugriff (Link) · > Einfache < / < Erweiterte > Ansicht · rechts ✥ und QR-Ausweis */
+.sz-zeile h3 { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 8px; min-width: 0; }
+.sz-link { border: none; background: none; padding: 4px 0; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 4px; position: relative; }
+.sz-link::after { content: ""; position: absolute; inset: -8px 0; }
+.ansichtname { font-size: .8rem; font-weight: 700; text-transform: none; letter-spacing: 0; white-space: nowrap; border: none; background: none; padding: 6px 2px; font-family: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; position: relative; }
+.ansichtname::after { content: ""; position: absolute; inset: -8px 0; }
+.ansichtname.ein { color: #1b7a43; } .ansichtname.erw { color: #b3261e; }
+:root.dunkel .ansichtname.ein, :root[data-modus="nacht"] .ansichtname.ein { color: #5fd38d; } :root.dunkel .ansichtname.erw, :root[data-modus="nacht"] .ansichtname.erw { color: #ff8a80; }
+.sz-rechts { display: inline-flex; align-items: center; gap: 6px; flex: none; margin-top: 8px; }
+.sz-rechts .knopf { margin-top: 0; }
+.sz-anordnen { min-width: 40px; font-size: 1.05rem; }
+.ausweis-knopf { display: inline-flex; align-items: center; gap: 5px; border: 2px solid #1a1500; border-radius: 10px; background: #f2b705; color: #1a1500; font: 800 .85rem/1 system-ui, sans-serif; padding: 7px 10px; cursor: pointer; white-space: nowrap; }
+.ausweis-knopf .qr-sym { width: 17px; height: 17px; display: block; }
+.ausweis-knopf:active { transform: scale(.95); }
+/* Ausweis-Karte: QR immer schwarz auf weiß – auch im Dunkel-Design, damit jeder Scanner ihn liest */
+.ausweis-karte { background: #fff; color: #1a1500; border: 3px solid #f2b705; border-radius: 16px; padding: 14px; max-width: 340px; margin: 0 auto 10px; text-align: center; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.ausweis-kopf { display: flex; align-items: center; justify-content: center; gap: 8px; color: #8a6400; font-weight: 800; font-size: 1.05rem; margin-bottom: 8px; }
+.ausweis-kopf img { border-radius: 50%; }
+.ausweis-qr svg { width: 100%; max-width: 280px; height: auto; display: block; margin: 0 auto; background: #fff; }
+.ausweis-name { font-weight: 800; font-size: 1.2rem; margin-top: 8px; } .ausweis-art { color: #555; font-size: .92rem; }
+.ausweis-nr { font-family: ui-monospace, monospace; font-size: 1.15rem; letter-spacing: 2px; color: #8a6400; margin-top: 4px; }
+.ausweis-demo { margin-top: 6px; font-size: .85rem; color: #b3261e; font-weight: 700; } .ausweis-hinweis { text-align: center; }
+.abschnitt.sz-zeile { flex-wrap: nowrap; align-items: center; }
+.sz-zeile h3 { flex: 1 1 auto; min-width: 0; margin-top: 12px; margin-bottom: 8px; }
+.sz-zeile .sz-rechts { margin-top: 4px; }
+/* 🔍 0.62.0 Ausweis prüfen */
+.ap-video { position: relative; width: 100%; max-width: 420px; margin: 0 auto 10px; aspect-ratio: 1; border-radius: 16px; overflow: hidden; background: #111; }
+.ap-video video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ap-rahmen { position: absolute; inset: 18%; border: 4px solid #f2b705; border-radius: 14px; box-shadow: 0 0 0 999px rgba(0,0,0,.35); }
+.ap-ergebnis { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; border-radius: 16px; text-align: center; margin-bottom: 10px; }
+.ap-ergebnis.ok { background: #e3f5e9; color: #0f3d22; border: 3px solid #1b7a43; } .ap-ergebnis.nein { background: #fde8e7; color: #5c0f0b; border: 3px solid #b3261e; }
+.ap-zeichen { font-size: 2.6rem; line-height: 1; } .ap-ergebnis b { font-size: 1.3rem; } .ap-gesicht { width: 72px; height: 72px; display: block; } .ap-gesicht svg { width: 100%; height: 100%; }
+.ap-tipp { text-align: center; }
+/* 🎼 0.63.0 Abschnitts-Überschriften im Register „Leitung“ (über die ganze Breite des Kachel-Rasters) */
+.raster .reg-abschnitt { grid-column: 1 / -1; margin: 10px 4px 0; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--grau); }
+.raster .reg-abschnitt:first-child { margin-top: 0; }
+/* 📦 0.63.0 Inventur */
+.iv-knoepfe { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.iv-video { width: 100%; max-width: 420px; aspect-ratio: 1; object-fit: cover; display: block; margin: 0 auto 12px; border-radius: 16px; background: #111; border: 4px solid #f2b705; }
+.iv-sym { font-size: 1.3rem; width: 30px; text-align: center; flex: none; }
+.iv-fach li, .iv-orte li { display: flex; align-items: center; gap: 10px; } .iv-fach small, .iv-orte small { display: block; opacity: .8; }
+.iv-rechts { display: inline-flex; gap: 6px; align-items: center; flex: none; }
+.iv-da { background: #1b7a43 !important; color: #fff !important; } .iv-fehlt { background: #b3261e !important; color: #fff !important; }
+.b-rot { background: #fde8e7; color: #b3261e; } .b-blau { background: #e3eefc; color: #1e5aa8; }
+/* Regal-Schilder: 2 je Seite, QR schwarz auf weiß */
+.iv-schilder { display: flex; flex-direction: column; gap: 14mm; }
+.iv-schild { display: flex; gap: 8mm; align-items: center; border: 1mm solid #1a1500; border-radius: 4mm; padding: 6mm; break-inside: avoid; page-break-inside: avoid; background: #fff; color: #1a1500; }
+.iv-schild-qr { width: 55mm; flex: none; } .iv-schild-qr svg { width: 100%; height: auto; display: block; }
+.iv-schild-gold { height: 3mm; background: #f2b705; border-radius: 1.5mm; margin-bottom: 3mm; }
+.iv-schild h2 { margin: 0 0 2mm; font-size: 22pt; } .iv-schild p { margin: 1mm 0; font-size: 11pt; } .iv-schild-fuss { color: #8a6400; font-size: 9pt !important; }
+/* 🎼 0.63.0 mehr als 4 Register: zwei Reihen à 3 – Namen bleiben ganz lesbar */
+.register.viele { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.register.viele button { padding: 8px 4px; font-size: .88rem; }

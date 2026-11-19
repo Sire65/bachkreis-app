@@ -1,0 +1,46 @@
+/* 🧹 0.78.0 Aufgeräumte Anordnung (Wunsch Hansi 18.11.: „Buttons und Knöpfe … voll und unübersichtlich – aufgeräumter, an die Größen
+   angepasst, nicht überladen“). Gilt für alle Seiten; gemessen mit einer Prüfung aller 98 Seiten in allen Rollen bei 390 px Breite.
+   Zuletzt geladen, damit es die Einzelregeln sanft überstimmt. */
+
+/* 1) Seitenkopf: Der Titel behält mindestens 9 Zeichen Platz – passen die Knöpfe nicht daneben, rutschen sie rechtsbündig in eine
+      zweite Zeile, statt den Titel abzuschneiden („N…“). */
+.kopf2 { flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
+.kopf2 h2 { flex: 1 1 9.5rem; overflow-wrap: anywhere; }
+.kopf2 .na-netz + h2 { flex: 1 1 8rem; }
+.kopf2 > .knopf, .kopf2 > button:not(.zurueck) { flex: none; min-height: 40px; }
+
+/* 2) Filter-Reihen (Chips/Reiter): umbrechen statt rechts unsichtbar weiterlaufen – alles auf einen Blick, nichts abgeschnitten. */
+.inst-chips, .jb-reiter { flex-wrap: wrap; overflow-x: visible; row-gap: 6px; }
+/*    Lange Reihen (7 und mehr) würden 4–5 Zeilen füllen: dort wischen, mit sanftem Auslaufen rechts als Hinweis „es geht weiter“. */
+.inst-chips:has(> :nth-child(7)) { flex-wrap: nowrap; overflow-x: auto; -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); padding-right: 28px; }
+
+/* 3) Fingergerecht: Filter-Knöpfe und kleine Knöpfe mindestens 36 px hoch (vorher 28 px), Schrift etwas ruhiger. */
+.inst-chips button, .ub-chips button, .chip-wahl, .jb-reiter button, .knopf.klein { min-height: 36px; }
+.knopf { min-height: 42px; line-height: 1.2; }
+.knopfreihe { gap: 8px 10px; align-items: stretch; }
+
+/* 4) Knopfreihen mit vielen Knöpfen auf dem Handy: gleich breite Spalten statt ungleichmäßigem Flattersatz. */
+@media (max-width: 560px) {
+  .knopfreihe:has(> :nth-child(3)) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .knopfreihe:has(> :nth-child(3)) > * { width: 100%; text-align: center; justify-content: center; }
+  .knopfreihe:has(> :nth-child(3)) > .knopf.breit, .knopfreihe:has(> :nth-child(3)) > .knopf.haupt:only-of-type { grid-column: 1 / -1; }
+}
+
+/* 5) Schwebende 🔍/? -Knöpfe: schmal übereinander am Rand und halb durchsichtig, solange man nicht zielt – sie verdecken weniger Inhalt. */
+.hilfe-knoepfe { flex-direction: column; gap: 6px; right: 8px; }
+.hilfe-knoepfe button { width: 40px; height: 40px; font-size: 1.05rem; opacity: .72; transition: opacity .15s; }
+.hilfe-knoepfe button:hover, .hilfe-knoepfe button:focus-visible { opacity: 1; }
+body.mit-fuss .seite { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
+
+/* 6) Breite Tabellen (mit tabindex="0", also auch per Tastatur wischbar – Barrierefreiheit) bleiben in ihrer Karte und lassen sich dort
+      wischen, statt die ganze Seite zu verbreitern. */
+.karte table[tabindex] { display: block; max-width: 100%; overflow-x: auto; }
+
+/* 7) Lange Hinweise im Abzeichen-Stil (z. B. „Muster – bitte vor dem Echtbetrieb …“) brechen um, statt die Seite zu verbreitern. */
+p.badge, div.badge { display: block; white-space: normal; border-radius: 12px; padding: 6px 10px; line-height: 1.35; }
+
+/* 8) Wisch-Reihen (z. B. „Gerade online“): rechts sanft ausgeblendet – man sieht, dass es weitergeht. */
+.on-knoepfe { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); padding-right: 24px; }
+
+/* 9) Hinweis-Leisten (z. B. „Wann passt es? … – bitte abstimmen ›“): Zusatz unter den Text statt in eine schmale eigene Spalte. */
+.t-hinweis { flex-wrap: wrap; } .t-hinweis > b { flex: 1 1 60%; } .t-hinweis > span { white-space: nowrap; }

@@ -1,0 +1,49 @@
+/* BK-PINNWAND (0.7.0) – Korkwand und Post-its wie in der KC Club App (KC-CLUB-PINNWAND, -FARBEN, -NAME, -KNOPF, -EMOJI) */
+.kork { background: radial-gradient(circle at 20% 30%, rgba(0,0,0,.07) 1px, transparent 2px) 0 0/9px 9px, radial-gradient(circle at 70% 60%, rgba(255,255,255,.12) 1px, transparent 2px) 0 0/13px 13px, linear-gradient(135deg, #c99a62, #b8844c);
+  border: 8px solid #8a5a2b; border-radius: 16px; padding: 22px 12px 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 14px; box-shadow: inset 0 2px 8px rgba(0,0,0,.25); min-height: 160px; }
+.kork .leer { grid-column: 1 / -1; text-align: center; color: #fff8e6; font-weight: 800; text-shadow: 0 1px 2px rgba(0,0,0,.4); align-self: center; }
+.zettel { position: relative; background: #fff27a; color: #2b2410; padding: 22px 12px 10px; border-radius: 2px; box-shadow: 2px 6px 10px rgba(0,0,0,.28); font-size: .98rem; line-height: 1.35; transform: rotate(var(--dreh, -1.5deg)); overflow-wrap: break-word; hyphens: auto; }
+.zettel::before { content: ""; position: absolute; top: -7px; left: 50%; width: 16px; height: 16px; margin-left: -8px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a8a, #c62828 60%, #7f1010); box-shadow: 1px 3px 3px rgba(0,0,0,.4); }
+.zettel.wichtig { background: #ffd94a; outline: 3px solid #c62828; }
+/* 1 gelb · 2 rosé · 3 hellgrün · 4 hellblau – wie echte Post-its, „wichtig“ behält Rand und Nadel */
+.zettel.f1 { background: #fff27a; } .zettel.f2 { background: #ffb8d1; } .zettel.f3 { background: #c6f2a2; } .zettel.f4 { background: #aeddf7; }
+.zettel .zkopf { font-size: .76rem; line-height: 1.3; margin: 0 0 6px; color: #3d3110; }
+.zettel .zkopf b { font-size: .95rem; }
+.zettel.wichtig::before { background: radial-gradient(circle at 35% 35%, #ffb3b3, #d50000 60%, #7f0000); width: 18px; height: 18px; margin-left: -9px; }
+.zettel .zwichtig { position: absolute; top: 4px; right: 6px; font-size: .7rem; font-weight: 900; color: #8e0f0f; }
+.zettel .ztext { white-space: pre-wrap; font-weight: 700; zoom: var(--zoom, 1); }
+.zettel .zfuss { margin-top: 8px; font-size: .74rem; color: #4a3d10; }
+.zettel .zknoepfe { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.zettel .zknoepfe button { border: 1px solid rgba(0,0,0,.25); background: rgba(255,255,255,.55); color: #2b2410; border-radius: 10px; padding: 5px 9px; font-weight: 800; font-size: .8rem; cursor: pointer; }
+.zettel .zknoepfe button.antw { background: #1a1500; color: #f5c400; border-color: #1a1500; font-size: .88rem; padding: 7px 12px; }
+.zettel .zknoepfe button.erl { background: #25683f; color: #fff; border-color: #25683f; }
+.zettel.erledigt { filter: saturate(.55); } /* 0.25: statt Transparenz – Text bleibt lesbar (axe) */
+.zettel details { margin-top: 6px; font-size: .78rem; } .zettel summary { cursor: pointer; font-weight: 800; }
+.zettel-nadel { position: absolute; left: 50%; top: -10px; font-size: 1.6rem; pointer-events: none; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+/* Aushang (🎂 Geburtstag): grün mit grüner Nadel, zählt nicht zu den 4 Zetteln */
+.zettel.aushang { background: #e3f6e6; outline: 3px solid #2e7d4f; padding-top: 24px; }
+.zettel.aushang .zwichtig { color: #1d5e33; position: static; display: block; margin: 0 0 4px; font-size: .74rem; }
+.zettel.aushang::before { background: radial-gradient(circle at 35% 35%, #9be7a8, #2e7d4f 60%, #144d26); }
+.zettel.aushang .zknoepfe button.antw { background: #2e7d4f; border-color: #2e7d4f; color: #fff; }
+.zettelpunkt { width: 16px; height: 16px; border-radius: 3px; flex: none; box-shadow: 1px 1px 2px rgba(0,0,0,.3); }
+.zettelpunkt.f1 { background: #fff27a; } .zettelpunkt.f2 { background: #ffb8d1; } .zettelpunkt.f3 { background: #c6f2a2; } .zettelpunkt.f4 { background: #aeddf7; }
+/* „＋ Zettel 2/4“ – der Stand steht als kleine Zahl im Knopf */
+#pwNeuKnopf .pwStand { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: rgba(0,0,0,.32); font-size: .78em; font-weight: 800; vertical-align: 1px; }
+#pwNeuKnopf .pwStand.voll { background: #f6c343; color: #3b2a00; }
+.pw-voll { margin: 0 0 10px; border: 2px solid #d68910; border-radius: 10px; padding: 8px 10px; }
+.pw-voll .zeile { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.pw-hinweis-wichtig { border: 2px solid #c62828; }
+.pw-kopfzeile { display: flex !important; align-items: baseline; justify-content: space-between; gap: 8px; }
+.zaehler200 { font-size: .78rem; font-weight: 700; color: var(--grau); } .zaehler200.knapp { color: #b26a00; } .zaehler200.voll { color: #c62828; }
+.pw-emo { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
+.pw-emo button { min-width: 44px; min-height: 44px; font-size: 1.35rem; border: 1px solid var(--linie); background: var(--karte); border-radius: 12px; cursor: pointer; }
+.wahlliste { max-height: 260px; overflow-y: auto; border: 1px solid var(--linie); border-radius: 12px; background: var(--karte); }
+.wahlliste label { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--linie); cursor: pointer; font-weight: 700; }
+.wahlliste label[hidden] { display: none; }
+.wahlliste label:last-child { border-bottom: none; } .wahlliste input { width: 20px; height: 20px; }
+#pwForm .umschalter button { color: var(--text); }
+/* Post-it-Fenster beim Öffnen / Erinnerung */
+.pw-fenster-hg { z-index: 60; }
+.pwfenster-zettel { display: grid; gap: 22px; padding: 18px 10px 8px; }
+.pwfenster-zettel .zettel { font-size: 1.1rem; }
+@media (max-width: 380px) { .kork { grid-template-columns: 1fr 1fr; gap: 20px 10px; padding: 20px 8px 10px; } .zettel { font-size: .92rem; padding: 20px 9px 9px; } }

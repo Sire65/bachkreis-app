@@ -1,0 +1,1 @@
+pdf.js 4.10.38 (Mozilla, Apache-2.0), legacy build – unverändert aus pdfjs-dist (übernommen aus der KC Club App). Nur für die Anzeige von PDFs in der App; wird erst beim ersten Öffnen eines PDFs geladen.

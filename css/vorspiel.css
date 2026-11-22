@@ -1,0 +1,52 @@
+/* 🎙️ Vorspiel (0.79.0): ein großer Knopf zum Aufnehmen, große Wahlfelder „An wen?“, Liste mit „neu“ */
+.vs-start, .vs-rec { text-align: center; }
+.vs-start p { text-align: left; }
+.vs-knopf { width: 128px; height: 128px; border-radius: 50%; border: 0; margin: 14px auto 8px; display: grid; place-items: center; cursor: pointer;
+  background: #d32f2f; color: #fff; font-size: 2.6rem; box-shadow: 0 0 0 10px rgba(211, 47, 47, .22), 0 0 0 22px rgba(211, 47, 47, .08); }
+.vs-knopf:focus-visible { outline: 4px solid var(--haupt); outline-offset: 26px; }
+.vs-knopf.an { animation: vsPuls 1.4s ease-in-out infinite; }
+@keyframes vsPuls { 50% { box-shadow: 0 0 0 16px rgba(211, 47, 47, .3), 0 0 0 30px rgba(211, 47, 47, .1); } }
+.vs-zeit { font-size: 2rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.vs-pegel { display: flex; gap: 4px; justify-content: center; align-items: flex-end; height: 40px; margin: 8px 0; }
+.vs-pegel i { width: 8px; height: 100%; border-radius: 3px; background: var(--karte2); transition: background .08s; }
+.vs-pegel i:nth-child(odd) { height: 70%; } .vs-pegel i:nth-child(3n) { height: 85%; }
+.vs-pegel i.an { background: #2e9d5b; } .vs-pegel i.an:nth-child(n+11) { background: #e0a800; } .vs-pegel i.an:nth-child(n+14) { background: #d32f2f; }
+.vs-vorzaehler { display: inline-flex; gap: 8px; align-items: center; margin-top: 6px; font-weight: 700; min-height: 40px; }
+.vs-wer { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 6px; }
+.vs-audio { width: 100%; margin: 6px 0; }
+.vs-frage { font-weight: 800; margin: 12px 0 6px; }
+.vs-wahl { display: grid; gap: 8px; }
+.vs-option { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; font: inherit; color: var(--text); background: var(--karte2);
+  border: 2px solid transparent; border-radius: 14px; padding: 11px 12px; cursor: pointer; min-height: 56px; }
+.vs-option > span:first-child { font-size: 1.5rem; } .vs-option b { display: block; } .vs-option small { color: var(--grau); font-weight: 600; }
+.vs-option.an { border-color: var(--haupt); background: color-mix(in srgb, var(--haupt) 16%, var(--karte)); }
+.vs-auswahl details { margin: 8px 0; } .vs-auswahl summary { font-weight: 800; cursor: pointer; min-height: 36px; display: flex; align-items: center; }
+.vs-personen { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 10px; padding: 4px 0 4px 6px; }
+.vs-person { display: flex; gap: 8px; align-items: center; min-height: 36px; }
+.vs-senden { margin-top: 12px; font-size: 1.1rem; }
+.vs-liste { list-style: none; margin: 0; padding: 0; }
+.vs-liste li + li { border-top: 1px solid var(--linie); }
+.vs-zeile { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 2px; background: none; border: 0; font: inherit; color: var(--text); text-align: left; cursor: pointer; min-height: 56px; }
+.vs-sym { width: 42px; height: 42px; border-radius: 50%; background: var(--karte2); display: grid; place-items: center; font-size: 1.2rem; flex: none; }
+.vs-zeile .fl { flex: 1; min-width: 0; } .vs-zeile b { display: block; overflow-wrap: anywhere; } .vs-zeile small { display: block; color: var(--grau); }
+.vs-neu { background: var(--haupt); color: var(--haupt-text); border-radius: 99px; padding: 2px 9px; font-size: .78rem; font-weight: 900; flex: none; }
+.vs-ok { color: #2e9d5b; font-weight: 900; flex: none; }
+.vs-gruen { color: #2e7d32 !important; font-weight: 700; } :root.dunkel .vs-gruen { color: #66bb6a !important; }
+.vs-notiz { font-style: italic; background: var(--karte2); border-radius: 10px; padding: 8px 10px; }
+.vs-tipps { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.vs-antworten { padding-left: 18px; } .vs-antworten li { margin: 4px 0; }
+.vs-tage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .vs-tage input { width: 5.5em; }
+.vs-live h3 { color: #d32f2f; } :root.dunkel .vs-live h3 { color: #ff7b7b; }
+@media (prefers-reduced-motion: reduce) { .vs-knopf.an { animation: none; } }
+/* 📅 0.79.7 Live-Vorspiel verabreden */
+.vt-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.vt { border: 1px solid var(--linie); border-radius: 14px; padding: 10px 12px; background: var(--karte); }
+.vt.dran { border: 2px solid var(--haupt); box-shadow: 0 0 0 3px color-mix(in srgb, var(--haupt) 18%, transparent); }
+.vt-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .vt-kopf b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.vt-status { font-size: .82rem; font-weight: 800; color: var(--grau); } .vt.dran .vt-status { color: var(--text); }
+.vt-notiz { font-style: italic; margin: 6px 0; } .vt-notiz b { font-style: normal; }
+.vt-frage { font-weight: 800; margin: 8px 0 4px; }
+.vt-zeiten { display: grid; gap: 6px; } .vt-zeiten .knopf { width: 100%; text-align: left; }
+.vt-termin { font-size: 1.05rem; margin: 6px 0; }
+.vt-abgelehnt, .vt-abgesagt, .vt-zurueckgezogen { opacity: .65; }
+.vt-live { margin-top: 6px; }

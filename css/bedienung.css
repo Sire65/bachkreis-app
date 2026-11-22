@@ -419,3 +419,4 @@ body:has(#hilfeKnoepfe:not([hidden])) #inhalt { padding-bottom: 64px; } /* die r
 .gk-wind i:nth-child(1) { top: 18%; } .gk-wind i:nth-child(2) { top: 30%; animation-delay: .15s; } .gk-wind i:nth-child(3) { top: 42%; animation-delay: .3s; }
 @keyframes gkBein { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } } @keyframes gkBlinzeln { 0%, 85% { transform: scaleY(1); } 90% { transform: scaleY(.1); } }
 @keyframes gkWiegen { from { transform: rotate(-8deg); } to { transform: rotate(8deg); } } @keyframes gkWind { to { left: 110%; opacity: 0; } }
+.kind-knoepfe { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; } .kind-knoepfe .knopf { width: 100%; text-align: center; }

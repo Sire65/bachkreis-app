@@ -1,6 +1,6 @@
 {
   "name": "bachkreis-app",
-  "version": "0.79.5",
+  "version": "0.79.6",
   "private": true,
   "type": "module",
   "description": "Bachkreis Bergkamen – Verwaltungs- und Termin-App (PWA, ohne Build-Schritt)",

@@ -39,7 +39,8 @@ export function elternErledigen(ks = gewaehlt(), heute = new Date()) {
 }
 // 0.62.0 die 8 wichtigsten (Wunsch Hansi); Mitfahrbörse, Üben und Elternbereich stehen unter „Alle Bereiche“
 export const ELTERN_KACHELN = [["meinetermine", "📅", "Termine"], ["meinstatus", "🤒", "Krank / Status"], ["nachrichten", "💬", "Nachrichten"], ["meinegenehmigungen", "✍️", "Genehmigungen"],
-  ["pinnwand", "📌", "Pinnwand"], ["gesundheit", "🩺", "Notfall"], ["meininstrument", "🎻", "Leihinstrument"], ["kinder", "👪", "Meine Kinder"]];
+  ["pinnwand", "📌", "Pinnwand"], ["gesundheit", "🩺", "Notfall"], ["meininstrument", "🎻", "Leihinstrument"], ["kinder", "👪", "Meine Kinder"],
+  ["vorspiel", "🎙️", "Vorspiel"], ["buehne", "🎭", "Bühne"]]; // 0.79.6 Vorspiel für das Kind aufnehmen; Bühne mit Bach und Noten
 
 export function elternStartHtml() {
   const ks = kinder(), w = einst().elternKind && ks.includes(einst().elternKind) ? einst().elternKind : "", sicht = gewaehlt();

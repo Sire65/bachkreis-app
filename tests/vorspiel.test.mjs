@@ -102,3 +102,11 @@ test("🔴 Live-Vorspiel: Anruf im Musik-Modus (Mikrofon ohne Sprachfilter); Auf
   assert.match(sp, /audioBitsPerSecond: musik \? 64000 : 32000/);
   assert.match(lies("js/app/start.js"), /id: "vorspiel", sym: "🎙️"/); assert.match(lies("js/kern/hilfe.js"), /h\("vorspiel-live"/);
 });
+
+test("0.79.6 Kinder und Eltern finden Vorspiel und Bühne auf ihrer eigenen Startseite", () => {
+  const k = lies("js/app/kinderstart.js"), e = lies("js/app/elternstart.js");
+  assert.match(k, /\["vorspiel", "🎙️", "Vorspiel", "vorspiel"\]/); assert.match(k, /\["buehne", "🎭", "Bühne", "buehne"/);
+  assert.match(k, /data-a="kindKachel" data-x="vorspiel">🎙️ Vorspielen/, "Knopf bei den Übe-Aufgaben");
+  assert.match(e, /\["vorspiel", "🎙️", "Vorspiel"\], \["buehne", "🎭", "Bühne"\]/);
+  assert.equal((k.match(/^ {2}\["\w+", "[^"]+", "[^"]+"/gm) || []).length % 2, 0, "gerade Zahl Kacheln (Zweier-Raster ohne Lücke)");
+});

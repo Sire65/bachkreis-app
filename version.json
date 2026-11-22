@@ -1,11 +1,18 @@
 {
-  "version": "0.79.5",
-  "datum": "2026-11-18",
+  "version": "0.79.6",
+  "datum": "2026-11-22",
   "stufe": "DEV",
   "neu": [
-    "🎼 Bach-Stücke mit freien Noten zum Mitlesen; eigene Noten aus dem Notenarchiv über die BWV-Nummer"
+    "🎙️ Vorspiel und 🎭 Bühne auch auf der Kinder- und Eltern-Startseite"
   ],
   "verlauf": [
+    {
+      "version": "0.79.5",
+      "datum": "2026-11-18",
+      "neu": [
+        "🎼 Bach-Stücke mit freien Noten zum Mitlesen; eigene Noten aus dem Notenarchiv über die BWV-Nummer"
+      ]
+    },
     {
       "version": "0.79.4",
       "datum": "2026-11-18",

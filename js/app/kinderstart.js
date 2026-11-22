@@ -16,10 +16,12 @@ export const kindAnsicht = () => istSchueler() && !(kindGross() && einst().kindM
 export const KIND_KACHELN = [
   ["meinetermine", "📅", "Termine", "termine", { filter: "meine" }],
   ["kindueben", "🎻", "Üben", "buehne", { modus: "ueben" }],
+  ["vorspiel", "🎙️", "Vorspiel", "vorspiel"], // 0.79.6 (Hansi: „Wo kann das Kind die Aufnahme machen“ – fehlte in der Kinder-Ansicht)
+  ["buehne", "🎭", "Bühne", "buehne", { modus: "melodien" }], // 0.79.6 Orchester, Bach und Noten – vorher nur über „Üben“ erreichbar
   ["meinenoten", "🎼", "Noten", "meinenoten"],
   ["quiz", "🧠", "Quiz", "quiz"],
   ["instrumentenkunde", "🎺", "Instrumente", "instrumentenkunde"],
-  ["orchester", "🎭", "Orchester", "orchester"],
+  ["orchester", "👥", "Orchester", "orchester"], // 0.79.6 👥 wie unten in der Leiste (🎭 ist die Bühne)
   ["nachrichten", "💬", "Nachrichten", "nachrichten"],
   ["ich", "🙂", "Ich", null],
 ];
@@ -44,10 +46,10 @@ function uebeKarte(pid) {
   const auf = liste("uebeaufgaben", (x) => aufgabeGiltFuer(db, x, pid) && (!x.bis || x.bis >= heute)).sort((x, y) => String(x.bis || "9").localeCompare(String(y.bis || "9"))).slice(0, 4);
   const f = kindFortschritt(pid);
   const kopf = `<h3>🎯 Meine Übe-Aufgaben <span class="kind-sterne">⭐ ${f.sterne || 0}${f.serie ? ` · 🔥 ${f.serie}` : ""}</span></h3>`;
-  if (!auf.length) return `<div class="karte kind-karte">${kopf}<p>Gerade keine Aufgabe – üb, was dir Spaß macht! 🎻</p><button type="button" class="knopf haupt breit" data-a="kindUeben">🎻 Jetzt üben</button></div>`;
+  if (!auf.length) return `<div class="karte kind-karte">${kopf}<p>Gerade keine Aufgabe – üb, was dir Spaß macht! 🎻</p><div class="kind-knoepfe"><button type="button" class="knopf haupt" data-a="kindUeben">🎻 Jetzt üben</button><button type="button" class="knopf" data-a="kindKachel" data-x="vorspiel">🎙️ Vorspielen</button></div></div>`;
   return `<div class="karte kind-karte">${kopf}<ul class="kind-aufgaben">${auf.map((x) => { const st = uebeStand(db, x).find((s) => s.pid === pid) || {};
     return `<li class="${st.ziel ? "fertig" : ""}"><span>${st.ziel ? "✅" : "▸"}</span><b>${esc(x.titel)}</b><small>${st.ziel ? "geschafft!" : st.anzahl ? `${st.anzahl}× geübt` : "noch offen"}${x.bis ? ` · bis ${esc(x.bis.split("-").reverse().slice(0, 2).join("."))}.` : ""}</small></li>`; }).join("")}</ul>
-    <button type="button" class="knopf haupt breit" data-a="kindUeben">🎻 Jetzt üben</button></div>`;
+    <div class="kind-knoepfe"><button type="button" class="knopf haupt" data-a="kindUeben">🎻 Jetzt üben</button><button type="button" class="knopf" data-a="kindKachel" data-x="vorspiel">🎙️ Vorspielen</button></div></div>`;
 }
 function zettelKarte() {
   const l = pwWichtigFuerMich().slice(0, 2); if (!l.length) return "";

@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.79.6 DEV – 22.11.2026
+🎙️ **Vorspiel und Bühne für Kinder und Eltern auffindbar** (Hansi: „Wo kann das Kind die Aufnahme machen?“ – „Ich finde die Kachel nicht“): Kinder und Eltern haben eine eigene, vereinfachte Startseite mit festen großen Kacheln – dort fehlten das Vorspiel und die Bühne (die Bühne war für Kinder nur über „Üben“ erreichbar).
+- **Kinder-Startseite:** neue Kacheln **🎙️ Vorspiel** und **🎭 Bühne** (gleich nach „Üben“); bei **„Meine Übe-Aufgaben“** neben „🎻 Jetzt üben“ der Knopf **„🎙️ Vorspielen“**; „Orchester“ jetzt mit 👥 wie in der Leiste unten (🎭 = Bühne)
+- **Eltern-Startseite:** Kacheln **🎙️ Vorspiel** (für das eigene Kind aufnehmen) und **🎭 Bühne**
+- Hilfe-Text angepasst, Test ergänzt
+
 ## 0.79.5 DEV – 18.11.2026
 🎼 **Noten zu den Bach-Aufnahmen** (Wunsch Hansi „Verknüpfung vorbereiten und gemeinfrei für die Lieder schon mal die Noten besorgen“):
 - Bühne › 🎻 Bach › **„🎼 Noten“**: zu jedem Bach-Stück die Noten zum Mitlesen (das gerade gespielte oben) – öffnen in der PDF-Ansicht mit Pult

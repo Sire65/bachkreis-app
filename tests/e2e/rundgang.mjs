@@ -293,7 +293,7 @@ for (const rolle of ["leitung", "lehrkraft", "vorstand", "schueler", "eltern"]) 
 }
 // 🧒 0.32.0 Kinder-Ansicht: 8 Kacheln, keine Register, Kinder-Fußleiste, Zusage direkt · 🧠 Quiz-Runde bis zum Ende
 await p.selectOption("#demoleiste select", "schueler"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));
-if ((await p.$$(".kind-kachel")).length !== 8 || (await p.$("#register"))) fehler.push("Kinder-Ansicht: nicht 8 Kacheln bzw. Register sichtbar");
+if ((await p.$$(".kind-kachel")).length !== 10 || (await p.$("#register"))) fehler.push("Kinder-Ansicht: nicht 10 Kacheln (0.79.6: + Vorspiel, Bühne) bzw. Register sichtbar");
 if (!(await p.$('.fuss-leiste [data-x="kindueben"]'))) fehler.push("Kinder-Ansicht: Fußleiste ohne 🎻 Üben");
 if (await p.$('.kind-antwort [data-x$="|ja"]')) { await p.click('.kind-antwort [data-x$="|ja"]'); await p.waitForTimeout(400); }
 await p.screenshot({ path: `${BILDER}kind-start.png`, fullPage: true });
@@ -304,7 +304,7 @@ await p.screenshot({ path: `${BILDER}quiz-ende.png` });
 await p.click('.fuss-leiste [data-x="kindich"]'); await p.waitForSelector(".quiz-stand");
 // 👪 0.33.0 Eltern-Ansicht: „Bitte erledigen“, Kinder-Umschalter, 8 Kacheln (0.62.0: die wichtigsten, Rest unter „Alle Bereiche“) · 🏢 Büro: Regal, Brief aus Vorlage ablegen, Vorstand sieht nur Finanzen
 await p.selectOption("#demoleiste select", "eltern"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));
-if (!(await p.$(".eltern-todo")) || (await p.$$(".eltern-raster .kachel")).length !== 8) fehler.push("Eltern-Ansicht: Erledigen-Liste oder Kacheln fehlen");
+if (!(await p.$(".eltern-todo")) || (await p.$$(".eltern-raster .kachel")).length !== 10) fehler.push("Eltern-Ansicht (0.79.6: 10 Kacheln mit Vorspiel und Bühne): Erledigen-Liste oder Kacheln fehlen");
 if ((await p.$$(".eltern-kinder button")).length >= 2) { await p.click(".eltern-kinder button >> nth=0"); await p.waitForSelector(".eltern-kinder button.an >> nth=0"); await p.click('.eltern-kinder [data-x=""]'); }
 await p.screenshot({ path: `${BILDER}eltern-start.png`, fullPage: true });
 await p.selectOption("#demoleiste select", "leitung"); await p.waitForTimeout(500); await p.evaluate(() => document.querySelectorAll("#blattHg,#snHg").forEach((e) => e.remove()));

@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.79.7 DEV – 22.11.2026
+📅 **Live-Vorspiel verabreden** (Wunsch Hansi „zum Vorspiel verabreden als Terminanfrage mit annehmen, ablehnen, anderen vorschlagen usw.“):
+- 🎙️ Vorspiel › **„📅 Live-Vorspiel verabreden“**: Kind (oder Eltern für ihr Kind) **fragt einen Termin an** – Lehrkraft wählen, **bis zu 3 Zeiten**, Dauer (10–45 Min.), Nachricht. **Lehrkräfte können auch ein Kind einladen**
+- Wer dran ist, sieht **„👉 Du bist dran“** (Karte rückt nach oben, Zahl an der Kachel) und kann: **eine Zeit antippen (✅ verabredet)**, **❌ ablehnen** oder **↔️ andere Zeit vorschlagen** – dann ist die andere Seite dran, so lange hin und her, bis es passt; wer gefragt hat, kann **↩️ zurückziehen**
+- **Verabredet:** Zeit und Dauer, **📆 In den Kalender** (mit Erinnerung 10 Min. vorher), **🚫 Absagen** (beide Seiten); zur verabredeten Zeit (10 Min. vorher bis kurz nach dem Ende) beim Kind **🔴 Jetzt live vorspielen** (Anruf im Musik-Modus, sobald „Anrufe & Video“ freigeschaltet ist), bei der Lehrkraft „ruft gleich an – App offen lassen“
+- **Jeder Schritt benachrichtigt die andere Seite** (bei Kindern unter 18 auch die Eltern); Nachrichten zu jedem Schritt stehen in der Karte („Bettina schlägt vor: …“)
+- **Server erzwingt** (gleiche Logik wie die App, `logik.js` vtNeu/vtAntwort): sehen nur Kind, Eltern und Lehrkraft; antworten nur, wer am Zug ist; nur vorgeschlagene, künftige Zeiten; Personen nicht änderbar; anfragen nur für sich bzw. das eigene Kind und nur bei Lehrkräften
+- Neue Tabelle `bk_vorspiel_termine` (Migration 20261206, Rechte nur für den Server), Beispiel-Verabredungen in der Vorführversion, Hilfe, Tests (`vorspiel.test`: 2 Abläufe am Server)
+
 ## 0.79.6 DEV – 22.11.2026
 🎙️ **Vorspiel und Bühne für Kinder und Eltern auffindbar** (Hansi: „Wo kann das Kind die Aufnahme machen?“ – „Ich finde die Kachel nicht“): Kinder und Eltern haben eine eigene, vereinfachte Startseite mit festen großen Kacheln – dort fehlten das Vorspiel und die Bühne (die Bühne war für Kinder nur über „Üben“ erreichbar).
 - **Kinder-Startseite:** neue Kacheln **🎙️ Vorspiel** und **🎭 Bühne** (gleich nach „Üben“); bei **„Meine Übe-Aufgaben“** neben „🎻 Jetzt üben“ der Knopf **„🎙️ Vorspielen“**; „Orchester“ jetzt mit 👥 wie in der Leiste unten (🎭 = Bühne)

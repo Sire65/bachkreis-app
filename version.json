@@ -1,11 +1,18 @@
 {
-  "version": "0.79.6",
+  "version": "0.79.7",
   "datum": "2026-11-22",
   "stufe": "DEV",
   "neu": [
-    "🎙️ Vorspiel und 🎭 Bühne auch auf der Kinder- und Eltern-Startseite"
+    "📅 Live-Vorspiel verabreden: Terminanfrage mit annehmen, ablehnen, andere Zeit vorschlagen"
   ],
   "verlauf": [
+    {
+      "version": "0.79.6",
+      "datum": "2026-11-22",
+      "neu": [
+        "🎙️ Vorspiel und 🎭 Bühne auch auf der Kinder- und Eltern-Startseite"
+      ]
+    },
     {
       "version": "0.79.5",
       "datum": "2026-11-18",

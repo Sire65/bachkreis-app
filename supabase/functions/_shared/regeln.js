@@ -8,12 +8,13 @@
 //  - Fremde Personen sehen Schüler/Eltern nur mit Namen (keine Adresse, kein Telefon, keine Gesundheitsangaben).
 //  - Geschützte Felder (Notfall-/Gesundheitsinfo) nur Leitung/Admin/Lehrkraft.
 import { ECHO_RUBRIKEN, ECHO_AUSGABEN, ECHO_REDAKTION, ECHO_FREIGABE, ECHO_TEXT_MAX, VS_GEGEN_MAX, vsGruppe, KS_CHAT, KS_SICHT, KS_LESEN, KS_SPERRE, KS_STANDARD, ksVon, kinderChatOffen, ksVerborgen, ab16, FOTO_ZWECKE, KUENDIGUNG_ARTEN, KUENDIGUNG_BEREICHE, KUENDIGUNG_WEGE, KUENDIGUNG_VERWALTER, STATUS_ARTEN, statusId, KARTEN_ROLLEN, KARTEN_STATUS, ZUSTIMMUNG_ARTEN, ZUSTIMMUNG_NACHWEIS, DS_VERSION, EK_VERTEILER, EK_QUELLEN, LV_VERWALTER, LV_STATUS, LEIH_ZUBEHOER, ANRUF_ARTEN, anrufErlaubt, erwachsen, UNTERLAGEN_ARTEN, UNTERLAGEN_LEITUNG, SITZUNG_PLANER, SITZUNG_ARTEN, SITZUNG_FUER, sitzungFuerMich, boerseDarf, BOERSE_ARTEN, BOERSE_KAT, rollenMit, HOCH_ROLLEN, RM_LEITUNG, ER_KASSE, erBetrag, VS_ABSTIMMEN, vsZielgruppe, FOTO_HOCHLADEN, TU_STIMMEN, TU_PLANER, tuAntwortId, tuFuerMich, ceId, cmId, STUMM_IMMER, ANGEHEFTET_MAX, bueroDarf, snFuerMich, snAntwortId, SN_SPAETER_STD, UEBE_MODI, UEBE_AUFNAHME_TAGE, PERSONEN_VOLL, PERSONEN_SICHT, TABELLEN, PINNWAND, pwSichtbar, pwEmpfaenger, pwGelesenId, pwAppPerson, CHAT, DATEI, nsId, nachrichtFrei, chatPartnerErlaubt, chatMitgliederMitKopie, istMinderjaehrig, elternZugriff, KIND_KONTAKT, VORSPIEL_TAGE_MAX, VORSPIEL_MAX_SEK, VORSPIEL_MAX_AN, vorspielTage } from "./schema.js";
+import { vtNeu, vtAntwort, vtAktionAus, vtSeite } from "./logik.js"; // 📅 0.79.7 gleiche Logik wie die App
 
 export const SERVER_ONLY = new Set(["aenderungen", "versand", "kom_zustand", "kom_ereignisse"]); // schreibt nur der Server
 const GESCHUETZT_ROLLEN = ["admin", "leitung", "lehrkraft"];
 const ALLGEMEIN = new Set(["gruppen", "register", "instrument_typen", "terminarten", "projekte", "genehmigung_vorlagen", "werke", "programm", "raeume", "chronik"]);
 // Private Tabellen: Zeilen-Regel gilt für ALLE Rollen (auch die Leitung sieht fremde private Pinnwand-Zettel nicht – wie KC)
-const PRIVAT = new Set(["vorspiele", "vorspiel_antworten", "passkeys", "zustimmungen", "eingangskorb", "leihvertraege", "tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
+const PRIVAT = new Set(["vorspiele", "vorspiel_antworten", "vorspiel_termine", "passkeys", "zustimmungen", "eingangskorb", "leihvertraege", "tischgaeste", "pinnwand", "pinnwand_gelesen", "nachricht_status", "uebungen", "eigene_termine", "klopfen", "chat_einstellungen", "chat_merker", "terminumfrage_antworten", "vorschlag_stimmen", "rueckmeldungen", "boerse", "jahrbuch_momente", "versammlungen", "unterlagen", "anrufe", "erstattungen", "fehlerberichte"]); // 0.38.0: Chat-Einstellungen und Merkliste sieht auch die Leitung nicht
 export const UEBE_INHALT = ["tonleitern", "etueden", "stueck", "vomblatt", "rhythmus", "gehoer", "technik"];
 // Eigene Unterhaltungen (Einzelchat, Runde) sind privat – auch die Leitung liest sie nur, wenn sie dabei ist (wie KC)
 const PRIVAT_CHAT = new Set(["einzel", "runde"]);
@@ -119,6 +120,7 @@ function zeileSichtbar(tab, z, ctx) {
     case "mitfahrten": return ctx.termine.has(z.termin_id); // 🚗 wer zum Termin eingeladen ist
     case "uebeaufgaben": return z.person_id ? ctx.meine.has(z.person_id) : (!z.register_id || ctx.register.has(z.register_id)) && (!z.gruppe_id || ctx.gruppen.has(z.gruppe_id)) && !!(z.register_id || z.gruppe_id);
     case "uebe_ergebnisse": return ctx.meine.has(z.person_id); // ⭐ eigene bzw. die der Kinder
+    case "vorspiel_termine": return z.lehrkraft === ctx.ich || ctx.meine.has(z.kind); // 📅 0.79.7 nur Lehrkraft, Kind und seine Eltern
     case "vorspiele": return vorspielSichtbar(z, ctx); // 🎙️ 0.79.0 Kind, Eltern, gewählte Empfänger – sonst niemand
     case "vorspiel_antworten": { const v = ctx.vpMap?.get(z.vorspiel_id); return !!v && vorspielSichtbar(v, ctx) && (z.von === ctx.ich || ctx.meine.has(v.von)); } // Antwort: Schreiber/in und das Kind (+ Eltern)
     case "gastgeber": return z.person_id === ctx.ich; // 🏠 eigenes Angebot
@@ -564,6 +566,26 @@ export function schreibPruefung(tab, neu, alt, ctx, jetzt = new Date().toISOStri
       return { ok: true, zeile: { id: neu.id, von: neu.von, stueck: String(neu.stueck || "").trim().slice(0, 80) || null, notiz: String(neu.notiz || "").trim().slice(0, 300) || null,
         aufnahme: "datei:" + id, dauer_sek: Number.isFinite(dauer) && dauer > 0 ? Math.min(dauer, VORSPIEL_MAX_SEK + 30) : null,
         an_art: ["lehrkraft", "register", "orchester", "auswahl"].includes(neu.an_art) ? neu.an_art : "auswahl", an, loeschen_am: loeschen, geloescht_am: null } };
+    }
+    case "vorspiel_termine": {
+      // 📅 0.79.7 Live-Vorspiel verabreden: neu = Kind/Eltern fragen eine Lehrkraft an oder eine Lehrkraft lädt ein Kind ein; danach darf nur antworten,
+      // wer am Zug ist – der Server leitet die Aktion aus der Änderung ab und rechnet die Zeile selbst nach (vtAntwort, gleiche Logik wie die App)
+      if (!alt) {
+        const lehrt = (p) => !!p && (rollenMit(p.rollen || []).some((r) => ["leitung", "lehrkraft", "admin"].includes(r)) || ["leitung", "lehrkraft"].includes(p.typ));
+        const ichLehre = neu.lehrkraft === ctx.ich && lehrt(ctx.person);
+        if (!ichLehre && !ctx.meine.has(neu.kind)) return { ok: false, grund: "NICHT_MEINE_PERSON" };
+        if (!lehrt(ctx.pMap?.get(neu.lehrkraft))) return { ok: false, grund: "KEINE_LEHRKRAFT" };
+        if (ichLehre && ctx.pMap?.get(neu.kind)?.typ !== "schueler") return { ok: false, grund: "KEIN_KIND" };
+        const r = vtNeu(neu, { von: ctx.ich, seiteVon: ichLehre ? "lehrkraft" : "kind" }, jetzt);
+        return r.fehler ? { ok: false, grund: r.fehler } : { ok: true, zeile: r.zeile };
+      }
+      const seite = vtSeite(alt, ctx.ich, ctx.meine);
+      if (!seite) return { ok: false, grund: "NICHT_BETEILIGT" };
+      if (["kind", "lehrkraft", "angefragt_von"].some((k) => neu[k] !== undefined && neu[k] !== alt[k])) return { ok: false, grund: "PERSONEN_FEST" };
+      const a = vtAktionAus(alt, neu);
+      if (!a.art) return { ok: false, grund: "KEINE_AENDERUNG" };
+      const r = vtAntwort(alt, a.art, { ich: ctx.ich, seite, zeit: a.zeit, zeiten: a.zeiten, text: a.text }, jetzt);
+      return r.fehler ? { ok: false, grund: r.fehler } : { ok: true, zeile: r.zeile };
     }
     case "vorspiel_antworten": {
       // 🎙️ Antwort/„gehört“: nur Empfänger (und das Kind bzw. seine Eltern auf Antworten), immer als man selbst; Sprachantwort nur eigene Datei

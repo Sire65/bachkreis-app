@@ -1512,6 +1512,23 @@ export const TABELLEN = {
     liste: ["von", "stueck", "an_art", "loeschen_am"],
     anzeige: (z) => z.stueck || "Vorspiel",
   },
+  // 📅 0.79.7 Live-Vorspiel verabreden: Terminanfrage Kind (bzw. Eltern) ↔ Lehrkraft – Logik in logik.js (vtNeu/vtAntwort), Server prüft, wer am Zug ist
+  vorspiel_termine: {
+    titel: "Vorspiel-Verabredungen", sym: "📅", gruppe: "Orchester", lesen: [], schreiben: [],
+    felder: [
+      { k: "kind", t: "spielt vor", typ: "ref", ref: "personen", pflicht: true },
+      { k: "lehrkraft", t: "Lehrkraft", typ: "ref", ref: "personen", pflicht: true },
+      { k: "angefragt_von", t: "angefragt von", typ: "ref", ref: "personen" },
+      { k: "zeiten", t: "vorgeschlagene Zeiten", typ: "json" },
+      { k: "dauer_min", t: "Dauer (Minuten)", typ: "zahl" },
+      { k: "status", t: "Status", typ: "wahl", werte: { offen: "offen", angenommen: "verabredet", abgelehnt: "abgelehnt", abgesagt: "abgesagt", zurueckgezogen: "zurückgezogen" } },
+      { k: "am_zug", t: "am Zug", typ: "wahl", werte: { kind: "Kind", lehrkraft: "Lehrkraft" } },
+      { k: "termin", t: "verabredet für", typ: "zeit" },
+      { k: "notiz", t: "Notiz", typ: "text" },
+      { k: "verlauf", t: "Verlauf", typ: "json" },
+    ],
+    liste: ["kind", "lehrkraft", "status", "termin"],
+  },
   vorspiel_antworten: {
     titel: "Vorspiele: Antworten", sym: "💬", gruppe: "Orchester", lesen: [], schreiben: [],
     felder: [

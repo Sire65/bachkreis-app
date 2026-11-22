@@ -469,6 +469,16 @@ export function erzeugeDemodaten(heute = new Date()) {
       { id: "vs-2", von: demoKindB.id, stueck: "Air (J. S. Bach)", notiz: null, aufnahme: "datei:demo-vorspiel-2", dauer_sek: 112, an_art: "lehrkraft", an: ["p-leitung"], loeschen_am: bis(1), erstellt_am: iso(tag(jetzt, -1, 17, 40)) },
       zweiterCello && { id: "vs-3", von: zweiterCello, stueck: "Tonleiter G-Dur, 2 Oktaven", notiz: "Zum ersten Mal ganz ohne Fehler!", aufnahme: "datei:demo-vorspiel-3", dauer_sek: 48, an_art: "register", an: ["p-leitung", demoSchueler.id, ...cellos.filter((x) => x !== zweiterCello)], loeschen_am: bis(0), erstellt_am: iso(tag(jetzt, 0, 7, 55)) },
     ].filter(Boolean);
+    // 📅 0.79.7 Live-Vorspiel verabreden: eins verabredet, eins wartet auf die Leitung, eins mit Gegenvorschlag der Leitung (Kind ist dran)
+    const vl = (wer, was, n, h, text = null) => ({ wer, was, zeit: iso(tag(jetzt, n, h, 5)), text });
+    d.vorspiel_termine = [
+      { id: "vt-1", kind: demoSchueler.id, lehrkraft: "p-leitung", angefragt_von: demoSchueler.id, zeiten: [iso(tag(jetzt, 2, 17, 0)), iso(tag(jetzt, 3, 17, 30))], dauer_min: 15, status: "angenommen", am_zug: null,
+        termin: iso(tag(jetzt, 2, 17, 0)), notiz: "Menuett G-Dur, ganz durch", verlauf: [vl(demoSchueler.id, "angefragt", -2, 18, "Menuett G-Dur, ganz durch"), vl("p-leitung", "angenommen", -1, 9)] },
+      { id: "vt-2", kind: demoKindB.id, lehrkraft: "p-leitung", angefragt_von: demoKindB.id, zeiten: [iso(tag(jetzt, 4, 16, 0)), iso(tag(jetzt, 5, 16, 30)), iso(tag(jetzt, 6, 11, 0))], dauer_min: 10, status: "offen", am_zug: "lehrkraft",
+        termin: null, notiz: "Air – die schnelle Stelle", verlauf: [vl(demoKindB.id, "angefragt", 0, 7, "Air – die schnelle Stelle")] },
+      zweiterCello && { id: "vt-3", kind: zweiterCello, lehrkraft: "p-leitung", angefragt_von: zweiterCello, zeiten: [iso(tag(jetzt, 7, 18, 0))], dauer_min: 20, status: "offen", am_zug: "kind",
+        termin: null, notiz: null, verlauf: [vl(zweiterCello, "angefragt", -1, 19), vl("p-leitung", "gegenvorschlag", 0, 8, "Am Mittwoch bin ich auf Fortbildung – geht der Montag drauf?")] },
+    ].filter(Boolean);
     d.vorspiel_antworten = [
       { id: "va-1", vorspiel_id: "vs-1", von: "p-leitung", art: "gehoert", text: null, aufnahme: null, erstellt_am: iso(tag(jetzt, -2, 20, 5)) },
       { id: "va-2", vorspiel_id: "vs-1", von: "p-leitung", art: "tipp", text: "🎯 Diese Stelle noch üben", aufnahme: null, erstellt_am: iso(tag(jetzt, -2, 20, 6)) },

@@ -692,3 +692,59 @@ export function heftAusschiessen(n) {
   return aus;
 }
 export const heftSeitenZahl = (n) => Math.max(4, Math.ceil(n / 4) * 4);
+
+// ---------- 📅 Live-Vorspiel verabreden (0.79.7, Wunsch Hansi „zum Vorspiel verabreden als Terminanfrage mit annehmen, ablehnen, anderen vorschlagen“) ----------
+// Eine Anfrage zwischen Kind (bzw. Eltern für ihr Kind) und Lehrkraft: bis zu 3 Zeiten; wer „am Zug“ ist, nimmt eine an, lehnt ab oder schlägt andere
+// vor (dann ist die andere Seite dran). Zugesagt → Termin; absagen geht von beiden Seiten. App und Server (regeln.js) rechnen mit DENSELBEN Funktionen.
+export const VT_MAX_ZEITEN = 3, VT_DAUER = [10, 15, 20, 30, 45];
+export const VT_STATUS = { offen: "⏳ offen", angenommen: "✅ verabredet", abgelehnt: "❌ abgelehnt", abgesagt: "🚫 abgesagt", zurueckgezogen: "↩️ zurückgezogen" };
+const vtZeitenPruefen = (zeiten, jetzt) => {
+  const l = [...new Set((Array.isArray(zeiten) ? zeiten : []).map((z) => { const d = new Date(z); return Number.isNaN(d.getTime()) ? null : d.toISOString(); }).filter(Boolean))].sort();
+  if (!l.length) return { fehler: "ZEIT_FEHLT" };
+  if (l.length > VT_MAX_ZEITEN) return { fehler: "ZU_VIELE_ZEITEN" };
+  if (l.some((z) => z <= jetzt)) return { fehler: "ZEIT_VORBEI" };
+  return { zeiten: l };
+};
+export const vtSeite = (vt, ich, meine = new Set([ich])) => (ich === vt.lehrkraft ? "lehrkraft" : meine.has(vt.kind) ? "kind" : null);
+// neue Anfrage: von = wer fragt; seiteVon = „kind“ (Kind/Eltern fragen an) oder „lehrkraft“ (Lehrkraft lädt ein) → die andere Seite ist am Zug
+export function vtNeu({ id, kind, lehrkraft, zeiten, dauer_min, notiz }, { von, seiteVon }, jetzt = new Date().toISOString()) {
+  if (!kind || !lehrkraft || kind === lehrkraft) return { fehler: "PERSONEN_FEHLEN" };
+  const z = vtZeitenPruefen(zeiten, jetzt); if (z.fehler) return z;
+  const d = Number(dauer_min), text = String(notiz || "").trim().slice(0, 300) || null;
+  return { zeile: { id, kind, lehrkraft, angefragt_von: von, zeiten: z.zeiten, dauer_min: VT_DAUER.includes(d) ? d : 15, status: "offen", am_zug: seiteVon === "lehrkraft" ? "kind" : "lehrkraft",
+    termin: null, notiz: text, verlauf: [{ wer: von, was: "angefragt", zeit: jetzt, text }], geloescht_am: null } };
+}
+// Antwort: aktion = annehmen (zeit) · ablehnen · gegenvorschlag (zeiten) · zurueckziehen · absagen
+export function vtAntwort(alt, aktion, { ich, seite, zeit = null, zeiten = null, text = null }, jetzt = new Date().toISOString()) {
+  if (!alt || !seite) return { fehler: "NICHT_BETEILIGT" };
+  const notiz = String(text || "").trim().slice(0, 300) || null, v = (was) => [...(alt.verlauf || []), { wer: ich, was, zeit: jetzt, text: notiz }].slice(-30);
+  const amZug = alt.status === "offen" && alt.am_zug === seite;
+  if (aktion === "annehmen") {
+    if (!amZug) return { fehler: "NICHT_AM_ZUG" };
+    const d = new Date(zeit || ""), z = Number.isNaN(d.getTime()) ? null : d.toISOString();
+    if (!z || !(alt.zeiten || []).includes(z)) return { fehler: "ZEIT_NICHT_VORGESCHLAGEN" };
+    if (z <= jetzt) return { fehler: "ZEIT_VORBEI" };
+    return { zeile: { ...alt, status: "angenommen", termin: z, am_zug: null, verlauf: v("angenommen") } };
+  }
+  if (aktion === "ablehnen") return amZug ? { zeile: { ...alt, status: "abgelehnt", am_zug: null, verlauf: v("abgelehnt") } } : { fehler: "NICHT_AM_ZUG" };
+  if (aktion === "gegenvorschlag") {
+    if (!amZug) return { fehler: "NICHT_AM_ZUG" };
+    const g = vtZeitenPruefen(zeiten, jetzt); if (g.fehler) return g;
+    return { zeile: { ...alt, zeiten: g.zeiten, am_zug: seite === "lehrkraft" ? "kind" : "lehrkraft", verlauf: v("gegenvorschlag") } };
+  }
+  if (aktion === "zurueckziehen") return alt.status === "offen" && alt.am_zug !== seite ? { zeile: { ...alt, status: "zurueckgezogen", am_zug: null, verlauf: v("zurueckgezogen") } } : { fehler: "NICHT_MOEGLICH" };
+  if (aktion === "absagen") return alt.status === "angenommen" ? { zeile: { ...alt, status: "abgesagt", verlauf: v("abgesagt") } } : { fehler: "NICHT_MOEGLICH" };
+  return { fehler: "UNBEKANNT" };
+}
+// Welche Aktion steckt in einer geänderten Zeile? (der Server rechnet danach selbst nach – nur Status/Zeiten/Termin/Notiz zählen)
+export function vtAktionAus(alt, neu) {
+  const text = (neu.verlauf || []).length > (alt.verlauf || []).length ? neu.verlauf[neu.verlauf.length - 1]?.text || null : null;
+  if (neu.status === "angenommen" && alt.status === "offen") return { art: "annehmen", zeit: neu.termin, text };
+  if (neu.status === "abgelehnt" && alt.status === "offen") return { art: "ablehnen", text };
+  if (neu.status === "zurueckgezogen" && alt.status === "offen") return { art: "zurueckziehen", text };
+  if (neu.status === "abgesagt" && alt.status === "angenommen") return { art: "absagen", text };
+  if (neu.status === "offen" && alt.status === "offen" && JSON.stringify(neu.zeiten || []) !== JSON.stringify(alt.zeiten || [])) return { art: "gegenvorschlag", zeiten: neu.zeiten, text };
+  return { art: null };
+}
+// Live-Fenster: ab 10 Minuten vorher bis 15 Minuten nach dem Ende
+export const vtLiveJetzt = (vt, jetzt = Date.now()) => vt?.status === "angenommen" && !!vt.termin && jetzt >= Date.parse(vt.termin) - 10 * 60000 && jetzt <= Date.parse(vt.termin) + ((vt.dauer_min || 15) + 15) * 60000;

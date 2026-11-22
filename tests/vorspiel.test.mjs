@@ -110,3 +110,37 @@ test("0.79.6 Kinder und Eltern finden Vorspiel und Bühne auf ihrer eigenen Star
   assert.match(e, /\["vorspiel", "🎙️", "Vorspiel"\], \["buehne", "🎭", "Bühne"\]/);
   assert.equal((k.match(/^ {2}\["\w+", "[^"]+", "[^"]+"/gm) || []).length % 2, 0, "gerade Zahl Kacheln (Zweier-Raster ohne Lücke)");
 });
+
+test("📅 0.79.7 Live-Vorspiel verabreden: anfragen, nur wer am Zug ist antwortet, Gegenvorschlag, annehmen, absagen", async () => {
+  const in2 = (t, h) => new Date(Date.now() + t * 86400000 + h * 3600000).toISOString();
+  const z1 = in2(3, 0), z2 = in2(4, 0), z3 = in2(5, 1);
+  const r = await sp(kind, "vorspiel_termine", { id: "t-vt1", kind, lehrkraft: "p-leitung", zeiten: [z1, z2], dauer_min: 15, notiz: "Menuett", status: "angenommen", am_zug: "kind" });
+  const a = r.gespeichert?.[0]; assert.ok(a, JSON.stringify(r.konflikte));
+  assert.equal(a.status, "offen", "Status setzt der Server"); assert.equal(a.am_zug, "lehrkraft"); assert.equal(a.angefragt_von, kind);
+  assert.equal((await sp(kind, "vorspiel_termine", { id: "t-vt0", kind, lehrkraft: fremd, zeiten: [z1] })).konflikte?.[0]?.grund, "KEINE_LEHRKRAFT");
+  assert.equal((await sp(kind, "vorspiel_termine", { id: "t-vt9", kind, lehrkraft: "p-leitung", zeiten: [new Date(Date.now() - 3600000).toISOString()] })).konflikte?.[0]?.grund, "ZEIT_VORBEI");
+  // das Kind ist nicht am Zug
+  assert.equal((await sp(kind, "vorspiel_termine", { ...a, status: "angenommen", termin: z1 })).konflikte?.[0]?.grund, "NICHT_AM_ZUG");
+  // Lehrkraft schlägt eine andere Zeit vor → Kind ist dran
+  const g = (await sp("p-leitung", "vorspiel_termine", { ...a, zeiten: [z3], verlauf: [...a.verlauf, { wer: "p-leitung", was: "gegenvorschlag", text: "Freitag?" }] })).gespeichert?.[0];
+  assert.equal(g.am_zug, "kind"); assert.deepEqual(g.zeiten, [new Date(z3).toISOString()]); assert.equal(g.verlauf.at(-1).wer, "p-leitung"); assert.equal(g.verlauf.at(-1).text, "Freitag?");
+  assert.equal((await sp(kind, "vorspiel_termine", { ...g, status: "angenommen", termin: z1 })).konflikte?.[0]?.grund, "ZEIT_NICHT_VORGESCHLAGEN", "nur vorgeschlagene Zeiten");
+  assert.equal((await sp(kind, "vorspiel_termine", { ...g, lehrkraft: fremd })).konflikte?.[0]?.grund, "PERSONEN_FEST");
+  const ok = (await sp(kind, "vorspiel_termine", { ...g, status: "angenommen", termin: z3 })).gespeichert?.[0];
+  assert.equal(ok.status, "angenommen"); assert.equal(Date.parse(ok.termin), Date.parse(z3));
+  // sehen: Kind, Eltern, Lehrkraft – sonst niemand
+  assert.ok((await lade("p-leitung")).vorspiel_termine.some((x) => x.id === "t-vt1"));
+  assert.ok(!(await lade(fremd)).vorspiel_termine.some((x) => x.id === "t-vt1"));
+  assert.ok(!(await lade(kollege)).vorspiel_termine.some((x) => x.id === "t-vt1"));
+  if (elternKind) assert.ok((await lade(elternKind)).vorspiel_termine.some((x) => x.id === "t-vt1"));
+  assert.equal((await sp(fremd, "vorspiel_termine", { ...ok, status: "abgesagt" })).konflikte?.[0]?.grund, "NICHT_BETEILIGT");
+  assert.equal((await sp("p-leitung", "vorspiel_termine", { ...ok, status: "abgesagt" })).gespeichert?.[0]?.status, "abgesagt", "beide Seiten können absagen");
+});
+test("📅 Lehrkraft lädt ein Kind ein (dann ist das Kind am Zug); Kind lehnt ab", async () => {
+  const z = new Date(Date.now() + 3 * 86400000).toISOString();
+  const a = (await sp("p-leitung", "vorspiel_termine", { id: "t-vt2", kind, lehrkraft: "p-leitung", zeiten: [z], dauer_min: 20 })).gespeichert?.[0];
+  assert.equal(a.am_zug, "kind");
+  assert.equal((await sp("p-leitung", "vorspiel_termine", { ...a, status: "abgelehnt" })).konflikte?.[0]?.grund, "NICHT_AM_ZUG");
+  assert.equal((await sp(kind, "vorspiel_termine", { ...a, status: "abgelehnt" })).gespeichert?.[0]?.status, "abgelehnt");
+  assert.equal((await sp(fremd, "vorspiel_termine", { id: "t-vt3", kind, lehrkraft: "p-leitung", zeiten: [z] })).konflikte?.[0]?.grund, "NICHT_MEINE_PERSON");
+});

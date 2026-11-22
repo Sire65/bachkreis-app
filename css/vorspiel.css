@@ -38,3 +38,15 @@
 .vs-tage { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; } .vs-tage input { width: 5.5em; }
 .vs-live h3 { color: #d32f2f; } :root.dunkel .vs-live h3 { color: #ff7b7b; }
 @media (prefers-reduced-motion: reduce) { .vs-knopf.an { animation: none; } }
+/* 📅 0.79.7 Live-Vorspiel verabreden */
+.vt-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.vt { border: 1px solid var(--linie); border-radius: 14px; padding: 10px 12px; background: var(--karte); }
+.vt.dran { border: 2px solid var(--haupt); box-shadow: 0 0 0 3px color-mix(in srgb, var(--haupt) 18%, transparent); }
+.vt-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; } .vt-kopf b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.vt-status { font-size: .82rem; font-weight: 800; color: var(--grau); } .vt.dran .vt-status { color: var(--text); }
+.vt-notiz { font-style: italic; margin: 6px 0; } .vt-notiz b { font-style: normal; }
+.vt-frage { font-weight: 800; margin: 8px 0 4px; }
+.vt-zeiten { display: grid; gap: 6px; } .vt-zeiten .knopf { width: 100%; text-align: left; }
+.vt-termin { font-size: 1.05rem; margin: 6px 0; }
+.vt-abgelehnt, .vt-abgesagt, .vt-zurueckgezogen { opacity: .65; }
+.vt-live { margin-top: 6px; }

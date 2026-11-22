@@ -37,7 +37,11 @@ const erwachsenIch = () => erwachsen(S.ich);
 // 📰 0.70.0 Bachkreis-Echo: neues Heft (noch nicht geöffnet) + für die Redaktion neue Beiträge im Eingang
 export const echoNeuesHeft = () => { const h = liste("echo_hefte", (x) => !x.geloescht_am && x.status === "erschienen").sort((a, b) => (b.jahr || 0) - (a.jahr || 0) || (b.nr || 0) - (a.nr || 0))[0]; return h && (Number(h.nr) || 0) > (Number(einst().echoGelesen) || 0) ? h : null; };
 // 🎙️ 0.79.0 Vorspiele an mich, die ich noch nicht gehört habe
-const vorspielNeu = () => { const ich = S.ich?.id, h = new Date().toISOString().slice(0, 10); return liste("vorspiele", (v) => !v.geloescht_am && (v.an || []).includes(ich) && (!v.loeschen_am || v.loeschen_am >= h) && !liste("vorspiel_antworten", (a) => a.vorspiel_id === v.id && a.von === ich && !a.geloescht_am).length).length; };
+const vorspielNeu = () => vorspielGehoert() + vtDran();
+// 📅 0.79.7 offene Terminanfragen, bei denen ich (bzw. mein Kind) am Zug bin
+const vtDran = () => { const ich = S.ich?.id, kinder = new Set([ich, ...liste("eltern_kind", (e) => e.eltern_id === ich && !e.geloescht_am).map((e) => e.kind_id)]);
+  return liste("vorspiel_termine", (v) => !v.geloescht_am && v.status === "offen" && ((v.am_zug === "lehrkraft" && v.lehrkraft === ich) || (v.am_zug === "kind" && kinder.has(v.kind) && v.lehrkraft !== ich))).length; };
+const vorspielGehoert = () => { const ich = S.ich?.id, h = new Date().toISOString().slice(0, 10); return liste("vorspiele", (v) => !v.geloescht_am && (v.an || []).includes(ich) && (!v.loeschen_am || v.loeschen_am >= h) && !liste("vorspiel_antworten", (a) => a.vorspiel_id === v.id && a.von === ich && !a.geloescht_am).length).length; };
 const echoZahl = () => (echoNeuesHeft() ? 1 : 0) + (hatRolle("admin", "leitung", "redaktion") ? liste("echo_beitraege", (b) => !b.geloescht_am && b.status === "eingereicht").length : 0);
 import { neueProtokolle } from "./protokolle.js";
 import { elternAnsicht, elternStartHtml } from "./elternstart.js";

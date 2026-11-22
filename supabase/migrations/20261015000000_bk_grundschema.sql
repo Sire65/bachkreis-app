@@ -1707,6 +1707,32 @@ grant select, insert, update, delete on bk_vorspiele to service_role;
 drop trigger if exists bk_vorspiele_stempel on bk_vorspiele;
 create trigger bk_vorspiele_stempel before update on bk_vorspiele for each row execute function bk_abgleich_stempel();
 
+-- Vorspiel-Verabredungen
+create table if not exists bk_vorspiel_termine (
+  id text primary key default gen_random_uuid()::text,
+  kind text not null,
+  lehrkraft text not null,
+  angefragt_von text,
+  zeiten jsonb,
+  dauer_min integer,
+  status text check (status is null or status in ('offen', 'angenommen', 'abgelehnt', 'abgesagt', 'zurueckgezogen')),
+  am_zug text check (am_zug is null or am_zug in ('kind', 'lehrkraft')),
+  termin timestamptz,
+  notiz text,
+  verlauf jsonb,
+  version integer not null default 1,
+  erstellt_am timestamptz not null default now(),
+  geaendert_am timestamptz not null default now(),
+  geaendert_von text,
+  geloescht_am timestamptz
+);
+create index if not exists bk_vorspiel_termine_geaendert on bk_vorspiel_termine (geaendert_am);
+alter table bk_vorspiel_termine enable row level security;
+revoke all on bk_vorspiel_termine from public, anon, authenticated;
+grant select, insert, update, delete on bk_vorspiel_termine to service_role;
+drop trigger if exists bk_vorspiel_termine_stempel on bk_vorspiel_termine;
+create trigger bk_vorspiel_termine_stempel before update on bk_vorspiel_termine for each row execute function bk_abgleich_stempel();
+
 -- Vorspiele: Antworten
 create table if not exists bk_vorspiel_antworten (
   id text primary key default gen_random_uuid()::text,
@@ -2596,6 +2622,9 @@ do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_beitraege_heft_id_fk') then alter table bk_echo_beitraege add constraint bk_echo_beitraege_heft_id_fk foreign key (heft_id) references bk_echo_hefte(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_echo_beitraege_von_fk') then alter table bk_echo_beitraege add constraint bk_echo_beitraege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiele_von_fk') then alter table bk_vorspiele add constraint bk_vorspiele_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiel_termine_kind_fk') then alter table bk_vorspiel_termine add constraint bk_vorspiel_termine_kind_fk foreign key (kind) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiel_termine_lehrkraft_fk') then alter table bk_vorspiel_termine add constraint bk_vorspiel_termine_lehrkraft_fk foreign key (lehrkraft) references bk_personen(id) on delete restrict; end if; end $$;
+do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiel_termine_angefragt_von_fk') then alter table bk_vorspiel_termine add constraint bk_vorspiel_termine_angefragt_von_fk foreign key (angefragt_von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiel_antworten_vorspiel_id_fk') then alter table bk_vorspiel_antworten add constraint bk_vorspiel_antworten_vorspiel_id_fk foreign key (vorspiel_id) references bk_vorspiele(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorspiel_antworten_von_fk') then alter table bk_vorspiel_antworten add constraint bk_vorspiel_antworten_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;
 do $$ begin if not exists (select 1 from pg_constraint where conname = 'bk_vorschlaege_von_fk') then alter table bk_vorschlaege add constraint bk_vorschlaege_von_fk foreign key (von) references bk_personen(id) on delete restrict; end if; end $$;

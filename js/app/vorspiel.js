@@ -5,9 +5,10 @@
 // ③ Empfänger hören (auch „auf der Bühne“), antworten mit einem Tipp, Text oder einer Sprachantwort; das Kind sieht „✔ gehört“.
 // Wer was sehen darf, erzwingt der Server (regeln.js: vorspiele, vorspiel_antworten). Kinder nur mit Einwilligung „Übe-Aufnahmen“.
 import { S, VIEWS, db, kopf, name, vorname, hatRolle, istEltern, zeichne, einst, einstSetzen } from "./zustand.js";
-import { esc, AKTIONEN, toast, blatt, blattZu, frage, vorZeit, datumKurz } from "../kern/ui.js";
+import { esc, AKTIONEN, toast, blatt, blattZu, frage, vorZeit, datumKurz, herunterladen } from "../kern/ui.js";
+import { senden } from "../kern/versand.js";
 import { liste, hole, speichere, loesche, konfig, konfigSetzen, istEchtbetrieb } from "../kern/daten.js";
-import { kinderVon, registerVon, einwilligung, tagIso } from "../kern/logik.js";
+import { kinderVon, elternVon, registerVon, einwilligung, tagIso, vtNeu, vtAntwort, vtSeite, vtLiveJetzt, ics, VT_STATUS, VT_DAUER, VT_MAX_ZEITEN } from "../kern/logik.js";
 import { istMinderjaehrig, vorspielTage, VORSPIEL_TIPPS, VORSPIEL_MAX_SEK, VORSPIEL_TAGE_MIN, VORSPIEL_TAGE_MAX } from "../kern/schema.js";
 import { hochladen, dateiUrl, groesseText } from "../kern/dateien.js";
 import { aufnahme, aufnahmeMoeglich, dauerText } from "./sprache.js";
@@ -69,15 +70,15 @@ function zeileGesendet(v) {
 VIEWS.vorspiel = {
   render() {
     if (!fuerWen().includes(V.fuer)) V.fuer = fuerWen()[0];
-    const fm = fuerMich(), gs = gesendet(), lehrt = istLehrkraftP(S.ich);
+    const fm = fuerMich(), gs = gesendet(), lehrt = istLehrkraftP(S.ich), dran = vtAmZug() > 0;
     // Lehrkräfte/Leitung: zuerst „Für mich“ (zum Anhören), Kinder: zuerst Aufnehmen
     return kopf("🎙️ Vorspiel") + `<div class="vs">
-      ${lehrt ? "" : aufnahmeKarte()}
+      ${dran ? liveKarte() : ""}${lehrt ? "" : aufnahmeKarte()}
       ${lehrt && !fm.length ? '<div class="karte"><h3>🎧 Für mich</h3><p class="hinweis">Noch keine Vorspiele – Kinder schicken sie hier hin.</p></div>' : ""}
       ${fm.length ? `<div class="karte"><h3>🎧 Für mich <span class="hinweis">${fm.filter((v) => !gehoertVonMir(v)).length} neu</span></h3><ul class="vs-liste">${fm.map(zeileFuerMich).join("")}</ul></div>` : ""}
       ${gs.length ? `<div class="karte"><h3>📤 Gesendet</h3><ul class="vs-liste">${gs.map(zeileGesendet).join("")}</ul><p class="hinweis">Vorspiele werden nach ${vorspielTage(konfig())} Tagen automatisch gelöscht.</p></div>` : ""}
       ${lehrt ? aufnahmeKarte() : ""}
-      ${liveKarte()}
+      ${dran ? "" : liveKarte()}
       ${hatRolle("leitung", "admin") ? `<div class="karte"><h3>⚙️ Aufbewahrung</h3><div class="vs-tage"><label for="vsTage">Vorspiele löschen nach</label><input id="vsTage" type="number" min="${VORSPIEL_TAGE_MIN}" max="${VORSPIEL_TAGE_MAX}" value="${vorspielTage(konfig())}" inputmode="numeric"><span>Tagen</span><button type="button" class="knopf" data-a="vsTage">💾</button></div><p class="hinweis">Gilt für neue Vorspiele (Standard 30 Tage). Auch unter ⚙️ Einstellungen › Admin.</p></div>` : ""}
     </div>`;
   },
@@ -123,12 +124,85 @@ function auswahlHtml(pid) {
   const teil = (t, l) => (l.length ? `<details ${t.startsWith("👩") ? "open" : ""}><summary>${t} (${l.length})</summary><div class="vs-personen">${l.sort((a, b) => name(a).localeCompare(name(b))).map(box).join("")}</div></details>` : "");
   return `<div class="vs-auswahl">${teil("👩‍🏫 Lehrkräfte & Leitung", lk.filter((x) => x !== pid))}${teil(`🎻 ${esc(registerName(pid))}`, reg.filter((x) => !lk.includes(x)))}${teil(`🎼 ${esc(orchesterName(pid))}`, orch)}</div>`;
 }
-function liveKarte() {
-  const lk = meineLehrkraft(V.fuer);
-  if (!lk || lk === S.ich?.id) return "";
-  return `<div class="karte vs-live"><h3>🔴 Live vorspielen</h3><p>Mit ${esc(name(lk))} verabredet? Dann direkt live vorspielen – ${esc(name(lk))} hört sofort zu und kann gleich etwas sagen. Ton im Musik-Modus, kein Speichern.</p>
-    ${anrufAn() ? `<button type="button" class="knopf" data-a="vsLive" data-x="${esc(lk)}">🔴 Jetzt live vorspielen</button>` : '<p class="hinweis">🎯 Kommt nach dem Pilot: dafür schaltet die Leitung „📞 Anrufe & Video“ frei (Admin › 🧩 Module).</p>'}</div>`;
+// ---------- 📅 Live-Vorspiel verabreden (0.79.7) ----------
+// Terminanfrage Kind (bzw. Eltern) ↔ Lehrkraft: bis zu 3 Zeiten · annehmen · ablehnen · andere Zeit vorschlagen · zurückziehen · absagen.
+// Logik in logik.js (vtNeu/vtAntwort) – derselbe Code prüft auf dem Server, wer am Zug ist. Jeder Schritt benachrichtigt die andere Seite.
+const zeitText = (z) => new Date(z).toLocaleString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }).replace(",", "") + " Uhr";
+const meineSeite = (vt) => vtSeite(vt, S.ich?.id, new Set(fuerWen()));
+const andere = (vt) => (meineSeite(vt) === "lehrkraft" ? vt.kind : vt.lehrkraft);
+export const vtMeine = () => { const jetzt = Date.now(), m = new Set(fuerWen()); return liste("vorspiel_termine", (v) => !v.geloescht_am && (v.lehrkraft === S.ich?.id || m.has(v.kind))
+  && !(["abgelehnt", "abgesagt", "zurueckgezogen"].includes(v.status) && jetzt - Date.parse(v.verlauf?.at(-1)?.zeit || v.geaendert_am || 0) > 7 * 86400000)
+  && !(v.status === "angenommen" && Date.parse(v.termin) + ((v.dauer_min || 15) + 60) * 60000 < jetzt))
+  .sort((a, b) => (b.am_zug === meineSeite(b)) - (a.am_zug === meineSeite(a)) || String(a.termin || a.zeiten?.[0] || "").localeCompare(String(b.termin || b.zeiten?.[0] || ""))); };
+export const vtAmZug = () => vtMeine().filter((v) => v.status === "offen" && v.am_zug === meineSeite(v)).length;
+const WAS = { angefragt: "fragt an", gegenvorschlag: "schlägt vor", angenommen: "sagt zu", abgelehnt: "lehnt ab", abgesagt: "sagt ab", zurueckgezogen: "zieht zurück" };
+function vtHtml(v) {
+  const seite = meineSeite(v), amZug = v.status === "offen" && v.am_zug === seite, letzte = v.verlauf?.at(-1), wer = andere(v);
+  const notiz = letzte?.text ? `<p class="vt-notiz"><b>${esc(vorname(letzte.wer))}</b> ${WAS[letzte.was] || ""}: „${esc(letzte.text)}“</p>` : v.notiz ? `<p class="vt-notiz">„${esc(v.notiz)}“</p>` : "";
+  let inhalt = "";
+  if (amZug) inhalt = `<p class="vt-frage">Wann passt es? Eine Zeit antippen:</p><div class="vt-zeiten">${(v.zeiten || []).map((z) => `<button type="button" class="knopf gruen" data-a="vtAnnehmen" data-x="${esc(v.id)}|${esc(z)}">✅ ${esc(zeitText(z))}</button>`).join("")}</div>
+    <div class="knopfreihe"><button type="button" class="knopf" data-a="vtForm" data-x="gegen:${esc(v.id)}">↔️ Andere Zeit vorschlagen</button><button type="button" class="knopf rot" data-a="vtAblehnen" data-x="${esc(v.id)}">❌ Ablehnen</button></div>`;
+  else if (v.status === "offen") inhalt = `<p class="hinweis">⏳ Wartet auf ${esc(name(wer))}: ${(v.zeiten || []).map((z) => esc(zeitText(z))).join(" · ")}</p>${v.am_zug !== seite ? `<button type="button" class="knopf klein" data-a="vtZurueck" data-x="${esc(v.id)}">↩️ Zurückziehen</button>` : ""}`;
+  else if (v.status === "angenommen") {
+    const live = vtLiveJetzt(v);
+    inhalt = `<p class="vt-termin">✅ <b>${esc(zeitText(v.termin))}</b> · ${v.dauer_min || 15} Min.</p>
+      ${live && seite === "kind" ? (anrufAn() ? `<button type="button" class="knopf haupt breit vt-live" data-a="vsLive" data-x="${esc(v.lehrkraft)}">🔴 Jetzt live vorspielen</button>` : '<p class="hinweis">🔴 Live vorspielen geht, sobald die Leitung „📞 Anrufe & Video“ freischaltet (im Pilot aus).</p>') : ""}
+      ${live && seite === "lehrkraft" ? `<p class="hinweis">📞 ${esc(vorname(v.kind))} ruft gleich an – App offen lassen.</p>` : ""}
+      <div class="knopfreihe"><button type="button" class="knopf" data-a="vtKalender" data-x="${esc(v.id)}">📆 In den Kalender</button><button type="button" class="knopf rot" data-a="vtAbsagen" data-x="${esc(v.id)}">🚫 Absagen</button></div>`;
+  }
+  return `<li class="vt vt-${esc(v.status)}${amZug ? " dran" : ""}"><div class="vt-kopf"><b>${seite === "lehrkraft" ? "🎻 " + esc(name(v.kind)) : "👩‍🏫 " + esc(name(v.lehrkraft))}</b>${fuerWen().length > 1 && seite === "kind" ? ` <small>für ${esc(vorname(v.kind))}</small>` : ""}<span class="vt-status">${amZug ? "👉 Du bist dran" : VT_STATUS[v.status] || ""}</span></div>${notiz}${inhalt}</li>`;
 }
+function liveKarte() {
+  const l = vtMeine(), lehrt = istLehrkraftP(S.ich), lk = meineLehrkraft(V.fuer);
+  const neu = lehrt ? `<button type="button" class="knopf" data-a="vtForm" data-x="einladen:">📅 Kind zum Vorspiel einladen</button>`
+    : lk ? `<button type="button" class="knopf haupt" data-a="vtForm" data-x="neu:">📅 Termin anfragen</button>` : "";
+  return `<div class="karte vs-live"><h3>📅 Live-Vorspiel verabreden</h3>
+    ${l.length ? `<ul class="vt-liste">${l.map(vtHtml).join("")}</ul>` : `<p>${lehrt ? "Noch keine Anfragen. Kinder fragen hier einen Termin an – oder du lädst selbst ein." : `Einen Termin mit ${esc(name(lk))} ausmachen: bis zu ${VT_MAX_ZEITEN} Zeiten vorschlagen – ${esc(name(lk))} nimmt eine an, lehnt ab oder schlägt eine andere vor. Zur verabredeten Zeit dann 🔴 live vorspielen (Musik-Modus, nichts wird gespeichert).`}</p>`}
+    <div class="knopfreihe">${neu}</div></div>`;
+}
+// Formular: neu (Kind/Eltern fragen an) · einladen (Lehrkraft) · gegen (andere Zeit vorschlagen)
+const lokal = (d) => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
+AKTIONEN.vtForm = (x) => {
+  const [modus, id] = String(x).split(":"); // „:“ als Trenner (der Vertragstest liest „wort|“ als Ansicht)
+  const morgen = new Date(); morgen.setDate(morgen.getDate() + 1); morgen.setHours(17, 0, 0, 0);
+  const wer = modus === "neu" ? `<div class="feld"><label for="vtLk">Mit wem?</label><select id="vtLk">${lehrkraefte().map((p) => `<option value="${esc(p.id)}" ${p.id === meineLehrkraft(V.fuer) ? "selected" : ""}>${esc(name(p.id))}</option>`).join("")}</select></div>${fuerWen().length > 1 ? `<p class="hinweis">Für ${esc(vorname(V.fuer))} (oben auf der Seite umschaltbar).</p>` : ""}`
+    : modus === "einladen" ? `<div class="feld"><label for="vtKind">Welches Kind?</label><select id="vtKind">${liste("personen", (p) => p.typ === "schueler" && p.status !== "ausgetreten" && !p.geloescht_am).sort((a, b) => name(a.id).localeCompare(name(b.id))).map((p) => `<option value="${esc(p.id)}">${esc(name(p.id))}</option>`).join("")}</select></div>` : "";
+  blatt(modus === "gegen" ? "↔️ Andere Zeit vorschlagen" : modus === "einladen" ? "📅 Zum Live-Vorspiel einladen" : "📅 Live-Vorspiel anfragen", `${wer}
+    <p class="hinweis">Bis zu ${VT_MAX_ZEITEN} Zeiten vorschlagen – die andere Seite tippt eine an.</p>
+    ${Array.from({ length: VT_MAX_ZEITEN }, (_, i) => `<div class="feld"><label for="vtZ${i}">${i + 1}. Zeit${i ? " (freiwillig)" : ""}</label><input id="vtZ${i}" type="datetime-local" ${i ? "" : `value="${lokal(morgen)}"`} min="${lokal(new Date())}"></div>`).join("")}
+    ${modus === "gegen" ? "" : `<div class="feld"><label for="vtDauer">Dauer</label><select id="vtDauer">${VT_DAUER.map((d) => `<option value="${d}" ${d === 15 ? "selected" : ""}>${d} Minuten</option>`).join("")}</select></div>`}
+    <div class="feld"><label for="vtText">Nachricht (freiwillig)</label><input id="vtText" maxlength="300" placeholder="${modus === "gegen" ? "z. B. Am Mittwoch kann ich leider nicht" : "z. B. Menuett G-Dur, ganz durch"}"></div>
+    <button type="button" class="knopf haupt breit" data-a="vtSenden" data-x="${esc(modus)}|${esc(id || "")}">📨 Senden</button>`);
+};
+const BETREFF = { angefragt: "📅 Anfrage: Live-Vorspiel", gegenvorschlag: "↔️ Andere Zeit fürs Live-Vorspiel", angenommen: "✅ Live-Vorspiel verabredet", abgelehnt: "❌ Live-Vorspiel abgelehnt", abgesagt: "🚫 Live-Vorspiel abgesagt", zurueckgezogen: "↩️ Anfrage Live-Vorspiel zurückgezogen" };
+async function melden(v, was) { // die andere Seite benachrichtigen (bei Kindern unter 18 auch die Eltern)
+  const an = meineSeite(v) === "lehrkraft" ? [v.kind, ...(istMinderjaehrig(hole("personen", v.kind)) ? elternVon(db, v.kind) : [])] : [v.lehrkraft];
+  const wann = v.status === "angenommen" ? ` – ${zeitText(v.termin)}` : v.status === "offen" ? `: ${(v.zeiten || []).map(zeitText).join(" · ")}` : "";
+  try { await senden({ an, betreff: `${BETREFF[was] || "📅 Live-Vorspiel"} (${vorname(v.kind)})`, text: `${name(S.ich.id)}${wann}. In der App unter 🎙️ Vorspiel antworten.`, ereignis: "standard" }); } catch { /* Nachricht ist nur ein Hinweis */ }
+}
+async function vtSpeichern(r, was, ok) {
+  if (r.fehler) return toast("⚠️ " + ({ ZEIT_FEHLT: "Bitte mindestens eine Zeit angeben.", ZEIT_VORBEI: "Diese Zeit ist schon vorbei.", NICHT_AM_ZUG: "Gerade ist die andere Seite dran.", ZU_VIELE_ZEITEN: `Höchstens ${VT_MAX_ZEITEN} Zeiten.` }[r.fehler] || "Das geht so nicht."));
+  try { const z = await speichere("vorspiel_termine", r.zeile); melden(z || r.zeile, was); blattZu(); toast(ok); zeichne(); } catch (e) { toast("⚠️ " + e.message); }
+}
+const zeitenAusForm = () => Array.from({ length: VT_MAX_ZEITEN }, (_, i) => document.getElementById("vtZ" + i)?.value).filter(Boolean).map((s) => new Date(s).toISOString());
+const formText = () => String(document.getElementById("vtText")?.value || "").trim();
+AKTIONEN.vtSenden = (x) => {
+  const [modus, id] = String(x).split("|"), jetzt = new Date().toISOString();
+  if (modus === "gegen") { const v = hole("vorspiel_termine", id); return vtSpeichern(vtAntwort(v, "gegenvorschlag", { ich: S.ich.id, seite: meineSeite(v), zeiten: zeitenAusForm(), text: formText() }, jetzt), "gegenvorschlag", "↔️ Vorschlag geschickt"); }
+  const lehrt = modus === "einladen", kind = lehrt ? document.getElementById("vtKind")?.value : V.fuer, lehrkraft = lehrt ? S.ich.id : document.getElementById("vtLk")?.value;
+  if (!lehrt) einstSetzen("vorspielLehrkraft", { ...(einst().vorspielLehrkraft || {}), [kind]: lehrkraft });
+  return vtSpeichern(vtNeu({ kind, lehrkraft, zeiten: zeitenAusForm(), dauer_min: Number(document.getElementById("vtDauer")?.value), notiz: formText() }, { von: S.ich.id, seiteVon: lehrt ? "lehrkraft" : "kind" }, jetzt), "angefragt", "📨 Anfrage geschickt");
+};
+const vtAntworten = (id, art, mehr, ok) => { const v = hole("vorspiel_termine", id); if (v) vtSpeichern(vtAntwort(v, art, { ich: S.ich.id, seite: meineSeite(v), ...mehr }), art === "annehmen" ? "angenommen" : art === "ablehnen" ? "abgelehnt" : art === "absagen" ? "abgesagt" : "zurueckgezogen", ok); };
+AKTIONEN.vtAnnehmen = (x) => { const [id, zeit] = String(x).split("|"); vtAntworten(id, "annehmen", { zeit }, "✅ Verabredet!"); };
+AKTIONEN.vtAblehnen = async (id) => { if (await frage("Anfrage ablehnen?", { ja: "❌ Ablehnen", gefahr: true })) vtAntworten(id, "ablehnen", {}, "❌ Abgelehnt"); };
+AKTIONEN.vtZurueck = async (id) => { if (await frage("Anfrage zurückziehen?", { ja: "↩️ Zurückziehen", gefahr: true })) vtAntworten(id, "zurueckziehen", {}, "↩️ Zurückgezogen"); };
+AKTIONEN.vtAbsagen = async (id) => { if (await frage("Das verabredete Live-Vorspiel absagen?", { ja: "🚫 Absagen", gefahr: true })) vtAntworten(id, "absagen", {}, "🚫 Abgesagt"); };
+AKTIONEN.vtKalender = (id) => {
+  const v = hole("vorspiel_termine", id); if (!v?.termin) return;
+  const ende = new Date(Date.parse(v.termin) + (v.dauer_min || 15) * 60000).toISOString();
+  herunterladen(`live-vorspiel-${tagIso(new Date(v.termin))}.ics`, ics([{ id: "vt-" + v.id, titel: `🔴 Live-Vorspiel ${vorname(v.kind)} – ${name(v.lehrkraft)}`, beginn: v.termin, ende, ort: "Bachkreis-App › 🎙️ Vorspiel", beschreibung: v.notiz || "" }], "Live-Vorspiel", { alarm: 10 }), "text/calendar");
+};
 
 // ---------- Aufnehmen ----------
 AKTIONEN.vsFuer = (pid) => { V.fuer = pid; V.schritt = "start"; zeichne(); };

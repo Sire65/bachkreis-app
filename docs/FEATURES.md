@@ -193,6 +193,8 @@ Stand v0.3.0 DEV (Vorführversion). DoD = Definition of Done.
 | BK-F190 | 🎙️ Vorspiel: aufnehmen (Musik-Modus), an Lehrkraft/Register/Orchester/Auswahl senden, anhören, antworten, Aufbewahrung einstellbar | ✅ | vorspiel.test |
 | BK-F191 | 🔴 Live-Vorspiel über Anrufe im Musik-Modus | ✅ | vorspiel.test |
 | BK-F192 | 🎼 Bühne: Schalter Orchester/Noten, mitlaufender Zeiger (Melodie/Partitur) | ✅ | buehne-noten.test |
+| BK-F193 | 🎼 Bach-Noten zum Mitlesen + Notenarchiv über BWV | ✅ | bach-noten.test |
+| BK-F194 | 📅 Live-Vorspiel verabreden (anfragen, annehmen, ablehnen, Gegenvorschlag, absagen) | ✅ | vorspiel.test |
 | BK-F181 | 🧊 Hänger-Messung mit Ursache, Fehler-ID und 📖 Fehlerkatalog (Admin, wie KC 2.966) | ✅ | haenger-puls.test |
 | BK-F182 | 🎚️ Datenverkehr-Säulen L/S im Kopf (Admin, wie KC 2.964) | ✅ | haenger-puls.test |
 | BK-F176 | 👉 Dirigentin gibt Einsätze: dreht sich zur Gruppe, linke Hand zeigt hin | ✅ | dirigent.test |
